@@ -49,7 +49,7 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
-            -DSEIR_BENCHMARKS=ON \
+            -DSEIR_BENCHMARKS=${{ matrix.mode != 'coverage' && 'ON' || 'OFF' }} \
             -DSEIR_TESTS=${{ matrix.mode != 'benchmark' && 'ON' || 'OFF' }}
       - name: Build
         run: |
