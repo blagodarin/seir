@@ -12,6 +12,7 @@ seir_set_defaults()
 
 option(SEIR_STATIC_RUNTIME "Build Seir with static runtime" OFF)
 if(PROJECT_IS_TOP_LEVEL)
+	option(SEIR_BENCHMARKS "Build Seir benchmarks" OFF)
 	option(SEIR_TESTS "Build Seir tests" OFF)
 endif()
 
@@ -67,6 +68,12 @@ if(SEIR_TESTS)
 	enable_testing()
 	add_subdirectory(libs/audio/tests)
 	add_subdirectory(libs/base/tests)
+endif()
+
+if(SEIR_BENCHMARKS)
+	seir_provide_benchmark(benchmark_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+	find_package(benchmark REQUIRED)
+	add_subdirectory(libs/audio/benchmarks)
 endif()
 
 include(CMakePackageConfigHelpers)

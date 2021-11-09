@@ -1,0 +1,18 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -20,6 +20,7 @@
+ add_library(benchmark ${SOURCE_FILES})
+ add_library(benchmark::benchmark ALIAS benchmark)
+ set_target_properties(benchmark PROPERTIES
++  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+   OUTPUT_NAME "benchmark"
+   VERSION ${GENERIC_LIB_VERSION}
+   SOVERSION ${GENERIC_LIB_SOVERSION}
+@@ -63,6 +64,7 @@
+ add_library(benchmark_main "benchmark_main.cc")
+ add_library(benchmark::benchmark_main ALIAS benchmark_main)
+ set_target_properties(benchmark_main PROPERTIES
++  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+   OUTPUT_NAME "benchmark_main"
+   VERSION ${GENERIC_LIB_VERSION}
+   SOVERSION ${GENERIC_LIB_SOVERSION}

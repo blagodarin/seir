@@ -15,13 +15,19 @@ jobs:
             config: Release
           - cxx: g++-10
             config: Debug
+          - cxx: g++-10
+            config: Release
+            mode: benchmark
+          - cxx: g++-10
+            config: Debug
+            mode: coverage
           - cxx: clang++-12
             config: Release
           - cxx: clang++-12
             config: Debug
-          - cxx: g++-10
-            config: Debug
-            mode: coverage
+          - cxx: clang++-12
+            config: Release
+            mode: benchmark
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
@@ -43,20 +49,26 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
-            -DSEIR_TESTS=ON
+            -DSEIR_BENCHMARKS=ON \
+            -DSEIR_TESTS=${{ matrix.mode != 'benchmark' && 'ON' || 'OFF' }}
       - name: Build
         run: |
           cmake --build build
-          cmake --build build --target install
       - name: Run tests
+        if: matrix.mode != 'benchmark'
         run: |
           cd build
           ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
           cd "${{ github.workspace }}"
+          cmake --build build --target install
           cmake -S cmake/SeirExample -B build.example -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
           cmake --build build.example
+      - name: Run benchmarks
+        if: matrix.mode == 'benchmark'
+        run: |
+          build/libs/audio/benchmarks/audio_benchmarks
       - name: Upload coverage reports
         if: matrix.mode == 'coverage'
         run: |
