@@ -58,12 +58,14 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		)
 endif()
 
+add_subdirectory(libs/audio)
 add_subdirectory(libs/base)
 
 if(SEIR_TESTS)
 	seir_provide_doctest(doctest_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 	find_package(doctest REQUIRED)
 	enable_testing()
+	add_subdirectory(libs/audio/tests)
 	add_subdirectory(libs/base/tests)
 endif()
 
