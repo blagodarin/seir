@@ -16,10 +16,22 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_TESTS "Build Seir tests" OFF)
 endif()
 
+find_package(Threads REQUIRED)
+if(NOT WIN32)
+	find_package(ALSA REQUIRED)
+endif()
+
+if(WIN32)
+	set(CMAKE_DEBUG_POSTFIX "d")
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	add_compile_options(-Werror -Weverything
 		-Wno-c++98-compat
 		-Wno-c++98-compat-pedantic
+		-Wno-ctad-maybe-unsupported
+		-Wno-padded
+		-Wno-weak-vtables # '___' has no out-of-line virtual method definitions; its vtable will be emitted in every translation unit
 		)
 endif()
 
@@ -46,6 +58,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	add_compile_options(/Wall /WX
+		/wd4464 # relative include path contains '..'
 		/wd4514 # unreferenced inline function has been removed
 		/wd4623 # default constructor was implicitly defined as deleted
 		/wd4625 # copy constructor was implicitly defined as deleted
@@ -54,6 +67,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		/wd4711 # function selected for automatic inline expansion
 		/wd4738 # storing 32-bit float result in memory, possible loss of performance
 		/wd4820 # 'bytes' bytes padding added after construct 'member_name'
+		/wd5026 # move constructor was implicitly defined as deleted
 		/wd5027 # move assignment operator was implicitly defined as deleted
 		/wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 		)

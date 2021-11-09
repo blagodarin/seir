@@ -34,7 +34,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install ninja-build
+          sudo apt-get install libasound2-dev ninja-build
       - name: Run CMake
         env:
           CXX: ${{ matrix.cxx }}
@@ -42,7 +42,7 @@ jobs:
           if [ "${{ matrix.mode }}" == "coverage" ]; then
             export CXXFLAGS="--coverage"
             export LDFLAGS="--coverage"
-          else
+          elif [ "${{ matrix.mode }}" != "benchmark" ]; then
             export CXXFLAGS="-fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute"
             export LDFLAGS="-fsanitize=address -fsanitize=undefined"
           fi

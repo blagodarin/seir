@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 seir_folder(base)
-source_group("include" REGULAR_EXPRESSION "/include/")
-add_library(base INTERFACE
+set(HEADERS
 	include/seir_base/allocator.hpp
 	include/seir_base/buffer.hpp
 	include/seir_base/endian.hpp
@@ -18,6 +17,8 @@ add_library(base INTERFACE
 	include/seir_base/string_utils.hpp
 	include/seir_base/utf8.hpp
 	)
+source_group("include" FILES ${HEADERS})
+add_library(base INTERFACE ${HEADERS})
 add_library(Seir::base ALIAS base)
 target_include_directories(base INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 seir_install(base EXPORT SeirTargets)
