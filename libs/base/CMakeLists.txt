@@ -2,7 +2,7 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-seir_folder(libs)
+seir_folder(base)
 source_group("include" REGULAR_EXPRESSION "/include/")
 add_library(base INTERFACE
 	include/seir_base/allocator.hpp

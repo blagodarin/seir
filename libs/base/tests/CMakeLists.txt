@@ -2,7 +2,7 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-seir_folder(tests)
+seir_folder(base)
 source_group("src" REGULAR_EXPRESSION ".*\\.(hpp|cpp)$")
 add_executable(base_tests
 	src/allocator.cpp

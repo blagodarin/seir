@@ -2,7 +2,7 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-seir_folder(benchmarks)
+seir_folder(audio)
 source_group("src" REGULAR_EXPRESSION ".*\\.(hpp|cpp)$")
 add_executable(audio_benchmarks
 	src/processing.cpp
