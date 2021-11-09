@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -101,6 +101,7 @@
+ set_target_properties(
+     ogg PROPERTIES
+     SOVERSION ${LIB_SOVERSION}
++    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+     VERSION ${LIB_VERSION}
+     PUBLIC_HEADER "${OGG_HEADERS}"
+ )
