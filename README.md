@@ -7,6 +7,14 @@
 
 Seir is a toolkit (or a framework, or whatever) for building interactive applications.
 
+Seir aims to be:
+* **Easy to start using.**
+  Building Seir requires internet connection, [Git](https://git-scm.com/downloads/),
+  recent [CMake](https://cmake.org/download/) and a supported C++ compiler,
+  which is essentially the bare minimum for building modern C++ projects.
+  On top of that, you don't even need to build Seir manually in order to use it.
+  Some three lines of CMake script will get you Seir with all its dependencies.
+
 ### Disclaimer
 
 Seir was created as a vessel for its author's erratic software engineering work.
