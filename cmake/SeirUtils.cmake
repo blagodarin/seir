@@ -120,7 +120,7 @@ function(seir_set_defaults)
 		set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER ".cmake")
 		set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 	elseif(NOT CMAKE_FOLDER)
-		set(CMAKE_FOLDER ".subprojects" PARENT_SCOPE)
+		set(CMAKE_FOLDER "Seir" PARENT_SCOPE)
 	endif()
 	set(CMAKE_CXX_STANDARD 23 PARENT_SCOPE)
 	set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG "Debug;;Release" PARENT_SCOPE) # "Release" may be the only configuration provided by the host system.

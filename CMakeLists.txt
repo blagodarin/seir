@@ -10,14 +10,15 @@ include(cmake/SeirPackages.cmake)
 
 seir_set_defaults()
 
-option(SEIR_STATIC_RUNTIME "Build Seir with static runtime" OFF)
+option(SEIR_AUDIO "Build audio library" OFF)
+option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime" OFF)
 if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_BENCHMARKS "Build Seir benchmarks" OFF)
 	option(SEIR_TESTS "Build Seir tests" OFF)
 endif()
 
 find_package(Threads REQUIRED)
-if(NOT WIN32)
+if(SEIR_AUDIO AND NOT WIN32)
 	find_package(ALSA REQUIRED)
 endif()
 
@@ -31,7 +32,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		-Wno-c++98-compat-pedantic
 		-Wno-ctad-maybe-unsupported
 		-Wno-padded
-		-Wno-weak-vtables # '___' has no out-of-line virtual method definitions; its vtable will be emitted in every translation unit
+		-Wno-weak-vtables
 		)
 endif()
 
@@ -73,21 +74,27 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		)
 endif()
 
-add_subdirectory(libs/audio)
 add_subdirectory(libs/base)
+if(SEIR_AUDIO)
+	add_subdirectory(libs/audio)
+endif()
 
 if(SEIR_TESTS)
 	seir_provide_doctest(doctest_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 	find_package(doctest REQUIRED)
 	enable_testing()
-	add_subdirectory(libs/audio/tests)
+	if(SEIR_AUDIO)
+		add_subdirectory(libs/audio/tests)
+	endif()
 	add_subdirectory(libs/base/tests)
 endif()
 
 if(SEIR_BENCHMARKS)
 	seir_provide_benchmark(benchmark_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 	find_package(benchmark REQUIRED)
-	add_subdirectory(libs/audio/benchmarks)
+	if(SEIR_AUDIO)
+		add_subdirectory(libs/audio/benchmarks)
+	endif()
 endif()
 
 include(CMakePackageConfigHelpers)

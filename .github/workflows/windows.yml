@@ -19,7 +19,7 @@ jobs:
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
       - name: Install prerequisites
         run: |
-          cinst ninja
+          cinst --no-progress ninja
       - name: Run CMake
         env:
           CMAKE_GENERATOR: Ninja
@@ -27,6 +27,7 @@ jobs:
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install" `
+            -DSEIR_AUDIO=ON `
             -DSEIR_STATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }} `
             -DSEIR_BENCHMARKS=ON `
             -DSEIR_TESTS=ON
@@ -35,16 +36,18 @@ jobs:
           cmake --build build
       - name: Run tests
         if: matrix.mode != 'benchmark'
+        env:
+          CMAKE_GENERATOR: Ninja
         run: |
           cd build
           ctest --verbose
           cd "${{ github.workspace }}"
           cmake --build build --target install
-          cmake -S cmake\SeirExample -B build.example `
+          cmake -S cmake\test -B build.test `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}\install" `
             -DSTATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }}
-          cmake --build build.example
+          cmake --build build.test
       - name: Run benchmarks
         if: matrix.config != 'Debug'
         run: |
@@ -62,8 +65,11 @@ jobs:
           CMAKE_GENERATOR_PLATFORM: Win32
         run: |
           cmake -S . -B build `
-            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install"
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install" `
+            -DSEIR_AUDIO=ON
       - name: Build
         run: |
           cmake --build build --config Debug --parallel -- /nologo
+          cmake --build build --config Debug --target install -- /nologo
           cmake --build build --config RelWithDebInfo --parallel -- /nologo
+          cmake --build build --config RelWithDebInfo --target install -- /nologo
