@@ -18,7 +18,7 @@ set(SOURCES
 	src/utf8.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
-add_executable(base_tests ${SOURCES})
-target_link_libraries(base_tests PRIVATE Seir::base doctest::doctest_with_main)
-set_target_properties(base_tests PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<NOT:$<BOOL:${SEIR_STATIC_RUNTIME}>>:DLL>")
-add_test(NAME base COMMAND base_tests)
+add_executable(seir_base_tests ${SOURCES})
+target_link_libraries(seir_base_tests PRIVATE Seir::base doctest::doctest_with_main)
+set_target_properties(seir_base_tests PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<NOT:$<BOOL:${SEIR_STATIC_RUNTIME}>>:DLL>")
+add_test(NAME base COMMAND seir_base_tests)

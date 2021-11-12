@@ -18,8 +18,9 @@ set(HEADERS
 	include/seir_base/utf8.hpp
 	)
 source_group("include" FILES ${HEADERS})
-add_library(base INTERFACE ${HEADERS})
-add_library(Seir::base ALIAS base)
-target_include_directories(base INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-seir_install(base EXPORT SeirTargets)
+add_library(seir_base INTERFACE ${HEADERS})
+add_library(Seir::base ALIAS seir_base)
+target_include_directories(seir_base INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+set_target_properties(seir_base PROPERTIES EXPORT_NAME base)
+seir_install(seir_base EXPORT SeirTargets)
 install(DIRECTORY include/seir_base DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

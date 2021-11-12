@@ -69,7 +69,7 @@ jobs:
       - name: Run benchmarks
         if: matrix.mode == 'benchmark'
         run: |
-          build/libs/audio/benchmarks/audio_benchmarks
+          build/libs/audio/benchmarks/seir_audio_benchmarks
       - name: Upload coverage reports
         if: matrix.mode == 'coverage'
         run: |
