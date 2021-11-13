@@ -2,7 +2,6 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-seir_folder(audio)
 set(SOURCES
 	src/backend.cpp
 	src/common.hpp
@@ -12,5 +11,5 @@ set(SOURCES
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_audio_tests ${SOURCES})
 target_link_libraries(seir_audio_tests PRIVATE Seir::audio doctest::doctest_with_main)
-set_target_properties(seir_audio_tests PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<NOT:$<BOOL:${SEIR_STATIC_RUNTIME}>>:DLL>")
+seir_target(seir_audio_tests FOLDER audio STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 add_test(NAME audio COMMAND seir_audio_tests)

@@ -8,7 +8,7 @@ project(Seir LANGUAGES CXX)
 
 include(cmake/SeirPackages.cmake)
 
-seir_set_defaults()
+seir_defaults()
 
 option(SEIR_AUDIO "Build audio library" OFF)
 option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime" OFF)
@@ -72,6 +72,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		/wd5027 # move assignment operator was implicitly defined as deleted
 		/wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 		)
+endif()
+
+if(NOT DEFINED CMAKE_FOLDER)
+	set(CMAKE_FOLDER "Seir") # Default folder for top-level projects.
 endif()
 
 add_subdirectory(libs/base)
