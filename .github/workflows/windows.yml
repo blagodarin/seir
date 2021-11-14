@@ -14,6 +14,8 @@ jobs:
           - config: Release
           - config: Debug
       fail-fast: false
+    env:
+      CMAKE_GENERATOR: Ninja
     steps:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
@@ -21,8 +23,6 @@ jobs:
         run: |
           cinst --no-progress ninja
       - name: Run CMake
-        env:
-          CMAKE_GENERATOR: Ninja
         run: |
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
@@ -35,14 +35,10 @@ jobs:
         run: |
           cmake --build build
       - name: Run tests
-        if: matrix.mode != 'benchmark'
         run: |
           cd build
           ctest --verbose
       - name: Check exports
-        if: matrix.mode != 'benchmark'
-        env:
-          CMAKE_GENERATOR: Ninja
         run: |
           cmake --build build --target install
           cmake -S cmake\test -B build.test `
@@ -59,19 +55,21 @@ jobs:
     # It ensures it is a valid way to build Seir.
     name: Visual Studio
     runs-on: windows-latest
+    env:
+      CMAKE_GENERATOR: Visual Studio 16 2019
+      CMAKE_GENERATOR_PLATFORM: Win32
     steps:
       - uses: actions/checkout@v2
       - name: Run CMake
-        env:
-          CMAKE_GENERATOR: Visual Studio 16 2019
-          CMAKE_GENERATOR_PLATFORM: Win32
         run: |
           cmake -S . -B build `
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install" `
             -DSEIR_AUDIO=ON
-      - name: Build
+      - name: Build Debug
         run: |
           cmake --build build --config Debug --parallel -- /nologo
           cmake --build build --config Debug --target install -- /nologo
+      - name: Build RelWithDebInfo
+        run: |
           cmake --build build --config RelWithDebInfo --parallel -- /nologo
           cmake --build build --config RelWithDebInfo --target install -- /nologo

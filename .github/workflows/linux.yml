@@ -5,8 +5,8 @@ on:
       - 'LICENSE'
       - 'README.md'
 jobs:
-  ci:
-    name: Linux
+  build:
+    name: Build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -15,20 +15,15 @@ jobs:
             config: Release
           - cxx: g++-10
             config: Debug
-          - cxx: g++-10
-            config: Release
-            mode: benchmark
-          - cxx: g++-10
-            config: Debug
-            mode: coverage
           - cxx: clang++-12
             config: Release
           - cxx: clang++-12
             config: Debug
-          - cxx: clang++-12
-            config: Release
-            mode: benchmark
       fail-fast: false
+    env:
+      CXX: ${{ matrix.cxx }}
+      CXXFLAGS: -fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute
+      LDFLAGS: -fsanitize=address -fsanitize=undefined
     steps:
       - uses: actions/checkout@v2
       - name: Install prerequisites
@@ -36,53 +31,83 @@ jobs:
           sudo apt-get update
           sudo apt-get install libasound2-dev ninja-build
       - name: Run CMake
-        env:
-          CXX: ${{ matrix.cxx }}
         run: |
-          if [ "${{ matrix.mode }}" == "coverage" ]; then
-            export CXXFLAGS="--coverage"
-            export LDFLAGS="--coverage"
-          elif [ "${{ matrix.mode }}" != "benchmark" ]; then
-            export CXXFLAGS="-fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute"
-            export LDFLAGS="-fsanitize=address -fsanitize=undefined"
-          fi
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DSEIR_AUDIO=ON \
-            -DSEIR_BENCHMARKS=${{ matrix.mode != 'coverage' && 'ON' || 'OFF' }} \
-            -DSEIR_TESTS=${{ matrix.mode != 'benchmark' && 'ON' || 'OFF' }}
+            -DSEIR_BENCHMARKS=ON \
+            -DSEIR_TESTS=ON
       - name: Build
         run: |
           cmake --build build
       - name: Run tests
-        if: matrix.mode != 'benchmark'
         run: |
           cd build
           ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
       - name: Check exports
-        if: matrix.mode != 'benchmark'
-        env:
-          CXX: ${{ matrix.cxx }}
         run: |
           cmake --build build --target install
-          if [ "${{ matrix.mode }}" == "coverage" ]; then
-            export CXXFLAGS="--coverage"
-            export LDFLAGS="--coverage"
-          elif [ "${{ matrix.mode }}" != "benchmark" ]; then
-            export CXXFLAGS="-fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute"
-            export LDFLAGS="-fsanitize=address -fsanitize=undefined"
-          fi
           cmake -S cmake/test -B build.test -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
           cmake --build build.test
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - cxx: g++-10
+          - cxx: clang++-12
+      fail-fast: false
+    env:
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install libasound2-dev ninja-build
+      - name: Run CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSEIR_AUDIO=ON \
+            -DSEIR_BENCHMARKS=ON
+      - name: Build
+        run: |
+          cmake --build build
       - name: Run benchmarks
-        if: matrix.mode == 'benchmark'
         run: |
           build/libs/audio/benchmarks/seir_audio_benchmarks
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    env:
+      CXX: g++-10
+      CXXFLAGS: --coverage
+      LDFLAGS: --coverage
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install libasound2-dev ninja-build
+      - name: Run CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DSEIR_AUDIO=ON \
+            -DSEIR_TESTS=ON
+      - name: Build
+        run: |
+          cmake --build build
+      - name: Run tests
+        run: |
+          cd build
+          ctest --verbose
       - name: Upload coverage reports
-        if: matrix.mode == 'coverage'
         run: |
           pip install --user codecov
-          codecov --gcov-root "${{ github.workspace }}/build" --gcov-exec gcov-10 --gcov-args "-s `pwd`"
+          codecov --gcov-root "${{ github.workspace }}/build" --gcov-exec gcov-10 --gcov-args "-s ${{ github.workspace }}"
