@@ -36,12 +36,14 @@ jobs:
           cmake --build build
       - name: Run tests
         if: matrix.mode != 'benchmark'
-        env:
-          CMAKE_GENERATOR: Ninja
         run: |
           cd build
           ctest --verbose
-          cd "${{ github.workspace }}"
+      - name: Check exports
+        if: matrix.mode != 'benchmark'
+        env:
+          CMAKE_GENERATOR: Ninja
+        run: |
           cmake --build build --target install
           cmake -S cmake\test -B build.test `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `

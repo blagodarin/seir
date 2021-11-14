@@ -60,8 +60,19 @@ jobs:
         run: |
           cd build
           ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
-          cd "${{ github.workspace }}"
+      - name: Check exports
+        if: matrix.mode != 'benchmark'
+        env:
+          CXX: ${{ matrix.cxx }}
+        run: |
           cmake --build build --target install
+          if [ "${{ matrix.mode }}" == "coverage" ]; then
+            export CXXFLAGS="--coverage"
+            export LDFLAGS="--coverage"
+          elif [ "${{ matrix.mode }}" != "benchmark" ]; then
+            export CXXFLAGS="-fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute"
+            export LDFLAGS="-fsanitize=address -fsanitize=undefined"
+          fi
           cmake -S cmake/test -B build.test -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"

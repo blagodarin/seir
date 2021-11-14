@@ -79,6 +79,7 @@ if(NOT DEFINED CMAKE_FOLDER)
 endif()
 
 add_subdirectory(libs/base)
+add_subdirectory(libs/main)
 if(SEIR_AUDIO)
 	add_subdirectory(libs/audio)
 endif()
