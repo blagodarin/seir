@@ -25,8 +25,8 @@ add_library(seir_audio STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::audio ALIAS seir_audio)
 target_include_directories(seir_audio PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_audio PUBLIC Seir::base Threads::Threads $<$<NOT:$<BOOL:${WIN32}>>:ALSA::ALSA>)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-	target_compile_options(seir_audio PRIVATE -msse4.1) # TODO: Use target platform detection.
+if(CMAKE_CXX_COMPILER_ID MATCHES "^Clang|GNU$" AND SEIR_ARCHITECTURE MATCHES "^amd64|x86$")
+	target_compile_options(seir_audio PRIVATE -msse4.1) # NOTE: Audio benchmarks should have the same compile options as Seir::audio.
 endif()
 seir_target(seir_audio FOLDER audio STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_audio EXPORT SeirTargets INCLUDE_DIRECTORY include/seir_audio)

@@ -22,10 +22,6 @@ if(SEIR_AUDIO AND NOT WIN32)
 	find_package(ALSA REQUIRED)
 endif()
 
-if(WIN32)
-	set(CMAKE_DEBUG_POSTFIX "d")
-endif()
-
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	add_compile_options(-Werror -Weverything
 		-Wno-c++98-compat
