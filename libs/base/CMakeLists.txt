@@ -7,6 +7,7 @@ set(HEADERS
 	include/seir_base/buffer.hpp
 	include/seir_base/endian.hpp
 	include/seir_base/fixed.hpp
+	include/seir_base/int_utils.hpp
 	include/seir_base/intrinsics.hpp
 	include/seir_base/macros.hpp
 	include/seir_base/pointer.hpp

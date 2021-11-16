@@ -7,6 +7,7 @@ set(SOURCES
 	src/buffer.cpp
 	src/endian.cpp
 	src/fixed.cpp
+	src/int_utils.cpp
 	src/intrinsics.cpp
 	src/macros.cpp
 	src/pointer.cpp
