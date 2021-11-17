@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+#include <plf_colony.h>
+
 int u8main(int, char**)
 {
 	std::string helloWorld = "Hello world!";
