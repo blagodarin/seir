@@ -8,6 +8,12 @@
 #include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
 
+#define NOBITMAP
+#define NOGDI
+#define NOIME
+#define NOKERNEL
+#define NOMCX
+#define NOSERVICE
 #define WIN32_LEAN_AND_MEAN
 #pragma warning(push)
 #pragma warning(disable : 4365) // signed/unsigned mismatch
