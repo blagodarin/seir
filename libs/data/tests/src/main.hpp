@@ -4,6 +4,6 @@
 
 #pragma once
 
-#include <string>
+#include <filesystem>
 
-extern std::string thisExecutable;
+extern std::filesystem::path thisExecutable;

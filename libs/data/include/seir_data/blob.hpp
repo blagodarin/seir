@@ -4,25 +4,40 @@
 
 #pragma once
 
+#include <cassert>
 #include <filesystem>
 #include <memory>
 
 namespace seir
 {
+	// Memory-based data source.
 	class Blob
 	{
 	public:
+		// Creates a Blob that references a memory range.
+		// The range must stay valid for the lifetime of the Blob.
 		[[nodiscard]] static std::shared_ptr<Blob> from(const void* data, size_t size);
+
+		// Creates a Blob that references a part of another Blob.
 		[[nodiscard]] static std::shared_ptr<Blob> from(const std::shared_ptr<Blob>&, size_t offset, size_t size);
+
+		// Creates a Blob that references a memory-mapped file.
 		[[nodiscard]] static std::shared_ptr<Blob> from(const std::filesystem::path&);
 
 		virtual ~Blob() noexcept = default;
-		[[nodiscard]] const void* data() const noexcept { return _data; }
-		[[nodiscard]] size_t size() const noexcept { return _size; }
+		[[nodiscard]] constexpr const void* data() const noexcept { return _data; }
+		[[nodiscard]] constexpr size_t size() const noexcept { return _size; }
+
+		template <typename T>
+		[[nodiscard]] constexpr const T& get(size_t offset) const noexcept
+		{
+			assert(offset < _size && _size - offset >= sizeof(T));
+			return *reinterpret_cast<const T*>(static_cast<const std::byte*>(_data) + offset);
+		}
 
 	protected:
-		const void* _data = nullptr;
-		size_t _size = 0;
+		const void* const _data;
+		const size_t _size;
 		constexpr Blob(const void* data, size_t size) noexcept
 			: _data{ data }, _size{ size } {}
 	};

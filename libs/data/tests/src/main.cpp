@@ -7,7 +7,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
-std::string thisExecutable;
+std::filesystem::path thisExecutable;
 
 int main(int argc, char** argv)
 {

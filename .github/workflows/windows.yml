@@ -28,6 +28,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install" `
             -DSEIR_AUDIO=ON `
+            -DSEIR_DATA=ON `
             -DSEIR_STATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }} `
             -DSEIR_BENCHMARKS=ON `
             -DSEIR_TESTS=ON
@@ -64,7 +65,9 @@ jobs:
         run: |
           cmake -S . -B build `
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install" `
-            -DSEIR_AUDIO=ON
+            -DSEIR_AUDIO=ON `
+            -DSEIR_DATA=ON `
+            -DSEIR_TESTS=ON
       - name: Build Debug
         run: |
           cmake --build build --config Debug --parallel -- /nologo
@@ -73,3 +76,7 @@ jobs:
         run: |
           cmake --build build --config RelWithDebInfo --parallel -- /nologo
           cmake --build build --config RelWithDebInfo --target install -- /nologo
+      - name: Run tests
+        run: |
+          cd build
+          ctest --verbose --build-config Debug
