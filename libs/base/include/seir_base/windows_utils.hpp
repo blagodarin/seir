@@ -28,7 +28,7 @@ namespace seir
 		{
 		public:
 			constexpr Handle() noexcept = default;
-			explicit constexpr Handle(HANDLE handle) noexcept
+			constexpr explicit Handle(HANDLE handle) noexcept
 				: _handle{ handle } {}
 			constexpr Handle(Handle&& other) noexcept
 				: _handle{ other._handle } { other._handle = nullptr; }
@@ -46,7 +46,7 @@ namespace seir
 		{
 		public:
 			constexpr LocalPtr() noexcept = default;
-			explicit constexpr LocalPtr(T* data) noexcept
+			constexpr explicit LocalPtr(T* data) noexcept
 				: _data{ data } {}
 			constexpr LocalPtr(LocalPtr&& other) noexcept
 				: _data{ other._data } { other._data = nullptr; }

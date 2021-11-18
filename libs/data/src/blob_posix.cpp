@@ -16,7 +16,7 @@ namespace
 	class Descriptor
 	{
 	public:
-		constexpr Descriptor(int descriptor) noexcept
+		constexpr explicit Descriptor(int descriptor) noexcept
 			: _descriptor{ descriptor } {}
 		~Descriptor() noexcept
 		{

@@ -28,7 +28,7 @@ namespace
 	{
 		intptr_t _tag = 0;
 
-		constexpr TaggedDeleter(intptr_t tag) noexcept
+		constexpr explicit TaggedDeleter(intptr_t tag) noexcept
 			: _tag{ tag } {}
 
 		TaggedDeleter(TaggedDeleter&& deleter) noexcept

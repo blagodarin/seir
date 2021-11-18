@@ -21,7 +21,7 @@ namespace seir
 		~StaticVector() noexcept { clear(); }
 		StaticVector& operator=(const StaticVector&) = delete;
 
-		StaticVector(std::initializer_list<T> initializers) noexcept
+		explicit StaticVector(std::initializer_list<T> initializers) noexcept
 			: _size{ initializers.size() <= kCapacity ? initializers.size() : kCapacity }
 		{
 			std::uninitialized_copy_n(initializers.begin(), _size, _data);

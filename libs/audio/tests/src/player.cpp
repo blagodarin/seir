@@ -21,7 +21,7 @@ namespace
 		, public seir::AudioCallbacks
 	{
 	public:
-		SingleSourcePlayerTester(size_t channels) noexcept
+		explicit SingleSourcePlayerTester(size_t channels) noexcept
 			: _channels{ channels } {}
 
 		void checkPostconditions() const
