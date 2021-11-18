@@ -1,0 +1,43 @@
+name: Static analysis
+on:
+  push:
+    paths-ignore:
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/windows.yml'
+      - 'LICENSE'
+      - 'README.md'
+jobs:
+  static-analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install cppcheck libasound2-dev ninja-build
+      - name: Run cppcheck
+        continue-on-error: true
+        run: |
+          cppcheck --enable=all --error-exitcode=1 --inline-suppr --quiet \
+            -I libs/audio/include \
+            -I libs/base/include \
+            -I libs/data/include \
+            -I libs/main/include \
+            --template="({file}:{line}) ({severity}/{id}) {message}" .
+      - name: Run clang-format
+        continue-on-error: true
+        run: |
+          clang-format-12 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
+          git diff --color=always --exit-code --histogram
+      - name: Run CMake
+        env:
+          CXX: clang++-12
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DSEIR_AUDIO=ON \
+            -DSEIR_DATA=ON \
+            -DSEIR_BENCHMARKS=ON \
+            -DSEIR_TESTS=ON
