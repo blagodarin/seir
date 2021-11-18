@@ -6,17 +6,8 @@
 
 #include <seir_base/buffer.hpp>
 
-#define NOGDI
-#define NOIME
-#define NOKERNEL
-#define NOMCX
-#define NOSERVICE
 #define NOUSER
-#pragma warning(push)
-#pragma warning(disable : 4668) // '___' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-#pragma warning(disable : 5039) // pointer or reference to potentially throwing function passed to 'extern "C"' function under -EHc. Undefined behavior may occur if this function throws an exception.
-#include <windows.h>
-#pragma warning(pop)
+#include <seir_base/windows_utils.hpp>
 
 namespace
 {
@@ -26,7 +17,7 @@ namespace
 		seir::Buffer<char*> argv;
 		int argc = 0;
 		{
-			const seir::CPtr<LPWSTR, ::LocalFree> argvW{ ::CommandLineToArgvW(::GetCommandLineW(), &argc) };
+			const seir::windows::LocalPtr<LPWSTR> argvW{ ::CommandLineToArgvW(::GetCommandLineW(), &argc) };
 			seir::Buffer<int> sizes{ static_cast<size_t>(argc) };
 			size_t bufferSize = 0;
 			for (int i = 0; i < argc; ++i)

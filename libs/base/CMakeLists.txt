@@ -17,9 +17,15 @@ set(HEADERS
 	include/seir_base/string_utils.hpp
 	include/seir_base/utf8.hpp
 	)
+if(WIN32)
+	list(APPEND HEADERS
+		include/seir_base/windows_utils.hpp
+		)
+endif()
 source_group("include" FILES ${HEADERS})
 add_library(seir_base INTERFACE ${HEADERS})
 add_library(Seir::base ALIAS seir_base)
 target_include_directories(seir_base INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 seir_target(seir_base FOLDER base)
-seir_install(seir_base EXPORT SeirTargets INCLUDE_DIRECTORY include/seir_base)
+seir_install(seir_base EXPORT SeirTargets)
+install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_base)

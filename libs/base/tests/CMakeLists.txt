@@ -17,6 +17,11 @@ set(SOURCES
 	src/string_utils.cpp
 	src/utf8.cpp
 	)
+if(WIN32)
+	list(APPEND SOURCES
+		src/windows_utils.cpp
+		)
+endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_base_tests ${SOURCES})
 target_link_libraries(seir_base_tests PRIVATE Seir::base doctest::doctest_with_main)

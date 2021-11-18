@@ -8,23 +8,18 @@
 #include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
 
-#define NOBITMAP
-#define NOGDI
-#define NOIME
-#define NOKERNEL
-#define NOMCX
-#define NOSERVICE
 #define WIN32_LEAN_AND_MEAN
+#include <seir_base/windows_utils.hpp>
+#pragma warning(push)
+#pragma warning(disable : 4668) // '_WIN64' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#include <audioclient.h>
+#pragma warning(pop)
 #pragma warning(push)
 #pragma warning(disable : 4365) // signed/unsigned mismatch
-#pragma warning(disable : 4668) // '_WIN64' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-#pragma warning(disable : 5039) // pointer or reference to potentially throwing function passed to 'extern "C"' function under -EHc. Undefined behavior may occur if this function throws an exception.
 #pragma warning(disable : 5204) // class has virtual functions, but its trivial destructor is not virtual; instances of objects derived from this class may not be destructed correctly
-#include <audioclient.h>
 #include <comdef.h>
-#include <mmdeviceapi.h>
-#include <winnt.h>
 #pragma warning(pop)
+#include <mmdeviceapi.h>
 
 namespace
 {
@@ -37,31 +32,8 @@ namespace seir
 	void runAudioBackend(AudioBackendCallbacks& callbacks, unsigned samplingRate)
 	{
 		const auto error = [&callbacks](const char* function, HRESULT code) {
-			std::string description;
-			{
-				struct LocalBuffer
-				{
-					char* _data = nullptr;
-					~LocalBuffer() noexcept { ::LocalFree(_data); }
-				};
-				LocalBuffer buffer;
-				::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-					nullptr, static_cast<DWORD>(code), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), reinterpret_cast<char*>(&buffer._data), 0, nullptr);
-				if (buffer._data)
-				{
-					auto length = std::strlen(buffer._data);
-					if (length > 0 && buffer._data[length - 1] == '\n')
-					{
-						--length;
-						if (length > 0 && buffer._data[length - 1] == '\r')
-							--length;
-					}
-					description.assign(buffer._data, length);
-				}
-			}
-			callbacks.onBackendError(function, static_cast<int>(code), description);
+			callbacks.onBackendError(function, static_cast<int>(code), static_cast<const char*>(windows::errorText(static_cast<DWORD>(code))));
 		};
-
 		if (const auto hr = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED); FAILED(hr))
 			return error("CoInitializeEx", hr);
 		SEIR_FINALLY([] { ::CoUninitialize(); });
