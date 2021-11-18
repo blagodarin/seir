@@ -10,5 +10,8 @@ set(SOURCES
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_data_tests ${SOURCES})
 target_link_libraries(seir_data_tests PRIVATE Seir::data doctest::doctest)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	target_compile_options(seir_data_tests PRIVATE -Wno-exit-time-destructors -Wno-global-constructors)
+endif()
 seir_target(seir_data_tests FOLDER data STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 add_test(NAME data COMMAND seir_data_tests)

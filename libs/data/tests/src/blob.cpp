@@ -21,5 +21,8 @@ TEST_CASE("Blob::from")
 	const auto peSignatureOffset = self->get<uint32_t>(0x3c);
 	REQUIRE(self->size() > peSignatureOffset + 4);
 	CHECK(self->get<uint32_t>(peSignatureOffset) == seir::makeCC('P', 'E', '\0', '\0'));
+#else
+	REQUIRE(self->size() >= 4);
+	CHECK(self->get<uint32_t>(0) == seir::makeCC('\x7f', 'E', 'L', 'F'));
 #endif
 }
