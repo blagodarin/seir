@@ -6,6 +6,7 @@ set(SOURCES
 	src/blob.cpp
 	src/main.cpp
 	src/main.hpp
+	src/reader.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_data_tests ${SOURCES})

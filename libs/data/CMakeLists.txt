@@ -4,6 +4,7 @@
 
 set(HEADERS
 	include/seir_data/blob.hpp
+	include/seir_data/reader.hpp
 	)
 if(WIN32)
 	list(APPEND SOURCES src/blob_windows.cpp)
