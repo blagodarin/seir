@@ -66,3 +66,83 @@ TEST_CASE("Reader")
 		CHECK(reader.offset() == expectedOffset);
 	}
 }
+
+TEST_CASE("Reader::readLine")
+{
+	SUBCASE("empty")
+	{
+		const std::string_view buffer{ "" };
+		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *blob };
+		std::string_view line;
+		CHECK_FALSE(reader.readLine(line));
+	}
+	SUBCASE("newline")
+	{
+		std::string_view buffer;
+		SUBCASE("windows") { buffer = "\r\n"; }
+		SUBCASE("unix") { buffer = "\n"; }
+		SUBCASE("mac") { buffer = "\r"; }
+		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *blob };
+		std::string_view line;
+		CHECK(reader.readLine(line));
+		CHECK(line.empty());
+		CHECK_FALSE(reader.readLine(line));
+		CHECK(line.empty());
+	}
+	SUBCASE("one line")
+	{
+		std::string_view buffer;
+		SUBCASE("windows") { buffer = "text\r\n"; }
+		SUBCASE("unix") { buffer = "text\n"; }
+		SUBCASE("mac") { buffer = "text\r"; }
+		SUBCASE("eof") { buffer = "text"; }
+		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *blob };
+		std::string_view line;
+		CHECK(reader.readLine(line));
+		CHECK(line == "text");
+		CHECK_FALSE(reader.readLine(line));
+		CHECK(line.empty());
+	}
+	SUBCASE("two lines")
+	{
+		std::string_view buffer;
+		SUBCASE("windows") { buffer = "first\r\nsecond"; }
+		SUBCASE("unix") { buffer = "first\nsecond"; }
+		SUBCASE("mac") { buffer = "first\rsecond"; }
+		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *blob };
+		std::string_view line;
+		CHECK(reader.readLine(line));
+		CHECK(line == "first");
+		CHECK(reader.readLine(line));
+		CHECK(line == "second");
+		CHECK_FALSE(reader.readLine(line));
+		CHECK(line.empty());
+	}
+	SUBCASE("double newline")
+	{
+		std::string_view buffer;
+		SUBCASE("windows-windows") { buffer = "\r\n\r\neof"; }
+		SUBCASE("windows-unix") { buffer = "\r\n\neof"; }
+		SUBCASE("windows-mac") { buffer = "\r\n\reof"; }
+		SUBCASE("unix-windows") { buffer = "\n\r\neof"; }
+		SUBCASE("unix-unix") { buffer = "\n\neof"; }
+		SUBCASE("unix-mac") { buffer = "\n\reof"; }
+		SUBCASE("mac-windows") { buffer = "\r\r\neof"; }
+		SUBCASE("mac-mac") { buffer = "\r\reof"; }
+		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *blob };
+		std::string_view line;
+		CHECK(reader.readLine(line));
+		CHECK(line.empty());
+		CHECK(reader.readLine(line));
+		CHECK(line.empty());
+		CHECK(reader.readLine(line));
+		CHECK(line == "eof");
+		CHECK_FALSE(reader.readLine(line));
+		CHECK(line.empty());
+	}
+}

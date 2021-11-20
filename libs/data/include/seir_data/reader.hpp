@@ -6,6 +6,8 @@
 
 #include <seir_data/blob.hpp>
 
+#include <string_view>
+
 namespace seir
 {
 	class Reader
@@ -22,6 +24,11 @@ namespace seir
 		// Otherwise, returns nullptr and doesn't change the offset.
 		template <typename T>
 		[[nodiscard]] constexpr const T* read() noexcept;
+
+		// Retrieves the next line of text (excluding newline),
+		// and advances the current offset accordingly (including newline).
+		// Returns false if there is no more data to read.
+		[[nodiscard]] constexpr bool readLine(std::string_view&) noexcept;
 
 		// Sets the current offset to the specified value.
 		constexpr bool seek(size_t offset) noexcept;
@@ -47,6 +54,33 @@ template <typename T>
 	const auto result = &_blob.get<T>(_offset);
 	_offset += sizeof(T);
 	return result;
+}
+
+constexpr bool seir::Reader::readLine(std::string_view& line) noexcept
+{
+	const auto data = static_cast<const char*>(_blob.data()) + _offset;
+	const auto size = _blob.size() - _offset;
+	for (size_t i = 0;; ++i)
+	{
+		if (i == size)
+		{
+			line = { data, i };
+			_offset += i;
+			return size > 0;
+		}
+		if (data[i] == '\n')
+		{
+			line = { data, i++ };
+			_offset += i;
+			return true;
+		}
+		if (data[i] == '\r')
+		{
+			line = { data, i++ };
+			_offset += i + static_cast<bool>(i != size && data[i] == '\n');
+			return true;
+		}
+	}
 }
 
 constexpr bool seir::Reader::seek(size_t offset) noexcept
