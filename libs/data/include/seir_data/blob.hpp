@@ -4,29 +4,29 @@
 
 #pragma once
 
+#include <seir_base/shared_ptr.hpp>
+
 #include <cassert>
 #include <filesystem>
-#include <memory>
 
 namespace seir
 {
 	// Memory-based data source.
-	class Blob
+	class Blob : public ReferenceCounter
 	{
 	public:
 		// Creates a Blob that references a memory range.
 		// The range must stay valid for the lifetime of the Blob.
-		[[nodiscard]] static std::shared_ptr<Blob> from(const void* data, size_t size);
+		[[nodiscard]] static UniquePtr<Blob> from(const void* data, size_t size);
 
 		// Creates a Blob that references a part of another Blob.
-		[[nodiscard]] static std::shared_ptr<Blob> from(const std::shared_ptr<Blob>&, size_t offset, size_t size);
+		[[nodiscard]] static UniquePtr<Blob> from(const SharedPtr<Blob>&, size_t offset, size_t size);
 
 		// Creates a Blob that references a memory-mapped file.
-		[[nodiscard]] static std::shared_ptr<Blob> from(const std::filesystem::path&);
+		[[nodiscard]] static UniquePtr<Blob> from(const std::filesystem::path&);
 
-		virtual ~Blob() noexcept = default;
+		// Returns the data pointer.
 		[[nodiscard]] constexpr const void* data() const noexcept { return _data; }
-		[[nodiscard]] constexpr size_t size() const noexcept { return _size; }
 
 		template <typename T>
 		[[nodiscard]] constexpr const T& get(size_t offset) const noexcept
@@ -34,6 +34,9 @@ namespace seir
 			assert(offset < _size && _size - offset >= sizeof(T));
 			return *reinterpret_cast<const T*>(static_cast<const std::byte*>(_data) + offset);
 		}
+
+		// Returns the size of the data.
+		[[nodiscard]] constexpr size_t size() const noexcept { return _size; }
 
 	protected:
 		const void* const _data;
@@ -43,29 +46,29 @@ namespace seir
 	};
 }
 
-inline std::shared_ptr<seir::Blob> seir::Blob::from(const void* data, size_t size)
+inline seir::UniquePtr<seir::Blob> seir::Blob::from(const void* data, size_t size)
 {
-	struct Wrapper final : seir::Blob
+	struct Wrapper final : Blob
 	{
 		constexpr Wrapper(const void* data, size_t size) noexcept
 			: Blob{ data, size } {}
 	};
-	return std::make_shared<Wrapper>(data, size);
+	return makeUnique<Wrapper>(data, size);
 }
 
-inline std::shared_ptr<seir::Blob> seir::Blob::from(const std::shared_ptr<seir::Blob>& parent, size_t offset, size_t size)
+inline seir::UniquePtr<seir::Blob> seir::Blob::from(const SharedPtr<Blob>& parent, size_t offset, size_t size)
 {
-	class Subrange : public seir::Blob
+	class Subrange : public Blob
 	{
 	public:
-		Subrange(const std::shared_ptr<Blob>& parent, size_t offset, size_t size)
+		Subrange(const SharedPtr<Blob>& parent, size_t offset, size_t size)
 			: Blob{ static_cast<const std::byte*>(parent->data()) + offset, size }, _parent{ parent } {}
 
 	private:
-		const std::shared_ptr<seir::Blob> _parent;
+		const SharedPtr<Blob> _parent;
 	};
 	if (offset > parent->size())
 		offset = parent->size();
 	const auto maxSize = parent->size() - offset;
-	return std::make_shared<Subrange>(parent, offset, size < maxSize ? size : maxSize);
+	return makeUnique<Subrange>(parent, offset, size < maxSize ? size : maxSize);
 }

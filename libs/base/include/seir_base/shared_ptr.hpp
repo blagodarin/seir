@@ -24,8 +24,6 @@ namespace seir
 	private:
 		mutable std::atomic<int> _references{ 1 };
 		template <class>
-		friend class UniquePtr;
-		template <class>
 		friend class SharedPtr;
 	};
 
@@ -74,8 +72,11 @@ namespace seir
 		friend std::enable_if_t<std::is_convertible_v<U*, ReferenceCounter*>, SharedPtr<U>> makeShared(Args&&...);
 	};
 
+	template <class T>
+	SharedPtr(UniquePtr<T>&&) -> SharedPtr<T>;
+
 	template <class U, class... Args>
-	[[nodiscard]] inline std::enable_if_t<std::is_convertible_v<U*, ReferenceCounter*>, SharedPtr<U>> makeShared(Args&&... args) { return SharedPtr<U>{ new U{ std::forward<Args>(args)... } }; }
+	[[nodiscard]] inline std::enable_if_t<std::is_convertible_v<U*, ReferenceCounter*>, SharedPtr<U>> makeShared(Args&&... args) { return SharedPtr{ new U{ std::forward<Args>(args)... } }; }
 }
 
 template <class T>

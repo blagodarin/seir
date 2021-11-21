@@ -34,28 +34,28 @@ namespace
 
 namespace seir
 {
-	std::shared_ptr<Blob> Blob::from(const std::filesystem::path& path)
+	UniquePtr<Blob> Blob::from(const std::filesystem::path& path)
 	{
 		if (windows::Handle file{ ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) }; file == INVALID_HANDLE_VALUE)
-			seir::windows::reportLastError("CreateFileW");
+			windows::reportLastError("CreateFileW");
 		else if (LARGE_INTEGER size; !::GetFileSizeEx(file, &size))
-			seir::windows::reportLastError("GetFileSizeEx");
+			windows::reportLastError("GetFileSizeEx");
 		else
 		{
 			if (!size.QuadPart)
 				return Blob::from(nullptr, 0);
 			if (toUnsigned(size.QuadPart) <= std::numeric_limits<size_t>::max())
 				if (windows::Handle mapping{ ::CreateFileMappingW(file, nullptr, PAGE_READONLY, toUnsigned(size.HighPart), size.LowPart, nullptr) }; !mapping)
-					seir::windows::reportLastError("CreateFileMappingW");
+					windows::reportLastError("CreateFileMappingW");
 				else if (auto data = ::MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, static_cast<SIZE_T>(size.QuadPart)); !data)
-					seir::windows::reportLastError("MapViewOfFile");
+					windows::reportLastError("MapViewOfFile");
 				else
 				{
 					SEIR_FINALLY([&data] {
 						if (data && !::UnmapViewOfFile(data))
-							seir::windows::reportLastError("UnmapViewOfFile");
+							windows::reportLastError("UnmapViewOfFile");
 					});
-					return std::make_shared<FileBlob>(data, static_cast<size_t>(size.QuadPart));
+					return makeUnique<FileBlob>(data, static_cast<size_t>(size.QuadPart));
 				}
 		}
 		return {};

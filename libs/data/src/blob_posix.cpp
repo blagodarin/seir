@@ -47,7 +47,7 @@ namespace
 
 namespace seir
 {
-	std::shared_ptr<Blob> Blob::from(const std::filesystem::path& path)
+	UniquePtr<Blob> Blob::from(const std::filesystem::path& path)
 	{
 		if (const Descriptor file{ ::open(path.c_str(), O_RDONLY | O_NOATIME) }; file == -1)
 			::perror("open");
@@ -61,7 +61,7 @@ namespace seir
 				if (data != MAP_FAILED && ::munmap(data, static_cast<size_t>(size)) == -1)
 					::perror("munmap");
 			});
-			return std::make_shared<FileBlob>(data, static_cast<size_t>(size));
+			return makeUnique<FileBlob>(data, static_cast<size_t>(size));
 		}
 		return {};
 	}

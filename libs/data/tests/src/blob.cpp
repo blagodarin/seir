@@ -27,7 +27,7 @@ TEST_CASE("Blob::from")
 	SUBCASE("size() > 0")
 	{
 		const std::array<char, 4> buffer{ 'H', 'E', 'L', 'O' };
-		const auto all = seir::Blob::from(buffer.data(), buffer.size());
+		const auto all = seir::SharedPtr{ seir::Blob::from(buffer.data(), buffer.size()) };
 		REQUIRE(all);
 		CHECK(all->data() == buffer.data());
 		CHECK(all->size() == buffer.size());
