@@ -13,8 +13,10 @@ set(HEADERS
 	include/seir_base/pointer.hpp
 	include/seir_base/rigid_vector.hpp
 	include/seir_base/scope.hpp
+	include/seir_base/shared_ptr.hpp
 	include/seir_base/static_vector.hpp
 	include/seir_base/string_utils.hpp
+	include/seir_base/unique_ptr.hpp
 	include/seir_base/utf8.hpp
 	)
 if(WIN32)
