@@ -4,21 +4,20 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <type_traits>
 
 namespace seir
 {
 	// Clamps a signed integer value to a 8-bit unsigned value.
-	template <typename T>
-	[[nodiscard]] constexpr std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T>, uint8_t> clampToU8(T x) noexcept
+	[[nodiscard]] constexpr uint8_t clampToU8(std::signed_integral auto x) noexcept
 	{
-		return static_cast<uint8_t>(static_cast<std::make_unsigned_t<T>>(x) > 255 ? ~x >> (sizeof x * 8 - 1) : x);
+		return static_cast<uint8_t>(static_cast<std::make_unsigned_t<decltype(x)>>(x) > 255 ? ~x >> (sizeof x * 8 - 1) : x);
 	}
 
 	// Returns true if the value is a power of two.
-	template <typename T>
-	[[nodiscard]] constexpr std::enable_if_t<std::is_integral_v<T>, bool> isPowerOf2(T x) noexcept
+	[[nodiscard]] constexpr bool isPowerOf2(std::integral auto x) noexcept
 	{
 		return !(x & (x - 1)) && x > 0;
 	}
@@ -40,15 +39,13 @@ namespace seir
 		return x + 1;
 	}
 
-	template <typename T>
-	[[nodiscard]] constexpr std::enable_if_t<std::is_integral_v<T>, T> powerOf2Alignment(T x) noexcept
+	[[nodiscard]] constexpr auto powerOf2Alignment(std::integral auto x) noexcept
 	{
-		return static_cast<T>(((x ^ (x - 1)) + 1) >> 1);
+		return static_cast<decltype(x)>(((x ^ (x - 1)) + 1) >> 1);
 	}
 
 	// Returns true if both values have the same sign.
-	template <typename T>
-	[[nodiscard]] constexpr std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T>, bool> sameSign(T x, T y) noexcept
+	[[nodiscard]] constexpr bool sameSign(std::signed_integral auto x, std::signed_integral auto y) noexcept
 	{
 		return (x ^ y) >= 0;
 	}
@@ -59,9 +56,8 @@ namespace seir
 		return static_cast<std::underlying_type_t<T>>(value);
 	}
 
-	template <typename T>
-	[[nodiscard]] constexpr auto toUnsigned(T value) noexcept
+	[[nodiscard]] constexpr auto toUnsigned(std::signed_integral auto value) noexcept
 	{
-		return static_cast<std::make_unsigned_t<std::remove_cvref_t<T>>>(value);
+		return static_cast<std::make_unsigned_t<decltype(value)>>(value);
 	}
 }
