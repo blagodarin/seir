@@ -55,7 +55,7 @@ namespace seir
 						if (data && !::UnmapViewOfFile(data))
 							windows::reportLastError("UnmapViewOfFile");
 					});
-					return makeUnique<FileBlob>(data, static_cast<size_t>(size.QuadPart));
+					return makeUnique<Blob, FileBlob>(data, static_cast<size_t>(size.QuadPart));
 				}
 		}
 		return {};

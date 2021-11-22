@@ -15,11 +15,12 @@ namespace seir
 	{
 	public:
 		constexpr UniquePtr() noexcept = default;
+		// cppcheck-suppress noExplicitConstructor
 		constexpr UniquePtr(std::nullptr_t) noexcept {}
-		UniquePtr(UniquePtr&& other) noexcept
+		constexpr UniquePtr(UniquePtr&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
 		template <class U>
-		UniquePtr(UniquePtr<U>&& other) noexcept
+		constexpr explicit UniquePtr(UniquePtr<U>&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
 		~UniquePtr() noexcept { delete _pointer; }
 		UniquePtr& operator=(UniquePtr&& other) noexcept;
@@ -39,12 +40,15 @@ namespace seir
 		friend class UniquePtr;
 		template <class>
 		friend class SharedPtr;
-		template <class U, class... Args>
-		friend UniquePtr<U> makeUnique(Args&&...);
+		template <class R, class U, class... Args>
+		friend std::enable_if_t<std::is_base_of_v<R, U>, UniquePtr<R>> makeUnique(Args&&...);
 	};
 
-	template <class U, class... Args>
-	[[nodiscard]] inline UniquePtr<U> makeUnique(Args&&... args) { return UniquePtr<U>{ new U{ std::forward<Args>(args)... } }; }
+	template <class R, class U = R, class... Args>
+	[[nodiscard]] std::enable_if_t<std::is_base_of_v<R, U>, UniquePtr<R>> makeUnique(Args&&... args)
+	{
+		return UniquePtr<R>{ new U{ std::forward<Args>(args)... } };
+	}
 }
 
 template <class T>

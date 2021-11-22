@@ -53,7 +53,7 @@ inline seir::UniquePtr<seir::Blob> seir::Blob::from(const void* data, size_t siz
 		constexpr Wrapper(const void* data, size_t size) noexcept
 			: Blob{ data, size } {}
 	};
-	return makeUnique<Wrapper>(data, size);
+	return makeUnique<Blob, Wrapper>(data, size);
 }
 
 inline seir::UniquePtr<seir::Blob> seir::Blob::from(const SharedPtr<Blob>& parent, size_t offset, size_t size)
@@ -70,5 +70,5 @@ inline seir::UniquePtr<seir::Blob> seir::Blob::from(const SharedPtr<Blob>& paren
 	if (offset > parent->size())
 		offset = parent->size();
 	const auto maxSize = parent->size() - offset;
-	return makeUnique<Subrange>(parent, offset, size < maxSize ? size : maxSize);
+	return makeUnique<Blob, Subrange>(parent, offset, size < maxSize ? size : maxSize);
 }

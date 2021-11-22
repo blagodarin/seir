@@ -11,7 +11,7 @@ namespace
 	class Base
 	{
 	public:
-		constexpr Base(int& counter) noexcept
+		constexpr explicit Base(int& counter) noexcept
 			: _counter{ counter } { ++_counter; }
 		virtual ~Base() noexcept { --_counter; }
 
@@ -22,7 +22,7 @@ namespace
 	class Derived : public Base
 	{
 	public:
-		constexpr Derived(int& counter) noexcept
+		constexpr explicit Derived(int& counter) noexcept
 			: Base{ counter } { ++_counter; }
 		~Derived() noexcept override { --_counter; }
 	};
@@ -50,10 +50,39 @@ TEST_CASE("UniquePtr")
 	}
 	SUBCASE("UniquePtr(nullptr)")
 	{
-		seir::UniquePtr<Base> ptr{ nullptr };
+		const seir::UniquePtr<Base> ptr{ nullptr };
 		CHECK_FALSE(ptr);
 	}
-	SUBCASE("makeUnique(...)")
+	SUBCASE("makeUnique")
+	{
+		int counter = 0;
+		SUBCASE("<Base>")
+		{
+			const auto ptr = seir::makeUnique<Base>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Base&>);
+			CHECK(counter == 1);
+		}
+		SUBCASE("<Base, Base>")
+		{
+			const auto ptr = seir::makeUnique<Base, Base>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Base&>);
+			CHECK(counter == 1);
+		}
+		SUBCASE("<Base, Derived>")
+		{
+			const auto ptr = seir::makeUnique<Base, Derived>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Base&>);
+			CHECK(counter == 2);
+		}
+		SUBCASE("<Derived>")
+		{
+			const auto ptr = seir::makeUnique<Derived>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Derived&>);
+			CHECK(counter == 2);
+		}
+		CHECK(counter == 0);
+	}
+	SUBCASE("...")
 	{
 		int counter = 0;
 		{
@@ -72,7 +101,7 @@ TEST_CASE("UniquePtr")
 			}
 			SUBCASE("construction-cast")
 			{
-				seir::UniquePtr<Base> base{ std::move(ptr) };
+				const seir::UniquePtr<Base> base{ std::move(ptr) };
 				CHECK_FALSE(ptr);
 				CHECK(base);
 				CHECK(counter == 2);

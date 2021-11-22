@@ -11,7 +11,7 @@ namespace
 	class Base : public seir::ReferenceCounter
 	{
 	public:
-		constexpr Base(int& counter) noexcept
+		constexpr explicit Base(int& counter) noexcept
 			: _counter{ counter } { ++_counter; }
 		~Base() noexcept override { --_counter; }
 
@@ -22,7 +22,7 @@ namespace
 	class Derived : public Base
 	{
 	public:
-		constexpr Derived(int& counter) noexcept
+		constexpr explicit Derived(int& counter) noexcept
 			: Base{ counter } { ++_counter; }
 		~Derived() noexcept override { --_counter; }
 	};
@@ -37,8 +37,15 @@ TEST_CASE("SharedPtr")
 		CHECK_FALSE(ptr.get());
 		CHECK_FALSE(&ptr.operator*());
 		CHECK_FALSE(ptr.operator->());
-		SUBCASE("self-copy") { ptr = ptr; }
-		SUBCASE("self-move") { ptr = std::move(ptr); }
+		SUBCASE("self-copy")
+		{
+			// cppcheck-suppress selfAssignment
+			ptr = ptr;
+		}
+		SUBCASE("self-move")
+		{
+			ptr = std::move(ptr);
+		}
 		CHECK_FALSE(ptr);
 		SUBCASE("copy")
 		{
@@ -62,10 +69,39 @@ TEST_CASE("SharedPtr")
 	}
 	SUBCASE("SharedPtr(nullptr)")
 	{
-		seir::SharedPtr<Base> ptr{ nullptr };
+		const seir::SharedPtr<Base> ptr{ nullptr };
 		CHECK_FALSE(ptr);
 	}
-	SUBCASE("makeShared(...)")
+	SUBCASE("makeShared")
+	{
+		int counter = 0;
+		SUBCASE("<Base>")
+		{
+			const auto ptr = seir::makeShared<Base>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Base&>);
+			CHECK(counter == 1);
+		}
+		SUBCASE("<Base, Base>")
+		{
+			const auto ptr = seir::makeShared<Base, Base>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Base&>);
+			CHECK(counter == 1);
+		}
+		SUBCASE("<Base, Derived>")
+		{
+			const auto ptr = seir::makeShared<Base, Derived>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Base&>);
+			CHECK(counter == 2);
+		}
+		SUBCASE("<Derived>")
+		{
+			const auto ptr = seir::makeShared<Derived>(counter);
+			static_assert(std::is_same_v<decltype(*ptr), Derived&>);
+			CHECK(counter == 2);
+		}
+		CHECK(counter == 0);
+	}
+	SUBCASE("...")
 	{
 		int counter = 0;
 		{
@@ -91,14 +127,14 @@ TEST_CASE("SharedPtr")
 			}
 			SUBCASE("construction-cast-copy")
 			{
-				seir::SharedPtr<Base> base{ ptr };
+				const seir::SharedPtr<Base> base{ ptr };
 				CHECK(ptr);
 				CHECK(base);
 				CHECK(counter == 2);
 			}
 			SUBCASE("construction-cast-move")
 			{
-				seir::SharedPtr<Base> base{ std::move(ptr) };
+				const seir::SharedPtr<Base> base{ std::move(ptr) };
 				CHECK_FALSE(ptr);
 				CHECK(base);
 				CHECK(counter == 2);
@@ -172,8 +208,15 @@ TEST_CASE("SharedPtr")
 			}
 			SUBCASE("assignment-self")
 			{
-				SUBCASE("copy") { ptr = ptr; }
-				SUBCASE("move") { ptr = std::move(ptr); }
+				SUBCASE("copy")
+				{
+					// cppcheck-suppress selfAssignment
+					ptr = ptr;
+				}
+				SUBCASE("move")
+				{
+					ptr = std::move(ptr);
+				}
 				CHECK(ptr);
 				CHECK(counter == 2);
 			}
@@ -192,7 +235,7 @@ TEST_CASE("SharedPtr")
 		CHECK(uniqueCounter == 2);
 		SUBCASE("construction")
 		{
-			seir::SharedPtr<Base> sharedPtr{ std::move(uniquePtr) };
+			const seir::SharedPtr<Base> sharedPtr{ std::move(uniquePtr) };
 			CHECK_FALSE(uniquePtr);
 			CHECK(sharedPtr);
 			CHECK(uniqueCounter == 2);
@@ -223,7 +266,7 @@ TEST_CASE("SharedPtr")
 	{
 		seir::UniquePtr<Base> uniquePtr;
 		CHECK_FALSE(uniquePtr);
-		seir::SharedPtr<Base> sharedPtr{ std::move(uniquePtr) };
+		const seir::SharedPtr<Base> sharedPtr{ std::move(uniquePtr) };
 		CHECK_FALSE(sharedPtr);
 	}
 }

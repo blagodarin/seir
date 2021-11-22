@@ -61,7 +61,7 @@ namespace seir
 				if (data != MAP_FAILED && ::munmap(data, static_cast<size_t>(size)) == -1)
 					::perror("munmap");
 			});
-			return makeUnique<FileBlob>(data, static_cast<size_t>(size));
+			return makeUnique<Blob, FileBlob>(data, static_cast<size_t>(size));
 		}
 		return {};
 	}
