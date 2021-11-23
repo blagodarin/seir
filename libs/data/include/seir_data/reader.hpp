@@ -6,6 +6,8 @@
 
 #include <seir_data/blob.hpp>
 
+#include <cassert>
+#include <span>
 #include <string_view>
 
 namespace seir
@@ -22,8 +24,15 @@ namespace seir
 		// If there are at least sizeof(T) bytes from the current offset to the end of the blob,
 		// returns the pointer to the data at the current offset and advances the offset.
 		// Otherwise, returns nullptr and doesn't change the offset.
-		template <typename T>
+		template <class T>
 		[[nodiscard]] constexpr const T* read() noexcept;
+
+		//
+		template <class T>
+		[[nodiscard]] constexpr std::span<const T> readArray(size_t maxLength) noexcept;
+
+		//
+		[[nodiscard]] constexpr std::pair<const void*, size_t> readBlocks(size_t maxLength, size_t blockSize) noexcept;
 
 		// Retrieves the next line of text (excluding newline),
 		// and advances the current offset accordingly (including newline).
@@ -45,7 +54,7 @@ namespace seir
 	};
 }
 
-template <typename T>
+template <class T>
 [[nodiscard]] constexpr const T* seir::Reader::read() noexcept
 {
 	assert(_offset <= _blob.size());
@@ -53,6 +62,25 @@ template <typename T>
 		return nullptr;
 	const auto result = &_blob.get<T>(_offset);
 	_offset += sizeof(T);
+	return result;
+}
+
+template <class T>
+[[nodiscard]] constexpr std::span<const T> seir::Reader::readArray(size_t maxLength) noexcept
+{
+	assert(_offset <= _blob.size());
+	const auto remainingLength = (_blob.size() - _offset) / sizeof(T);
+	const auto result = std::span{ &_blob.get<T>(_offset), maxLength < remainingLength ? maxLength : remainingLength };
+	_offset += result.size() * sizeof(T);
+	return result;
+}
+
+[[nodiscard]] constexpr std::pair<const void*, size_t> seir::Reader::readBlocks(size_t maxLength, size_t blockSize) noexcept
+{
+	assert(_offset <= _blob.size());
+	const auto remainingLength = (_blob.size() - _offset) / blockSize;
+	const std::pair<const void*, size_t> result{ &_blob.get<std::byte>(_offset), maxLength < remainingLength ? maxLength : remainingLength };
+	_offset += result.second * blockSize;
 	return result;
 }
 

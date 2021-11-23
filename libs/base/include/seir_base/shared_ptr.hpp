@@ -60,7 +60,7 @@ namespace seir
 		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(UniquePtr<U>&& other) noexcept;
 		[[nodiscard]] constexpr T& operator*() const noexcept { return *_pointer; }
 		[[nodiscard]] constexpr T* operator->() const noexcept { return _pointer; }
-		[[nodiscard]] constexpr explicit operator bool() const noexcept { return _pointer; }
+		[[nodiscard]] constexpr explicit operator bool() const noexcept { return static_cast<bool>(_pointer); }
 		[[nodiscard]] constexpr T* get() const noexcept { return _pointer; }
 		void reset() noexcept { reset(nullptr); }
 

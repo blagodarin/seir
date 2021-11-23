@@ -6,12 +6,17 @@ cmake_minimum_required(VERSION 3.21)
 
 project(Seir LANGUAGES CXX)
 
+include(CMakeDependentOption)
 include(cmake/SeirPackages.cmake)
 
 seir_defaults()
 
+# Components.
 option(SEIR_AUDIO "Build audio library" OFF)
-option(SEIR_DATA "Build data library" OFF)
+cmake_dependent_option(SEIR_AUDIO_WAV "Enable WAV audio support" OFF "SEIR_AUDIO" OFF)
+cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO" ON)
+
+# Options.
 option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime" OFF)
 if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_BENCHMARKS "Build Seir benchmarks" OFF)

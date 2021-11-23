@@ -38,6 +38,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DSEIR_AUDIO=ON \
+            -DSEIR_AUDIO_WAV=ON \
             -DSEIR_DATA=ON \
             -DSEIR_BENCHMARKS=ON \
             -DSEIR_TESTS=ON

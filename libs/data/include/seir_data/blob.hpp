@@ -6,7 +6,6 @@
 
 #include <seir_base/shared_ptr.hpp>
 
-#include <cassert>
 #include <filesystem>
 
 namespace seir
@@ -29,11 +28,7 @@ namespace seir
 		[[nodiscard]] constexpr const void* data() const noexcept { return _data; }
 
 		template <typename T>
-		[[nodiscard]] constexpr const T& get(size_t offset) const noexcept
-		{
-			assert(offset < _size && _size - offset >= sizeof(T));
-			return *reinterpret_cast<const T*>(static_cast<const std::byte*>(_data) + offset);
-		}
+		[[nodiscard]] constexpr const T& get(size_t offset) const noexcept { return *reinterpret_cast<const T*>(static_cast<const std::byte*>(_data) + offset); }
 
 		// Returns the size of the data.
 		[[nodiscard]] constexpr size_t size() const noexcept { return _size; }

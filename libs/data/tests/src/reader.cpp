@@ -67,6 +67,54 @@ TEST_CASE("Reader")
 	}
 }
 
+TEST_CASE("Reader::readArray")
+{
+	const auto check = []<class T>(T) {
+		const std::array<T, 2> buffer{ 1, 2 };
+		for (size_t blobSize = 0; blobSize <= buffer.size() * sizeof(T); ++blobSize)
+		{
+			INFO("blobSize = ", blobSize);
+			const auto blob = seir::Blob::from(buffer.data(), blobSize);
+			for (size_t elementsToRead = 0; elementsToRead <= blobSize / sizeof(T) + 1; ++elementsToRead)
+			{
+				INFO("elementsToRead = ", elementsToRead);
+				seir::Reader reader{ *blob };
+				const auto elements = reader.readArray<T>(elementsToRead);
+				CHECK(elements.data() == buffer.data());
+				const auto expectedElements = std::min(elementsToRead, blob->size() / sizeof(T));
+				CHECK(elements.size() == expectedElements);
+				CHECK(reader.offset() == expectedElements * sizeof(T));
+			}
+		}
+	};
+	SUBCASE("int8_t") { check(int8_t{}); }
+	SUBCASE("int16_t") { check(int16_t{}); }
+}
+
+TEST_CASE("Reader::readBlocks")
+{
+	const std::array<int8_t, 5> buffer{ 1, 2, 3, 4, 5 };
+	for (size_t blockSize = 1; blockSize <= 2; ++blockSize)
+	{
+		INFO("blockSize = ", blockSize);
+		for (size_t blobSize = 0; blobSize <= buffer.size(); ++blobSize)
+		{
+			INFO("blobSize = ", blobSize);
+			const auto blob = seir::Blob::from(buffer.data(), blobSize);
+			for (size_t blocksToRead = 0; blocksToRead <= blobSize / blockSize + 1; ++blocksToRead)
+			{
+				INFO("blocksToRead = ", blocksToRead);
+				seir::Reader reader{ *blob };
+				const auto bytes = reader.readBlocks(blocksToRead, blockSize);
+				CHECK(bytes.first == buffer.data());
+				const auto expectedBlocksRead = std::min(blocksToRead, blob->size() / blockSize);
+				CHECK(bytes.second == expectedBlocksRead);
+				CHECK(reader.offset() == expectedBlocksRead * blockSize);
+			}
+		}
+	}
+}
+
 TEST_CASE("Reader::readLine")
 {
 	SUBCASE("empty")
