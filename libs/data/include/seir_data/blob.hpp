@@ -6,6 +6,7 @@
 
 #include <seir_base/shared_ptr.hpp>
 
+#include <cassert>
 #include <filesystem>
 
 namespace seir
@@ -27,8 +28,9 @@ namespace seir
 		// Returns the data pointer.
 		[[nodiscard]] constexpr const void* data() const noexcept { return _data; }
 
+		//
 		template <typename T>
-		[[nodiscard]] constexpr const T& get(size_t offset) const noexcept { return *reinterpret_cast<const T*>(static_cast<const std::byte*>(_data) + offset); }
+		[[nodiscard]] constexpr const T& get(size_t offset) const noexcept;
 
 		// Returns the size of the data.
 		[[nodiscard]] constexpr size_t size() const noexcept { return _size; }
@@ -66,4 +68,11 @@ inline seir::UniquePtr<seir::Blob> seir::Blob::from(const SharedPtr<Blob>& paren
 		offset = parent->size();
 	const auto maxSize = parent->size() - offset;
 	return makeUnique<Blob, Subrange>(parent, offset, size < maxSize ? size : maxSize);
+}
+
+template <typename T>
+[[nodiscard]] constexpr const T& seir::Blob::get(size_t offset) const noexcept
+{
+	assert(offset <= _size && sizeof(T) <= _size - offset);
+	return *reinterpret_cast<const T*>(static_cast<const std::byte*>(_data) + offset);
 }

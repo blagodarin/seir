@@ -79,11 +79,19 @@ TEST_CASE("Reader::readArray")
 			{
 				INFO("elementsToRead = ", elementsToRead);
 				seir::Reader reader{ *blob };
-				const auto elements = reader.readArray<T>(elementsToRead);
-				CHECK(elements.data() == buffer.data());
-				const auto expectedElements = std::min(elementsToRead, blob->size() / sizeof(T));
-				CHECK(elements.size() == expectedElements);
-				CHECK(reader.offset() == expectedElements * sizeof(T));
+				const auto expectedHeadSize = std::min(elementsToRead, blob->size() / sizeof(T));
+				const auto head = reader.readArray<T>(elementsToRead);
+				CHECK(head.data() == buffer.data());
+				CHECK(head.size() == expectedHeadSize);
+				CHECK(reader.offset() == expectedHeadSize * sizeof(T));
+				if (elementsToRead <= blobSize / sizeof(T))
+				{
+					const auto expectedTailSize = blobSize / sizeof(T) - elementsToRead;
+					const auto tail = reader.readArray<T>(expectedTailSize + 1);
+					CHECK(tail.data() == buffer.data() + expectedHeadSize);
+					CHECK(tail.size() == expectedTailSize);
+					CHECK(reader.offset() == (expectedHeadSize + expectedTailSize) * sizeof(T));
+				}
 			}
 		}
 	};
@@ -105,11 +113,19 @@ TEST_CASE("Reader::readBlocks")
 			{
 				INFO("blocksToRead = ", blocksToRead);
 				seir::Reader reader{ *blob };
-				const auto bytes = reader.readBlocks(blocksToRead, blockSize);
-				CHECK(bytes.first == buffer.data());
-				const auto expectedBlocksRead = std::min(blocksToRead, blob->size() / blockSize);
-				CHECK(bytes.second == expectedBlocksRead);
-				CHECK(reader.offset() == expectedBlocksRead * blockSize);
+				const auto expectedHeadSize = std::min(blocksToRead, blob->size() / blockSize);
+				const auto head = reader.readBlocks(blocksToRead, blockSize);
+				CHECK(head.first == buffer.data());
+				CHECK(head.second == expectedHeadSize);
+				CHECK(reader.offset() == expectedHeadSize * blockSize);
+				if (blocksToRead <= blobSize / blockSize)
+				{
+					const auto expectedTailSize = blobSize / blockSize - blocksToRead;
+					const auto tail = reader.readBlocks(expectedTailSize + 1, blockSize);
+					CHECK(tail.first == buffer.data() + expectedHeadSize * blockSize);
+					CHECK(tail.second == expectedTailSize);
+					CHECK(reader.offset() == (expectedHeadSize + expectedTailSize) * blockSize);
+				}
 			}
 		}
 	}
@@ -117,13 +133,19 @@ TEST_CASE("Reader::readBlocks")
 
 TEST_CASE("Reader::readLine")
 {
+	const auto strip = [](std::string_view text) {
+		if (text.ends_with("\r\n"))
+			return text.substr(0, text.size() - 2);
+		if (text.ends_with('\r') || text.ends_with('\n'))
+			return text.substr(0, text.size() - 1);
+		return text;
+	};
 	SUBCASE("empty")
 	{
 		const std::string_view buffer{ "" };
 		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
 		seir::Reader reader{ *blob };
-		std::string_view line;
-		CHECK_FALSE(reader.readLine(line));
+		CHECK(reader.readLine().empty());
 	}
 	SUBCASE("newline")
 	{
@@ -133,11 +155,10 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("mac") { buffer = "\r"; }
 		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
 		seir::Reader reader{ *blob };
-		std::string_view line;
-		CHECK(reader.readLine(line));
-		CHECK(line.empty());
-		CHECK_FALSE(reader.readLine(line));
-		CHECK(line.empty());
+		const auto line = reader.readLine();
+		CHECK(!line.empty());
+		CHECK(strip(line) == "");
+		CHECK(reader.readLine().empty());
 	}
 	SUBCASE("one line")
 	{
@@ -148,11 +169,8 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("eof") { buffer = "text"; }
 		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
 		seir::Reader reader{ *blob };
-		std::string_view line;
-		CHECK(reader.readLine(line));
-		CHECK(line == "text");
-		CHECK_FALSE(reader.readLine(line));
-		CHECK(line.empty());
+		CHECK(strip(reader.readLine()) == "text");
+		CHECK(reader.readLine().empty());
 	}
 	SUBCASE("two lines")
 	{
@@ -162,13 +180,9 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("mac") { buffer = "first\rsecond"; }
 		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
 		seir::Reader reader{ *blob };
-		std::string_view line;
-		CHECK(reader.readLine(line));
-		CHECK(line == "first");
-		CHECK(reader.readLine(line));
-		CHECK(line == "second");
-		CHECK_FALSE(reader.readLine(line));
-		CHECK(line.empty());
+		CHECK(strip(reader.readLine()) == "first");
+		CHECK(strip(reader.readLine()) == "second");
+		CHECK(reader.readLine().empty());
 	}
 	SUBCASE("double newline")
 	{
@@ -183,14 +197,9 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("mac-mac") { buffer = "\r\reof"; }
 		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
 		seir::Reader reader{ *blob };
-		std::string_view line;
-		CHECK(reader.readLine(line));
-		CHECK(line.empty());
-		CHECK(reader.readLine(line));
-		CHECK(line.empty());
-		CHECK(reader.readLine(line));
-		CHECK(line == "eof");
-		CHECK_FALSE(reader.readLine(line));
-		CHECK(line.empty());
+		CHECK(strip(reader.readLine()).empty());
+		CHECK(strip(reader.readLine()).empty());
+		CHECK(reader.readLine() == "eof");
+		CHECK(reader.readLine().empty());
 	}
 }

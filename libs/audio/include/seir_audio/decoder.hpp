@@ -24,11 +24,11 @@ namespace seir
 
 		virtual ~AudioDecoder() noexcept = default;
 
-		// Returns audio format.
+		// Returns the decoded audio format.
 		[[nodiscard]] constexpr AudioFormat format() const noexcept { return _format; }
 
 		//
-		virtual std::pair<const void*, size_t> decode(void* buffer, size_t maxFrames) = 0;
+		virtual size_t decode(void* buffer, size_t maxFrames) = 0;
 
 		// Restarts decoding from the beginning.
 		virtual void restart() = 0;

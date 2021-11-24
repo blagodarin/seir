@@ -8,7 +8,7 @@
 #include <seir_audio/wav.hpp>
 #include <seir_data/reader.hpp>
 
-#include <algorithm>
+#include <cstring>
 
 namespace
 {
@@ -16,13 +16,33 @@ namespace
 	{
 	public:
 		RawAudioDecoder(const seir::AudioFormat& format, seir::UniquePtr<seir::Blob>&& blob) noexcept
-			: AudioDecoder{ format }, _blob{ std::move(blob) } {}
-		std::pair<const void*, size_t> decode(void*, size_t maxFrames) override { return _reader.readBlocks(maxFrames, _format.bytesPerFrame()); }
-		void restart() override { _reader.seek(0); }
+			: AudioDecoder{ format }
+			, _blob{ std::move(blob) }
+		{
+		}
+
+		size_t decode(void* buffer, size_t maxFrames) override
+		{
+			// The caller just requires a memory range with subsequent samples,
+			// so we could return the pointer to the blob data without copying.
+			// However, this is only possible for uncompressed audio, and audio
+			// is (almost) never stored uncompressed. This also breaks alignment
+			// requirements for processing functions, complicating things further.
+			// So, we're sticking to simpler code with extra copying.
+			const auto blocks = _reader.readBlocks(maxFrames, _bytesPerFrame);
+			std::memcpy(buffer, blocks.first, blocks.second * _bytesPerFrame);
+			return blocks.second;
+		}
+
+		void restart() override
+		{
+			_reader.seek(0);
+		}
 
 	private:
 		const seir::SharedPtr<seir::Blob> _blob;
 		seir::Reader _reader{ *_blob };
+		const size_t _bytesPerFrame = _format.bytesPerFrame();
 	};
 }
 

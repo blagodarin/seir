@@ -6,7 +6,6 @@
 
 #include <seir_data/blob.hpp>
 
-#include <cassert>
 #include <span>
 #include <string_view>
 
@@ -29,15 +28,15 @@ namespace seir
 
 		//
 		template <class T>
-		[[nodiscard]] constexpr std::span<const T> readArray(size_t maxLength) noexcept;
+		[[nodiscard]] constexpr std::span<const T> readArray(size_t maxElements) noexcept;
 
 		//
-		[[nodiscard]] constexpr std::pair<const void*, size_t> readBlocks(size_t maxLength, size_t blockSize) noexcept;
+		[[nodiscard]] constexpr std::pair<const void*, size_t> readBlocks(size_t maxBlocks, size_t blockSize) noexcept;
 
-		// Retrieves the next line of text (excluding newline),
-		// and advances the current offset accordingly (including newline).
-		// Returns false if there is no more data to read.
-		[[nodiscard]] constexpr bool readLine(std::string_view&) noexcept;
+		// Retrieves the next line of text (including newline),
+		// and advances the current offset accordingly.
+		// Returns empty string if there is no more data to read.
+		[[nodiscard]] constexpr std::string_view readLine() noexcept;
 
 		// Sets the current offset to the specified value.
 		constexpr bool seek(size_t offset) noexcept;
@@ -57,7 +56,6 @@ namespace seir
 template <class T>
 [[nodiscard]] constexpr const T* seir::Reader::read() noexcept
 {
-	assert(_offset <= _blob.size());
 	if (_blob.size() - _offset < sizeof(T))
 		return nullptr;
 	const auto result = &_blob.get<T>(_offset);
@@ -66,49 +64,42 @@ template <class T>
 }
 
 template <class T>
-[[nodiscard]] constexpr std::span<const T> seir::Reader::readArray(size_t maxLength) noexcept
+[[nodiscard]] constexpr std::span<const T> seir::Reader::readArray(size_t maxElements) noexcept
 {
-	assert(_offset <= _blob.size());
-	const auto remainingLength = (_blob.size() - _offset) / sizeof(T);
-	const auto result = std::span{ &_blob.get<T>(_offset), maxLength < remainingLength ? maxLength : remainingLength };
-	_offset += result.size() * sizeof(T);
-	return result;
+	const auto data = reinterpret_cast<const T*>(static_cast<const std::byte*>(_blob.data()) + _offset);
+	auto size = (_blob.size() - _offset) / sizeof(T);
+	if (size > maxElements)
+		size = maxElements;
+	_offset += size * sizeof(T);
+	return { data, size };
 }
 
-[[nodiscard]] constexpr std::pair<const void*, size_t> seir::Reader::readBlocks(size_t maxLength, size_t blockSize) noexcept
+[[nodiscard]] constexpr std::pair<const void*, size_t> seir::Reader::readBlocks(size_t maxBlocks, size_t blockSize) noexcept
 {
-	assert(_offset <= _blob.size());
-	const auto remainingLength = (_blob.size() - _offset) / blockSize;
-	const std::pair<const void*, size_t> result{ &_blob.get<std::byte>(_offset), maxLength < remainingLength ? maxLength : remainingLength };
-	_offset += result.second * blockSize;
-	return result;
+	const auto data = static_cast<const std::byte*>(_blob.data()) + _offset;
+	auto size = (_blob.size() - _offset) / blockSize;
+	if (size > maxBlocks)
+		size = maxBlocks;
+	_offset += size * blockSize;
+	return { data, size };
 }
 
-constexpr bool seir::Reader::readLine(std::string_view& line) noexcept
+constexpr std::string_view seir::Reader::readLine() noexcept
 {
 	const auto data = static_cast<const char*>(_blob.data()) + _offset;
 	const auto size = _blob.size() - _offset;
-	for (size_t i = 0;; ++i)
-	{
-		if (i == size)
+	size_t i = 0;
+	while (i < size)
+		if (const auto next = data[i++]; next == '\r')
 		{
-			line = { data, i };
-			_offset += i;
-			return size > 0;
+			if (i < size && data[i] == '\n')
+				++i;
+			break;
 		}
-		if (data[i] == '\n')
-		{
-			line = { data, i++ };
-			_offset += i;
-			return true;
-		}
-		if (data[i] == '\r')
-		{
-			line = { data, i++ };
-			_offset += i + static_cast<bool>(i != size && data[i] == '\n');
-			return true;
-		}
-	}
+		else if (next == '\n')
+			break;
+	_offset += i;
+	return { data, i };
 }
 
 constexpr bool seir::Reader::seek(size_t offset) noexcept
@@ -121,7 +112,6 @@ constexpr bool seir::Reader::seek(size_t offset) noexcept
 
 constexpr bool seir::Reader::skip(size_t bytes) noexcept
 {
-	assert(_offset <= _blob.size());
 	if (bytes > _blob.size() - _offset)
 		return false;
 	_offset += bytes;
