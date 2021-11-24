@@ -33,16 +33,16 @@ namespace
 			_thread.join();
 		}
 
-		void play(const std::shared_ptr<seir::AudioSource>& source) override
+		seir::AudioFormat format() const noexcept override
+		{
+			return { seir::AudioSampleType::f32, seir::AudioChannelLayout::Stereo, _samplingRate };
+		}
+
+		void play(const seir::SharedPtr<seir::AudioSource>& source) override
 		{
 			auto inOut = source;
 			std::scoped_lock lock{ _mutex };
 			_source.swap(inOut);
-		}
-
-		unsigned samplingRate() const noexcept override
-		{
-			return _samplingRate;
 		}
 
 		void stop() noexcept override
@@ -119,7 +119,7 @@ namespace
 		const unsigned _samplingRate;
 		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> _monoBuffer;
 		std::atomic<bool> _done{ false };
-		std::shared_ptr<seir::AudioSource> _source;
+		seir::SharedPtr<seir::AudioSource> _source;
 		bool _playing = false;
 		bool _started = false;
 		bool _stopped = false;
@@ -130,8 +130,8 @@ namespace
 
 namespace seir
 {
-	std::unique_ptr<AudioPlayer> AudioPlayer::create(AudioCallbacks& callbacks, unsigned samplingRate)
+	UniquePtr<AudioPlayer> AudioPlayer::create(AudioCallbacks& callbacks, unsigned samplingRate)
 	{
-		return std::make_unique<AudioPlayerImpl>(callbacks, samplingRate);
+		return makeUnique<AudioPlayer, AudioPlayerImpl>(callbacks, samplingRate);
 	}
 }

@@ -38,6 +38,6 @@ target_link_libraries(seir_audio PUBLIC Seir::data Threads::Threads $<$<NOT:$<BO
 if(CMAKE_CXX_COMPILER_ID MATCHES "^Clang|GNU$" AND SEIR_ARCHITECTURE MATCHES "^amd64|x86$")
 	target_compile_options(seir_audio PRIVATE -msse4.1) # NOTE: Audio benchmarks should have the same compile options as Seir::audio.
 endif()
-seir_target(seir_audio FOLDER audio STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+seir_target(seir_audio FOLDER libs/audio STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_audio EXPORT SeirTargets)
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_audio)

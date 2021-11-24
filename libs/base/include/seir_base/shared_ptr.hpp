@@ -63,6 +63,7 @@ namespace seir
 		[[nodiscard]] constexpr explicit operator bool() const noexcept { return static_cast<bool>(_pointer); }
 		[[nodiscard]] constexpr T* get() const noexcept { return _pointer; }
 		void reset() noexcept { reset(nullptr); }
+		constexpr void swap(SharedPtr& other) noexcept { std::swap(_pointer, other._pointer); }
 
 	private:
 		T* _pointer = nullptr;

@@ -30,5 +30,5 @@ target_link_libraries(seir_base_tests PRIVATE Seir::base doctest::doctest_with_m
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	target_compile_options(seir_base_tests PRIVATE -Wno-self-assign-overloaded -Wno-self-move)
 endif()
-seir_target(seir_base_tests FOLDER base STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+seir_target(seir_base_tests FOLDER libs/base STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 add_test(NAME base COMMAND seir_base_tests)

@@ -11,5 +11,5 @@ set(SOURCES
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_audio_tests ${SOURCES})
 target_link_libraries(seir_audio_tests PRIVATE Seir::audio doctest::doctest_with_main)
-seir_target(seir_audio_tests FOLDER audio STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+seir_target(seir_audio_tests FOLDER libs/audio STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 add_test(NAME audio COMMAND seir_audio_tests)

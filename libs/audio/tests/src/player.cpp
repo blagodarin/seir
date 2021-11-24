@@ -119,19 +119,19 @@ namespace
 
 TEST_CASE("player_single_source")
 {
-	std::shared_ptr<SingleSourcePlayerTester> tester;
+	seir::SharedPtr<SingleSourcePlayerTester> tester;
 	SUBCASE("mono")
 	{
-		tester = std::make_shared<SingleSourcePlayerTester>(1u);
+		tester = seir::makeShared<SingleSourcePlayerTester>(1u);
 	}
 	SUBCASE("stereo")
 	{
-		tester = std::make_shared<SingleSourcePlayerTester>(2u);
+		tester = seir::makeShared<SingleSourcePlayerTester>(2u);
 	}
 	{
 		const auto player = seir::AudioPlayer::create(*tester, kTestSamplingRate);
 		REQUIRE(player);
-		player->play(tester);
+		player->play(seir::SharedPtr<seir::AudioSource>{ tester });
 		tester->waitForStop();
 	}
 	tester->checkPostconditions();
