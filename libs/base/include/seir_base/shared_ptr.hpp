@@ -46,9 +46,8 @@ namespace seir
 		template <class U>
 		constexpr explicit SharedPtr(SharedPtr<U>&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
-		template <class U, class = std::enable_if_t<std::is_base_of_v<T, U> && std::is_base_of_v<ReferenceCounter, T>>>
-		constexpr explicit SharedPtr(UniquePtr<U>&& other) noexcept
-			: _pointer{ other._pointer } { other._pointer = nullptr; }
+		template <class U>
+		constexpr explicit SharedPtr(UniquePtr<U>&&) noexcept;
 		~SharedPtr() noexcept { reset(nullptr); }
 		SharedPtr& operator=(const SharedPtr& other) noexcept;
 		template <class U>
@@ -101,6 +100,15 @@ seir::SharedPtr<T>::SharedPtr(const SharedPtr<U>& other) noexcept
 {
 	if (_pointer)
 		_pointer->_references.fetch_add(1);
+}
+
+template <class T>
+template <class U>
+constexpr seir::SharedPtr<T>::SharedPtr(UniquePtr<U>&& other) noexcept
+	: _pointer{ other._pointer }
+{
+	static_assert(std::is_base_of_v<T, U> && std::is_base_of_v<ReferenceCounter, T>);
+	other._pointer = nullptr;
 }
 
 template <class T>

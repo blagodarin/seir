@@ -26,6 +26,11 @@ namespace
 			: Base{ counter } { ++_counter; }
 		~Derived() noexcept override { --_counter; }
 	};
+
+	class CheckIncomplete
+	{
+		seir::SharedPtr<class Incomplete> _incomplete;
+	};
 }
 
 TEST_CASE("SharedPtr")
