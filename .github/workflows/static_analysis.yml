@@ -43,4 +43,5 @@ jobs:
             -DSEIR_BENCHMARKS=ON \
             -DSEIR_DATA=ON \
             -DSEIR_EXAMPLES=ON \
-            -DSEIR_TESTS=ON
+            -DSEIR_TESTS=ON \
+            -DSEIR_U8MAIN=ON

@@ -43,7 +43,8 @@ jobs:
             -DSEIR_BENCHMARKS=ON \
             -DSEIR_DATA=ON \
             -DSEIR_EXAMPLES=ON \
-            -DSEIR_TESTS=ON
+            -DSEIR_TESTS=ON \
+            -DSEIR_U8MAIN=ON
       - name: Build
         run: |
           cmake --build build
@@ -108,7 +109,8 @@ jobs:
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_DATA=ON \
-            -DSEIR_TESTS=ON
+            -DSEIR_TESTS=ON \
+            -DSEIR_U8MAIN=ON
       - name: Build
         run: |
           cmake --build build

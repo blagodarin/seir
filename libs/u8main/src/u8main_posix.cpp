@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_main/u8main.hpp>
+#include <seir_u8main/u8main.hpp>
 
 int main(int argc, char** argv)
 {

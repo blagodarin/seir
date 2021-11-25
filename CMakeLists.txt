@@ -16,6 +16,7 @@ option(SEIR_AUDIO_OGGVORBIS "Enable Ogg Vorbis audio support")
 option(SEIR_AUDIO_WAV "Enable Waveform audio support")
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO" ON)
+option(SEIR_U8MAIN "Build u8main library")
 
 # Options.
 option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime" OFF)
@@ -96,12 +97,14 @@ if(NOT DEFINED CMAKE_FOLDER)
 endif()
 
 add_subdirectory(libs/base)
-add_subdirectory(libs/main)
 if(SEIR_AUDIO)
 	add_subdirectory(libs/audio)
 endif()
 if(SEIR_DATA)
 	add_subdirectory(libs/data)
+endif()
+if(SEIR_U8MAIN)
+	add_subdirectory(libs/u8main)
 endif()
 
 if(SEIR_TESTS)

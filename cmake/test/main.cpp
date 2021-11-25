@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_base/string_utils.hpp>
-#include <seir_main/u8main.hpp>
+#include <seir_u8main/u8main.hpp>
 
 #include <iostream>
 
