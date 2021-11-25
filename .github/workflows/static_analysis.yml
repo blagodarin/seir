@@ -15,7 +15,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install cppcheck libasound2-dev ninja-build
+          sudo apt-get install cppcheck libasound2-dev libvorbis-dev ninja-build
       - name: Run cppcheck
         continue-on-error: true
         run: |
@@ -38,6 +38,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DSEIR_AUDIO=ON \
+            -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_BENCHMARKS=ON \
             -DSEIR_DATA=ON \

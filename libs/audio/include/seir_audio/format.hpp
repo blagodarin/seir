@@ -28,6 +28,7 @@ namespace seir
 		[[nodiscard]] constexpr unsigned bytesPerFrame() const noexcept { return bytesPerSample() * channels(); }
 		[[nodiscard]] constexpr unsigned bytesPerSample() const noexcept { return static_cast<unsigned>(_sampleType); }
 		[[nodiscard]] constexpr unsigned bytesPerSecond() const noexcept { return bytesPerFrame() * _samplingRate; }
+		[[nodiscard]] constexpr AudioChannelLayout channelLayout() const noexcept { return _channelLayout; }
 		[[nodiscard]] constexpr unsigned channels() const noexcept { return static_cast<unsigned>(_channelLayout); }
 		[[nodiscard]] constexpr unsigned samplingRate() const noexcept { return _samplingRate; }
 		[[nodiscard]] constexpr AudioSampleType sampleType() const noexcept { return _sampleType; }

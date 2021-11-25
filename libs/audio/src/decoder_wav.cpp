@@ -15,13 +15,18 @@ namespace
 	class RawAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
-		RawAudioDecoder(const seir::AudioFormat& format, seir::UniquePtr<seir::Blob>&& blob) noexcept
-			: AudioDecoder{ format }
-			, _blob{ std::move(blob) }
+		RawAudioDecoder(seir::UniquePtr<seir::Blob>&& blob, const seir::AudioFormat& format) noexcept
+			: _blob{ std::move(blob) }
+			, _format{ format }
 		{
 		}
 
-		size_t decode(void* buffer, size_t maxFrames) override
+		seir::AudioFormat format() const override
+		{
+			return _format;
+		}
+
+		size_t read(void* buffer, size_t maxFrames) override
 		{
 			// The caller just requires a memory range with subsequent samples,
 			// so we could return the pointer to the blob data without copying.
@@ -29,20 +34,21 @@ namespace
 			// is (almost) never stored uncompressed. This also breaks alignment
 			// requirements for processing functions, complicating things further.
 			// So, we're sticking to simpler code with extra copying.
-			const auto blocks = _reader.readBlocks(maxFrames, _bytesPerFrame);
-			std::memcpy(buffer, blocks.first, blocks.second * _bytesPerFrame);
+			const auto blocks = _reader.readBlocks(maxFrames, _format.bytesPerFrame());
+			std::memcpy(buffer, blocks.first, blocks.second * _format.bytesPerFrame());
 			return blocks.second;
 		}
 
-		void restart() override
+		bool seek(size_t frameOffset) override
 		{
-			_reader.seek(0);
+			return frameOffset <= _reader.size() / _format.bytesPerFrame() // To prevent overflow.
+				&& _reader.seek(frameOffset * _format.bytesPerFrame());
 		}
 
 	private:
 		const seir::SharedPtr<seir::Blob> _blob;
 		seir::Reader _reader{ *_blob };
-		const size_t _bytesPerFrame = _format.bytesPerFrame();
+		const seir::AudioFormat _format;
 	};
 }
 
@@ -94,6 +100,6 @@ namespace seir
 		auto dataSize = reader.size() - reader.offset();
 		if (dataSize > dataHeader->_size)
 			dataSize = dataHeader->_size;
-		return makeUnique<AudioDecoder, RawAudioDecoder>(AudioFormat{ sampleType, channelLayout, fmt->samplesPerSecond }, Blob::from(blob, reader.offset(), dataSize));
+		return makeUnique<AudioDecoder, RawAudioDecoder>(Blob::from(blob, reader.offset(), dataSize), AudioFormat{ sampleType, channelLayout, fmt->samplesPerSecond });
 	}
 }

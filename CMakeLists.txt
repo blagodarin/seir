@@ -12,8 +12,9 @@ include(cmake/SeirPackages.cmake)
 seir_defaults()
 
 # Components.
-option(SEIR_AUDIO "Build audio library" OFF)
-cmake_dependent_option(SEIR_AUDIO_WAV "Enable WAV audio support" OFF "SEIR_AUDIO" OFF)
+option(SEIR_AUDIO_OGGVORBIS "Enable Ogg Vorbis audio support")
+option(SEIR_AUDIO_WAV "Enable Waveform audio support")
+cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO" ON)
 
 # Options.
@@ -25,8 +26,21 @@ if(PROJECT_IS_TOP_LEVEL)
 endif()
 
 find_package(Threads REQUIRED)
+if(NOT WIN32)
+	find_package(PkgConfig REQUIRED)
+endif()
 if(SEIR_AUDIO AND NOT WIN32)
 	find_package(ALSA REQUIRED)
+endif()
+if(SEIR_AUDIO_OGGVORBIS)
+	if(WIN32)
+		seir_provide_ogg(Ogg_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+		seir_provide_vorbis(Vorbis_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+		find_package(Vorbis REQUIRED)
+	else()
+		pkg_check_modules(vorbisfile REQUIRED IMPORTED_TARGET vorbisfile)
+		add_library(Vorbis::vorbisfile ALIAS PkgConfig::vorbisfile)
+	endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

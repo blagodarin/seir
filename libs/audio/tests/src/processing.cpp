@@ -166,7 +166,83 @@ TEST_CASE("addSamples2x1D")
 	}
 }
 
-TEST_CASE("duplicate1D_16")
+TEST_CASE("convertSamples1D")
+{
+	SUBCASE("int16_t")
+	{
+		alignas(seir::kAudioAlignment) const std::array<int16_t, 17> src{
+			-32768, -28672, -24576, -20480, -16384, -12288, -8192, -4096,
+			0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 30720
+		};
+		static_assert(::checkSize(src));
+		alignas(seir::kAudioAlignment) std::array<float, src.size()> dst{};
+		const std::array<float, dst.size()> expected{
+			-1.f, -.875f, -.75f, -.625f, -.5f, -.375f, -.25f, -.125f,
+			0.f, .125f, .25f, .375f, .5f, .625f, .75f, .875f, .9375f
+		};
+		for (auto size = src.size(); size >= src.size() - seir::kAudioAlignment / sizeof src[0]; --size)
+		{
+			INFO("size = " << size);
+			std::generate_n(dst.begin(), size, [value = -1.f]() mutable { return value += .125f; });
+			std::fill_n(dst.begin() + static_cast<ptrdiff_t>(size), dst.size() - size, sentinelFloat);
+			seir::convertSamples1D(dst.data(), src.data(), size);
+			for (size_t i = 0; i < size; ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == expected[i]);
+			}
+			for (auto i = size; i < dst.size(); ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == sentinelFloat);
+			}
+		}
+	}
+}
+
+TEST_CASE("convertSamples2x1D")
+{
+	SUBCASE("int16_t")
+	{
+		alignas(seir::kAudioAlignment) const std::array<int16_t, 17> src{
+			-32768, -28672, -24576, -20480, -16384, -12288, -8192, -4096,
+			0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 30720
+		};
+		static_assert(::checkSize(src));
+		alignas(seir::kAudioAlignment) std::array<float, src.size() * 2> dst{};
+		const std::array<float, dst.size()> expected{
+			-1.f, -1.f, -.875f, -.875f, -.75f, -.75f, -.625f, -.625f,
+			-.5f, -.5f, -.375f, -.375f, -.25f, -.25f, -.125f, -.125f,
+			0.f, 0.f, .125f, .125f, .25f, .25f, .375f, .375f,
+			.5f, .5f, .625f, .625f, .75f, .75f, .875f, .875f, .9375f, .9375f
+		};
+		for (auto size = src.size(); size >= src.size() - seir::kAudioAlignment / sizeof src[0]; --size)
+		{
+			INFO("size = " << size);
+			const auto dstSize = size * 2;
+			std::generate_n(dst.begin(), dstSize, [value = -1.f, increment = true]() mutable {
+				if (increment)
+					value += .125f;
+				increment = !increment;
+				return value;
+			});
+			std::fill_n(dst.begin() + static_cast<ptrdiff_t>(dstSize), dst.size() - dstSize, sentinelFloat);
+			seir::convertSamples2x1D(dst.data(), src.data(), size);
+			for (size_t i = 0; i < dstSize; ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == expected[i]);
+			}
+			for (auto i = dstSize; i < dst.size(); ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == sentinelFloat);
+			}
+		}
+	}
+}
+
+TEST_CASE("duplicate1D")
 {
 	SUBCASE("16")
 	{

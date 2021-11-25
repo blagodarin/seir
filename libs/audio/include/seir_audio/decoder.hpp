@@ -25,17 +25,12 @@ namespace seir
 		virtual ~AudioDecoder() noexcept = default;
 
 		// Returns the decoded audio format.
-		[[nodiscard]] constexpr AudioFormat format() const noexcept { return _format; }
+		[[nodiscard]] virtual AudioFormat format() const = 0;
 
 		//
-		virtual size_t decode(void* buffer, size_t maxFrames) = 0;
+		[[nodiscard]] virtual size_t read(void* buffer, size_t maxFrames) = 0;
 
-		// Restarts decoding from the beginning.
-		virtual void restart() = 0;
-
-	protected:
-		const AudioFormat _format;
-		constexpr explicit AudioDecoder(const AudioFormat& format) noexcept
-			: _format{ format } {}
+		// Restarts decoding from the specified offset.
+		virtual bool seek(size_t frameOffset) = 0;
 	};
 }

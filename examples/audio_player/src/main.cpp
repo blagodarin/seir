@@ -20,8 +20,8 @@ namespace
 			: _decoder{ decoder } {}
 
 	private:
-		bool isStereo() const noexcept override { return _decoder.format().channels() == 2; }
-		size_t onRead(float* buffer, size_t maxFrames) noexcept override { return _decoder.decode(buffer, maxFrames); }
+		seir::AudioFormat format() const noexcept override { return _decoder.format(); }
+		size_t read(void* buffer, size_t maxFrames) noexcept override { return _decoder.read(buffer, maxFrames); }
 
 	private:
 		seir::AudioDecoder& _decoder;

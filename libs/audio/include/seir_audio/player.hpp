@@ -20,8 +20,8 @@ namespace seir
 	class AudioSource : public ReferenceCounter
 	{
 	public:
-		virtual bool isStereo() const noexcept = 0;
-		virtual size_t onRead(float* buffer, size_t maxFrames) noexcept = 0;
+		[[nodiscard]] virtual AudioFormat format() const noexcept = 0;
+		[[nodiscard]] virtual size_t read(void* buffer, size_t maxFrames) noexcept = 0;
 	};
 
 	class AudioCallbacks

@@ -83,6 +83,55 @@ namespace seir
 		}
 	}
 
+	void convertSamples1D(float* dst, const int16_t* src, size_t length) noexcept
+	{
+		constexpr auto unit = 1.f / 32768.f;
+#if SEIR_INTRINSICS_SSE // 1-5% faster with MSVC.
+		for (; length >= 8; length -= 8)
+		{
+			const auto input = _mm_load_si128(reinterpret_cast<const __m128i*>(src));
+			src += 8;
+			_mm_store_ps(dst, _mm_mul_ps(_mm_set1_ps(unit), _mm_cvtepi32_ps(_mm_cvtepi16_epi32(input))));
+			dst += 4;
+			_mm_store_ps(dst, _mm_mul_ps(_mm_set1_ps(unit), _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_srli_si128(input, 8)))));
+			dst += 4;
+		}
+		for (; length > 0; --length) // For some reason it's faster than i-based loop with the preceding SSE-optimized loop, but slower without one.
+			*dst++ = static_cast<float>(*src++) * unit;
+#else
+		for (size_t i = 0; i < length; ++i)
+			dst[i] = static_cast<float>(src[i]) * unit;
+#endif
+	}
+
+	void convertSamples2x1D(float* dst, const int16_t* src, size_t length) noexcept
+	{
+		constexpr auto unit = 1.f / 32768.f;
+#if SEIR_INTRINSICS_SSE // 120-160% faster with MSVC.
+		for (; length >= 8; length -= 8)
+		{
+			const auto input = _mm_load_si128(reinterpret_cast<const __m128i*>(src));
+			src += 8;
+			const auto normalized1 = _mm_mul_ps(_mm_set1_ps(unit), _mm_cvtepi32_ps(_mm_cvtepi16_epi32(input)));
+			const auto normalized2 = _mm_mul_ps(_mm_set1_ps(unit), _mm_cvtepi32_ps(_mm_cvtepi16_epi32(_mm_srli_si128(input, 8))));
+			_mm_store_ps(dst, _mm_unpacklo_ps(normalized1, normalized1));
+			dst += 4;
+			_mm_store_ps(dst, _mm_unpackhi_ps(normalized1, normalized1));
+			dst += 4;
+			_mm_store_ps(dst, _mm_unpacklo_ps(normalized2, normalized2));
+			dst += 4;
+			_mm_store_ps(dst, _mm_unpackhi_ps(normalized2, normalized2));
+			dst += 4;
+		}
+#endif
+		for (; length > 0; --length)
+		{
+			const auto value = static_cast<float>(*src++) * unit;
+			*dst++ = value;
+			*dst++ = value;
+		}
+	}
+
 	void duplicate1D_16(void* dst, const void* src, size_t length) noexcept
 	{
 		size_t i = 0;

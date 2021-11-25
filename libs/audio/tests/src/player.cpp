@@ -21,8 +21,8 @@ namespace
 		, public seir::AudioCallbacks
 	{
 	public:
-		explicit SingleSourcePlayerTester(size_t channels) noexcept
-			: _channels{ channels } {}
+		explicit SingleSourcePlayerTester(const seir::AudioFormat& format) noexcept
+			: _format{ format } {}
 
 		void checkPostconditions() const
 		{
@@ -42,19 +42,19 @@ namespace
 		}
 
 	private:
-		bool isStereo() const noexcept override
+		seir::AudioFormat format() const noexcept override
 		{
-			return _channels == 2;
+			return _format;
 		}
 
-		size_t onRead(float* buffer, size_t maxFrames) noexcept override
+		size_t read(void* buffer, size_t maxFrames) noexcept override
 		{
 			CHECK(maxFrames > 0);
 			std::scoped_lock lock{ _mutex };
 			const auto result = std::min(_framesRemaining, maxFrames);
 			if (result > 0)
 			{
-				std::memset(buffer, 0, result * _channels * sizeof(float));
+				std::memset(buffer, 0, result * _format.bytesPerFrame());
 				_framesRemaining -= result;
 			}
 			MESSAGE(++_step, ") ", maxFrames, " -> ", result);
@@ -106,7 +106,7 @@ namespace
 		}
 
 	private:
-		const size_t _channels;
+		const seir::AudioFormat _format;
 		mutable std::mutex _mutex;
 		std::condition_variable _condition;
 		bool _started = false;
@@ -122,11 +122,11 @@ TEST_CASE("player_single_source")
 	seir::SharedPtr<SingleSourcePlayerTester> tester;
 	SUBCASE("mono")
 	{
-		tester = seir::makeShared<SingleSourcePlayerTester>(1u);
+		tester = seir::makeShared<SingleSourcePlayerTester>(seir::AudioFormat{ seir::AudioSampleType::f32, seir::AudioChannelLayout::Mono, kTestSamplingRate });
 	}
 	SUBCASE("stereo")
 	{
-		tester = seir::makeShared<SingleSourcePlayerTester>(2u);
+		tester = seir::makeShared<SingleSourcePlayerTester>(seir::AudioFormat{ seir::AudioSampleType::f32, seir::AudioChannelLayout::Stereo, kTestSamplingRate });
 	}
 	{
 		const auto player = seir::AudioPlayer::create(*tester, kTestSamplingRate);

@@ -40,7 +40,7 @@ namespace
 
 		void play(const seir::SharedPtr<seir::AudioSource>& source) override
 		{
-			auto inOut = source;
+			auto inOut = source && source->format().samplingRate() == _samplingRate ? source : nullptr;
 			std::scoped_lock lock{ _mutex };
 			_source.swap(inOut);
 		}
@@ -55,7 +55,7 @@ namespace
 	private:
 		void onBackendAvailable(size_t maxReadFrames) override
 		{
-			_monoBuffer.reserve(maxReadFrames, false);
+			_buffer.reserve(maxReadFrames * format().bytesPerFrame(), false);
 		}
 
 		void onBackendError(seir::AudioError error) override
@@ -92,22 +92,46 @@ namespace
 
 		size_t onBackendRead(float* output, size_t maxFrames) noexcept override
 		{
+			using Conversion = void (*)(void*, const void*, size_t) noexcept;
 			size_t frames = 0;
-			bool monoToStereo = false;
+			Conversion conversion = nullptr;
+			size_t conversionMultiplier = 1;
 			if (std::scoped_lock lock{ _mutex }; _source)
 			{
-				if (_source->isStereo())
-					frames = _source->onRead(output, maxFrames);
-				else
+				switch (const auto format = _source->format(); format.channelLayout())
 				{
-					frames = _source->onRead(_monoBuffer.data(), maxFrames);
-					monoToStereo = true;
+				case seir::AudioChannelLayout::Mono:
+					switch (format.sampleType())
+					{
+					case seir::AudioSampleType::i16:
+						frames = _source->read(_buffer.data(), maxFrames);
+						conversion = reinterpret_cast<Conversion>(seir::convertSamples2x1D);
+						break;
+					case seir::AudioSampleType::f32:
+						frames = _source->read(_buffer.data(), maxFrames);
+						conversion = reinterpret_cast<Conversion>(seir::duplicate1D_32);
+						break;
+					}
+					break;
+				case seir::AudioChannelLayout::Stereo:
+					switch (format.sampleType())
+					{
+					case seir::AudioSampleType::i16:
+						frames = _source->read(_buffer.data(), maxFrames);
+						conversion = reinterpret_cast<Conversion>(seir::convertSamples1D);
+						conversionMultiplier = 2;
+						break;
+					case seir::AudioSampleType::f32:
+						frames = _source->read(output, maxFrames);
+						break;
+					}
+					break;
 				}
 				if (frames < maxFrames)
 					_source.reset();
 			}
-			if (monoToStereo)
-				seir::duplicate1D_32(output, _monoBuffer.data(), frames);
+			if (conversion)
+				conversion(output, _buffer.data(), frames * conversionMultiplier);
 			_started = !_playing && frames > 0;
 			_stopped = _playing && frames < maxFrames;
 			_playing = frames == maxFrames;
@@ -117,7 +141,7 @@ namespace
 	private:
 		seir::AudioCallbacks& _callbacks;
 		const unsigned _samplingRate;
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> _monoBuffer;
+		seir::Buffer<std::byte, seir::AlignedAllocator<seir::kAudioAlignment>> _buffer;
 		std::atomic<bool> _done{ false };
 		seir::SharedPtr<seir::AudioSource> _source;
 		bool _playing = false;
