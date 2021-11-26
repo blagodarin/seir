@@ -21,6 +21,9 @@ namespace seir
 	class AudioFormat
 	{
 	public:
+		static constexpr unsigned kMinSamplingRate = 8'000;
+		static constexpr unsigned kMaxSamplingRate = 48'000;
+
 		constexpr AudioFormat() noexcept = default;
 		constexpr AudioFormat(AudioSampleType sampleType, AudioChannelLayout channelLayout, unsigned samplingRate) noexcept
 			: _sampleType{ sampleType }, _channelLayout{ channelLayout }, _samplingRate{ samplingRate } {}
@@ -34,8 +37,8 @@ namespace seir
 		[[nodiscard]] constexpr AudioSampleType sampleType() const noexcept { return _sampleType; }
 
 	private:
-		AudioSampleType _sampleType = AudioSampleType::i16;
-		AudioChannelLayout _channelLayout = AudioChannelLayout::Mono;
-		unsigned _samplingRate = 0;
+		AudioSampleType _sampleType = AudioSampleType::f32;
+		AudioChannelLayout _channelLayout = AudioChannelLayout::Stereo;
+		unsigned _samplingRate = kMaxSamplingRate;
 	};
 }

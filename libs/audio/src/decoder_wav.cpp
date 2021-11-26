@@ -92,7 +92,7 @@ namespace seir
 		case 2: channelLayout = AudioChannelLayout::Stereo; break;
 		default: return {};
 		}
-		if (fmt->samplesPerSecond < 8000 || fmt->samplesPerSecond > 48000)
+		if (fmt->samplesPerSecond < AudioFormat::kMinSamplingRate || fmt->samplesPerSecond > AudioFormat::kMaxSamplingRate)
 			return {};
 		const auto dataHeader = findChunk(WavChunkHeader::data);
 		if (!dataHeader)

@@ -44,7 +44,7 @@ namespace
 			case 2: channelLayout = seir::AudioChannelLayout::Stereo; break;
 			default: return false;
 			}
-			if (info->rate < 8000 || info->rate > 48000)
+			if (info->rate < seir::AudioFormat::kMinSamplingRate || info->rate > seir::AudioFormat::kMaxSamplingRate)
 				return false;
 			const auto totalFrames = ::ov_pcm_total(&_oggVorbis, -1);
 			if (totalFrames < 0)

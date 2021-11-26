@@ -7,14 +7,14 @@ cmake_minimum_required(VERSION 3.21)
 project(Seir LANGUAGES CXX)
 
 include(CMakeDependentOption)
+include(FetchContent)
 include(cmake/SeirPackages.cmake)
 
-seir_defaults()
-
 # Components.
+option(SEIR_AUDIO_AULOS "Enable Aulos audio support")
 option(SEIR_AUDIO_OGGVORBIS "Enable Ogg Vorbis audio support")
 option(SEIR_AUDIO_WAV "Enable Waveform audio support")
-cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
+cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_AULOS;NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO" ON)
 option(SEIR_U8MAIN "Build u8main library")
 
@@ -26,12 +26,20 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_TESTS "Build Seir tests" OFF)
 endif()
 
+set(CMAKE_FOLDER ".external")
+seir_defaults()
+
 find_package(Threads REQUIRED)
 if(NOT WIN32)
 	find_package(PkgConfig REQUIRED)
 endif()
 if(SEIR_AUDIO AND NOT WIN32)
 	find_package(ALSA REQUIRED)
+endif()
+if(SEIR_AUDIO_AULOS)
+	set(AULOS_STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+	FetchContent_Declare(Aulos GIT_REPOSITORY https://github.com/blagodarin/aulos.git GIT_TAG 004492664dd60ea61db55e0340ab7c3ecc27b172)
+	FetchContent_MakeAvailable(Aulos)
 endif()
 if(SEIR_AUDIO_OGGVORBIS)
 	if(WIN32)

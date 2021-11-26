@@ -7,6 +7,9 @@
 #include <seir_base/endian.hpp>
 #include <seir_data/blob.hpp>
 
+#if SEIR_AUDIO_AULOS
+#	include "decoder_aulos.hpp"
+#endif
 #if SEIR_AUDIO_OGGVORBIS
 #	include "decoder_oggvorbis.hpp"
 #endif
@@ -34,7 +37,11 @@ namespace seir
 				break;
 #endif
 			default:
+#if SEIR_AUDIO_AULOS
+				return createAulosDecoder(blob, preferredFormat);
+#else
 				break;
+#endif
 			}
 		return {};
 	}
