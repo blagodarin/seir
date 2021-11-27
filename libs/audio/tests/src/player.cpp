@@ -2,6 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
+#include <seir_audio/decoder.hpp>
 #include <seir_audio/player.hpp>
 
 #include "common.hpp"
@@ -17,7 +18,7 @@
 namespace
 {
 	class SingleSourcePlayerTester
-		: public seir::AudioSource
+		: public seir::AudioDecoder
 		, public seir::AudioCallbacks
 	{
 	public:
@@ -59,6 +60,11 @@ namespace
 			}
 			MESSAGE(++_step, ") ", maxFrames, " -> ", result);
 			return result;
+		}
+
+		bool seek(size_t) noexcept override
+		{
+			return false;
 		}
 
 		void onPlaybackError(seir::AudioError error) override
@@ -131,7 +137,7 @@ TEST_CASE("player_single_source")
 	{
 		const auto player = seir::AudioPlayer::create(*tester, kTestSamplingRate);
 		REQUIRE(player);
-		player->play(seir::SharedPtr<seir::AudioSource>{ tester });
+		player->play(seir::SharedPtr<seir::AudioDecoder>{ tester });
 		tester->waitForStop();
 	}
 	tester->checkPostconditions();

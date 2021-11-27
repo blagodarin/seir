@@ -11,17 +11,12 @@
 
 namespace seir
 {
+	class AudioDecoder;
+
 	// Known audio playback errors.
 	enum class AudioError
 	{
 		NoDevice, // No audio playback device found.
-	};
-
-	class AudioSource : public ReferenceCounter
-	{
-	public:
-		[[nodiscard]] virtual AudioFormat format() const noexcept = 0;
-		[[nodiscard]] virtual size_t read(void* buffer, size_t maxFrames) noexcept = 0;
 	};
 
 	class AudioCallbacks
@@ -43,7 +38,7 @@ namespace seir
 		virtual ~AudioPlayer() noexcept = default;
 
 		[[nodiscard]] virtual AudioFormat format() const noexcept = 0;
-		virtual void play(const SharedPtr<AudioSource>&) = 0;
+		virtual void play(const SharedPtr<AudioDecoder>&) = 0;
 		virtual void stop() noexcept = 0;
 	};
 }

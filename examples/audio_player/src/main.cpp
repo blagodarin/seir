@@ -13,20 +13,6 @@
 
 namespace
 {
-	class AudioSource : public seir::AudioSource
-	{
-	public:
-		AudioSource(seir::AudioDecoder& decoder)
-			: _decoder{ decoder } {}
-
-	private:
-		seir::AudioFormat format() const noexcept override { return _decoder.format(); }
-		size_t read(void* buffer, size_t maxFrames) noexcept override { return _decoder.read(buffer, maxFrames); }
-
-	private:
-		seir::AudioDecoder& _decoder;
-	};
-
 	class AudioCallbacks : public seir::AudioCallbacks
 	{
 	public:
@@ -72,7 +58,7 @@ int main(int argc, char** argv)
 		std::cerr << "Bad file \"" << argv[1] << "\"\n";
 		return 1;
 	}
-	const auto decoder = seir::AudioDecoder::create(file, {});
+	const auto decoder = seir::SharedPtr{ seir::AudioDecoder::create(file, {}) };
 	if (!decoder)
 	{
 		std::cerr << "Bad audio file \"" << argv[1] << "\"\n";
@@ -81,6 +67,6 @@ int main(int argc, char** argv)
 	AudioCallbacks callbacks;
 	const auto player = seir::AudioPlayer::create(callbacks, decoder->format().samplingRate());
 	assert(player);
-	player->play(seir::makeShared<seir::AudioSource, AudioSource>(*decoder));
+	player->play(decoder);
 	return callbacks.join();
 }

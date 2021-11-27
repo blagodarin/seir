@@ -24,7 +24,7 @@ namespace seir
 		if (blob && blob->size() >= sizeof(uint32_t))
 			switch (blob->get<uint32_t>(0))
 			{
-			case seir::makeCC('O', 'g', 'g', 'S'):
+			case makeCC('O', 'g', 'g', 'S'):
 #if SEIR_AUDIO_OGGVORBIS
 				return createOggVorbisDecoder(blob, preferredFormat);
 #else

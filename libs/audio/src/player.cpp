@@ -6,9 +6,9 @@
 
 #include "backend.hpp"
 
+#include <seir_audio/decoder.hpp>
 #include <seir_base/buffer.hpp>
 
-#include <atomic>
 #include <cstdio>
 #include <mutex>
 #include <thread>
@@ -38,18 +38,18 @@ namespace
 			return { seir::AudioSampleType::f32, seir::AudioChannelLayout::Stereo, _samplingRate };
 		}
 
-		void play(const seir::SharedPtr<seir::AudioSource>& source) override
+		void play(const seir::SharedPtr<seir::AudioDecoder>& decoder) override
 		{
-			auto inOut = source && source->format().samplingRate() == _samplingRate ? source : nullptr;
+			auto inOut = decoder && decoder->format().samplingRate() == _samplingRate ? decoder : nullptr;
 			std::scoped_lock lock{ _mutex };
-			_source.swap(inOut);
+			_decoder.swap(inOut);
 		}
 
 		void stop() noexcept override
 		{
-			decltype(_source) out;
+			decltype(_decoder) out;
 			std::scoped_lock lock{ _mutex };
-			_source.swap(out);
+			_decoder.swap(out);
 		}
 
 	private:
@@ -96,19 +96,19 @@ namespace
 			size_t frames = 0;
 			Conversion conversion = nullptr;
 			size_t conversionMultiplier = 1;
-			if (std::scoped_lock lock{ _mutex }; _source)
+			if (std::scoped_lock lock{ _mutex }; _decoder)
 			{
-				switch (const auto format = _source->format(); format.channelLayout())
+				switch (const auto format = _decoder->format(); format.channelLayout())
 				{
 				case seir::AudioChannelLayout::Mono:
 					switch (format.sampleType())
 					{
 					case seir::AudioSampleType::i16:
-						frames = _source->read(_buffer.data(), maxFrames);
+						frames = _decoder->read(_buffer.data(), maxFrames);
 						conversion = reinterpret_cast<Conversion>(seir::convertSamples2x1D);
 						break;
 					case seir::AudioSampleType::f32:
-						frames = _source->read(_buffer.data(), maxFrames);
+						frames = _decoder->read(_buffer.data(), maxFrames);
 						conversion = reinterpret_cast<Conversion>(seir::duplicate1D_32);
 						break;
 					}
@@ -117,18 +117,18 @@ namespace
 					switch (format.sampleType())
 					{
 					case seir::AudioSampleType::i16:
-						frames = _source->read(_buffer.data(), maxFrames);
+						frames = _decoder->read(_buffer.data(), maxFrames);
 						conversion = reinterpret_cast<Conversion>(seir::convertSamples1D);
 						conversionMultiplier = 2;
 						break;
 					case seir::AudioSampleType::f32:
-						frames = _source->read(output, maxFrames);
+						frames = _decoder->read(output, maxFrames);
 						break;
 					}
 					break;
 				}
 				if (frames < maxFrames)
-					_source.reset();
+					_decoder.reset();
 			}
 			if (conversion)
 				conversion(output, _buffer.data(), frames * conversionMultiplier);
@@ -143,7 +143,7 @@ namespace
 		const unsigned _samplingRate;
 		seir::Buffer<std::byte, seir::AlignedAllocator<seir::kAudioAlignment>> _buffer;
 		std::atomic<bool> _done{ false };
-		seir::SharedPtr<seir::AudioSource> _source;
+		seir::SharedPtr<seir::AudioDecoder> _decoder;
 		bool _playing = false;
 		bool _started = false;
 		bool _stopped = false;
