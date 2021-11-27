@@ -15,6 +15,7 @@ function(seir_provide_doctest _output)
 	set(_version "2.4.6")
 	set(_package "doctest-${_version}")
 	seir_download("https://github.com/onqtam/doctest/archive/refs/tags/${_version}.zip"
+		NAME "${_package}.zip"
 		SHA1 "2c228e0aa91d5cbbe8740eaf5b1a50e168171a47"
 		EXTRACT_DIR "${_package}"
 		PATCH ${_patch}
