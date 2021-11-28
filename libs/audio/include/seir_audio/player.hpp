@@ -33,12 +33,9 @@ namespace seir
 	class AudioPlayer
 	{
 	public:
-		[[nodiscard]] static UniquePtr<AudioPlayer> create(AudioCallbacks&, unsigned samplingRate);
+		[[nodiscard]] static UniquePtr<AudioPlayer> create(AudioCallbacks&, unsigned preferredSamplingRate);
 
 		virtual ~AudioPlayer() noexcept = default;
-
-		//
-		[[nodiscard]] virtual AudioFormat format() const noexcept = 0;
 
 		//
 		virtual void play(const SharedPtr<AudioDecoder>&) = 0;

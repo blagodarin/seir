@@ -29,7 +29,7 @@ namespace
 
 namespace seir
 {
-	void runAudioBackend(AudioBackendCallbacks& callbacks, unsigned samplingRate)
+	void runAudioBackend(AudioBackendCallbacks& callbacks, unsigned)
 	{
 		const auto error = [&callbacks](const char* function, HRESULT code) {
 			callbacks.onBackendError(function, static_cast<int>(code), static_cast<const char*>(windows::errorText(static_cast<DWORD>(code))));
@@ -71,20 +71,13 @@ namespace seir
 			format->nBlockAlign = static_cast<WORD>((format->wBitsPerSample / 8) * format->nChannels);
 			format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
 		}
-		DWORD streamFlags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
-		if (format->nSamplesPerSec != samplingRate)
-		{
-			streamFlags |= AUDCLNT_STREAMFLAGS_RATEADJUST;
-			format->nSamplesPerSec = samplingRate;
-			format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
-		}
 		if (format->nChannels != kAudioBackendChannels)
 		{
 			format->nChannels = kAudioBackendChannels;
 			format->nBlockAlign = static_cast<WORD>((format->wBitsPerSample / 8) * format->nChannels);
 			format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
 		}
-		if (const auto hr = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, streamFlags, period, 0, format, nullptr); FAILED(hr))
+		if (const auto hr = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, period, 0, format, nullptr); FAILED(hr))
 			return error("IAudioClient::Initialize", hr);
 		seir::CPtr<std::remove_pointer_t<HANDLE>, ::CloseHandle> event;
 		if (*event.out() = ::CreateEventW(nullptr, FALSE, FALSE, nullptr); !event)
@@ -97,7 +90,7 @@ namespace seir
 		ComPtr<IAudioRenderClient> audioRenderClient;
 		if (const auto hr = audioClient->GetService(__uuidof(IAudioRenderClient), reinterpret_cast<void**>(&audioRenderClient)); !audioRenderClient)
 			return error("IAudioClient::GetService", hr);
-		callbacks.onBackendAvailable(bufferFrames);
+		callbacks.onBackendAvailable(format->nSamplesPerSec, bufferFrames);
 		const UINT32 updateFrames = bufferFrames / kAudioBackendFrameAlignment * kAudioBackendFrameAlignment / 2;
 		bool audioClientStarted = false;
 		SEIR_FINALLY([&] {
@@ -115,7 +108,7 @@ namespace seir
 				lockedFrames = (bufferFrames - paddingFrames) / kAudioBackendFrameAlignment * kAudioBackendFrameAlignment;
 				if (lockedFrames >= updateFrames)
 					break;
-				if (const auto status = ::WaitForSingleObjectEx(event, 2 * paddingFrames * 1000 / samplingRate, FALSE); status != WAIT_OBJECT_0)
+				if (const auto status = ::WaitForSingleObjectEx(event, 2 * paddingFrames * 1000 / format->nSamplesPerSec, FALSE); status != WAIT_OBJECT_0)
 					return error("WaitForSingleObjectEx", static_cast<HRESULT>(status == WAIT_TIMEOUT ? ERROR_TIMEOUT : ::GetLastError()));
 			}
 			BYTE* buffer = nullptr;

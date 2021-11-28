@@ -28,7 +28,7 @@ namespace
 
 namespace seir
 {
-	void runAudioBackend(AudioBackendCallbacks& callbacks, unsigned samplingRate)
+	void runAudioBackend(AudioBackendCallbacks& callbacks, unsigned preferredSamplingRate)
 	{
 #define CHECK_ALSA(call) \
 	if (const auto status = call; status < 0) \
@@ -46,7 +46,7 @@ namespace seir
 			CHECK_ALSA(::snd_pcm_hw_params_set_access(pcm, hw, SND_PCM_ACCESS_RW_INTERLEAVED));
 			CHECK_ALSA(::snd_pcm_hw_params_set_format(pcm, hw, SND_PCM_FORMAT_FLOAT));
 			CHECK_ALSA(::snd_pcm_hw_params_set_channels(pcm, hw, kAudioBackendChannels));
-			CHECK_ALSA(::snd_pcm_hw_params_set_rate(pcm, hw, samplingRate, 0));
+			CHECK_ALSA(::snd_pcm_hw_params_set_rate(pcm, hw, preferredSamplingRate, 0));
 			unsigned periods = 2;
 			CHECK_ALSA(::snd_pcm_hw_params_set_periods_near(pcm, hw, &periods, nullptr));
 			snd_pcm_uframes_t minPeriod = 0;
@@ -68,7 +68,7 @@ namespace seir
 			CHECK_ALSA(::snd_pcm_sw_params(pcm, sw));
 		}
 		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> period{ periodFrames * kAudioBackendChannels };
-		callbacks.onBackendAvailable(periodFrames);
+		callbacks.onBackendAvailable(preferredSamplingRate, periodFrames);
 		SEIR_FINALLY([&] { ::snd_pcm_drain(pcm); });
 		while (callbacks.onBackendIdle())
 		{
@@ -86,7 +86,7 @@ namespace seir
 				}
 				if (result == 0)
 				{
-					::snd_pcm_wait(pcm, static_cast<int>((bufferFrames * 1000 + samplingRate - 1) / samplingRate));
+					::snd_pcm_wait(pcm, static_cast<int>((bufferFrames * 1000 + preferredSamplingRate - 1) / preferredSamplingRate));
 					continue;
 				}
 				data += static_cast<snd_pcm_uframes_t>(result) * kAudioBackendChannels;

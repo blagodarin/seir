@@ -22,12 +22,12 @@ namespace seir
 	public:
 		virtual ~AudioBackendCallbacks() noexcept = default;
 
-		virtual void onBackendAvailable(size_t maxReadFrames) = 0;
+		virtual void onBackendAvailable(unsigned samplingRate, size_t maxReadFrames) = 0;
 		virtual void onBackendError(AudioError) = 0;
 		virtual void onBackendError(const char* function, int code, const std::string& description) = 0;
 		virtual bool onBackendIdle() = 0;
 		virtual size_t onBackendRead(float* output, size_t maxFrames) noexcept = 0;
 	};
 
-	void runAudioBackend(AudioBackendCallbacks&, unsigned samplingRate);
+	void runAudioBackend(AudioBackendCallbacks&, unsigned preferredSamplingRate);
 }

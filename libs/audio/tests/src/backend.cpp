@@ -28,7 +28,7 @@ namespace
 		}
 
 	private:
-		void onBackendAvailable(size_t) override
+		void onBackendAvailable(unsigned, size_t) override
 		{
 			CHECK(!_available);
 			_available = true;

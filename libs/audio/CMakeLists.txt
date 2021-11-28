@@ -12,6 +12,8 @@ set(HEADERS
 set(SOURCES
 	src/backend.hpp
 	src/decoder.cpp
+	src/mixer.cpp
+	src/mixer.hpp
 	src/player.cpp
 	src/processing.cpp
 	)
