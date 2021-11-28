@@ -21,6 +21,11 @@ namespace
 		{
 		}
 
+		bool finished() const noexcept override
+		{
+			return _reader.size() - _reader.offset() < _format.bytesPerFrame();
+		}
+
 		seir::AudioFormat format() const override
 		{
 			return _format;

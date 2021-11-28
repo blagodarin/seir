@@ -9,9 +9,11 @@
 #include <seir_audio/decoder.hpp>
 #include <seir_base/buffer.hpp>
 
+#include <cassert>
 #include <cstdio>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace
 {
@@ -40,16 +42,31 @@ namespace
 
 		void play(const seir::SharedPtr<seir::AudioDecoder>& decoder) override
 		{
-			auto inOut = decoder && decoder->format().samplingRate() == _samplingRate ? decoder : nullptr;
+			assert(decoder);
+			if (decoder->format().samplingRate() != _samplingRate)
+				return;
 			std::scoped_lock lock{ _mutex };
-			_decoder.swap(inOut);
+			if (const auto i = std::find_if(_decoders.begin(), _decoders.end(), [&decoder](const auto& item) { return item.first == decoder; }); i != _decoders.end())
+				i->second = false;
+			else
+				_decoders.emplace_back(decoder, false);
 		}
 
-		void stop() noexcept override
+		void stop(const seir::SharedPtr<const seir::AudioDecoder>& decoder) noexcept override
 		{
-			decltype(_decoder) out;
 			std::scoped_lock lock{ _mutex };
-			_decoder.swap(out);
+			if (const auto i = std::find_if(_decoders.begin(), _decoders.end(), [&decoder](const auto& item) { return item.first == decoder; }); i != _decoders.end())
+			{
+				if (const auto last = std::prev(_decoders.end()); i != last)
+					std::iter_swap(i, last);
+				_decoders.pop_back();
+			}
+		}
+
+		void stopAll() noexcept override
+		{
+			std::scoped_lock lock{ _mutex };
+			_decoders.clear();
 		}
 
 	private:
@@ -83,33 +100,57 @@ namespace
 
 		bool onBackendIdle() override
 		{
-			if (_started)
+			if (_done.load())
+				return false;
+			const auto wasEmpty = _activeDecoders.empty();
+			_activeDecoders.clear();
+			{
+				std::scoped_lock lock{ _mutex };
+				_decoders.erase(
+					std::remove_if(_decoders.begin(), _decoders.end(),
+						[this](auto& element) {
+							if (!element.second)
+							{
+								element.first->seek(0);
+								element.second = true;
+							}
+							if (element.first->finished())
+								return true;
+							_activeDecoders.emplace_back(element.first);
+							return false;
+						}),
+					_decoders.end());
+			}
+			if (wasEmpty && !_activeDecoders.empty())
 				_callbacks.onPlaybackStarted();
-			if (_stopped)
+			if (!wasEmpty && _activeDecoders.empty())
 				_callbacks.onPlaybackStopped();
-			return !_done.load();
+			return true;
 		}
 
 		size_t onBackendRead(float* output, size_t maxFrames) noexcept override
 		{
-			using Conversion = void (*)(void*, const void*, size_t) noexcept;
-			size_t frames = 0;
-			Conversion conversion = nullptr;
-			size_t conversionMultiplier = 1;
-			if (std::scoped_lock lock{ _mutex }; _decoder)
+			size_t mixedFrames = 0;
+			for (const auto& decoder : _activeDecoders)
 			{
-				switch (const auto format = _decoder->format(); format.channelLayout())
+				size_t frames = 0;
+				switch (const auto format = decoder->format(); format.channelLayout())
 				{
 				case seir::AudioChannelLayout::Mono:
+					frames = decoder->read(_buffer.data(), maxFrames);
 					switch (format.sampleType())
 					{
 					case seir::AudioSampleType::i16:
-						frames = _decoder->read(_buffer.data(), maxFrames);
-						conversion = reinterpret_cast<Conversion>(seir::convertSamples2x1D);
+						if (!mixedFrames)
+							seir::convertSamples2x1D(output, reinterpret_cast<const int16_t*>(_buffer.data()), frames);
+						else
+							seir::addSamples2x1D(output, reinterpret_cast<const int16_t*>(_buffer.data()), frames);
 						break;
 					case seir::AudioSampleType::f32:
-						frames = _decoder->read(_buffer.data(), maxFrames);
-						conversion = reinterpret_cast<Conversion>(seir::duplicate1D_32);
+						if (!mixedFrames)
+							seir::duplicate1D_32(output, _buffer.data(), frames);
+						else
+							seir::addSamples2x1D(output, reinterpret_cast<const float*>(_buffer.data()), frames);
 						break;
 					}
 					break;
@@ -117,25 +158,26 @@ namespace
 					switch (format.sampleType())
 					{
 					case seir::AudioSampleType::i16:
-						frames = _decoder->read(_buffer.data(), maxFrames);
-						conversion = reinterpret_cast<Conversion>(seir::convertSamples1D);
-						conversionMultiplier = 2;
+						frames = decoder->read(_buffer.data(), maxFrames);
+						if (!mixedFrames)
+							seir::convertSamples1D(output, reinterpret_cast<const int16_t*>(_buffer.data()), frames * 2);
+						else
+							seir::addSamples1D(output, reinterpret_cast<const int16_t*>(_buffer.data()), frames * 2);
 						break;
 					case seir::AudioSampleType::f32:
-						frames = _decoder->read(output, maxFrames);
+						frames = decoder->read(mixedFrames ? reinterpret_cast<float*>(_buffer.data()) : output, maxFrames);
 						break;
 					}
 					break;
 				}
-				if (frames < maxFrames)
-					_decoder.reset();
+				if (frames > mixedFrames)
+				{
+					if (!mixedFrames)
+						std::memset(output + frames * 2, 0, (maxFrames - frames) * 2);
+					mixedFrames = frames;
+				}
 			}
-			if (conversion)
-				conversion(output, _buffer.data(), frames * conversionMultiplier);
-			_started = !_playing && frames > 0;
-			_stopped = _playing && frames < maxFrames;
-			_playing = frames == maxFrames;
-			return frames;
+			return mixedFrames;
 		}
 
 	private:
@@ -143,10 +185,8 @@ namespace
 		const unsigned _samplingRate;
 		seir::Buffer<std::byte, seir::AlignedAllocator<seir::kAudioAlignment>> _buffer;
 		std::atomic<bool> _done{ false };
-		seir::SharedPtr<seir::AudioDecoder> _decoder;
-		bool _playing = false;
-		bool _started = false;
-		bool _stopped = false;
+		std::vector<std::pair<seir::SharedPtr<seir::AudioDecoder>, bool>> _decoders;
+		std::vector<seir::SharedPtr<seir::AudioDecoder>> _activeDecoders;
 		std::mutex _mutex;
 		std::thread _thread;
 	};

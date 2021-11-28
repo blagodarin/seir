@@ -54,6 +54,11 @@ namespace
 			return true;
 		}
 
+		bool finished() const noexcept override
+		{
+			return _currentFrame == _totalFrames;
+		}
+
 		seir::AudioFormat format() const override
 		{
 			return _format;

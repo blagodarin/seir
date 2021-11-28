@@ -83,6 +83,12 @@ namespace seir
 	{
 		return SharedPtr<R>{ new U{ std::forward<Args>(args)... } };
 	}
+
+	template <class A, class B>
+	[[nodiscard]] constexpr bool operator==(const SharedPtr<A>& a, const SharedPtr<B>& b) noexcept
+	{
+		return a.get() == b.get();
+	}
 }
 
 template <class T>

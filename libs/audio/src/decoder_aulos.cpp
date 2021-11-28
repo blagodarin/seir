@@ -44,6 +44,11 @@ namespace
 		{
 		}
 
+		bool finished() const noexcept override
+		{
+			return _finished;
+		}
+
 		seir::AudioFormat format() const noexcept override
 		{
 			return _format;
@@ -51,13 +56,16 @@ namespace
 
 		size_t read(void* buffer, size_t maxFrames) override
 		{
-			return _renderer->render(static_cast<float*>(buffer), maxFrames);
+			const auto result = _renderer->render(static_cast<float*>(buffer), maxFrames);
+			_finished = !result;
+			return result;
 		}
 
 		bool seek(size_t frameOffset) override
 		{
 			_renderer->restart();
 			_renderer->skipFrames(frameOffset);
+			_finished = false;
 			return true;
 		}
 
@@ -65,6 +73,7 @@ namespace
 		const std::unique_ptr<const aulos::Composition> _composition;
 		const std::unique_ptr<aulos::Renderer> _renderer;
 		const seir::AudioFormat _format = ::convertFormat(_renderer->format());
+		bool _finished = false;
 	};
 }
 

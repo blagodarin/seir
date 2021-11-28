@@ -43,6 +43,11 @@ namespace
 		}
 
 	private:
+		bool finished() const noexcept override
+		{
+			return !_framesRemaining;
+		}
+
 		seir::AudioFormat format() const noexcept override
 		{
 			return _format;

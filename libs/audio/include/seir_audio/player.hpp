@@ -37,8 +37,16 @@ namespace seir
 
 		virtual ~AudioPlayer() noexcept = default;
 
+		//
 		[[nodiscard]] virtual AudioFormat format() const noexcept = 0;
+
+		//
 		virtual void play(const SharedPtr<AudioDecoder>&) = 0;
-		virtual void stop() noexcept = 0;
+
+		//
+		virtual void stop(const SharedPtr<const AudioDecoder>&) noexcept = 0;
+
+		//
+		virtual void stopAll() noexcept = 0;
 	};
 }
