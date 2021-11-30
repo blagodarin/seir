@@ -2,9 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "decoder_aulos.hpp"
+#include "decoder.hpp"
 
-#include <seir_audio/decoder.hpp>
 #include <seir_data/reader.hpp>
 
 #include <aulos/composition.hpp>
@@ -35,7 +34,7 @@ namespace
 		return { seir::AudioSampleType::f32, channels, format.samplingRate() };
 	}
 
-	class AulosAudioDecoder final : public seir::AudioDecoder
+	class AulosAudioDecoder final : public seir::AudioDecoderBase
 	{
 	public:
 		AulosAudioDecoder(std::unique_ptr<const aulos::Composition>&& composition, std::unique_ptr<aulos::Renderer>&& renderer) noexcept
@@ -44,7 +43,7 @@ namespace
 		{
 		}
 
-		bool finished() const noexcept override
+		bool finishedDecoding() const noexcept override
 		{
 			return _finished;
 		}

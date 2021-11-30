@@ -2,9 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "decoder_wav.hpp"
+#include "decoder.hpp"
 
-#include <seir_audio/decoder.hpp>
 #include <seir_audio/wav.hpp>
 #include <seir_data/reader.hpp>
 
@@ -12,7 +11,7 @@
 
 namespace
 {
-	class RawAudioDecoder final : public seir::AudioDecoder
+	class RawAudioDecoder final : public seir::AudioDecoderBase
 	{
 	public:
 		RawAudioDecoder(seir::UniquePtr<seir::Blob>&& blob, const seir::AudioFormat& format) noexcept
@@ -21,7 +20,7 @@ namespace
 		{
 		}
 
-		bool finished() const noexcept override
+		bool finishedDecoding() const noexcept override
 		{
 			return _reader.size() - _reader.offset() < _format.bytesPerFrame();
 		}

@@ -19,9 +19,6 @@ namespace seir
 	public:
 		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const AudioFormat& preferredFormat);
 
-		//
-		[[nodiscard]] virtual bool finished() const noexcept = 0;
-
 		// Returns the decoded audio format.
 		[[nodiscard]] virtual AudioFormat format() const = 0;
 

@@ -2,20 +2,10 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_audio/decoder.hpp>
+#include "decoder.hpp"
 
 #include <seir_base/endian.hpp>
 #include <seir_data/blob.hpp>
-
-#if SEIR_AUDIO_AULOS
-#	include "decoder_aulos.hpp"
-#endif
-#if SEIR_AUDIO_OGGVORBIS
-#	include "decoder_oggvorbis.hpp"
-#endif
-#if SEIR_AUDIO_WAV
-#	include "decoder_wav.hpp"
-#endif
 
 namespace seir
 {

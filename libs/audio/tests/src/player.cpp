@@ -2,9 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_audio/decoder.hpp>
 #include <seir_audio/player.hpp>
-
+#include "../src/decoder.hpp"
 #include "common.hpp"
 
 #include <condition_variable>
@@ -18,7 +17,7 @@
 namespace
 {
 	class SingleSourcePlayerTester
-		: public seir::AudioDecoder
+		: public seir::AudioDecoderBase
 		, public seir::AudioCallbacks
 	{
 	public:
@@ -43,7 +42,7 @@ namespace
 		}
 
 	private:
-		bool finished() const noexcept override
+		bool finishedDecoding() const noexcept override
 		{
 			return !_framesRemaining;
 		}

@@ -4,8 +4,8 @@
 
 #include <seir_audio/player.hpp>
 
-#include <seir_audio/decoder.hpp>
 #include "backend.hpp"
+#include "decoder.hpp"
 #include "mixer.hpp"
 
 #include <cassert>
@@ -102,10 +102,10 @@ namespace
 						[this](auto& element) {
 							if (!element.second)
 							{
-								element.first->seek(0);
+								static_cast<seir::AudioDecoderBase&>(*element.first).restart();
 								element.second = true;
 							}
-							if (element.first->finished())
+							if (static_cast<seir::AudioDecoderBase&>(*element.first).finished())
 								return true;
 							_activeDecoders.emplace_back(element.first);
 							return false;
@@ -123,7 +123,7 @@ namespace
 		{
 			size_t mixedFrames = 0;
 			for (const auto& decoder : _activeDecoders)
-				if (const auto frames = _mixer.mix(output, maxFrames, !mixedFrames, *decoder); frames > mixedFrames)
+				if (const auto frames = _mixer.mix(reinterpret_cast<seir::AudioFrame*>(output), maxFrames, !mixedFrames, static_cast<seir::AudioDecoderBase&>(*decoder)); frames > mixedFrames)
 					mixedFrames = frames;
 			return mixedFrames;
 		}

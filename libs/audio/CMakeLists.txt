@@ -12,19 +12,21 @@ set(HEADERS
 set(SOURCES
 	src/backend.hpp
 	src/decoder.cpp
+	src/decoder.hpp
+	src/frame.hpp
 	src/mixer.cpp
 	src/mixer.hpp
 	src/player.cpp
 	src/processing.cpp
 	)
 if(SEIR_AUDIO_AULOS)
-	list(APPEND SOURCES src/decoder_aulos.cpp src/decoder_aulos.hpp)
+	list(APPEND SOURCES src/decoder_aulos.cpp)
 endif()
 if(SEIR_AUDIO_OGGVORBIS)
-	list(APPEND SOURCES src/decoder_oggvorbis.cpp src/decoder_oggvorbis.hpp)
+	list(APPEND SOURCES src/decoder_oggvorbis.cpp)
 endif()
 if(SEIR_AUDIO_WAV)
-	list(APPEND SOURCES src/decoder_wav.cpp src/decoder_wav.hpp)
+	list(APPEND SOURCES src/decoder_wav.cpp)
 endif()
 if(WIN32)
 	list(APPEND SOURCES src/backend_wasapi.cpp)

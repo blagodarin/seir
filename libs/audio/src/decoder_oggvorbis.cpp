@@ -2,9 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "decoder_oggvorbis.hpp"
+#include "decoder.hpp"
 
-#include <seir_audio/decoder.hpp>
 #include <seir_data/reader.hpp>
 #include <seir_base/int_utils.hpp>
 
@@ -19,7 +18,7 @@
 
 namespace
 {
-	class OggVorbisAudioDecoder final : public seir::AudioDecoder
+	class OggVorbisAudioDecoder final : public seir::AudioDecoderBase
 	{
 	public:
 		OggVorbisAudioDecoder(const seir::SharedPtr<seir::Blob>& blob) noexcept
@@ -54,7 +53,7 @@ namespace
 			return true;
 		}
 
-		bool finished() const noexcept override
+		bool finishedDecoding() const noexcept override
 		{
 			return _currentFrame == _totalFrames;
 		}

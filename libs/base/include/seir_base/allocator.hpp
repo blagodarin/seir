@@ -18,8 +18,7 @@ namespace seir
 	public:
 		[[nodiscard]] static void* allocate(size_t size)
 		{
-			if (const auto memory = std::malloc(size); memory)
-				[[likely]]
+			if (const auto memory = std::malloc(size); memory) [[likely]]
 				return memory;
 			throw std::bad_alloc{};
 		}
@@ -41,11 +40,10 @@ namespace seir
 			constexpr auto kAlignmentMask = kAlignment - 1;
 			const auto alignedSize = (size + kAlignmentMask) & ~kAlignmentMask;
 #ifdef _MSC_VER
-			if (const auto memory = ::_aligned_malloc(alignedSize, kAlignment); memory)
+			if (const auto memory = ::_aligned_malloc(alignedSize, kAlignment); memory) [[likely]]
 #else
-			if (const auto memory = std::aligned_alloc(kAlignment, alignedSize); memory)
+			if (const auto memory = std::aligned_alloc(kAlignment, alignedSize); memory) [[likely]]
 #endif
-				[[likely]]
 				return memory;
 			throw std::bad_alloc{};
 		}
