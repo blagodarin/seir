@@ -14,10 +14,6 @@
 #define OV_EXCLUDE_STATIC_CALLBACKS
 #include <vorbis/vorbisfile.h>
 
-// NOTE: Vorbis produces f32 samples, but vorbisfile can only provide i16 samples
-// (also u16, i8 and u8, but nobody cares). Playback always uses f32, so
-// it's better to use Vorbis directly and get rid of f32->i16->f32 conversion.
-
 namespace
 {
 	class OggVorbisAudioDecoder final : public seir::AudioDecoderBase
@@ -50,7 +46,7 @@ namespace
 			const auto totalFrames = ::ov_pcm_total(&_oggVorbis, -1);
 			if (totalFrames < 0)
 				return false;
-			_format = { seir::AudioSampleType::i16, channelLayout, static_cast<unsigned>(info->rate) };
+			_format = { seir::AudioSampleType::f32, channelLayout, static_cast<unsigned>(info->rate) };
 			_totalFrames = static_cast<size_t>(totalFrames);
 			return true;
 		}
@@ -67,17 +63,22 @@ namespace
 
 		size_t read(void* buffer, size_t maxFrames) override
 		{
-			const auto bytesToRead = std::min(maxFrames, _totalFrames - _currentFrame) * _format.bytesPerFrame();
-			size_t bytesRead = 0;
-			while (bytesRead < bytesToRead)
+			const auto framesToRead = std::min(maxFrames, _totalFrames - _currentFrame);
+			size_t framesRead = 0;
+			while (framesRead < framesToRead)
 			{
-				const auto size = static_cast<int>(std::min(bytesToRead - bytesRead, size_t{ std::numeric_limits<int>::max() }));
-				const auto read = ::ov_read(&_oggVorbis, static_cast<char*>(buffer) + bytesRead, size, 0, 2, 1, nullptr);
-				if (read <= 0)
+				float** src = nullptr;
+				const auto srcFrames = ::ov_read_float(&_oggVorbis, &src, static_cast<int>(std::min(framesToRead - framesRead, size_t{ std::numeric_limits<int>::max() })), nullptr);
+				if (srcFrames <= 0)
 					break;
-				bytesRead += seir::toUnsigned(read);
+				const auto dst = static_cast<float*>(buffer) + framesRead * _format.channels();
+				for (auto i = decltype(srcFrames){}; i < srcFrames; ++i)
+				{
+					dst[2 * i] = src[0][i];
+					dst[2 * i + 1] = src[1][i];
+				}
+				framesRead += seir::toUnsigned(srcFrames);
 			}
-			const auto framesRead = bytesRead / _format.bytesPerFrame();
 			_currentFrame += framesRead;
 			return framesRead;
 		}
