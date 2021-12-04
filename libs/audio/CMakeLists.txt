@@ -48,7 +48,7 @@ target_compile_definitions(seir_audio PUBLIC
 target_include_directories(seir_audio PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_audio PUBLIC Seir::data PRIVATE Threads::Threads
 	$<$<NOT:$<BOOL:${WIN32}>>:ALSA::ALSA>
-	$<$<BOOL:${SEIR_AUDIO_AULOS}>:aulos>
+	$<$<BOOL:${SEIR_AUDIO_AULOS}>:Aulos::aulos>
 	$<$<BOOL:${SEIR_AUDIO_OGGVORBIS}>:Vorbis::vorbisfile>
 	)
 if(CMAKE_CXX_COMPILER_ID MATCHES "^Clang|GNU$" AND SEIR_ARCHITECTURE MATCHES "^amd64|x86$")
