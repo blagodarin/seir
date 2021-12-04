@@ -172,7 +172,18 @@ namespace seir
 
 	void resampleAdd2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
 	{
-		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
+		size_t i = 0, j = srcOffset;
+#if SEIR_INTRINSICS_SSE // 40-85% faster with MSVC.
+		for (; i < (dstLength & ~size_t{ 0b1 }); i += 2)
+		{
+			const auto lo = src + 2 * (j >> kResamplingFractionBits);
+			j += srcStep;
+			const auto hi = src + 2 * (j >> kResamplingFractionBits);
+			j += srcStep;
+			_mm_store_ps(dst + 2 * i, _mm_add_ps(_mm_load_ps(dst + 2 * i), _mm_loadh_pi(_mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(lo)), reinterpret_cast<const __m64*>(hi))));
+		}
+#endif
+		for (; i < dstLength; ++i, j += srcStep)
 		{
 			dst[2 * i] += src[2 * (j >> kResamplingFractionBits)];
 			dst[2 * i + 1] += src[2 * (j >> kResamplingFractionBits) + 1];
@@ -181,7 +192,18 @@ namespace seir
 
 	void resampleCopy2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
 	{
-		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
+		size_t i = 0, j = srcOffset;
+#if SEIR_INTRINSICS_SSE // 35-65% faster with MSVC.
+		for (; i < (dstLength & ~size_t{ 0b1 }); i += 2)
+		{
+			const auto lo = src + 2 * (j >> kResamplingFractionBits);
+			j += srcStep;
+			const auto hi = src + 2 * (j >> kResamplingFractionBits);
+			j += srcStep;
+			_mm_store_ps(dst + 2 * i, _mm_loadh_pi(_mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(lo)), reinterpret_cast<const __m64*>(hi)));
+		}
+#endif
+		for (; i < dstLength; ++i, j += srcStep)
 		{
 			dst[2 * i] = src[2 * (j >> kResamplingFractionBits)];
 			dst[2 * i + 1] = src[2 * (j >> kResamplingFractionBits) + 1];

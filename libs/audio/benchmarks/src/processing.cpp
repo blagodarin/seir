@@ -182,3 +182,61 @@ BENCHMARK(duplicate1D_i16_Opt)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudio
 BENCHMARK(duplicate1D_i16_Ref)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudioAlignment)->RangeMultiplier(4)->Range(1 << 10, 1 << 20);
 BENCHMARK(duplicate1D_i32_Opt)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudioAlignment)->RangeMultiplier(4)->Range(1 << 10, 1 << 20);
 BENCHMARK(duplicate1D_i32_Ref)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudioAlignment)->RangeMultiplier(4)->Range(1 << 10, 1 << 20);
+
+namespace
+{
+	void baseline_resampleAdd2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
+	{
+		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
+		{
+			dst[2 * i] += src[2 * (j >> seir::kResamplingFractionBits)];
+			dst[2 * i + 1] += src[2 * (j >> seir::kResamplingFractionBits) + 1];
+		}
+	}
+
+	template <auto function>
+	void benchmark_resampleAdd2x1D(benchmark::State& state)
+	{
+		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> src{ static_cast<size_t>(state.range(0) - 2) / sizeof(float) };
+		std::iota(src.data(), src.data() + src.capacity(), 0.f);
+		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> dst{ src.capacity() };
+		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		for (auto _ : state)
+			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kResamplingFractionBits) / 13);
+	}
+
+	void resampleAdd2x1D_Opt(benchmark::State& state) { benchmark_resampleAdd2x1D<seir::resampleAdd2x1D>(state); }
+	void resampleAdd2x1D_Ref(benchmark::State& state) { benchmark_resampleAdd2x1D<baseline_resampleAdd2x1D>(state); }
+}
+
+BENCHMARK(resampleAdd2x1D_Opt)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudioAlignment)->RangeMultiplier(4)->Range(1 << 10, 1 << 20);
+BENCHMARK(resampleAdd2x1D_Ref)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudioAlignment)->RangeMultiplier(4)->Range(1 << 10, 1 << 20);
+
+namespace
+{
+	void baseline_resampleCopy2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
+	{
+		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
+		{
+			dst[2 * i] = src[2 * (j >> seir::kResamplingFractionBits)];
+			dst[2 * i + 1] = src[2 * (j >> seir::kResamplingFractionBits) + 1];
+		}
+	}
+
+	template <auto function>
+	void benchmark_resampleCopy2x1D(benchmark::State& state)
+	{
+		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> src{ static_cast<size_t>(state.range(0) - 2) / sizeof(float) };
+		std::iota(src.data(), src.data() + src.capacity(), 0.f);
+		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> dst{ src.capacity() };
+		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		for (auto _ : state)
+			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kResamplingFractionBits) / 13);
+	}
+
+	void resampleCopy2x1D_Opt(benchmark::State& state) { benchmark_resampleCopy2x1D<seir::resampleCopy2x1D>(state); }
+	void resampleCopy2x1D_Ref(benchmark::State& state) { benchmark_resampleCopy2x1D<baseline_resampleCopy2x1D>(state); }
+}
+
+BENCHMARK(resampleCopy2x1D_Opt)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudioAlignment)->RangeMultiplier(4)->Range(1 << 10, 1 << 20);
+BENCHMARK(resampleCopy2x1D_Ref)->Arg(seir::kAudioAlignment)->Arg(2 * seir::kAudioAlignment)->RangeMultiplier(4)->Range(1 << 10, 1 << 20);
