@@ -10,11 +10,5 @@ namespace seir
 	{
 		float _left;
 		float _right;
-
-		constexpr void operator+=(const AudioFrame& other) noexcept
-		{
-			_left += other._left;
-			_right += other._right;
-		}
 	};
 }

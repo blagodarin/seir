@@ -169,4 +169,22 @@ namespace seir
 			static_cast<uint32_t*>(dst)[2 * i + 1] = value;
 		}
 	}
+
+	void resampleAdd2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
+	{
+		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
+		{
+			dst[2 * i] += src[2 * (j >> kResamplingFractionBits)];
+			dst[2 * i + 1] += src[2 * (j >> kResamplingFractionBits) + 1];
+		}
+	}
+
+	void resampleCopy2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
+	{
+		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
+		{
+			dst[2 * i] = src[2 * (j >> kResamplingFractionBits)];
+			dst[2 * i + 1] = src[2 * (j >> kResamplingFractionBits) + 1];
+		}
+	}
 }

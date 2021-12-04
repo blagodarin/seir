@@ -14,6 +14,9 @@ namespace seir
 	// Minimum alignment for audio data.
 	constexpr size_t kAudioAlignment = SEIR_INTRINSICS_SSE ? 16 : 1;
 
+	//
+	constexpr size_t kResamplingFractionBits = 16;
+
 	// Adds 32-bit floats to the output buffer with the same number of interleaved channels.
 	void addSamples1D(float* dst, const float* src, size_t length) noexcept;
 
@@ -41,4 +44,10 @@ namespace seir
 
 	// Duplicates 32-bit values.
 	void duplicate1D_32(void* dst, const void* src, size_t length) noexcept;
+
+	//
+	void resampleAdd2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept;
+
+	//
+	void resampleCopy2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept;
 }

@@ -10,13 +10,8 @@
 #include <cassert>
 #include <numeric>
 
-namespace
-{
-	constexpr size_t kResamplingFractionBits = 16;
-	constexpr size_t kResamplingScale = 1 << kResamplingFractionBits;
-	constexpr size_t kResamplingMask = kResamplingScale - 1;
-	constexpr auto kResamplingPrefixFrames = std::lcm(sizeof(seir::AudioFrame), seir::kAudioAlignment) / sizeof(seir::AudioFrame);
-}
+constexpr size_t kResamplingMask = (1 << seir::kResamplingFractionBits) - 1;
+constexpr auto kResamplingPrefixFrames = std::lcm(sizeof(seir::AudioFrame), seir::kAudioAlignment) / sizeof(seir::AudioFrame);
 
 namespace seir
 {
@@ -36,7 +31,7 @@ namespace seir
 		if (const auto samplingRate = decoder.format().samplingRate(); samplingRate != _samplingRate)
 		{
 			assert(maxFrames > 0);
-			const auto step = samplingRate * kResamplingScale / _samplingRate;
+			const auto step = (samplingRate << kResamplingFractionBits) / _samplingRate;
 			auto input = _resamplingBuffer.data() + kResamplingPrefixFrames;
 			auto offset = decoder._resamplingState._offset;
 			size_t readyFrames = 0;
@@ -61,17 +56,11 @@ namespace seir
 						&& ((offset + (stepCount - 1) * step) & kResamplingMask) >= step);
 					stepCount = maxFrames;
 				}
+				assert((offset + (stepCount - 1) * step) >> kResamplingFractionBits == inputFrames - 1);
 				if (rewrite)
-				{
-					for (size_t i = 0; i < stepCount; ++i, offset += step)
-						output[i] = input[offset >> kResamplingFractionBits];
-				}
+					resampleCopy2x1D(reinterpret_cast<float*>(output), stepCount, reinterpret_cast<float*>(input), offset, step);
 				else
-				{
-					for (size_t i = 0; i < stepCount; ++i, offset += step)
-						output[i] += input[offset >> kResamplingFractionBits];
-				}
-				assert((offset - step) >> kResamplingFractionBits == inputFrames - 1);
+					resampleAdd2x1D(reinterpret_cast<float*>(output), stepCount, reinterpret_cast<float*>(input), offset, step);
 				frames += stepCount;
 				decoder._resamplingState._offset = offset & kResamplingMask;
 				decoder._resamplingState._lastFrame = input[inputFrames - 1];

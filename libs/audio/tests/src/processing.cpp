@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <numeric>
 
 #include <doctest/doctest.h>
@@ -285,6 +286,134 @@ TEST_CASE("duplicate1D")
 			{
 				INFO("i = " << i);
 				CHECK(dst[i] == 0);
+			}
+		}
+	}
+}
+
+TEST_CASE("resample*2x1D")
+{
+	SUBCASE("upsampling")
+	{
+		constexpr size_t srcFrames = 5;
+		constexpr size_t dstFrames = 13;
+		alignas(seir::kAudioAlignment) const std::array<float, 2 * srcFrames> src{
+			0.f, 1.f,
+			2.f, 3.f,
+			4.f, 5.f,
+			6.f, 7.f,
+			8.f, 9.f
+		};
+		decltype(&seir::resampleAdd2x1D) function = nullptr;
+		std::array<float, 2 * dstFrames> expected;
+		SUBCASE("add")
+		{
+			function = seir::resampleAdd2x1D;
+			expected = std::to_array<float>({
+				0.00f, 1.25f, 0.50f, 1.75f, 0.00f, 1.25f, // 0 + { 0/13, 5/13, 10/13 }
+				2.50f, 3.75f, 2.00f, 3.25f, 2.50f, 3.75f, // 1 + { 2/13, 7/13, 12/13 }
+				4.00f, 5.25f, 4.50f, 5.75f,               // 2 + { 4/13, 9/13 }
+				6.00f, 7.25f, 6.50f, 7.75f, 6.00f, 7.25f, // 3 + { 1/13, 6/13, 11/13 }
+				8.50f, 9.75f, 8.00f, 9.25f                // 4 + { 3/13, 8/13 }
+			});
+		}
+		SUBCASE("copy")
+		{
+			function = seir::resampleCopy2x1D;
+			expected = std::to_array<float>({
+				0.f, 1.f, 0.f, 1.f, 0.f, 1.f, // 0 + { 0/13, 5/13, 10/13 }
+				2.f, 3.f, 2.f, 3.f, 2.f, 3.f, // 1 + { 2/13, 7/13, 12/13 }
+				4.f, 5.f, 4.f, 5.f,           // 2 + { 4/13, 9/13 }
+				6.f, 7.f, 6.f, 7.f, 6.f, 7.f, // 3 + { 1/13, 6/13, 11/13 }
+				8.f, 9.f, 8.f, 9.f            // 4 + { 3/13, 8/13 }
+			});
+		}
+		alignas(seir::kAudioAlignment) std::array<float, expected.size()> dst{};
+		constexpr auto step = (srcFrames << seir::kResamplingFractionBits) / dstFrames;
+		for (auto frames = dstFrames; frames > 0; --frames)
+		{
+			INFO("frames = " << frames);
+			std::fill(
+				std::generate_n(dst.begin(), 2 * frames, [i = 0.f, dummy = 0.f]() mutable {
+					return std::exchange(i, std::modf(i + .25f, &dummy));
+				}),
+				dst.end(), sentinelFloat);
+			function(dst.data(), frames, src.data(), 0, step);
+			for (size_t i = 0; i < frames * 2; ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == expected[i]);
+			}
+			for (auto i = frames * 2; i < dst.size(); ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == sentinelFloat);
+			}
+		}
+	}
+	SUBCASE("downsampling")
+	{
+		constexpr size_t srcFrames = 13;
+		constexpr size_t dstFrames = 5;
+		alignas(seir::kAudioAlignment) const std::array<float, 2 * srcFrames> src{
+			0.f, 1.f,
+			2.f, 3.f,
+			4.f, 5.f,
+			6.f, 7.f,
+			8.f, 9.f,
+			10.f, 11.f,
+			12.f, 13.f,
+			14.f, 15.f,
+			16.f, 17.f,
+			18.f, 19.f,
+			20.f, 21.f,
+			22.f, 23.f,
+			24.f, 25.f
+		};
+		decltype(&seir::resampleAdd2x1D) function = nullptr;
+		std::array<float, 2 * dstFrames> expected;
+		SUBCASE("add")
+		{
+			function = seir::resampleAdd2x1D;
+			expected = std::to_array<float>({
+				0.00f, 1.25f,   // 0/5 = 0.0
+				4.50f, 5.75f,   // 13/5 = 2.6
+				10.00f, 11.25f, // 26/5 = 5.2
+				14.50f, 15.75f, // 39/5 = 7.8
+				20.00f, 21.25f  // 52/5 = 10.4
+			});
+		}
+		SUBCASE("copy")
+		{
+			function = seir::resampleCopy2x1D;
+			expected = std::to_array<float>({
+				0.f, 1.f,   // 0/5 = 0.0
+				4.f, 5.f,   // 13/5 = 2.6
+				10.f, 11.f, // 26/5 = 5.2
+				14.f, 15.f, // 39/5 = 7.8
+				20.f, 21.f  // 52/5 = 10.4
+			});
+		}
+		alignas(seir::kAudioAlignment) std::array<float, expected.size()> dst{};
+		constexpr auto step = (srcFrames << seir::kResamplingFractionBits) / dstFrames;
+		for (auto frames = dstFrames; frames > 0; --frames)
+		{
+			INFO("frames = " << frames);
+			std::fill(
+				std::generate_n(dst.begin(), 2 * frames, [i = 0.f, dummy = 0.f]() mutable {
+					return std::exchange(i, std::modf(i + .25f, &dummy));
+				}),
+				dst.end(), sentinelFloat);
+			function(dst.data(), frames, src.data(), 0, step);
+			for (size_t i = 0; i < frames * 2; ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == expected[i]);
+			}
+			for (auto i = frames * 2; i < dst.size(); ++i)
+			{
+				INFO("i = " << i);
+				CHECK(dst[i] == sentinelFloat);
 			}
 		}
 	}
