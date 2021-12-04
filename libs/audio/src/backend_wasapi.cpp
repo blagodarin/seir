@@ -7,6 +7,7 @@
 #include <seir_audio/player.hpp>
 #include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
+#include "frame.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <seir_base/windows_utils.hpp>
@@ -71,9 +72,9 @@ namespace seir
 			format->nBlockAlign = static_cast<WORD>((format->wBitsPerSample / 8) * format->nChannels);
 			format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
 		}
-		if (format->nChannels != kAudioBackendChannels)
+		if (format->nChannels != kAudioChannels)
 		{
-			format->nChannels = kAudioBackendChannels;
+			format->nChannels = kAudioChannels;
 			format->nBlockAlign = static_cast<WORD>((format->wBitsPerSample / 8) * format->nChannels);
 			format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
 		}
@@ -91,7 +92,7 @@ namespace seir
 		if (const auto hr = audioClient->GetService(__uuidof(IAudioRenderClient), reinterpret_cast<void**>(&audioRenderClient)); !audioRenderClient)
 			return error("IAudioClient::GetService", hr);
 		callbacks.onBackendAvailable(format->nSamplesPerSec, bufferFrames);
-		const UINT32 updateFrames = bufferFrames / kAudioBackendFrameAlignment * kAudioBackendFrameAlignment / 2;
+		const UINT32 updateFrames = bufferFrames / kAudioFramesPerBlock * kAudioFramesPerBlock / 2;
 		bool audioClientStarted = false;
 		SEIR_FINALLY([&] {
 			if (audioClientStarted)
@@ -105,7 +106,7 @@ namespace seir
 				UINT32 paddingFrames = 0;
 				if (const auto hr = audioClient->GetCurrentPadding(&paddingFrames); FAILED(hr))
 					return error("IAudioClient::GetCurrentPadding", hr);
-				lockedFrames = (bufferFrames - paddingFrames) / kAudioBackendFrameAlignment * kAudioBackendFrameAlignment;
+				lockedFrames = (bufferFrames - paddingFrames) / kAudioFramesPerBlock * kAudioFramesPerBlock;
 				if (lockedFrames >= updateFrames)
 					break;
 				if (const auto status = ::WaitForSingleObjectEx(event, 2 * paddingFrames * 1000 / format->nSamplesPerSec, FALSE); status != WAIT_OBJECT_0)

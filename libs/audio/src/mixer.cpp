@@ -10,9 +10,6 @@
 #include <cassert>
 #include <numeric>
 
-constexpr size_t kResamplingMask = (1 << seir::kResamplingFractionBits) - 1;
-constexpr auto kResamplingPrefixFrames = std::lcm(sizeof(seir::AudioFrame), seir::kAudioAlignment) / sizeof(seir::AudioFrame);
-
 namespace seir
 {
 	void AudioMixer::reset(unsigned samplingRate, size_t maxBufferFrames)
@@ -20,11 +17,11 @@ namespace seir
 		assert(samplingRate > 0);
 		assert(maxBufferFrames > 0);
 		_samplingRate = samplingRate;
-		_processingBuffer.reserve(maxBufferFrames * sizeof(AudioFrame), false); // Enough for all supported audio frame format.
-		_resamplingBuffer.reserve(kResamplingPrefixFrames + (maxBufferFrames * AudioFormat::kMaxSamplingRate + samplingRate - 1) / samplingRate, false);
+		_processingBuffer.reserve(maxBufferFrames * kAudioFrameSize, false); // Enough for all supported audio frame format.
+		_resamplingBuffer.reserve((kAudioFramesPerBlock + (maxBufferFrames * AudioFormat::kMaxSamplingRate + samplingRate - 1) / samplingRate) * kAudioChannels, false);
 	}
 
-	size_t AudioMixer::mix(AudioFrame* output, size_t maxFrames, bool rewrite, AudioDecoderBase& decoder) noexcept
+	size_t AudioMixer::mix(float* output, size_t maxFrames, bool rewrite, AudioDecoderBase& decoder) noexcept
 	{
 		assert(_samplingRate > 0);
 		size_t frames = 0;
@@ -32,7 +29,7 @@ namespace seir
 		{
 			assert(maxFrames > 0);
 			const auto step = (samplingRate << kResamplingFractionBits) / _samplingRate;
-			auto input = _resamplingBuffer.data() + kResamplingPrefixFrames;
+			auto input = _resamplingBuffer.data() + kAudioFramesPerBlock;
 			auto offset = decoder._resamplingState._offset;
 			size_t readyFrames = 0;
 			if (offset >= step)
@@ -40,8 +37,9 @@ namespace seir
 				// The decoded audio is being upsampled and
 				// we aren't done with the last decoded frame.
 				assert(samplingRate < _samplingRate);
-				*--input = decoder._resamplingState._lastFrame;
+				input -= kAudioChannels;
 				++readyFrames;
+				std::memcpy(input, decoder._resamplingState._lastFrame, kAudioFrameSize);
 			}
 			const auto maxInputFrames = ((offset + (maxFrames - 1) * step) >> kResamplingFractionBits) + 1; // Index of the first input frame we won't touch.
 			const auto inputFrames = readyFrames + process(input + readyFrames, maxInputFrames - readyFrames, true, decoder);
@@ -53,27 +51,27 @@ namespace seir
 					// This may happen if the audio is being upsampled and
 					// the last input step spans more than one output frame.
 					assert(samplingRate < _samplingRate
-						&& ((offset + (stepCount - 1) * step) & kResamplingMask) >= step);
+						&& ((offset + (stepCount - 1) * step) & kResamplingFractionMask) >= step);
 					stepCount = maxFrames;
 				}
 				assert((offset + (stepCount - 1) * step) >> kResamplingFractionBits == inputFrames - 1);
 				if (rewrite)
-					resampleCopy2x1D(reinterpret_cast<float*>(output), stepCount, reinterpret_cast<float*>(input), offset, step);
+					resampleCopy2x1D(output, stepCount, input, offset, step);
 				else
-					resampleAdd2x1D(reinterpret_cast<float*>(output), stepCount, reinterpret_cast<float*>(input), offset, step);
+					resampleAdd2x1D(output, stepCount, input, offset, step);
 				frames += stepCount;
-				decoder._resamplingState._offset = offset & kResamplingMask;
-				decoder._resamplingState._lastFrame = input[inputFrames - 1];
+				decoder._resamplingState._offset = offset & kResamplingFractionMask;
+				std::memcpy(decoder._resamplingState._lastFrame, input + (inputFrames - 1) * kAudioChannels, kAudioFrameSize);
 			}
 		}
 		else
 			frames = process(output, maxFrames, rewrite, decoder);
 		if (frames > 0 && rewrite)
-			std::memset(output + frames, 0, (maxFrames - frames) * sizeof(AudioFrame));
+			std::memset(output + frames * kAudioChannels, 0, (maxFrames - frames) * kAudioFrameSize);
 		return frames;
 	}
 
-	size_t AudioMixer::process(AudioFrame* output, size_t maxFrames, bool rewrite, AudioDecoderBase& decoder) noexcept
+	size_t AudioMixer::process(float* output, size_t maxFrames, bool rewrite, AudioDecoderBase& decoder) noexcept
 	{
 		size_t frames = 0;
 		switch (const auto format = decoder.format(); format.channelLayout())
@@ -84,15 +82,15 @@ namespace seir
 			{
 			case AudioSampleType::i16:
 				if (rewrite)
-					convertSamples2x1D(reinterpret_cast<float*>(output), reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames);
+					convertSamples2x1D(output, reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames);
 				else
-					addSamples2x1D(reinterpret_cast<float*>(output), reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames);
+					addSamples2x1D(output, reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames);
 				break;
 			case AudioSampleType::f32:
 				if (rewrite)
 					duplicate1D_32(output, _processingBuffer.data(), frames);
 				else
-					addSamples2x1D(reinterpret_cast<float*>(output), reinterpret_cast<const float*>(_processingBuffer.data()), frames);
+					addSamples2x1D(output, reinterpret_cast<const float*>(_processingBuffer.data()), frames);
 				break;
 			}
 			break;
@@ -102,9 +100,9 @@ namespace seir
 			case AudioSampleType::i16:
 				frames = decoder.read(_processingBuffer.data(), maxFrames);
 				if (rewrite)
-					convertSamples1D(reinterpret_cast<float*>(output), reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames * 2);
+					convertSamples1D(output, reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames * kAudioChannels);
 				else
-					addSamples1D(reinterpret_cast<float*>(output), reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames * 2);
+					addSamples1D(output, reinterpret_cast<const int16_t*>(_processingBuffer.data()), frames * kAudioChannels);
 				break;
 			case AudioSampleType::f32:
 				if (rewrite)
@@ -112,7 +110,7 @@ namespace seir
 				else
 				{
 					frames = decoder.read(reinterpret_cast<float*>(_processingBuffer.data()), maxFrames);
-					addSamples1D(reinterpret_cast<float*>(output), reinterpret_cast<const float*>(_processingBuffer.data()), frames * 2);
+					addSamples1D(output, reinterpret_cast<const float*>(_processingBuffer.data()), frames * kAudioChannels);
 				}
 				break;
 			}

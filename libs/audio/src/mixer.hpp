@@ -6,7 +6,6 @@
 
 #include <seir_audio/processing.hpp>
 #include <seir_base/buffer.hpp>
-#include "frame.hpp"
 
 namespace seir
 {
@@ -16,14 +15,14 @@ namespace seir
 	{
 	public:
 		void reset(unsigned samplingRate, size_t maxBufferFrames);
-		size_t mix(AudioFrame* output, size_t maxFrames, bool rewrite, AudioDecoderBase&) noexcept;
+		size_t mix(float* output, size_t maxFrames, bool rewrite, AudioDecoderBase&) noexcept;
 
 	private:
-		size_t process(AudioFrame* output, size_t maxFrames, bool rewrite, AudioDecoderBase&) noexcept;
+		size_t process(float* output, size_t maxFrames, bool rewrite, AudioDecoderBase&) noexcept;
 
 	private:
 		unsigned _samplingRate = 0;
-		Buffer<std::byte, AlignedAllocator<kAudioAlignment>> _processingBuffer;
-		Buffer<AudioFrame, AlignedAllocator<kAudioAlignment>> _resamplingBuffer;
+		Buffer<std::byte, AlignedAllocator<kAudioBlockAlignment>> _processingBuffer;
+		Buffer<float, AlignedAllocator<kAudioBlockAlignment>> _resamplingBuffer;
 	};
 }

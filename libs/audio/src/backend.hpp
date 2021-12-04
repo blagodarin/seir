@@ -6,16 +6,11 @@
 
 #include <seir_audio/processing.hpp>
 
-#include <numeric>
 #include <string>
 
 namespace seir
 {
 	enum class AudioError;
-
-	constexpr auto kAudioBackendChannels = 2u;
-	constexpr auto kAudioBackendFrameBytes = kAudioBackendChannels * sizeof(float);
-	constexpr auto kAudioBackendFrameAlignment = std::lcm(kAudioAlignment, kAudioBackendFrameBytes) / kAudioBackendFrameBytes;
 
 	class AudioBackendCallbacks
 	{

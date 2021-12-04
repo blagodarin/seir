@@ -2,9 +2,9 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../../src/backend.hpp"
-
 #include <seir_audio/player.hpp>
+#include "../../src/backend.hpp"
+#include "../../src/frame.hpp"
 #include "common.hpp"
 
 #include <cstring>
@@ -70,7 +70,7 @@ namespace
 			const auto result = std::min(_framesRemaining, maxFrames);
 			if (result > 0)
 			{
-				std::memset(output, 0, result * seir::kAudioBackendFrameBytes);
+				std::memset(output, 0, result * seir::kAudioFrameSize);
 				_framesRemaining -= result;
 			}
 			else

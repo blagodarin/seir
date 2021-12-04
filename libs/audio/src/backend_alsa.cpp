@@ -8,6 +8,7 @@
 #include <seir_base/buffer.hpp>
 #include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
+#include "frame.hpp"
 
 #include <cstring>
 
@@ -45,14 +46,14 @@ namespace seir
 			CHECK_ALSA(::snd_pcm_hw_params_any(pcm, hw));
 			CHECK_ALSA(::snd_pcm_hw_params_set_access(pcm, hw, SND_PCM_ACCESS_RW_INTERLEAVED));
 			CHECK_ALSA(::snd_pcm_hw_params_set_format(pcm, hw, SND_PCM_FORMAT_FLOAT));
-			CHECK_ALSA(::snd_pcm_hw_params_set_channels(pcm, hw, kAudioBackendChannels));
+			CHECK_ALSA(::snd_pcm_hw_params_set_channels(pcm, hw, kAudioChannels));
 			CHECK_ALSA(::snd_pcm_hw_params_set_rate(pcm, hw, preferredSamplingRate, 0));
 			unsigned periods = 2;
 			CHECK_ALSA(::snd_pcm_hw_params_set_periods_near(pcm, hw, &periods, nullptr));
 			snd_pcm_uframes_t minPeriod = 0;
 			int dir = 0;
 			CHECK_ALSA(::snd_pcm_hw_params_get_period_size_min(hw, &minPeriod, &dir));
-			periodFrames = (minPeriod + kAudioBackendFrameAlignment - 1) / kAudioBackendFrameAlignment * kAudioBackendFrameAlignment;
+			periodFrames = (minPeriod + kAudioBlockAlignment - 1) / kAudioBlockAlignment * kAudioBlockAlignment;
 			CHECK_ALSA(::snd_pcm_hw_params_set_period_size(pcm, hw, periodFrames, periodFrames == minPeriod ? dir : 0));
 			CHECK_ALSA(::snd_pcm_hw_params(pcm, hw));
 			CHECK_ALSA(::snd_pcm_hw_params_get_period_size(hw, &periodFrames, nullptr));
@@ -67,14 +68,14 @@ namespace seir
 			CHECK_ALSA(::snd_pcm_sw_params_set_stop_threshold(pcm, sw, bufferFrames));
 			CHECK_ALSA(::snd_pcm_sw_params(pcm, sw));
 		}
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioAlignment>> period{ periodFrames * kAudioBackendChannels };
+		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> period{ periodFrames * kAudioChannels };
 		callbacks.onBackendAvailable(preferredSamplingRate, periodFrames);
 		SEIR_FINALLY([&] { ::snd_pcm_drain(pcm); });
 		while (callbacks.onBackendIdle())
 		{
 			auto data = period.data();
 			const auto writtenFrames = callbacks.onBackendRead(data, periodFrames);
-			std::memset(data + writtenFrames * kAudioBackendChannels, 0, (periodFrames - writtenFrames) * kAudioBackendFrameBytes);
+			std::memset(data + writtenFrames * kAudioChannels, 0, (periodFrames - writtenFrames) * kAudioFrameSize);
 			for (auto framesLeft = periodFrames; framesLeft > 0;)
 			{
 				const auto result = ::snd_pcm_writei(pcm, data, framesLeft);
@@ -89,7 +90,7 @@ namespace seir
 					::snd_pcm_wait(pcm, static_cast<int>((bufferFrames * 1000 + preferredSamplingRate - 1) / preferredSamplingRate));
 					continue;
 				}
-				data += static_cast<snd_pcm_uframes_t>(result) * kAudioBackendChannels;
+				data += static_cast<snd_pcm_uframes_t>(result) * kAudioChannels;
 				framesLeft -= static_cast<snd_pcm_uframes_t>(result);
 			}
 		}

@@ -123,7 +123,7 @@ namespace
 		{
 			size_t mixedFrames = 0;
 			for (const auto& decoder : _activeDecoders)
-				if (const auto frames = _mixer.mix(reinterpret_cast<seir::AudioFrame*>(output), maxFrames, !mixedFrames, static_cast<seir::AudioDecoderBase&>(*decoder)); frames > mixedFrames)
+				if (const auto frames = _mixer.mix(output, maxFrames, !mixedFrames, static_cast<seir::AudioDecoderBase&>(*decoder)); frames > mixedFrames)
 					mixedFrames = frames;
 			return mixedFrames;
 		}

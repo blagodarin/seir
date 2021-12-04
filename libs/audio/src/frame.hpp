@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include <seir_audio/processing.hpp>
+
+#include <numeric>
+
 namespace seir
 {
-	struct AudioFrame
-	{
-		float _left;
-		float _right;
-	};
+	constexpr size_t kAudioChannels = 2;
+	constexpr auto kAudioFrameSize = kAudioChannels * sizeof(float);
+	constexpr auto kAudioFramesPerBlock = std::lcm(kAudioFrameSize, kAudioBlockAlignment) / kAudioFrameSize;
 }

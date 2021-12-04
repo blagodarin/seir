@@ -13,7 +13,7 @@ namespace seir
 	struct AudioResamplingState
 	{
 		size_t _offset = 0;
-		AudioFrame _lastFrame{ 0.f, 0.f };
+		float _lastFrame[kAudioChannels]{};
 	};
 
 	class AudioDecoderBase : public AudioDecoder
