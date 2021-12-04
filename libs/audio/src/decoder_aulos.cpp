@@ -62,7 +62,8 @@ namespace
 		size_t read(void* buffer, size_t maxFrames) override
 		{
 			const auto result = _renderer->render(static_cast<float*>(buffer), maxFrames);
-			_finished = !result;
+			if (!_finished && result < maxFrames)
+				_finished = true;
 			return result;
 		}
 

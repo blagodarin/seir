@@ -18,6 +18,10 @@ namespace seir
 	public:
 		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const AudioFormat& preferredFormat);
 
+		// Wraps custom audio decoder to be used by audio player.
+		// TODO: Come up with a way to make this less error-prone.
+		[[nodiscard]] static UniquePtr<AudioDecoder> custom(const SharedPtr<AudioDecoder>&);
+
 		// Returns the decoded audio format.
 		[[nodiscard]] virtual AudioFormat format() const = 0;
 

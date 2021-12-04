@@ -2,6 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
+#include <seir_audio/format.hpp>
 #include <seir_audio/player.hpp>
 #include "../src/decoder.hpp"
 #include "common.hpp"

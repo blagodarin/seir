@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <seir_audio/format.hpp>
 #include <seir_base/shared_ptr.hpp>
 
 #include <string>
