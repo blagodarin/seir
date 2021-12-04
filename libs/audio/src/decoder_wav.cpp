@@ -6,13 +6,58 @@
 
 #include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
-#include <seir_audio/wav.hpp>
+#include <seir_base/endian.hpp>
 #include <seir_data/reader.hpp>
 
 #include <cstring>
 
 namespace
 {
+	enum : uint16_t
+	{
+		WAVE_FORMAT_PCM = 0x0001,
+		WAVE_FORMAT_IEEE_FLOAT = 0x0003,
+	};
+
+#pragma pack(push, 1)
+
+	struct WavFileHeader
+	{
+		enum : uint32_t
+		{
+			RIFF = seir::makeCC('R', 'I', 'F', 'F'),
+			WAVE = seir::makeCC('W', 'A', 'V', 'E'),
+		};
+
+		uint32_t _riffId;
+		uint32_t _riffSize;
+		uint32_t _waveId;
+	};
+
+	struct WavChunkHeader
+	{
+		enum : uint32_t
+		{
+			fmt = seir::makeCC('f', 'm', 't', ' '),
+			data = seir::makeCC('d', 'a', 't', 'a'),
+		};
+
+		uint32_t _id;
+		uint32_t _size;
+	};
+
+	struct WavFormatChunk
+	{
+		uint16_t format;
+		uint16_t channels;
+		uint32_t samplesPerSecond;
+		uint32_t bytesPerSecond;
+		uint16_t blockAlign;
+		uint16_t bitsPerSample;
+	};
+
+#pragma pack(pop)
+
 	class RawAudioDecoder final : public seir::AudioDecoder
 	{
 	public:

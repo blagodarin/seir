@@ -7,7 +7,7 @@
 #include <seir_audio/player.hpp>
 #include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
-#include "frame.hpp"
+#include "common.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <seir_base/windows_utils.hpp>

@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_audio/processing.hpp>
+#include "../src/processing.hpp"
 
 #include <algorithm>
 #include <array>
@@ -329,7 +329,7 @@ TEST_CASE("resample*2x1D")
 			});
 		}
 		alignas(seir::kAudioBlockAlignment) std::array<float, expected.size()> dst{};
-		constexpr auto step = (srcFrames << seir::kResamplingFractionBits) / dstFrames;
+		constexpr auto step = (srcFrames << seir::kAudioResamplingFractionBits) / dstFrames;
 		for (auto frames = dstFrames; frames > 0; --frames)
 		{
 			INFO("frames = " << frames);
@@ -395,7 +395,7 @@ TEST_CASE("resample*2x1D")
 			});
 		}
 		alignas(seir::kAudioBlockAlignment) std::array<float, expected.size()> dst{};
-		constexpr auto step = (srcFrames << seir::kResamplingFractionBits) / dstFrames;
+		constexpr auto step = (srcFrames << seir::kAudioResamplingFractionBits) / dstFrames;
 		for (auto frames = dstFrames; frames > 0; --frames)
 		{
 			INFO("frames = " << frames);

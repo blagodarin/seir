@@ -5,7 +5,6 @@
 #include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_audio/player.hpp>
-#include "../src/decoder.hpp"
 #include "common.hpp"
 
 #include <condition_variable>

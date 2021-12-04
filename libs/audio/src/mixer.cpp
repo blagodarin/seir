@@ -7,7 +7,7 @@
 #include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include "decoder.hpp"
-#include "frame.hpp"
+#include "processing.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -30,7 +30,7 @@ namespace seir
 		if (const auto samplingRate = decoder.format().samplingRate(); samplingRate != _samplingRate)
 		{
 			assert(maxFrames > 0);
-			const auto step = (samplingRate << kResamplingFractionBits) / _samplingRate;
+			const auto step = (samplingRate << kAudioResamplingFractionBits) / _samplingRate;
 			auto input = _resamplingBuffer.data() + kAudioFramesPerBlock;
 			auto offset = decoder._internal._resamplingOffset;
 			size_t readyFrames = 0;
@@ -44,26 +44,26 @@ namespace seir
 				static_assert(sizeof decoder._internal._resamplingBuffer == kAudioFrameSize);
 				std::memcpy(input, decoder._internal._resamplingBuffer, kAudioFrameSize);
 			}
-			const auto maxInputFrames = ((offset + (maxFrames - 1) * step) >> kResamplingFractionBits) + 1; // Index of the first input frame we won't touch.
+			const auto maxInputFrames = ((offset + (maxFrames - 1) * step) >> kAudioResamplingFractionBits) + 1; // Index of the first input frame we won't touch.
 			const auto inputFrames = readyFrames + process(input + readyFrames, maxInputFrames - readyFrames, true, decoder);
 			if (inputFrames > 0) [[likely]]
 			{
-				auto stepCount = ((inputFrames << kResamplingFractionBits) - offset + step - 1) / step;
+				auto stepCount = ((inputFrames << kAudioResamplingFractionBits) - offset + step - 1) / step;
 				if (stepCount > maxFrames)
 				{
 					// This may happen if the audio is being upsampled and
 					// the last input step spans more than one output frame.
 					assert(samplingRate < _samplingRate
-						&& ((offset + (stepCount - 1) * step) & kResamplingFractionMask) >= step);
+						&& ((offset + (stepCount - 1) * step) & kAudioResamplingFractionMask) >= step);
 					stepCount = maxFrames;
 				}
-				assert((offset + (stepCount - 1) * step) >> kResamplingFractionBits == inputFrames - 1);
+				assert((offset + (stepCount - 1) * step) >> kAudioResamplingFractionBits == inputFrames - 1);
 				if (rewrite)
 					resampleCopy2x1D(output, stepCount, input, offset, step);
 				else
 					resampleAdd2x1D(output, stepCount, input, offset, step);
 				frames += stepCount;
-				decoder._internal._resamplingOffset = offset & kResamplingFractionMask;
+				decoder._internal._resamplingOffset = offset & kAudioResamplingFractionMask;
 				static_assert(sizeof decoder._internal._resamplingBuffer == kAudioFrameSize);
 				std::memcpy(decoder._internal._resamplingBuffer, input + (inputFrames - 1) * kAudioChannels, kAudioFrameSize);
 			}

@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <seir_audio/processing.hpp>
-
 #include <string>
 
 namespace seir

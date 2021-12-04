@@ -4,7 +4,7 @@
 
 #include <seir_audio/player.hpp>
 #include "../../src/backend.hpp"
-#include "../../src/frame.hpp"
+#include "../../src/common.hpp"
 #include "common.hpp"
 
 #include <cstring>

@@ -8,7 +8,7 @@
 #include <seir_base/buffer.hpp>
 #include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
-#include "frame.hpp"
+#include "common.hpp"
 
 #include <cstring>
 

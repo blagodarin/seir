@@ -6,18 +6,17 @@ set(HEADERS
 	include/seir_audio/decoder.hpp
 	include/seir_audio/format.hpp
 	include/seir_audio/player.hpp
-	include/seir_audio/processing.hpp
-	include/seir_audio/wav.hpp
 	)
 set(SOURCES
 	src/backend.hpp
+	src/common.hpp
 	src/decoder.cpp
 	src/decoder.hpp
-	src/frame.hpp
 	src/mixer.cpp
 	src/mixer.hpp
 	src/player.cpp
 	src/processing.cpp
+	src/processing.hpp
 	)
 if(SEIR_AUDIO_AULOS)
 	list(APPEND SOURCES src/decoder_aulos.cpp)

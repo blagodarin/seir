@@ -6,7 +6,6 @@
 
 #include <seir_audio/decoder.hpp>
 #include "backend.hpp"
-#include "decoder.hpp"
 #include "mixer.hpp"
 
 #include <cassert>

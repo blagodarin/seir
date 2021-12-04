@@ -2,8 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_audio/processing.hpp>
 #include <seir_base/buffer.hpp>
+#include "../../src/processing.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -189,8 +189,8 @@ namespace
 	{
 		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
 		{
-			dst[2 * i] += src[2 * (j >> seir::kResamplingFractionBits)];
-			dst[2 * i + 1] += src[2 * (j >> seir::kResamplingFractionBits) + 1];
+			dst[2 * i] += src[2 * (j >> seir::kAudioResamplingFractionBits)];
+			dst[2 * i + 1] += src[2 * (j >> seir::kAudioResamplingFractionBits) + 1];
 		}
 	}
 
@@ -202,7 +202,7 @@ namespace
 		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() };
 		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
 		for (auto _ : state)
-			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kResamplingFractionBits) / 13);
+			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kAudioResamplingFractionBits) / 13);
 	}
 
 	void resampleAdd2x1D_Opt(benchmark::State& state) { benchmark_resampleAdd2x1D<seir::resampleAdd2x1D>(state); }
@@ -218,8 +218,8 @@ namespace
 	{
 		for (size_t i = 0, j = srcOffset; i < dstLength; ++i, j += srcStep)
 		{
-			dst[2 * i] = src[2 * (j >> seir::kResamplingFractionBits)];
-			dst[2 * i + 1] = src[2 * (j >> seir::kResamplingFractionBits) + 1];
+			dst[2 * i] = src[2 * (j >> seir::kAudioResamplingFractionBits)];
+			dst[2 * i + 1] = src[2 * (j >> seir::kAudioResamplingFractionBits) + 1];
 		}
 	}
 
@@ -231,7 +231,7 @@ namespace
 		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() };
 		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
 		for (auto _ : state)
-			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kResamplingFractionBits) / 13);
+			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kAudioResamplingFractionBits) / 13);
 	}
 
 	void resampleCopy2x1D_Opt(benchmark::State& state) { benchmark_resampleCopy2x1D<seir::resampleCopy2x1D>(state); }

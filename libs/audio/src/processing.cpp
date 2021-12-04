@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_audio/processing.hpp>
+#include "processing.hpp"
 
 namespace seir
 {
@@ -176,17 +176,17 @@ namespace seir
 #if SEIR_INTRINSICS_SSE // 40-85% faster with MSVC.
 		for (; i < (dstLength & ~size_t{ 0b1 }); i += 2)
 		{
-			const auto lo = src + 2 * (j >> kResamplingFractionBits);
+			const auto lo = src + 2 * (j >> kAudioResamplingFractionBits);
 			j += srcStep;
-			const auto hi = src + 2 * (j >> kResamplingFractionBits);
+			const auto hi = src + 2 * (j >> kAudioResamplingFractionBits);
 			j += srcStep;
 			_mm_store_ps(dst + 2 * i, _mm_add_ps(_mm_load_ps(dst + 2 * i), _mm_loadh_pi(_mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(lo)), reinterpret_cast<const __m64*>(hi))));
 		}
 #endif
 		for (; i < dstLength; ++i, j += srcStep)
 		{
-			dst[2 * i] += src[2 * (j >> kResamplingFractionBits)];
-			dst[2 * i + 1] += src[2 * (j >> kResamplingFractionBits) + 1];
+			dst[2 * i] += src[2 * (j >> kAudioResamplingFractionBits)];
+			dst[2 * i + 1] += src[2 * (j >> kAudioResamplingFractionBits) + 1];
 		}
 	}
 
@@ -196,17 +196,17 @@ namespace seir
 #if SEIR_INTRINSICS_SSE // 35-65% faster with MSVC.
 		for (; i < (dstLength & ~size_t{ 0b1 }); i += 2)
 		{
-			const auto lo = src + 2 * (j >> kResamplingFractionBits);
+			const auto lo = src + 2 * (j >> kAudioResamplingFractionBits);
 			j += srcStep;
-			const auto hi = src + 2 * (j >> kResamplingFractionBits);
+			const auto hi = src + 2 * (j >> kAudioResamplingFractionBits);
 			j += srcStep;
 			_mm_store_ps(dst + 2 * i, _mm_loadh_pi(_mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(lo)), reinterpret_cast<const __m64*>(hi)));
 		}
 #endif
 		for (; i < dstLength; ++i, j += srcStep)
 		{
-			dst[2 * i] = src[2 * (j >> kResamplingFractionBits)];
-			dst[2 * i + 1] = src[2 * (j >> kResamplingFractionBits) + 1];
+			dst[2 * i] = src[2 * (j >> kAudioResamplingFractionBits)];
+			dst[2 * i + 1] = src[2 * (j >> kAudioResamplingFractionBits) + 1];
 		}
 	}
 }
