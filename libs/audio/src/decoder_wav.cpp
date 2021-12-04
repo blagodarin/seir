@@ -4,6 +4,7 @@
 
 #include "decoder.hpp"
 
+#include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_audio/wav.hpp>
 #include <seir_data/reader.hpp>
@@ -12,18 +13,13 @@
 
 namespace
 {
-	class RawAudioDecoder final : public seir::AudioDecoderBase
+	class RawAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
 		RawAudioDecoder(seir::UniquePtr<seir::Blob>&& blob, const seir::AudioFormat& format) noexcept
 			: _blob{ std::move(blob) }
 			, _format{ format }
 		{
-		}
-
-		bool finished() const noexcept override
-		{
-			return _reader.size() - _reader.offset() < _format.bytesPerFrame();
 		}
 
 		seir::AudioFormat format() const override

@@ -9,16 +9,20 @@
 
 namespace seir
 {
-	class AudioDecoderBase;
+	class AudioDecoder;
 
 	class AudioMixer
 	{
 	public:
 		void reset(unsigned samplingRate, size_t maxBufferFrames);
-		size_t mix(float* output, size_t maxFrames, bool rewrite, AudioDecoderBase&) noexcept;
+		size_t mix(float* output, size_t maxFrames, bool rewrite, AudioDecoder&) noexcept;
+
+		// A little hack to avoid making more AudioDecoder friends.
+		template <class T>
+		static auto& decoderData(T& decoder) noexcept { return decoder._internal; }
 
 	private:
-		size_t process(float* output, size_t maxFrames, bool rewrite, AudioDecoderBase&) noexcept;
+		size_t process(float* output, size_t maxFrames, bool rewrite, AudioDecoder&) noexcept;
 
 	private:
 		unsigned _samplingRate = 0;

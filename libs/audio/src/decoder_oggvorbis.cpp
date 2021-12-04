@@ -4,6 +4,7 @@
 
 #include "decoder.hpp"
 
+#include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_data/reader.hpp>
 #include <seir_base/int_utils.hpp>
@@ -16,7 +17,7 @@
 
 namespace
 {
-	class OggVorbisAudioDecoder final : public seir::AudioDecoderBase
+	class OggVorbisAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
 		OggVorbisAudioDecoder(const seir::SharedPtr<seir::Blob>& blob) noexcept
@@ -49,11 +50,6 @@ namespace
 			_format = { seir::AudioSampleType::f32, channelLayout, static_cast<unsigned>(info->rate) };
 			_totalFrames = static_cast<size_t>(totalFrames);
 			return true;
-		}
-
-		bool finished() const noexcept override
-		{
-			return _currentFrame == _totalFrames;
 		}
 
 		seir::AudioFormat format() const override

@@ -18,10 +18,6 @@ namespace seir
 	public:
 		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const AudioFormat& preferredFormat);
 
-		// Wraps custom audio decoder to be used by audio player.
-		// TODO: Come up with a way to make this less error-prone.
-		[[nodiscard]] static UniquePtr<AudioDecoder> custom(const SharedPtr<AudioDecoder>&);
-
 		// Returns the decoded audio format.
 		[[nodiscard]] virtual AudioFormat format() const = 0;
 
@@ -30,5 +26,14 @@ namespace seir
 
 		// Restarts decoding from the specified offset.
 		virtual bool seek(size_t frameOffset) = 0;
+
+	private:
+		struct
+		{
+			bool _finished = false;
+			size_t _resamplingOffset = 0;
+			float _resamplingBuffer[2]{};
+		} _internal;
+		friend class AudioMixer;
 	};
 }

@@ -4,6 +4,7 @@
 
 #include <seir_audio/player.hpp>
 
+#include <seir_audio/decoder.hpp>
 #include "backend.hpp"
 #include "decoder.hpp"
 #include "mixer.hpp"
@@ -100,12 +101,14 @@ namespace
 				_decoders.erase(
 					std::remove_if(_decoders.begin(), _decoders.end(),
 						[this](auto& element) {
+							auto& decoderData = seir::AudioMixer::decoderData(*element.first);
 							if (!element.second)
 							{
-								static_cast<seir::AudioDecoderBase&>(*element.first).restart();
+								decoderData._finished = !element.first->seek(0);
+								decoderData._resamplingOffset = 0;
 								element.second = true;
 							}
-							if (static_cast<seir::AudioDecoderBase&>(*element.first).finished())
+							if (decoderData._finished)
 								return true;
 							_activeDecoders.emplace_back(element.first);
 							return false;
@@ -121,11 +124,11 @@ namespace
 
 		size_t onBackendRead(float* output, size_t maxFrames) noexcept override
 		{
-			size_t mixedFrames = 0;
+			size_t totalFrames = 0;
 			for (const auto& decoder : _activeDecoders)
-				if (const auto frames = _mixer.mix(output, maxFrames, !mixedFrames, static_cast<seir::AudioDecoderBase&>(*decoder)); frames > mixedFrames)
-					mixedFrames = frames;
-			return mixedFrames;
+				if (const auto frames = _mixer.mix(output, maxFrames, !totalFrames, *decoder); frames > totalFrames)
+					totalFrames = frames;
+			return totalFrames;
 		}
 
 	private:

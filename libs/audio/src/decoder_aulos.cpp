@@ -4,6 +4,7 @@
 
 #include "decoder.hpp"
 
+#include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_data/reader.hpp>
 
@@ -40,18 +41,13 @@ namespace
 		return { seir::AudioSampleType::f32, channels, format.samplingRate() };
 	}
 
-	class AulosAudioDecoder final : public seir::AudioDecoderBase
+	class AulosAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
 		AulosAudioDecoder(std::unique_ptr<const aulos::Composition>&& composition, std::unique_ptr<aulos::Renderer>&& renderer) noexcept
 			: _composition{ std::move(composition) }
 			, _renderer{ std::move(renderer) }
 		{
-		}
-
-		bool finished() const noexcept override
-		{
-			return _finished;
 		}
 
 		seir::AudioFormat format() const noexcept override
@@ -61,17 +57,13 @@ namespace
 
 		size_t read(void* buffer, size_t maxFrames) override
 		{
-			const auto result = _renderer->render(static_cast<float*>(buffer), maxFrames);
-			if (!_finished && result < maxFrames)
-				_finished = true;
-			return result;
+			return _renderer->render(static_cast<float*>(buffer), maxFrames);
 		}
 
 		bool seek(size_t frameOffset) override
 		{
 			_renderer->restart();
 			_renderer->skipFrames(frameOffset);
-			_finished = false;
 			return true;
 		}
 
@@ -79,7 +71,6 @@ namespace
 		const std::unique_ptr<const aulos::Composition> _composition;
 		const std::unique_ptr<aulos::Renderer> _renderer;
 		const seir::AudioFormat _format = ::convertFormat(_renderer->format());
-		bool _finished = false;
 	};
 }
 

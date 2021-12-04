@@ -2,6 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
+#include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_audio/player.hpp>
 #include "../src/decoder.hpp"
@@ -18,7 +19,7 @@
 namespace
 {
 	class SingleSourcePlayerTester
-		: public seir::AudioDecoderBase
+		: public seir::AudioDecoder
 		, public seir::AudioCallbacks
 	{
 	public:
@@ -43,11 +44,6 @@ namespace
 		}
 
 	private:
-		bool finished() const noexcept override
-		{
-			return !_framesRemaining;
-		}
-
 		seir::AudioFormat format() const noexcept override
 		{
 			return _format;
@@ -67,9 +63,9 @@ namespace
 			return result;
 		}
 
-		bool seek(size_t) noexcept override
+		bool seek(size_t frameOffset) noexcept override
 		{
-			return false;
+			return frameOffset == 0;
 		}
 
 		void onPlaybackError(seir::AudioError error) override

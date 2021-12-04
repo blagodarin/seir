@@ -4,31 +4,15 @@
 
 #pragma once
 
-#include <seir_audio/decoder.hpp>
-
-#include "frame.hpp"
-
 namespace seir
 {
-	struct AudioResamplingState
-	{
-		size_t _offset = 0;
-		float _lastFrame[kAudioChannels]{};
-	};
-
-	class AudioDecoderBase : public AudioDecoder
-	{
-	public:
-		AudioResamplingState _resamplingState;
-
-		virtual bool finished() const noexcept = 0;
-
-		void restart() noexcept
-		{
-			seek(0);
-			_resamplingState = {};
-		}
-	};
+	class AudioDecoder;
+	class AudioFormat;
+	class Blob;
+	template <class>
+	class SharedPtr;
+	template <class>
+	class UniquePtr;
 
 #if SEIR_AUDIO_AULOS
 	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>&, const AudioFormat&);
