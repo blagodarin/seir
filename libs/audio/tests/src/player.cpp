@@ -42,7 +42,7 @@ namespace
 		}
 
 	private:
-		bool finishedDecoding() const noexcept override
+		bool finished() const noexcept override
 		{
 			return !_framesRemaining;
 		}

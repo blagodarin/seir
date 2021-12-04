@@ -5,6 +5,7 @@
 #include <seir_audio/decoder.hpp>
 #include <seir_audio/player.hpp>
 #include <seir_data/blob.hpp>
+#include <seir_data/file.hpp>
 
 #include <condition_variable>
 #include <iostream>
@@ -52,21 +53,16 @@ int main(int argc, char** argv)
 		std::cerr << "Usage:\n\t" << std::filesystem::path{ argv[0] }.filename().string() << " FILE\n";
 		return 1;
 	}
-	const auto file = seir::SharedPtr{ seir::Blob::from(argv[1]) };
-	if (!file)
-	{
-		std::cerr << "Bad file \"" << argv[1] << "\"\n";
-		return 1;
-	}
-	const auto decoder = seir::SharedPtr{ seir::AudioDecoder::create(file, {}) };
+	const std::filesystem::path path{ argv[1] };
+	auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ seir::openFile(path) }, {});
 	if (!decoder)
 	{
-		std::cerr << "Bad audio file \"" << argv[1] << "\"\n";
+		std::cerr << "Unable to play " << path << '\n';
 		return 1;
 	}
 	AudioCallbacks callbacks;
 	const auto player = seir::AudioPlayer::create(callbacks, decoder->format().samplingRate());
 	assert(player);
-	player->play(decoder);
+	player->play(seir::SharedPtr{ std::move(decoder) });
 	return callbacks.join();
 }

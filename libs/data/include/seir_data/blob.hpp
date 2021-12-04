@@ -7,7 +7,7 @@
 #include <seir_base/shared_ptr.hpp>
 
 #include <cassert>
-#include <filesystem>
+#include <cstddef>
 
 namespace seir
 {
@@ -21,9 +21,6 @@ namespace seir
 
 		// Creates a Blob that references a part of another Blob.
 		[[nodiscard]] static UniquePtr<Blob> from(const SharedPtr<Blob>&, size_t offset, size_t size);
-
-		// Creates a Blob that references a memory-mapped file.
-		[[nodiscard]] static UniquePtr<Blob> from(const std::filesystem::path&);
 
 		// Returns the data pointer.
 		[[nodiscard]] constexpr const void* data() const noexcept { return _data; }

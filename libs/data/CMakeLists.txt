@@ -4,13 +4,14 @@
 
 set(HEADERS
 	include/seir_data/blob.hpp
+	include/seir_data/file.hpp
 	include/seir_data/reader.hpp
 	)
 if(WIN32)
-	list(APPEND SOURCES src/blob_windows.cpp)
+	list(APPEND SOURCES src/file_windows.cpp)
 else()
-	list(APPEND SOURCES src/blob_posix.cpp)
-	set_property(SOURCE src/blob_posix.cpp APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
+	list(APPEND SOURCES src/file_posix.cpp)
+	set_property(SOURCE src/file_posix.cpp APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
 endif()
 source_group("include" FILES ${HEADERS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})

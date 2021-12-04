@@ -4,10 +4,12 @@
 
 #include "decoder.hpp"
 
+#include <seir_audio/format.hpp>
 #include <seir_data/reader.hpp>
 #include <seir_base/int_utils.hpp>
 
 #include <cstring>
+#include <limits>
 
 #define OV_EXCLUDE_STATIC_CALLBACKS
 #include <vorbis/vorbisfile.h>
@@ -53,7 +55,7 @@ namespace
 			return true;
 		}
 
-		bool finishedDecoding() const noexcept override
+		bool finished() const noexcept override
 		{
 			return _currentFrame == _totalFrames;
 		}

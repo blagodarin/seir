@@ -4,15 +4,18 @@
 
 #include "mixer.hpp"
 
+#include <seir_audio/format.hpp>
 #include "decoder.hpp"
 
 #include <cassert>
+#include <numeric>
 
 namespace
 {
-	constexpr int kResamplingFractionBits = 16;
-	constexpr int kResamplingScale = 1 << kResamplingFractionBits;
-	constexpr int kResamplingMask = kResamplingScale - 1;
+	constexpr size_t kResamplingFractionBits = 16;
+	constexpr size_t kResamplingScale = 1 << kResamplingFractionBits;
+	constexpr size_t kResamplingMask = kResamplingScale - 1;
+	constexpr auto kResamplingPrefixFrames = std::lcm(sizeof(seir::AudioFrame), seir::kAudioAlignment) / sizeof(seir::AudioFrame);
 }
 
 namespace seir
@@ -22,8 +25,8 @@ namespace seir
 		assert(samplingRate > 0);
 		assert(maxBufferFrames > 0);
 		_samplingRate = samplingRate;
-		_processingBuffer.reserve(maxBufferFrames * 2 * sizeof(float), false);
-		_resamplingBuffer.reserve(maxBufferFrames, false);
+		_processingBuffer.reserve(maxBufferFrames * sizeof(AudioFrame), false); // Enough for all supported audio frame format.
+		_resamplingBuffer.reserve(kResamplingPrefixFrames + (maxBufferFrames * AudioFormat::kMaxSamplingRate + samplingRate - 1) / samplingRate, false);
 	}
 
 	size_t AudioMixer::mix(AudioFrame* output, size_t maxFrames, bool rewrite, AudioDecoderBase& decoder) noexcept
@@ -32,44 +35,46 @@ namespace seir
 		size_t frames = 0;
 		if (const auto samplingRate = decoder.format().samplingRate(); samplingRate != _samplingRate)
 		{
-			const auto step = static_cast<int>(samplingRate * kResamplingScale / _samplingRate);
-			frames = decoder._resamplingState.flush(output, maxFrames, rewrite, step);
-			if (const auto maxOutputFrames = static_cast<int>(maxFrames - frames); maxOutputFrames > 0) [[likely]]
+			assert(maxFrames > 0);
+			const auto step = samplingRate * kResamplingScale / _samplingRate;
+			auto input = _resamplingBuffer.data() + kResamplingPrefixFrames;
+			auto offset = decoder._resamplingState._offset;
+			size_t readyFrames = 0;
+			if (offset >= step)
 			{
-				auto offset = decoder._resamplingState._offset;
-				const auto maxInputFrames = ((offset + (maxOutputFrames - 1) * step) >> kResamplingFractionBits) + 1;
-				const auto inputFrames = process(_resamplingBuffer.data(), static_cast<size_t>(maxInputFrames), true, decoder);
-				if (inputFrames > 0) [[likely]]
+				// The decoded audio is being upsampled and
+				// we aren't done with the last decoded frame.
+				assert(samplingRate < _samplingRate);
+				*--input = decoder._resamplingState._lastFrame;
+				++readyFrames;
+			}
+			const auto maxInputFrames = ((offset + (maxFrames - 1) * step) >> kResamplingFractionBits) + 1; // Index of the first input frame we won't touch.
+			const auto inputFrames = readyFrames + process(input + readyFrames, maxInputFrames - readyFrames, true, decoder);
+			if (inputFrames > 0) [[likely]]
+			{
+				auto stepCount = ((inputFrames << kResamplingFractionBits) - offset + step - 1) / step;
+				if (stepCount > maxFrames)
 				{
-					auto stepCount = (((static_cast<int>(inputFrames) << kResamplingFractionBits) - 1) - offset) / step + 1;
-					if (stepCount > maxOutputFrames)
-					{
-						// This may happen if the audio is being upsampled and
-						// the last input step spans more than one output frame.
-						// TODO: Assert.
-						stepCount = maxOutputFrames;
-					}
-					const auto dst = output + frames;
-					const auto src = _resamplingBuffer.data();
-					if (rewrite)
-					{
-						for (int i = 0; i < stepCount; ++i, offset += step)
-							dst[i] = src[offset >> kResamplingFractionBits];
-					}
-					else
-					{
-						for (int i = 0; i < stepCount; ++i, offset += step)
-							dst[i] += src[offset >> kResamplingFractionBits];
-					}
-					assert((offset - step) >> kResamplingFractionBits == static_cast<int>(inputFrames) - 1);
-					frames += static_cast<size_t>(stepCount);
-					decoder._resamplingState._offset = offset & kResamplingMask;
-					if (decoder._resamplingState._offset >= step)
-					{
-						decoder._resamplingState._offset -= kResamplingScale;
-						decoder._resamplingState._lastFrame = src[inputFrames - 1];
-					}
+					// This may happen if the audio is being upsampled and
+					// the last input step spans more than one output frame.
+					assert(samplingRate < _samplingRate
+						&& ((offset + (stepCount - 1) * step) & kResamplingMask) >= step);
+					stepCount = maxFrames;
 				}
+				if (rewrite)
+				{
+					for (size_t i = 0; i < stepCount; ++i, offset += step)
+						output[i] = input[offset >> kResamplingFractionBits];
+				}
+				else
+				{
+					for (size_t i = 0; i < stepCount; ++i, offset += step)
+						output[i] += input[offset >> kResamplingFractionBits];
+				}
+				assert((offset - step) >> kResamplingFractionBits == inputFrames - 1);
+				frames += stepCount;
+				decoder._resamplingState._offset = offset & kResamplingMask;
+				decoder._resamplingState._lastFrame = input[inputFrames - 1];
 			}
 		}
 		else

@@ -4,6 +4,7 @@
 
 #include "decoder.hpp"
 
+#include <seir_audio/format.hpp>
 #include <seir_audio/wav.hpp>
 #include <seir_data/reader.hpp>
 
@@ -20,7 +21,7 @@ namespace
 		{
 		}
 
-		bool finishedDecoding() const noexcept override
+		bool finished() const noexcept override
 		{
 			return _reader.size() - _reader.offset() < _format.bytesPerFrame();
 		}

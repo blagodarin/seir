@@ -7,6 +7,7 @@
 #include <array>
 #include <cstdint>
 
+#include <ostream>
 #include <doctest/doctest.h>
 
 TEST_CASE("Reader")

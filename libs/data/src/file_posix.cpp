@@ -2,9 +2,10 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_data/blob.hpp>
+#include <seir_data/file.hpp>
 
 #include <seir_base/scope.hpp>
+#include <seir_data/blob.hpp>
 
 #include <fcntl.h>    // open
 #include <stdio.h>    // perror
@@ -47,7 +48,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<Blob> Blob::from(const std::filesystem::path& path)
+	UniquePtr<Blob> openFile(const std::filesystem::path& path)
 	{
 		if (const Descriptor file{ ::open(path.c_str(), O_RDONLY | O_NOATIME) }; file == -1)
 			::perror("open");

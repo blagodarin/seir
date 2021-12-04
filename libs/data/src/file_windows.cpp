@@ -2,10 +2,11 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_data/blob.hpp>
+#include <seir_data/file.hpp>
 
 #include <seir_base/int_utils.hpp>
 #include <seir_base/scope.hpp>
+#include <seir_data/blob.hpp>
 
 #include <limits>
 
@@ -34,7 +35,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<Blob> Blob::from(const std::filesystem::path& path)
+	UniquePtr<Blob> openFile(const std::filesystem::path& path)
 	{
 		if (windows::Handle file{ ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) }; file == INVALID_HANDLE_VALUE)
 			windows::reportLastError("CreateFileW");

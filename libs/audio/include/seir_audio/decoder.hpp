@@ -4,14 +4,13 @@
 
 #pragma once
 
-#include <seir_audio/format.hpp>
 #include <seir_base/shared_ptr.hpp>
 
 #include <cstddef>
-#include <utility>
 
 namespace seir
 {
+	class AudioFormat;
 	class Blob;
 
 	class AudioDecoder : public ReferenceCounter

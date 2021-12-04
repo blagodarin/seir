@@ -4,6 +4,7 @@
 
 #include "decoder.hpp"
 
+#include <seir_audio/format.hpp>
 #include <seir_data/reader.hpp>
 
 #include <aulos/composition.hpp>
@@ -14,13 +15,18 @@ namespace
 {
 	constexpr aulos::AudioFormat convertFormat(const seir::AudioFormat& format) noexcept
 	{
+		auto samplingRate = format.samplingRate();
+		if (samplingRate < aulos::Renderer::kMinSamplingRate)
+			samplingRate = aulos::Renderer::kMinSamplingRate;
+		else if (samplingRate > aulos::Renderer::kMaxSamplingRate)
+			samplingRate = aulos::Renderer::kMaxSamplingRate;
 		auto channels = aulos::ChannelLayout::Stereo;
 		switch (format.channelLayout())
 		{
 		case seir::AudioChannelLayout::Mono: channels = aulos::ChannelLayout::Mono; break;
 		case seir::AudioChannelLayout::Stereo: break;
 		}
-		return { std::clamp(format.samplingRate(), aulos::Renderer::kMinSamplingRate, aulos::Renderer::kMaxSamplingRate), channels };
+		return { samplingRate, channels };
 	}
 
 	constexpr seir::AudioFormat convertFormat(const aulos::AudioFormat& format) noexcept
@@ -43,7 +49,7 @@ namespace
 		{
 		}
 
-		bool finishedDecoding() const noexcept override
+		bool finished() const noexcept override
 		{
 			return _finished;
 		}

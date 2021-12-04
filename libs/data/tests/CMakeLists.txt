@@ -4,6 +4,7 @@
 
 set(SOURCES
 	src/blob.cpp
+	src/file.cpp
 	src/main.cpp
 	src/main.hpp
 	src/reader.cpp
