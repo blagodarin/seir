@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	const std::filesystem::path path{ argv[1] };
-	auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ seir::openFile(path) }, {});
+	auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ seir::openFile(path) });
 	if (!decoder)
 	{
 		std::cerr << "Unable to play " << path << '\n';

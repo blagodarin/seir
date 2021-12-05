@@ -100,7 +100,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>& blob, const AudioFormat&)
+	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>& blob, const AudioDecoder::Preferences&)
 	{
 		Reader reader{ *blob };
 		if (const auto fileHeader = reader.read<WavFileHeader>(); !fileHeader

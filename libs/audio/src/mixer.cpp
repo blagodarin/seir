@@ -5,8 +5,6 @@
 #include "mixer.hpp"
 
 #include <seir_audio/decoder.hpp>
-#include <seir_audio/format.hpp>
-#include "decoder.hpp"
 #include "processing.hpp"
 
 #include <cassert>

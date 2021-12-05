@@ -130,7 +130,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>& blob, const AudioFormat&)
+	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>& blob, const AudioDecoder::Preferences&)
 	{
 		auto decoder = makeUnique<OggVorbisAudioDecoder>(blob);
 		return UniquePtr<AudioDecoder>{ decoder->open() ? std::move(decoder) : nullptr };

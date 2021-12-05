@@ -4,23 +4,17 @@
 
 #pragma once
 
+#include <seir_audio/decoder.hpp>
+
 namespace seir
 {
-	class AudioDecoder;
-	class AudioFormat;
-	class Blob;
-	template <class>
-	class SharedPtr;
-	template <class>
-	class UniquePtr;
-
 #if SEIR_AUDIO_AULOS
-	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>&, const AudioFormat&);
+	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>&, const AudioDecoder::Preferences&);
 #endif
 #if SEIR_AUDIO_OGGVORBIS
-	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>&, const AudioFormat&);
+	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>&, const AudioDecoder::Preferences&);
 #endif
 #if SEIR_AUDIO_WAV
-	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>&, const AudioFormat&);
+	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>&, const AudioDecoder::Preferences&);
 #endif
 }

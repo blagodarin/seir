@@ -4,19 +4,26 @@
 
 #pragma once
 
+#include <seir_audio/format.hpp>
 #include <seir_base/shared_ptr.hpp>
 
 #include <cstddef>
 
 namespace seir
 {
-	class AudioFormat;
 	class Blob;
 
 	class AudioDecoder : public ReferenceCounter
 	{
 	public:
-		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const AudioFormat& preferredFormat);
+		// Decoding preferences.
+		struct Preferences
+		{
+			AudioFormat format;
+			bool loop = false;
+		};
+
+		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const Preferences& = {});
 
 		// Returns the decoded audio format.
 		[[nodiscard]] virtual AudioFormat format() const = 0;

@@ -4,7 +4,6 @@
 
 #include "decoder.hpp"
 
-#include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_data/reader.hpp>
 
@@ -76,11 +75,11 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>& blob, const AudioFormat& format)
+	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>& blob, const AudioDecoder::Preferences& preferences)
 	{
-		const std::string buffer{ static_cast<const char*>(blob->data()), blob->size() }; // Aulos requires null-terminated input. =(
+		const std::string buffer{ static_cast<const char*>(blob->data()), blob->size() }; // TODO: Remove when Aulos will support non-null-terminated input.
 		if (auto composition = aulos::Composition::create(buffer.c_str()))
-			if (auto renderer = aulos::Renderer::create(*composition, ::convertFormat(format)))
+			if (auto renderer = aulos::Renderer::create(*composition, ::convertFormat(preferences.format), preferences.loop))
 				return makeUnique<AudioDecoder, AulosAudioDecoder>(std::move(composition), std::move(renderer));
 		return {};
 	}
