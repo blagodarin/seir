@@ -6,6 +6,10 @@ set(HEADERS
 	include/seir_data/blob.hpp
 	include/seir_data/file.hpp
 	include/seir_data/reader.hpp
+	include/seir_data/storage.hpp
+	)
+set(SOURCES
+	src/storage.cpp
 	)
 if(WIN32)
 	list(APPEND SOURCES src/file_windows.cpp)

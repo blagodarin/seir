@@ -2,11 +2,10 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_data/file.hpp>
-
 #include <seir_base/endian.hpp>
 #include <seir_data/blob.hpp>
-#include "main.hpp"
+#include <seir_data/file.hpp>
+#include "common.hpp"
 
 #include <doctest/doctest.h>
 

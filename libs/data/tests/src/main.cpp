@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "main.hpp"
+#include "common.hpp"
 
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
