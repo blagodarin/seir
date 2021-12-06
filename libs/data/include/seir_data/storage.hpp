@@ -17,7 +17,14 @@ namespace seir
 	class Storage
 	{
 	public:
-		Storage();
+		enum class UseFileSystem
+		{
+			Never,
+			AfterAttachments,
+			BeforeAttachments,
+		};
+
+		Storage(UseFileSystem);
 		~Storage() noexcept;
 
 		//

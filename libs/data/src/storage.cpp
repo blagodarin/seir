@@ -6,6 +6,7 @@
 
 #include <seir_base/shared_ptr.hpp>
 #include <seir_data/blob.hpp>
+#include <seir_data/file.hpp>
 
 #include <string>
 #include <unordered_map>
@@ -14,11 +15,15 @@ namespace seir
 {
 	struct StorageImpl
 	{
+		const Storage::UseFileSystem _useFileSystem;
 		std::unordered_map<std::string, SharedPtr<Blob>> _attachments;
+
+		StorageImpl(Storage::UseFileSystem useFileSystem) noexcept
+			: _useFileSystem{ useFileSystem } {}
 	};
 
-	Storage::Storage()
-		: _impl{ makeUnique<StorageImpl>() }
+	Storage::Storage(UseFileSystem useFileSystem)
+		: _impl{ makeUnique<StorageImpl>(useFileSystem) }
 	{
 	}
 
@@ -31,8 +36,14 @@ namespace seir
 
 	SharedPtr<Blob> Storage::open(const std::string& name) const
 	{
+		if (_impl->_useFileSystem == UseFileSystem::BeforeAttachments)
+			if (auto blob = openFile(name))
+				return SharedPtr{ std::move(blob) };
 		if (const auto i = _impl->_attachments.find(name); i != _impl->_attachments.end())
 			return i->second;
+		if (_impl->_useFileSystem == UseFileSystem::AfterAttachments)
+			if (auto blob = openFile(name))
+				return SharedPtr{ std::move(blob) };
 		return {};
 	}
 }
