@@ -21,29 +21,17 @@ namespace
 
 #pragma pack(push, 1)
 
-	struct WavFileHeader
+	struct RiffFileHeader
 	{
-		enum : uint32_t
-		{
-			RIFF = seir::makeCC('R', 'I', 'F', 'F'),
-			WAVE = seir::makeCC('W', 'A', 'V', 'E'),
-		};
-
-		uint32_t _riffId;
-		uint32_t _riffSize;
-		uint32_t _waveId;
+		uint32_t id;
+		uint32_t size;
+		uint32_t type;
 	};
 
-	struct WavChunkHeader
+	struct RiffChunkHeader
 	{
-		enum : uint32_t
-		{
-			fmt = seir::makeCC('f', 'm', 't', ' '),
-			data = seir::makeCC('d', 'a', 't', 'a'),
-		};
-
-		uint32_t _id;
-		uint32_t _size;
+		uint32_t id;
+		uint32_t size;
 	};
 
 	struct WavFormatChunk
@@ -62,10 +50,7 @@ namespace
 	{
 	public:
 		RawAudioDecoder(seir::UniquePtr<seir::Blob>&& blob, const seir::AudioFormat& format) noexcept
-			: _blob{ std::move(blob) }
-			, _format{ format }
-		{
-		}
+			: _blob{ std::move(blob) }, _format{ format } {}
 
 		seir::AudioFormat format() const override
 		{
@@ -100,29 +85,30 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>& blob, const AudioDecoder::Preferences&)
+	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences&)
 	{
 		Reader reader{ *blob };
-		if (const auto fileHeader = reader.read<WavFileHeader>(); !fileHeader
-			|| fileHeader->_riffId != WavFileHeader::RIFF
-			|| fileHeader->_waveId != WavFileHeader::WAVE)
+		if (const auto fileHeader = reader.read<RiffFileHeader>(); !fileHeader
+			|| fileHeader->id != seir::makeCC('R', 'I', 'F', 'F')
+			|| fileHeader->type != seir::makeCC('W', 'A', 'V', 'E'))
 			return {};
-		const auto findChunk = [&reader](uint32_t id) -> const WavChunkHeader* {
+		const auto findChunk = [&reader](uint32_t id) -> const RiffChunkHeader* {
 			for (;;)
 			{
-				const auto header = reader.read<WavChunkHeader>();
+				const auto header = reader.read<RiffChunkHeader>();
 				if (!header)
 					return nullptr;
-				if (header->_id == id)
+				if (header->id == id)
 					return header;
-				if (!reader.skip(header->_size))
+				if (!reader.skip(header->size))
 					return nullptr;
 			}
 		};
-		if (!findChunk(WavChunkHeader::fmt))
+		const auto fmtHeader = findChunk(seir::makeCC('f', 'm', 't', ' '));
+		if (!fmtHeader || fmtHeader->size < sizeof(WavFormatChunk))
 			return {};
 		const auto fmt = reader.read<WavFormatChunk>();
-		if (!fmt)
+		if (!fmt || !reader.skip(fmtHeader->size - sizeof(WavFormatChunk)))
 			return {};
 		AudioSampleType sampleType;
 		if (fmt->format == WAVE_FORMAT_PCM && fmt->bitsPerSample == 16)
@@ -140,12 +126,12 @@ namespace seir
 		}
 		if (fmt->samplesPerSecond < AudioFormat::kMinSamplingRate || fmt->samplesPerSecond > AudioFormat::kMaxSamplingRate)
 			return {};
-		const auto dataHeader = findChunk(WavChunkHeader::data);
+		const auto dataHeader = findChunk(seir::makeCC('d', 'a', 't', 'a'));
 		if (!dataHeader)
 			return {};
 		auto dataSize = reader.size() - reader.offset();
-		if (dataSize > dataHeader->_size)
-			dataSize = dataHeader->_size;
+		if (dataSize > dataHeader->size)
+			dataSize = dataHeader->size;
 		return makeUnique<AudioDecoder, RawAudioDecoder>(Blob::from(blob, reader.offset(), dataSize), AudioFormat{ sampleType, channelLayout, fmt->samplesPerSecond });
 	}
 }

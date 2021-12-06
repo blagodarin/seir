@@ -2,7 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../src/processing.hpp"
+#include "../../src/common.hpp"
+#include "../../src/processing.hpp"
 
 #include <algorithm>
 #include <array>

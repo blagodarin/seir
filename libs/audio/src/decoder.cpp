@@ -10,7 +10,7 @@
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> AudioDecoder::create(const SharedPtr<Blob>& blob, [[maybe_unused]] const Preferences& preferences)
+	UniquePtr<AudioDecoder> AudioDecoder::create(const SharedPtr<Blob>& blob, [[maybe_unused]] const AudioDecoderPreferences& preferences)
 	{
 		if (blob && blob->size() >= sizeof(uint32_t))
 			switch (blob->get<uint32_t>(0))

@@ -4,6 +4,8 @@
 
 #include "processing.hpp"
 
+#include "common.hpp"
+
 namespace seir
 {
 	void addSamples1D(float* dst, const float* src, size_t length) noexcept

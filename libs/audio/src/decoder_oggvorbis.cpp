@@ -20,10 +20,8 @@ namespace
 	class OggVorbisAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
-		OggVorbisAudioDecoder(const seir::SharedPtr<seir::Blob>& blob) noexcept
-			: _blob{ blob }
-		{
-		}
+		explicit OggVorbisAudioDecoder(const seir::SharedPtr<seir::Blob>& blob) noexcept
+			: _blob{ blob } {}
 
 		~OggVorbisAudioDecoder() noexcept override
 		{
@@ -130,7 +128,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>& blob, const AudioDecoder::Preferences&)
+	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences&)
 	{
 		auto decoder = makeUnique<OggVorbisAudioDecoder>(blob);
 		return UniquePtr<AudioDecoder>{ decoder->open() ? std::move(decoder) : nullptr };

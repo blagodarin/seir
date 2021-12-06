@@ -13,17 +13,18 @@ namespace seir
 {
 	class Blob;
 
+	// NOTE: Making it a member of AudioDecoder results in GCC/Clang compilation error,
+	// see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88165.
+	struct AudioDecoderPreferences
+	{
+		AudioFormat format;
+		bool loop = false;
+	};
+
 	class AudioDecoder : public ReferenceCounter
 	{
 	public:
-		// Decoding preferences.
-		struct Preferences
-		{
-			AudioFormat format;
-			bool loop = false;
-		};
-
-		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const Preferences& = {});
+		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const AudioDecoderPreferences& = {});
 
 		// Returns the decoded audio format.
 		[[nodiscard]] virtual AudioFormat format() const = 0;

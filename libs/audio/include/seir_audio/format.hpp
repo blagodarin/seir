@@ -6,12 +6,14 @@
 
 namespace seir
 {
+	// Supported audio sample types.
 	enum class AudioSampleType
 	{
-		i16 = 2,
-		f32 = 4,
+		i16 = 2, // 16-bit signed integers.
+		f32 = 4, // 32-bit IEEE floats.
 	};
 
+	// Supported audio channel layouts.
 	enum class AudioChannelLayout
 	{
 		Mono = 1,   // One channel.

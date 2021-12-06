@@ -44,10 +44,7 @@ namespace
 	{
 	public:
 		AulosAudioDecoder(std::unique_ptr<const aulos::Composition>&& composition, std::unique_ptr<aulos::Renderer>&& renderer) noexcept
-			: _composition{ std::move(composition) }
-			, _renderer{ std::move(renderer) }
-		{
-		}
+			: _composition{ std::move(composition) }, _renderer{ std::move(renderer) } {}
 
 		seir::AudioFormat format() const noexcept override
 		{
@@ -75,7 +72,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>& blob, const AudioDecoder::Preferences& preferences)
+	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences& preferences)
 	{
 		const std::string buffer{ static_cast<const char*>(blob->data()), blob->size() }; // TODO: Remove when Aulos will support non-null-terminated input.
 		if (auto composition = aulos::Composition::create(buffer.c_str()))

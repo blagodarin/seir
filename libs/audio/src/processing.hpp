@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "common.hpp"
-
+#include <cstddef>
 #include <cstdint>
 
 namespace seir

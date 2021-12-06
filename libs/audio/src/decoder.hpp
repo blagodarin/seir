@@ -9,12 +9,12 @@
 namespace seir
 {
 #if SEIR_AUDIO_AULOS
-	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>&, const AudioDecoder::Preferences&);
+	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>&, const AudioDecoderPreferences&);
 #endif
 #if SEIR_AUDIO_OGGVORBIS
-	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>&, const AudioDecoder::Preferences&);
+	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>&, const AudioDecoderPreferences&);
 #endif
 #if SEIR_AUDIO_WAV
-	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>&, const AudioDecoder::Preferences&);
+	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>&, const AudioDecoderPreferences&);
 #endif
 }
