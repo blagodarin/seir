@@ -42,6 +42,7 @@ jobs:
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_BENCHMARKS=ON \
+            -DSEIR_COMPRESSION_ZLIB=ON \
             -DSEIR_DATA=ON \
             -DSEIR_EXAMPLES=ON \
             -DSEIR_TESTS=ON \

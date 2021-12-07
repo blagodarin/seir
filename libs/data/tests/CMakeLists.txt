@@ -5,6 +5,7 @@
 set(SOURCES
 	src/blob.cpp
 	src/common.hpp
+	src/compression.cpp
 	src/file.cpp
 	src/main.cpp
 	src/reader.cpp

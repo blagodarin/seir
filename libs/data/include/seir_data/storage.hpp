@@ -31,7 +31,7 @@ namespace seir
 		void attach(std::string_view name, const SharedPtr<Blob>&);
 
 		//
-		SharedPtr<Blob> open(const std::string& name) const;
+		[[nodiscard]] SharedPtr<Blob> open(const std::string& name) const;
 
 	private:
 		const UniquePtr<struct StorageImpl> _impl;
