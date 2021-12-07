@@ -4,8 +4,6 @@
 
 #include "compression.hpp"
 
-#include <cassert>
-
 namespace seir
 {
 	UniquePtr<Compressor> Compressor::create(Compression compression)
@@ -21,7 +19,6 @@ namespace seir
 			break;
 #endif
 		}
-		assert(false);
 		return {};
 	}
 
@@ -38,7 +35,6 @@ namespace seir
 			break;
 #endif
 		}
-		assert(false);
 		return {};
 	}
 }

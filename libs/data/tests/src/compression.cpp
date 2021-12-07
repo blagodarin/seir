@@ -43,3 +43,9 @@ TEST_CASE("Compression")
 	REQUIRE(decompressor->decompress(decompressed.data(), decompressed.size(), compressed.data(), compressed.size()));
 	CHECK(decompressed == original);
 }
+
+TEST_CASE("Compression::None")
+{
+	CHECK_FALSE(seir::Compressor::create(seir::Compression::None));
+	CHECK_FALSE(seir::Decompressor::create(seir::Compression::None));
+}

@@ -38,6 +38,7 @@ TEST_CASE("Storage::open")
 		seir::Storage storage{ seir::Storage::UseFileSystem::AfterAttachments };
 		SUBCASE("open")
 		{
+			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(thisExecutable.string());
 			REQUIRE(blob);
 			checkEqual(blob, file);
@@ -45,6 +46,7 @@ TEST_CASE("Storage::open")
 		SUBCASE("attach")
 		{
 			storage.attach(thisExecutable.string(), dummy);
+			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(thisExecutable.string());
 			REQUIRE(blob);
 			checkEqual(blob, dummy);
@@ -55,6 +57,7 @@ TEST_CASE("Storage::open")
 		seir::Storage storage{ seir::Storage::UseFileSystem::BeforeAttachments };
 		SUBCASE("open")
 		{
+			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(thisExecutable.string());
 			REQUIRE(blob);
 			checkEqual(blob, file);
@@ -62,6 +65,7 @@ TEST_CASE("Storage::open")
 		SUBCASE("attach")
 		{
 			storage.attach(thisExecutable.string(), dummy);
+			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(thisExecutable.string());
 			REQUIRE(blob);
 			checkEqual(blob, file);
@@ -72,11 +76,13 @@ TEST_CASE("Storage::open")
 		seir::Storage storage{ seir::Storage::UseFileSystem::Never };
 		SUBCASE("open")
 		{
+			CHECK_FALSE(storage.open("does/not/exist"));
 			CHECK_FALSE(storage.open(thisExecutable.string()));
 		}
 		SUBCASE("attach")
 		{
 			storage.attach(thisExecutable.string(), dummy);
+			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(thisExecutable.string());
 			REQUIRE(blob);
 			checkEqual(blob, dummy);
