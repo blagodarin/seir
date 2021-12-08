@@ -11,6 +11,7 @@
 namespace seir
 {
 	class Blob;
+	enum class Compression;
 	template <class>
 	class SharedPtr;
 
@@ -29,6 +30,9 @@ namespace seir
 
 		//
 		void attach(std::string_view name, const SharedPtr<Blob>&);
+
+		//
+		void attach(std::string_view name, const SharedPtr<Blob>&, size_t offset, size_t size, Compression, size_t compressedSize);
 
 		//
 		[[nodiscard]] SharedPtr<Blob> open(const std::string& name) const;
