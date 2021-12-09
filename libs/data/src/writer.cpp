@@ -16,9 +16,8 @@ namespace seir
 
 	bool Writer::reserve(uint64_t expectedBytes) noexcept
 	{
-		return expectedBytes <= _size - _offset
-			|| (expectedBytes <= std::numeric_limits<uint64_t>::max() - _offset
-				&& reserveImpl(_offset + expectedBytes));
+		return expectedBytes <= std::numeric_limits<uint64_t>::max() - _offset
+			&& reserveImpl(_offset + expectedBytes);
 	}
 
 	bool Writer::write(const void* data, size_t size) noexcept
