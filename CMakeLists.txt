@@ -65,6 +65,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		-Wno-c++98-compat-pedantic
 		-Wno-ctad-maybe-unsupported
 		-Wno-padded
+		-Wno-tautological-type-limit-compare # https://reviews.llvm.org/D41512
 		-Wno-weak-vtables
 		)
 endif()

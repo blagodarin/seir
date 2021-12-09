@@ -8,48 +8,43 @@
 #include <seir_base/pointer.hpp>
 
 #include <cstring>
-#include <memory>
 #include <type_traits>
 
 namespace seir
 {
-	template <typename T, typename A = Allocator>
+	//
+	template <class T, class A = Allocator>
 	class Buffer
 	{
 	public:
 		static_assert(std::is_trivially_default_constructible_v<T> && std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>);
 
 		constexpr Buffer() noexcept = default;
-		~Buffer() noexcept = default;
 		Buffer(const Buffer&) = delete;
+		constexpr Buffer(Buffer&& other) noexcept
+			: _data{ std::move(other._data) }, _capacity{ other._capacity } { other._capacity = 0; }
 		Buffer& operator=(Buffer&) = delete;
+		constexpr Buffer& operator=(Buffer&&) noexcept;
+		~Buffer() noexcept = default;
 
+		//
 		explicit Buffer(size_t capacity)
 			: _data{ static_cast<T*>(A::allocate(capacity * sizeof(T))) }, _capacity{ capacity } {}
 
-		constexpr Buffer(Buffer&& other) noexcept
-			: _data{ std::move(other._data) }, _capacity{ other._capacity } { other._capacity = 0; }
-
-		constexpr Buffer& operator=(Buffer&& other) noexcept
-		{
-			swap(*this, other);
-			return *this;
-		}
-
+		//
 		[[nodiscard]] constexpr size_t capacity() const noexcept { return _capacity; }
+
+		//
 		[[nodiscard]] constexpr T* data() noexcept { return _data; }
+
+		//
 		[[nodiscard]] constexpr const T* data() const noexcept { return _data; }
 
-		void reserve(size_t newCapacity, bool preserveContents = true)
-		{
-			if (newCapacity <= _capacity)
-				return;
-			decltype(_data) newData{ static_cast<T*>(A::allocate(newCapacity * sizeof(T))) };
-			if (preserveContents)
-				std::memcpy(newData, _data, (newCapacity < _capacity ? newCapacity : _capacity) * sizeof(T));
-			_data = std::move(newData);
-			_capacity = newCapacity;
-		}
+		//
+		void reserve(size_t newCapacity, bool preserveContents = true);
+
+		//
+		[[nodiscard]] bool tryReserve(size_t newCapacity, bool preserveContents = true) noexcept;
 
 		friend constexpr void swap(Buffer& first, Buffer& second) noexcept
 		{
@@ -62,4 +57,33 @@ namespace seir
 		CPtr<T, A::deallocate> _data;
 		size_t _capacity = 0;
 	};
+}
+
+template <class T, class A>
+constexpr seir::Buffer<T, A>& seir::Buffer<T, A>::operator=(Buffer&& other) noexcept
+{
+	swap(*this, other);
+	return *this;
+}
+
+template <class T, class A>
+void seir::Buffer<T, A>::reserve(size_t newCapacity, bool preserveContents)
+{
+	if (!tryReserve(newCapacity, preserveContents)) [[unlikely]]
+		throw std::bad_alloc{};
+}
+
+template <class T, class A>
+bool seir::Buffer<T, A>::tryReserve(size_t newCapacity, bool preserveContents) noexcept
+{
+	if (newCapacity <= _capacity)
+		return true;
+	decltype(_data) newData{ static_cast<T*>(A::tryAllocate(newCapacity * sizeof(T))) };
+	if (!newData) [[unlikely]]
+		return false;
+	if (preserveContents)
+		std::memcpy(newData, _data, (newCapacity < _capacity ? newCapacity : _capacity) * sizeof(T));
+	_data = std::move(newData);
+	_capacity = newCapacity;
+	return true;
 }

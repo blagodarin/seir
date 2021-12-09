@@ -4,7 +4,7 @@
 
 #include <seir_u8main/u8main.hpp>
 
-#include <seir_base/buffer.hpp>
+#include <memory>
 
 #define NOUSER
 #include <seir_base/windows_utils.hpp>
@@ -13,32 +13,32 @@ namespace
 {
 	int callMain()
 	{
-		seir::Buffer<char> buffer;
-		seir::Buffer<char*> argv;
+		std::unique_ptr<char[]> buffer;
+		std::unique_ptr<char*[]> argv;
 		int argc = 0;
 		{
 			const seir::windows::LocalPtr<LPWSTR> argvW{ ::CommandLineToArgvW(::GetCommandLineW(), &argc) };
-			seir::Buffer<int> sizes{ static_cast<size_t>(argc) };
+			const auto sizes = std::make_unique<int[]>(static_cast<size_t>(argc));
 			size_t bufferSize = 0;
-			for (int i = 0; i < argc; ++i)
+			for (size_t i = 0; i < static_cast<size_t>(argc); ++i)
 			{
 				const auto size = ::WideCharToMultiByte(CP_UTF8, 0, argvW[i], -1, nullptr, 0, nullptr, nullptr);
-				sizes.data()[i] = size;
+				sizes[i] = size;
 				bufferSize += size;
 			}
-			buffer.reserve(bufferSize);
-			argv.reserve(static_cast<size_t>(argc));
+			buffer = std::make_unique<char[]>(bufferSize);
+			argv = std::make_unique<char*[]>(static_cast<size_t>(argc));
 			size_t bufferOffset = 0;
-			for (int i = 0; i < argc; ++i)
+			for (size_t i = 0; i < static_cast<size_t>(argc); ++i)
 			{
-				const auto data = buffer.data() + bufferOffset;
-				const auto size = sizes.data()[i];
+				const auto data = buffer.get() + bufferOffset;
+				const auto size = sizes[i];
 				::WideCharToMultiByte(CP_UTF8, 0, argvW[i], -1, data, size, nullptr, nullptr);
-				argv.data()[i] = data;
+				argv[i] = data;
 				bufferOffset += size;
 			}
 		}
-		return u8main(argc, argv.data());
+		return u8main(argc, argv.get());
 	}
 }
 

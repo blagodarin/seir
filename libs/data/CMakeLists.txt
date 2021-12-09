@@ -8,11 +8,13 @@ set(HEADERS
 	include/seir_data/file.hpp
 	include/seir_data/reader.hpp
 	include/seir_data/storage.hpp
+	include/seir_data/writer.hpp
 	)
 set(SOURCES
 	src/compression.cpp
 	src/compression.hpp
 	src/storage.cpp
+	src/writer.cpp
 	)
 if(SEIR_COMPRESSION_ZLIB)
 	list(APPEND SOURCES src/compression_zlib.cpp)

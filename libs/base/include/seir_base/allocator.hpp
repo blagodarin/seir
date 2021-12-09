@@ -18,7 +18,7 @@ namespace seir
 	public:
 		[[nodiscard]] static void* allocate(size_t size)
 		{
-			if (const auto memory = std::malloc(size); memory) [[likely]]
+			if (const auto memory = tryAllocate(size); memory) [[likely]]
 				return memory;
 			throw std::bad_alloc{};
 		}
@@ -26,6 +26,11 @@ namespace seir
 		static void deallocate(void* memory) noexcept
 		{
 			std::free(memory);
+		}
+
+		[[nodiscard]] static void* tryAllocate(size_t size) noexcept
+		{
+			return std::malloc(size);
 		}
 	};
 
@@ -37,13 +42,7 @@ namespace seir
 
 		[[nodiscard]] static void* allocate(size_t size)
 		{
-			constexpr auto kAlignmentMask = kAlignment - 1;
-			const auto alignedSize = (size + kAlignmentMask) & ~kAlignmentMask;
-#ifdef _MSC_VER
-			if (const auto memory = ::_aligned_malloc(alignedSize, kAlignment); memory) [[likely]]
-#else
-			if (const auto memory = std::aligned_alloc(kAlignment, alignedSize); memory) [[likely]]
-#endif
+			if (const auto memory = tryAllocate(size); memory) [[likely]]
 				return memory;
 			throw std::bad_alloc{};
 		}
@@ -54,6 +53,17 @@ namespace seir
 			::_aligned_free(memory);
 #else
 			std::free(memory);
+#endif
+		}
+
+		[[nodiscard]] static void* tryAllocate(size_t size) noexcept
+		{
+			constexpr auto kAlignmentMask = kAlignment - 1;
+			const auto alignedSize = (size + kAlignmentMask) & ~kAlignmentMask;
+#ifdef _MSC_VER
+			return ::_aligned_malloc(alignedSize, kAlignment);
+#else
+			return std::aligned_alloc(kAlignment, alignedSize);
 #endif
 		}
 	};
@@ -72,6 +82,16 @@ namespace seir
 		static void deallocate(void* memory) noexcept
 		{
 			A::deallocate(memory);
+		}
+
+		[[nodiscard]] static void* tryAllocate(size_t size) noexcept
+		{
+			if (const auto memory = A::tryAllocate(size); memory) [[likely]]
+			{
+				std::memset(memory, 0, size);
+				return memory;
+			}
+			return nullptr;
 		}
 	};
 }
