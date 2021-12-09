@@ -75,9 +75,9 @@ namespace seir
 			return LocalPtr<char>{ buffer };
 		}
 
-		inline void reportLastError(const char* function) noexcept
+		inline void reportError(const char* function, DWORD error = ::GetLastError()) noexcept
 		{
-			if (const auto message = errorText(::GetLastError()))
+			if (const auto message = errorText(error))
 			{
 				DWORD_PTR arguments[]{ (DWORD_PTR)function, (DWORD_PTR) static_cast<const char*>(message) };
 				char* buffer = nullptr;
@@ -95,7 +95,7 @@ namespace seir
 seir::windows::Handle::~Handle() noexcept
 {
 	if (_handle && _handle != INVALID_HANDLE_VALUE && !::CloseHandle(_handle))
-		reportLastError("CloseHandle");
+		reportError("CloseHandle");
 }
 
 constexpr seir::windows::Handle& seir::windows::Handle::operator=(seir::windows::Handle&& other) noexcept

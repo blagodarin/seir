@@ -27,7 +27,11 @@ TEST_CASE("Reader")
 	}
 	SUBCASE("size() > 0")
 	{
-		const std::array<char, 16> buffer{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+		const std::array<char, 24> buffer{
+			'0', '1', '2', '3', '4', '5', '6', '7',
+			'8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+			'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'
+		};
 		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
 		seir::Reader reader{ *blob };
 		CHECK(reader.offset() == 0);
@@ -38,21 +42,21 @@ TEST_CASE("Reader")
 			CHECK(reader.seek(0));
 			CHECK(reader.offset() == 0);
 		}
-		SUBCASE("seek(2) && seek(4)")
+		SUBCASE("seek(4) && seek(8)")
 		{
-			CHECK(reader.seek(2));
-			CHECK(reader.offset() == 2);
 			CHECK(reader.seek(4));
 			CHECK(reader.offset() == 4);
-			expectedOffset = 4;
+			CHECK(reader.seek(8));
+			CHECK(reader.offset() == 8);
+			expectedOffset = 8;
 		}
-		SUBCASE("skip(2) && skip(4)")
+		SUBCASE("skip(4) && skip(8)")
 		{
-			CHECK(reader.skip(2));
-			CHECK(reader.offset() == 2);
 			CHECK(reader.skip(4));
-			CHECK(reader.offset() == 6);
-			expectedOffset = 6;
+			CHECK(reader.offset() == 4);
+			CHECK(reader.skip(8));
+			CHECK(reader.offset() == 12);
+			expectedOffset = 12;
 		}
 		CHECK(reader.read<uint32_t>() == reinterpret_cast<const uint32_t*>(buffer.data() + expectedOffset));
 		expectedOffset += 4;
@@ -63,7 +67,7 @@ TEST_CASE("Reader")
 		CHECK(reader.read<uint8_t>() == reinterpret_cast<const uint8_t*>(buffer.data() + expectedOffset));
 		expectedOffset += 1;
 		CHECK(reader.offset() == expectedOffset);
-		CHECK_FALSE(reader.read<std::pair<uint64_t, uint64_t>>());
+		CHECK_FALSE(reader.read<std::array<std::byte, buffer.size()>>());
 		CHECK(reader.offset() == expectedOffset);
 	}
 }

@@ -30,7 +30,7 @@ namespace seir
 		const Storage::UseFileSystem _useFileSystem;
 		std::unordered_map<std::string, Attachment> _attachments;
 
-		StorageImpl(Storage::UseFileSystem useFileSystem) noexcept
+		explicit StorageImpl(Storage::UseFileSystem useFileSystem) noexcept
 			: _useFileSystem{ useFileSystem } {}
 	};
 
@@ -56,7 +56,7 @@ namespace seir
 	SharedPtr<Blob> Storage::open(const std::string& name) const
 	{
 		if (_impl->_useFileSystem == UseFileSystem::BeforeAttachments)
-			if (auto blob = openFile(name))
+			if (auto blob = createFileBlob(name))
 				return SharedPtr{ std::move(blob) };
 		if (const auto i = _impl->_attachments.find(name); i != _impl->_attachments.end())
 		{
@@ -71,7 +71,7 @@ namespace seir
 			return {};
 		}
 		if (_impl->_useFileSystem == UseFileSystem::AfterAttachments)
-			if (auto blob = openFile(name))
+			if (auto blob = createFileBlob(name))
 				return SharedPtr{ std::move(blob) };
 		return {};
 	}

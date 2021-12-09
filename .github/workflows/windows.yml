@@ -2,8 +2,6 @@ name: Windows
 on:
   push:
     paths-ignore:
-      - '.github/workflows/linux.yml'
-      - '.github/workflows/static_analysis.yml'
       - 'LICENSE'
       - 'README.md'
 jobs:

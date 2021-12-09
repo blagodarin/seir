@@ -47,7 +47,7 @@ TEST_CASE("Storage::attach")
 
 TEST_CASE("Storage::open")
 {
-	const seir::SharedPtr file{ seir::openFile(thisExecutable) };
+	const seir::SharedPtr file{ seir::createFileBlob(thisExecutable) };
 	REQUIRE(file);
 	seir::SharedPtr dummy{ seir::Blob::from(&file, sizeof file) };
 	const auto checkEqual = [](const seir::SharedPtr<seir::Blob>& left, const seir::SharedPtr<seir::Blob>& right) {

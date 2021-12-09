@@ -25,7 +25,7 @@ namespace seir
 			BeforeAttachments,
 		};
 
-		Storage(UseFileSystem);
+		explicit Storage(UseFileSystem);
 		~Storage() noexcept;
 
 		//

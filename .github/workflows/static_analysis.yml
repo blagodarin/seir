@@ -2,8 +2,6 @@ name: Static analysis
 on:
   push:
     paths-ignore:
-      - '.github/workflows/linux.yml'
-      - '.github/workflows/windows.yml'
       - 'LICENSE'
       - 'README.md'
 jobs:
@@ -23,7 +21,7 @@ jobs:
             -I libs/audio/include \
             -I libs/base/include \
             -I libs/data/include \
-            -I libs/main/include \
+            -I libs/u8main/include \
             --template="({file}:{line}) ({severity}/{id}) {message}" .
       - name: Run clang-format
         continue-on-error: true

@@ -57,7 +57,8 @@ std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::to
 	struct BufferWriter final : Writer
 	{
 		Buffer<T, A>& _buffer;
-		BufferWriter(Buffer<T, A>& buffer) noexcept
+		// cppcheck-suppress constParameter
+		explicit BufferWriter(Buffer<T, A>& buffer) noexcept
 			: _buffer{ buffer } {}
 		bool reserveImpl(uint64_t capacity) noexcept override
 		{
