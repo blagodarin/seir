@@ -24,13 +24,18 @@ namespace
 			::deflateEnd(&_stream);
 		}
 
-		[[nodiscard]] bool prepare(int level) noexcept override
+		bool prepare(seir::CompressionLevel level) noexcept override
 		{
 			// TODO: Use a previously-prepared compressor without unnecessary deallocations (in deflateEnd)
 			// and allocations (in deflateInit). Using deflateParams (and maybe deflateReset) may help.
-			assert(level >= 0 && level <= 9);
+			int levelValue = Z_NO_COMPRESSION;
+			switch (level)
+			{
+			case seir::CompressionLevel::BestSpeed: levelValue = Z_BEST_SPEED; break;
+			case seir::CompressionLevel::BestCompression: levelValue = Z_BEST_COMPRESSION; break;
+			}
 			::deflateEnd(&_stream);
-			return deflateInit(&_stream, level) == Z_OK;
+			return deflateInit(&_stream, levelValue) == Z_OK;
 		}
 
 		[[nodiscard]] size_t maxCompressedSize(size_t uncompressedSize) const noexcept override

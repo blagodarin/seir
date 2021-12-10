@@ -18,6 +18,12 @@ namespace seir
 #else
 			break;
 #endif
+		case Compression::Zstd:
+#if SEIR_COMPRESSION_ZSTD
+			return createZstdCompressor();
+#else
+			break;
+#endif
 		}
 		return {};
 	}
@@ -31,6 +37,12 @@ namespace seir
 		case Compression::Zlib:
 #if SEIR_COMPRESSION_ZLIB
 			return createZlibDecompressor();
+#else
+			break;
+#endif
+		case Compression::Zstd:
+#if SEIR_COMPRESSION_ZSTD
+			return createZstdDecompressor();
 #else
 			break;
 #endif

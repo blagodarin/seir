@@ -29,7 +29,7 @@ TEST_CASE("Storage::attach")
 	{
 		const auto compressor = seir::Compressor::create(seir::Compression::Zlib);
 		REQUIRE(compressor);
-		REQUIRE(compressor->prepare(9));
+		REQUIRE(compressor->prepare(seir::CompressionLevel::BestCompression));
 		const std::string_view garbage = "garbage";
 		seir::Buffer<uint8_t> buffer{ garbage.size() + compressor->maxCompressedSize(contents.size()) + garbage.size() };
 		std::memcpy(buffer.data(), garbage.data(), garbage.size());

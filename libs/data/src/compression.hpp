@@ -12,4 +12,8 @@ namespace seir
 	UniquePtr<Compressor> createZlibCompressor();
 	UniquePtr<Decompressor> createZlibDecompressor();
 #endif
+#if SEIR_COMPRESSION_ZSTD
+	UniquePtr<Compressor> createZstdCompressor();
+	UniquePtr<Decompressor> createZstdDecompressor();
+#endif
 }

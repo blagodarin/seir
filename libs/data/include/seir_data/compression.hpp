@@ -15,22 +15,30 @@ namespace seir
 	{
 		None, // Special value to specify no compression.
 		Zlib,
+		Zstd,
+	};
+
+	//
+	enum class CompressionLevel
+	{
+		BestSpeed,
+		BestCompression,
 	};
 
 	// Data compression interface.
 	class Compressor
 	{
 	public:
+		//
 		static UniquePtr<Compressor> create(Compression);
 
 		virtual ~Compressor() noexcept = default;
 
 		// Prepares for compression. Must be called before every compress() call.
-		// Valid level range depends on the algorithm used.
 		// This is a separate function (and not a level parameter in other functions)
 		// because some compression algorithms (namely zlib) require full initialization
 		// before compressed data size estimation.
-		[[nodiscard]] virtual bool prepare(int level) noexcept = 0;
+		[[nodiscard]] virtual bool prepare(CompressionLevel) noexcept = 0;
 
 		// Returns the maximum compressed data size for uncompressed data of the specified size.
 		[[nodiscard]] virtual size_t maxCompressedSize(size_t uncompressedSize) const noexcept = 0;
@@ -45,6 +53,7 @@ namespace seir
 	class Decompressor
 	{
 	public:
+		//
 		static UniquePtr<Decompressor> create(Compression);
 
 		virtual ~Decompressor() noexcept = default;
