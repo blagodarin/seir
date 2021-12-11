@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(HEADERS
+	include/seir_data/archive.hpp
 	include/seir_data/blob.hpp
 	include/seir_data/compression.hpp
 	include/seir_data/file.hpp
@@ -11,6 +12,9 @@ set(HEADERS
 	include/seir_data/writer.hpp
 	)
 set(SOURCES
+	src/archive.cpp
+	src/archive.hpp
+	src/archive_seir.cpp
 	src/compression.cpp
 	src/compression.hpp
 	src/storage.cpp
