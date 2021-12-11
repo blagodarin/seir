@@ -1,0 +1,55 @@
+name: macOS
+on:
+  push:
+    paths-ignore:
+      - 'LICENSE'
+      - 'README.md'
+jobs:
+  ci:
+    name: macOS
+    runs-on: macos-11
+    strategy:
+      matrix:
+        include:
+          - config: Release
+          - config: Debug
+      fail-fast: false
+    env:
+      CMAKE_GENERATOR: Ninja
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          brew install ninja
+      - name: Run CMake
+        run: |
+          export CXX=$(brew --prefix llvm)/bin/clang++
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
+            -DSEIR_AUDIO=OFF \
+            -DSEIR_AUDIO_AULOS=OFF \
+            -DSEIR_AUDIO_OGGVORBIS=OFF \
+            -DSEIR_AUDIO_WAV=OFF \
+            -DSEIR_BENCHMARKS=ON \
+            -DSEIR_COMPRESSION_ZLIB=ON \
+            -DSEIR_COMPRESSION_ZSTD=OFF \
+            -DSEIR_DATA=ON \
+            -DSEIR_EXAMPLES=ON \
+            -DSEIR_TESTS=ON \
+            -DSEIR_U8MAIN=ON
+      - name: Build
+        run: |
+          cmake --build build
+      - name: Run tests
+        run: |
+          cd build
+          ctest --verbose
+      - name: Check exports
+        run: |
+          export CXX=$(brew --prefix llvm)/bin/clang++
+          cmake --build build --target install
+          cmake -S cmake/test -B build.test \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
+          cmake --build build.test

@@ -8,6 +8,8 @@
 #include <seir_data/writer.hpp>
 #include "common.hpp"
 
+#include <array>
+
 #include <doctest/doctest.h>
 
 TEST_CASE("TemporaryFile")
@@ -50,7 +52,7 @@ TEST_CASE("createFileBlob(const std::filesystem::path&)")
 	const auto peSignatureOffset = self->get<uint32_t>(0x3c);
 	REQUIRE(self->size() > peSignatureOffset + 4);
 	CHECK(self->get<uint32_t>(peSignatureOffset) == seir::makeCC('P', 'E', '\0', '\0'));
-#else
+#elif defined(__linux__)
 	REQUIRE(self->size() >= 4);
 	CHECK(self->get<uint32_t>(0) == seir::makeCC('\x7f', 'E', 'L', 'F'));
 #endif

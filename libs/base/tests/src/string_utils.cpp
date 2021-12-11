@@ -6,6 +6,7 @@
 
 #include <vector>
 
+#include <ostream>
 #include <doctest/doctest.h>
 
 TEST_CASE("matchWildcard")

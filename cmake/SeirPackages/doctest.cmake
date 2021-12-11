@@ -12,11 +12,11 @@ function(seir_provide_doctest _output)
 	else()
 		set(_patch ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest_shared.patch)
 	endif()
-	set(_version "2.4.6")
+	set(_version "2.4.7")
 	set(_package "doctest-${_version}")
-	seir_download("https://github.com/onqtam/doctest/archive/refs/tags/${_version}.zip"
-		NAME "${_package}.zip"
-		SHA1 "2c228e0aa91d5cbbe8740eaf5b1a50e168171a47"
+	seir_download("https://github.com/onqtam/doctest/archive/refs/tags/${_version}.tar.gz"
+		NAME "${_package}.tar.gz"
+		SHA1 "3e687657bf1be682b9a551b7770e2dfa9a8d9e11"
 		EXTRACT_DIR "${_package}"
 		PATCH ${_patch}
 		RESULT _downloaded)

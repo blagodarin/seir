@@ -57,6 +57,6 @@ TEST_CASE("Compression")
 
 TEST_CASE("Compression::None")
 {
-	CHECK_FALSE(seir::Compressor::create(seir::Compression::None));
-	CHECK_FALSE(seir::Decompressor::create(seir::Compression::None));
+	CHECK_FALSE(seir::Compressor::create(seir::Compression::None).get());
+	CHECK_FALSE(seir::Decompressor::create(seir::Compression::None).get());
 }

@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include <ostream>
 #include <doctest/doctest.h>
 
 TEST_CASE("isUtf8Continuation")

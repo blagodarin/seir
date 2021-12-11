@@ -14,9 +14,9 @@ function(seir_provide_benchmark _output)
 	endif()
 	set(_version "1.6.0")
 	set(_package "benchmark-${_version}")
-	seir_download("https://github.com/google/benchmark/archive/refs/tags/v${_version}.zip"
-		NAME "${_package}.zip"
-		SHA1 "26de5f5c784a4cdfaff7899fa2ba2a3d1b02fdf7"
+	seir_download("https://github.com/google/benchmark/archive/refs/tags/v${_version}.tar.gz"
+		NAME "${_package}.tar.gz"
+		SHA1 "c4d1a9135e779c5507015ccc8c428cb4aca69cef"
 		EXTRACT_DIR "${_package}"
 		PATCH ${_patch}
 		RESULT _downloaded)
