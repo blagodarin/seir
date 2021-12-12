@@ -6,7 +6,6 @@
 #include <seir_data/compression.hpp>
 #include <seir_data/file.hpp>
 #include <seir_data/storage.hpp>
-#include "common.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -48,7 +47,8 @@ TEST_CASE("Storage::attach")
 
 TEST_CASE("Storage::open")
 {
-	const seir::SharedPtr file{ seir::createFileBlob(thisExecutable) };
+	const std::string path{ SEIR_TEST_DIR "file.txt" };
+	const seir::SharedPtr file{ seir::createFileBlob(path) };
 	REQUIRE(file);
 	seir::SharedPtr dummy{ seir::Blob::from(&file, sizeof file) };
 	const auto checkEqual = [](const seir::SharedPtr<seir::Blob>& left, const seir::SharedPtr<seir::Blob>& right) {
@@ -61,15 +61,15 @@ TEST_CASE("Storage::open")
 		SUBCASE("open")
 		{
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(thisExecutable.string());
+			const auto blob = storage.open(path);
 			REQUIRE(blob);
 			checkEqual(blob, file);
 		}
 		SUBCASE("attach")
 		{
-			storage.attach(thisExecutable.string(), dummy);
+			storage.attach(path, dummy);
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(thisExecutable.string());
+			const auto blob = storage.open(path);
 			REQUIRE(blob);
 			checkEqual(blob, dummy);
 		}
@@ -80,15 +80,15 @@ TEST_CASE("Storage::open")
 		SUBCASE("open")
 		{
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(thisExecutable.string());
+			const auto blob = storage.open(path);
 			REQUIRE(blob);
 			checkEqual(blob, file);
 		}
 		SUBCASE("attach")
 		{
-			storage.attach(thisExecutable.string(), dummy);
+			storage.attach(path, dummy);
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(thisExecutable.string());
+			const auto blob = storage.open(path);
 			REQUIRE(blob);
 			checkEqual(blob, file);
 		}
@@ -99,13 +99,13 @@ TEST_CASE("Storage::open")
 		SUBCASE("open")
 		{
 			CHECK_FALSE(storage.open("does/not/exist"));
-			CHECK_FALSE(storage.open(thisExecutable.string()));
+			CHECK_FALSE(storage.open(path));
 		}
 		SUBCASE("attach")
 		{
-			storage.attach(thisExecutable.string(), dummy);
+			storage.attach(path, dummy);
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(thisExecutable.string());
+			const auto blob = storage.open(path);
 			REQUIRE(blob);
 			checkEqual(blob, dummy);
 		}
