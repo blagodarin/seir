@@ -49,7 +49,7 @@ namespace
 	class RawAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
-		RawAudioDecoder(seir::UniquePtr<seir::Blob>&& blob, const seir::AudioFormat& format) noexcept
+		RawAudioDecoder(seir::SharedPtr<seir::Blob>&& blob, const seir::AudioFormat& format) noexcept
 			: _blob{ std::move(blob) }, _format{ format } {}
 
 		seir::AudioFormat format() const override
@@ -65,9 +65,9 @@ namespace
 			// is (almost) never stored uncompressed. This also breaks alignment
 			// requirements for processing functions, complicating things further.
 			// So, we're sticking to simpler code with extra copying.
-			const auto blocks = _reader.readBlocks(maxFrames, _format.bytesPerFrame());
-			std::memcpy(buffer, blocks.first, blocks.second * _format.bytesPerFrame());
-			return blocks.second;
+			const auto [base, count] = _reader.readBlocks(maxFrames, _format.bytesPerFrame());
+			std::memcpy(buffer, base, count * _format.bytesPerFrame());
+			return count;
 		}
 
 		bool seek(size_t frameOffset) override
@@ -85,12 +85,12 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createWavDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences&)
+	UniquePtr<AudioDecoder> createWavDecoder(SharedPtr<Blob>&& blob, const AudioDecoderPreferences&)
 	{
 		Reader reader{ *blob };
 		if (const auto fileHeader = reader.read<RiffFileHeader>(); !fileHeader
-			|| fileHeader->id != seir::makeCC('R', 'I', 'F', 'F')
-			|| fileHeader->type != seir::makeCC('W', 'A', 'V', 'E'))
+			|| fileHeader->id != kWavFileID
+			|| fileHeader->type != makeCC('W', 'A', 'V', 'E'))
 			return {};
 		const auto findChunk = [&reader](uint32_t id) -> const RiffChunkHeader* {
 			for (;;)
@@ -104,7 +104,7 @@ namespace seir
 					return nullptr;
 			}
 		};
-		const auto fmtHeader = findChunk(seir::makeCC('f', 'm', 't', ' '));
+		const auto fmtHeader = findChunk(makeCC('f', 'm', 't', ' '));
 		if (!fmtHeader || fmtHeader->size < sizeof(WavFormatChunk))
 			return {};
 		const auto fmt = reader.read<WavFormatChunk>();
@@ -126,12 +126,12 @@ namespace seir
 		}
 		if (fmt->samplesPerSecond < AudioFormat::kMinSamplingRate || fmt->samplesPerSecond > AudioFormat::kMaxSamplingRate)
 			return {};
-		const auto dataHeader = findChunk(seir::makeCC('d', 'a', 't', 'a'));
+		const auto dataHeader = findChunk(makeCC('d', 'a', 't', 'a'));
 		if (!dataHeader)
 			return {};
 		auto dataSize = reader.size() - reader.offset();
 		if (dataSize > dataHeader->size)
 			dataSize = dataHeader->size;
-		return makeUnique<AudioDecoder, RawAudioDecoder>(Blob::from(blob, reader.offset(), dataSize), AudioFormat{ sampleType, channelLayout, fmt->samplesPerSecond });
+		return makeUnique<AudioDecoder, RawAudioDecoder>(Blob::from(std::move(blob), reader.offset(), dataSize), AudioFormat{ sampleType, channelLayout, fmt->samplesPerSecond });
 	}
 }

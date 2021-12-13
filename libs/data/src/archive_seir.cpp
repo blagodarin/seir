@@ -4,10 +4,9 @@
 
 #include "archive.hpp"
 
-#include <seir_base/endian.hpp>
-#include <seir_base/unique_ptr.hpp>
 #include <seir_data/blob.hpp>
 #include <seir_data/compression.hpp>
+#include <seir_data/storage.hpp>
 #include <seir_data/writer.hpp>
 
 #include <array>
@@ -16,7 +15,6 @@
 
 namespace
 {
-	constexpr uint32_t kSeirFileID = seir::makeCC('\xDF', 'S', 'a', '\x01');
 	constexpr size_t kSeirBlockAlignmentBits = 4;
 	constexpr size_t kSeirBlockAlignment = 1 << kSeirBlockAlignmentBits;
 
@@ -33,15 +31,19 @@ namespace
 		uint32_t _archivedSize = 0;
 		uint32_t _originalSize = 0;
 		uint32_t _flags = 0;
+
+		[[nodiscard]] constexpr uint64_t offset() const noexcept { return uint64_t{ _alignedOffset } << kSeirBlockAlignmentBits; }
 	};
 
 	static_assert(sizeof(SeirBlockInfo) == 16);
 
 	struct SeirFileHeader
 	{
-		uint32_t _id = kSeirFileID;
+		uint32_t _id = seir::kSeirFileID;
 		SeirCompression _compression = SeirCompression::None;
-		uint8_t _reserved[7]{};
+		uint8_t _reserved8 = 0;
+		uint16_t _reserved16 = 0;
+		uint32_t _reserved32 = 0;
 		uint32_t _fileCount = 0;
 		SeirBlockInfo _metaBlock;
 	};
@@ -179,6 +181,54 @@ namespace
 
 namespace seir
 {
+	bool attachSeirArchive(Storage& storage, SharedPtr<Blob>&& blob)
+	{
+		const auto fileHeader = blob->get<SeirFileHeader>(0);
+		if (!fileHeader
+			|| fileHeader->_id != seir::kSeirFileID
+			|| fileHeader->_reserved8 || fileHeader->_reserved16 || fileHeader->_reserved32)
+			return false;
+		if (!fileHeader->_fileCount)
+			return true;
+		if (fileHeader->_metaBlock._archivedSize > fileHeader->_metaBlock._originalSize
+			|| fileHeader->_metaBlock._flags)
+			return false;
+		auto metaBlock = blob->get<std::byte>(static_cast<size_t>(fileHeader->_metaBlock.offset()), fileHeader->_metaBlock._archivedSize);
+		if (!metaBlock)
+			return false;
+		auto compression = Compression::None; // Invalid compression also maps to None, which may be OK if nothing is actually compressed and correctly fails otherwise.
+		switch (fileHeader->_compression)
+		{
+		case SeirCompression::None: break;
+		case SeirCompression::Zlib: compression = Compression::Zlib; break;
+		case SeirCompression::Zstd: compression = Compression::Zstd; break;
+		}
+		seir::Buffer<std::byte> metaBuffer;
+		if (fileHeader->_metaBlock._archivedSize < fileHeader->_metaBlock._originalSize)
+		{
+			const auto decompressor = seir::Decompressor::create(compression);
+			if (!decompressor
+				|| !metaBuffer.tryReserve(fileHeader->_metaBlock._originalSize, false)
+				|| !decompressor->decompress(metaBuffer.data(), fileHeader->_metaBlock._originalSize, metaBlock, fileHeader->_metaBlock._archivedSize))
+				return false;
+			metaBlock = metaBuffer.data();
+		}
+		if (fileHeader->_fileCount > fileHeader->_metaBlock._originalSize / sizeof(SeirBlockInfo))
+			return false;
+		auto nameOffset = fileHeader->_fileCount * sizeof(SeirBlockInfo);
+		for (auto i = reinterpret_cast<const SeirBlockInfo*>(metaBlock), end = i + fileHeader->_fileCount; i != end; ++i)
+		{
+			if (nameOffset == fileHeader->_metaBlock._originalSize)
+				break;
+			const auto nameSize = std::to_integer<uint8_t>(metaBlock[nameOffset++]);
+			if (nameOffset + nameSize > fileHeader->_metaBlock._originalSize)
+				break;
+			storage.attach(std::string{ reinterpret_cast<const char*>(metaBlock + nameOffset), nameSize }, SharedPtr{ blob }, static_cast<size_t>(i->offset()), i->_originalSize, compression, i->_archivedSize);
+			nameOffset += nameSize;
+		}
+		return true;
+	}
+
 	UniquePtr<Archiver> createSeirArchiver(UniquePtr<Writer>&& writer, Compression compression)
 	{
 		UniquePtr<seir::Compressor> compressor;

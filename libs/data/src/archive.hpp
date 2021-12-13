@@ -6,7 +6,15 @@
 
 #include <seir_data/archive.hpp>
 
+#include <seir_base/endian.hpp>
+
 namespace seir
 {
+	template <class>
+	class SharedPtr;
+	class Storage;
+
+	constexpr uint32_t kSeirFileID = seir::makeCC('\xDF', 'S', 'a', '\x01');
+	bool attachSeirArchive(Storage&, SharedPtr<Blob>&&);
 	UniquePtr<Archiver> createSeirArchiver(UniquePtr<Writer>&&, Compression);
 }

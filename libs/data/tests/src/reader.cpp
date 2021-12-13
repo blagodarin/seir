@@ -119,16 +119,16 @@ TEST_CASE("Reader::readBlocks")
 				INFO("blocksToRead = ", blocksToRead);
 				seir::Reader reader{ *blob };
 				const auto expectedHeadSize = std::min(blocksToRead, blob->size() / blockSize);
-				const auto head = reader.readBlocks(blocksToRead, blockSize);
-				CHECK(head.first == buffer.data());
-				CHECK(head.second == expectedHeadSize);
+				const auto [headData, headSize] = reader.readBlocks(blocksToRead, blockSize);
+				CHECK(headData == buffer.data());
+				CHECK(headSize == expectedHeadSize);
 				CHECK(reader.offset() == expectedHeadSize * blockSize);
 				if (blocksToRead <= blobSize / blockSize)
 				{
 					const auto expectedTailSize = blobSize / blockSize - blocksToRead;
-					const auto tail = reader.readBlocks(expectedTailSize + 1, blockSize);
-					CHECK(tail.first == buffer.data() + expectedHeadSize * blockSize);
-					CHECK(tail.second == expectedTailSize);
+					const auto [tailData, tailSize] = reader.readBlocks(expectedTailSize + 1, blockSize);
+					CHECK(tailData == buffer.data() + expectedHeadSize * blockSize);
+					CHECK(tailSize == expectedTailSize);
 					CHECK(reader.offset() == (expectedHeadSize + expectedTailSize) * blockSize);
 				}
 			}

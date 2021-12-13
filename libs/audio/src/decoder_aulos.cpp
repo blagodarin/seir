@@ -72,7 +72,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createAulosDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences& preferences)
+	UniquePtr<AudioDecoder> createAulosDecoder(SharedPtr<Blob>&& blob, const AudioDecoderPreferences& preferences)
 	{
 		const std::string buffer{ static_cast<const char*>(blob->data()), blob->size() }; // TODO: Remove when Aulos will support non-null-terminated input.
 		if (auto composition = aulos::Composition::create(buffer.c_str()))

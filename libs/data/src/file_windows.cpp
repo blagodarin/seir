@@ -80,7 +80,7 @@ namespace seir
 		return {};
 	}
 
-	UniquePtr<Blob> createFileBlob(const std::filesystem::path& path)
+	SharedPtr<Blob> createFileBlob(const std::filesystem::path& path)
 	{
 		if (windows::Handle file{ ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) }; file == INVALID_HANDLE_VALUE)
 			windows::reportError("CreateFileW");
@@ -101,14 +101,14 @@ namespace seir
 						if (data && !::UnmapViewOfFile(data))
 							windows::reportError("UnmapViewOfFile");
 					});
-					return makeUnique<Blob, FileBlob>(data, static_cast<size_t>(size.QuadPart));
+					return makeShared<Blob, FileBlob>(data, static_cast<size_t>(size.QuadPart));
 				}
 		}
 		return {};
 	}
 
 	// cppcheck-suppress constParameter
-	UniquePtr<Blob> createFileBlob(TemporaryFile& file)
+	SharedPtr<Blob> createFileBlob(TemporaryFile& file)
 	{
 		return createFileBlob(file.path());
 	}

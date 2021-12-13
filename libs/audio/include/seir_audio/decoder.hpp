@@ -24,7 +24,7 @@ namespace seir
 	class AudioDecoder : public ReferenceCounter
 	{
 	public:
-		[[nodiscard]] static UniquePtr<AudioDecoder> create(const SharedPtr<Blob>&, const AudioDecoderPreferences& = {});
+		[[nodiscard]] static UniquePtr<AudioDecoder> create(SharedPtr<Blob>&&, const AudioDecoderPreferences& = {});
 
 		// Returns the decoded audio format.
 		[[nodiscard]] virtual AudioFormat format() const = 0;

@@ -58,7 +58,7 @@ template <class T>
 {
 	if (_blob.size() - _offset < sizeof(T))
 		return nullptr;
-	const auto result = &_blob.get<T>(_offset);
+	const auto result = reinterpret_cast<const T*>(static_cast<const std::byte*>(_blob.data()) + _offset);
 	_offset += sizeof(T);
 	return result;
 }

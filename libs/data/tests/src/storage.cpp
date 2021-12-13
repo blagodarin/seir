@@ -22,7 +22,7 @@ TEST_CASE("Storage::attach")
 	CHECK_FALSE(storage.open("present"));
 	SUBCASE("Compression::None")
 	{
-		storage.attach("present", seir::SharedPtr{ seir::Blob::from(contents.data(), contents.size()) });
+		storage.attach("present", seir::Blob::from(contents.data(), contents.size()));
 	}
 #if SEIR_COMPRESSION_ZLIB
 	SUBCASE("Compression::Zlib")
@@ -35,7 +35,7 @@ TEST_CASE("Storage::attach")
 		std::memcpy(buffer.data(), garbage.data(), garbage.size());
 		const auto compressedSize = compressor->compress(buffer.data() + garbage.size(), buffer.capacity() - 2 * garbage.size(), contents.data(), contents.size());
 		std::memcpy(buffer.data() + garbage.size() + compressedSize, garbage.data(), garbage.size());
-		storage.attach("present", seir::SharedPtr{ seir::Blob::from(std::move(buffer)) }, garbage.size(), contents.size(), seir::Compression::Zlib, compressedSize);
+		storage.attach("present", seir::Blob::from(std::move(buffer)), garbage.size(), contents.size(), seir::Compression::Zlib, compressedSize);
 	}
 #endif
 	CHECK_FALSE(storage.open("absent"));
@@ -48,9 +48,9 @@ TEST_CASE("Storage::attach")
 TEST_CASE("Storage::open")
 {
 	const std::string path{ SEIR_TEST_DIR "file.txt" };
-	const seir::SharedPtr file{ seir::createFileBlob(path) };
+	const auto file = seir::createFileBlob(path);
 	REQUIRE(file);
-	seir::SharedPtr dummy{ seir::Blob::from(&file, sizeof file) };
+	const auto dummy = seir::Blob::from(&file, sizeof file);
 	const auto checkEqual = [](const seir::SharedPtr<seir::Blob>& left, const seir::SharedPtr<seir::Blob>& right) {
 		REQUIRE(left->size() == right->size());
 		CHECK_FALSE(std::memcmp(left->data(), right->data(), left->size()));
@@ -67,7 +67,7 @@ TEST_CASE("Storage::open")
 		}
 		SUBCASE("attach")
 		{
-			storage.attach(path, dummy);
+			storage.attach(path, seir::SharedPtr{ dummy });
 			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(path);
 			REQUIRE(blob);
@@ -86,7 +86,7 @@ TEST_CASE("Storage::open")
 		}
 		SUBCASE("attach")
 		{
-			storage.attach(path, dummy);
+			storage.attach(path, seir::SharedPtr{ dummy });
 			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(path);
 			REQUIRE(blob);
@@ -103,7 +103,7 @@ TEST_CASE("Storage::open")
 		}
 		SUBCASE("attach")
 		{
-			storage.attach(path, dummy);
+			storage.attach(path, seir::SharedPtr{ dummy });
 			CHECK_FALSE(storage.open("does/not/exist"));
 			const auto blob = storage.open(path);
 			REQUIRE(blob);

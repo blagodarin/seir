@@ -15,7 +15,7 @@ TEST_CASE("AudioDecoder")
 	{
 		auto blob = seir::createFileBlob(SEIR_TEST_DIR "44100_mono.ogg");
 		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ std::move(blob) });
+		const auto decoder = seir::AudioDecoder::create(std::move(blob));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -39,7 +39,7 @@ TEST_CASE("AudioDecoder")
 	{
 		auto blob = seir::createFileBlob(SEIR_TEST_DIR "48000_stereo.ogg");
 		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ std::move(blob) });
+		const auto decoder = seir::AudioDecoder::create(std::move(blob));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -65,7 +65,7 @@ TEST_CASE("AudioDecoder")
 	{
 		auto blob = seir::createFileBlob(SEIR_TEST_DIR "8000_mono_i16.wav");
 		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ std::move(blob) });
+		const auto decoder = seir::AudioDecoder::create(std::move(blob));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -89,7 +89,7 @@ TEST_CASE("AudioDecoder")
 	{
 		auto blob = seir::createFileBlob(SEIR_TEST_DIR "22050_stereo_i16.wav");
 		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ std::move(blob) });
+		const auto decoder = seir::AudioDecoder::create(std::move(blob));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -113,7 +113,7 @@ TEST_CASE("AudioDecoder")
 	{
 		auto blob = seir::createFileBlob(SEIR_TEST_DIR "44100_mono_f32.wav");
 		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ std::move(blob) });
+		const auto decoder = seir::AudioDecoder::create(std::move(blob));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -137,7 +137,7 @@ TEST_CASE("AudioDecoder")
 	{
 		auto blob = seir::createFileBlob(SEIR_TEST_DIR "48000_stereo_f32.wav");
 		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(seir::SharedPtr{ std::move(blob) });
+		const auto decoder = seir::AudioDecoder::create(std::move(blob));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{

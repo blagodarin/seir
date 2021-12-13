@@ -5,35 +5,35 @@
 #include "decoder.hpp"
 
 #include <seir_audio/format.hpp>
-#include <seir_base/endian.hpp>
 #include <seir_data/blob.hpp>
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> AudioDecoder::create(const SharedPtr<Blob>& blob, [[maybe_unused]] const AudioDecoderPreferences& preferences)
+	UniquePtr<AudioDecoder> AudioDecoder::create(SharedPtr<Blob>&& blob, [[maybe_unused]] const AudioDecoderPreferences& preferences)
 	{
-		if (blob && blob->size() >= sizeof(uint32_t))
-			switch (blob->get<uint32_t>(0))
-			{
-			case makeCC('O', 'g', 'g', 'S'):
+		if (blob)
+			if (const auto id = blob->get<uint32_t>(0))
+				switch (*id)
+				{
+				case kOggVorbisFileID:
 #if SEIR_AUDIO_OGGVORBIS
-				return createOggVorbisDecoder(blob, preferences);
+					return createOggVorbisDecoder(std::move(blob), preferences);
 #else
-				break;
+					break;
 #endif
-			case makeCC('R', 'I', 'F', 'F'):
+				case kWavFileID:
 #if SEIR_AUDIO_WAV
-				return createWavDecoder(blob, preferences);
+					return createWavDecoder(std::move(blob), preferences);
 #else
-				break;
+					break;
 #endif
-			default:
+				default:
 #if SEIR_AUDIO_AULOS
-				return createAulosDecoder(blob, preferences);
+					return createAulosDecoder(std::move(blob), preferences);
 #else
-				break;
+					break;
 #endif
-			}
+				}
 		return {};
 	}
 }

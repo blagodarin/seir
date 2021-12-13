@@ -10,6 +10,8 @@ namespace seir
 {
 	class Blob;
 	template <class>
+	class SharedPtr;
+	template <class>
 	class UniquePtr;
 	class Writer;
 
@@ -34,8 +36,8 @@ namespace seir
 
 	// Creates a Blob that references a memory-mapped file.
 	// This should be a member function of Blob, but <filesystem> is extremely slow to compile.
-	[[nodiscard]] UniquePtr<Blob> createFileBlob(const std::filesystem::path&);
-	[[nodiscard]] UniquePtr<Blob> createFileBlob(TemporaryFile&);
+	[[nodiscard]] SharedPtr<Blob> createFileBlob(const std::filesystem::path&);
+	[[nodiscard]] SharedPtr<Blob> createFileBlob(TemporaryFile&);
 
 	// Creates a Writer thet writes to the specified file.
 	// This should be a member function of Writer, but <filesystem> is extremely slow to compile.

@@ -6,6 +6,7 @@
 #include <seir_data/blob.hpp>
 #include <seir_data/compression.hpp>
 #include <seir_data/file.hpp>
+#include <seir_data/storage.hpp>
 #include <seir_data/writer.hpp>
 
 #include <unordered_map>
@@ -41,9 +42,21 @@ TEST_CASE("Archiver")
 		}
 #endif
 		REQUIRE(archiver);
-		for (const auto& entry : entries)
-			REQUIRE(archiver->add(entry.first, *seir::Blob::from(entry.second.data(), entry.second.size()), seir::CompressionLevel::BestCompression));
+		for (const auto& [name, contents] : entries)
+			REQUIRE(archiver->add(name, *seir::Blob::from(contents.data(), contents.size()), seir::CompressionLevel::BestCompression));
 		CHECK(archiver->finish());
 	}
-	// TODO: Test archive loading.
+	seir::Storage storage{ seir::Storage::UseFileSystem::Never };
+	{
+		auto blob = seir::createFileBlob(*file);
+		REQUIRE(blob);
+		REQUIRE(storage.attachArchive(std::move(blob)));
+	}
+	for (const auto& [name, contents] : entries)
+	{
+		const auto blob = storage.open(name);
+		REQUIRE(blob);
+		REQUIRE(blob->size() == contents.size());
+		CHECK_FALSE(std::memcmp(blob->data(), contents.data(), contents.size()));
+	}
 }

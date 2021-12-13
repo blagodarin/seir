@@ -20,8 +20,8 @@ namespace
 	class OggVorbisAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
-		explicit OggVorbisAudioDecoder(const seir::SharedPtr<seir::Blob>& blob) noexcept
-			: _blob{ blob } {}
+		explicit OggVorbisAudioDecoder(seir::SharedPtr<seir::Blob>&& blob) noexcept
+			: _blob{ std::move(blob) } {}
 
 		~OggVorbisAudioDecoder() noexcept override
 		{
@@ -89,9 +89,9 @@ namespace
 	private:
 		static size_t readCallback(void* ptr, size_t size, size_t nmemb, void* datasource)
 		{
-			const auto blocks = static_cast<seir::Reader*>(datasource)->readBlocks(nmemb, size);
-			std::memcpy(ptr, blocks.first, blocks.second * size);
-			return blocks.second;
+			const auto [base, count] = static_cast<seir::Reader*>(datasource)->readBlocks(nmemb, size);
+			std::memcpy(ptr, base, count * size);
+			return count;
 		}
 
 		static int seekCallback(void* datasource, ogg_int64_t offset, int whence)
@@ -128,9 +128,9 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createOggVorbisDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences&)
+	UniquePtr<AudioDecoder> createOggVorbisDecoder(SharedPtr<Blob>&& blob, const AudioDecoderPreferences&)
 	{
-		auto decoder = makeUnique<OggVorbisAudioDecoder>(blob);
+		auto decoder = makeUnique<OggVorbisAudioDecoder>(std::move(blob));
 		return UniquePtr<AudioDecoder>{ decoder->open() ? std::move(decoder) : nullptr };
 	}
 }

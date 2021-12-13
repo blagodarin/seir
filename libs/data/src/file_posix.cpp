@@ -39,7 +39,7 @@ namespace
 			if (_data != MAP_FAILED && ::munmap(const_cast<void*>(_data), _size) == -1)
 				::perror("munmap");
 		}
-		static seir::UniquePtr<seir::Blob> create(int descriptor)
+		static seir::SharedPtr<seir::Blob> create(int descriptor)
 		{
 			if (const auto size = ::lseek(descriptor, 0, SEEK_END); size == -1)
 				::perror("lseek");
@@ -51,7 +51,7 @@ namespace
 					if (data != MAP_FAILED && ::munmap(data, static_cast<size_t>(size)) == -1)
 						::perror("munmap");
 				});
-				return seir::makeUnique<seir::Blob, FileBlob>(data, static_cast<size_t>(size));
+				return seir::makeShared<seir::Blob, FileBlob>(data, static_cast<size_t>(size));
 			}
 			return {};
 		}
@@ -96,7 +96,7 @@ namespace seir
 		return {};
 	}
 
-	UniquePtr<Blob> createFileBlob(const std::filesystem::path& path)
+	SharedPtr<Blob> createFileBlob(const std::filesystem::path& path)
 	{
 		if (const Descriptor file{ ::open(path.c_str(), O_RDONLY), true }; file._descriptor != -1)
 			return FileBlob::create(file._descriptor);
@@ -104,7 +104,7 @@ namespace seir
 		return {};
 	}
 
-	UniquePtr<Blob> createFileBlob(TemporaryFile& file)
+	SharedPtr<Blob> createFileBlob(TemporaryFile& file)
 	{
 		return FileBlob::create(static_cast<const TemporaryFileImpl&>(file)._file._descriptor);
 	}
