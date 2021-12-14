@@ -1,0 +1,6 @@
+---
+Checks: '*'
+FormatStyle: file
+HeaderFilterRegex: '.*'
+WarningsAsErrors: '*'
+...

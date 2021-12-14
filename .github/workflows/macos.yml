@@ -2,6 +2,7 @@ name: macOS
 on:
   push:
     paths-ignore:
+      - '.clang-tidy'
       - 'LICENSE'
       - 'README.md'
 jobs:

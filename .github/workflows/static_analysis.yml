@@ -13,7 +13,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install cppcheck libasound2-dev libvorbis-dev ninja-build
+          sudo apt-get install clang-tidy-12 cppcheck libasound2-dev libvorbis-dev ninja-build
       - name: Run cppcheck
         continue-on-error: true
         run: |
@@ -46,3 +46,6 @@ jobs:
             -DSEIR_EXAMPLES=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
+      - name: Run clang-tidy
+        run: |
+          find '${{ github.workspace }}/libs' -name '*.cpp' -printf '[%P]\n' -exec clang-tidy-12 -p='${{ github.workspace }}/build' --quiet '{}' \;

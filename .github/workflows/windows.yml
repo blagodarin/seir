@@ -2,6 +2,7 @@ name: Windows
 on:
   push:
     paths-ignore:
+      - '.clang-tidy'
       - 'LICENSE'
       - 'README.md'
 jobs:
