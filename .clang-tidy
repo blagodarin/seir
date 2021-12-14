@@ -1,5 +1,5 @@
 ---
-Checks: '*'
+Checks: '*,-*-braces-around-statements,-*-magic-numbers,-*-named-parameter,-*-no-malloc,-*-non-private-member-variables-in-classes,-cppcoreguidelines-macro-usage,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-fuchsia-*,-google-readability-namespace-comments,-google-readability-todo,-hicpp-signed-bitwise,-llvm-*,-llvmlibc-*,-modernize-use-trailing-return-type,-readability-implicit-bool-conversion'
 FormatStyle: file
 HeaderFilterRegex: '.*'
 WarningsAsErrors: '*'

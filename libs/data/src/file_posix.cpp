@@ -98,7 +98,7 @@ namespace seir
 
 	SharedPtr<Blob> createFileBlob(const std::filesystem::path& path)
 	{
-		if (const Descriptor file{ ::open(path.c_str(), O_RDONLY), true }; file._descriptor != -1)
+		if (const Descriptor file{ ::open(path.c_str(), O_RDONLY | O_CLOEXEC), true }; file._descriptor != -1)
 			return FileBlob::create(file._descriptor);
 		::perror("open");
 		return {};
