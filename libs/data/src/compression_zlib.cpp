@@ -5,7 +5,6 @@
 #include "compression.hpp"
 
 #include <cassert>
-#include <cstring>
 
 #include <zlib.h>
 
@@ -14,17 +13,12 @@ namespace
 	class ZlibCompressor final : public seir::Compressor
 	{
 	public:
-		ZlibCompressor() noexcept
-		{
-			std::memset(&_stream, 0, sizeof _stream);
-		}
-
 		~ZlibCompressor() noexcept override
 		{
 			::deflateEnd(&_stream);
 		}
 
-		bool prepare(seir::CompressionLevel level) noexcept override
+		[[nodiscard]] bool prepare(seir::CompressionLevel level) noexcept override
 		{
 			// TODO: Use a previously-prepared compressor without unnecessary deallocations (in deflateEnd)
 			// and allocations (in deflateInit). Using deflateParams (and maybe deflateReset) may help.
@@ -58,17 +52,12 @@ namespace
 		}
 
 	private:
-		z_stream _stream;
+		z_stream _stream{};
 	};
 
 	class ZlibDecompressor final : public seir::Decompressor
 	{
 	public:
-		ZlibDecompressor() noexcept
-		{
-			std::memset(&_stream, 0, sizeof _stream);
-		}
-
 		[[nodiscard]] bool decompress(void* dst, size_t dstCapacity, const void* src, size_t srcSize) noexcept override
 		{
 			if (inflateInit(&_stream) != Z_OK)
@@ -83,7 +72,7 @@ namespace
 		}
 
 	private:
-		z_stream _stream;
+		z_stream _stream{};
 	};
 }
 

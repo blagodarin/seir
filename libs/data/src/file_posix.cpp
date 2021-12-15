@@ -8,8 +8,8 @@
 #include <seir_data/blob.hpp>
 #include <seir_data/writer.hpp>
 
+#include <cstdio>     // perror
 #include <fcntl.h>    // open
-#include <stdio.h>    // perror
 #include <sys/mman.h> // mmap, munmap
 #include <unistd.h>   // close, ftruncate, lseek, pwrite, unlink
 
@@ -30,25 +30,27 @@ namespace
 		}
 	};
 
+	const auto kMapFailed = MAP_FAILED; // NOLINT(cppcoreguidelines-pro-type-cstyle-cast, performance-no-int-to-ptr)
+
 	struct FileBlob final : seir::Blob
 	{
 		FileBlob(void*& data, size_t size) noexcept
-			: Blob{ data, size } { data = MAP_FAILED; }
+			: Blob{ data, size } { data = kMapFailed; }
 		~FileBlob() noexcept override
 		{
-			if (_data != MAP_FAILED && ::munmap(const_cast<void*>(_data), _size) == -1)
+			if (_data != kMapFailed && ::munmap(const_cast<void*>(_data), _size) == -1)
 				::perror("munmap");
 		}
 		static seir::SharedPtr<seir::Blob> create(int descriptor)
 		{
 			if (const auto size = ::lseek(descriptor, 0, SEEK_END); size == -1)
 				::perror("lseek");
-			else if (auto data = ::mmap(nullptr, static_cast<size_t>(size), PROT_READ, MAP_PRIVATE, descriptor, 0); data == MAP_FAILED)
+			else if (auto data = ::mmap(nullptr, static_cast<size_t>(size), PROT_READ, MAP_PRIVATE, descriptor, 0); data == kMapFailed)
 				::perror("mmap");
 			else
 			{
 				SEIR_FINALLY([&] {
-					if (data != MAP_FAILED && ::munmap(data, static_cast<size_t>(size)) == -1)
+					if (data != kMapFailed && ::munmap(data, static_cast<size_t>(size)) == -1)
 						::perror("munmap");
 				});
 				return seir::makeShared<seir::Blob, FileBlob>(data, static_cast<size_t>(size));

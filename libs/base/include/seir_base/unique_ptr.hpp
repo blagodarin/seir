@@ -42,7 +42,7 @@ namespace seir
 		template <class>
 		friend class SharedPtr;
 		template <class R, class U, class... Args>
-		friend std::enable_if_t<std::is_base_of_v<R, U>, UniquePtr<R>> makeUnique(Args&&...);
+		friend std::enable_if_t<std::is_base_of_v<R, U>, UniquePtr<R>> makeUnique(Args&&...); //NOLINT(readability-redundant-declaration)
 	};
 
 	template <class R, class U = R, class... Args>

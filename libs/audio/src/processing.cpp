@@ -174,7 +174,8 @@ namespace seir
 
 	void resampleAdd2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
 	{
-		size_t i = 0, j = srcOffset;
+		size_t i = 0;
+		size_t j = srcOffset;
 #if SEIR_INTRINSICS_SSE // 40-85% faster with MSVC.
 		for (; i < (dstLength & ~size_t{ 0b1 }); i += 2)
 		{
@@ -194,7 +195,8 @@ namespace seir
 
 	void resampleCopy2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
 	{
-		size_t i = 0, j = srcOffset;
+		size_t i = 0;
+		size_t j = srcOffset;
 #if SEIR_INTRINSICS_SSE // 35-65% faster with MSVC.
 		for (; i < (dstLength & ~size_t{ 0b1 }); i += 2)
 		{

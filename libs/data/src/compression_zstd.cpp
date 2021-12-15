@@ -15,7 +15,7 @@ namespace
 	class ZstdCompressor final : public seir::Compressor
 	{
 	public:
-		bool prepare(seir::CompressionLevel level) noexcept override
+		[[nodiscard]] bool prepare(seir::CompressionLevel level) noexcept override
 		{
 			switch (level)
 			{
@@ -25,12 +25,12 @@ namespace
 			return true;
 		}
 
-		size_t maxCompressedSize(size_t uncompressedSize) const noexcept override
+		[[nodiscard]] size_t maxCompressedSize(size_t uncompressedSize) const noexcept override
 		{
 			return ::ZSTD_compressBound(uncompressedSize);
 		}
 
-		size_t compress(void* dst, size_t dstCapacity, const void* src, size_t srcSize) noexcept override
+		[[nodiscard]] size_t compress(void* dst, size_t dstCapacity, const void* src, size_t srcSize) noexcept override
 		{
 			const auto result = ::ZSTD_compressCCtx(_context, dst, dstCapacity, src, srcSize, _level);
 			return ::ZSTD_isError(result) ? 0 : result;
@@ -44,7 +44,7 @@ namespace
 	class ZstdDecompressor final : public seir::Decompressor
 	{
 	public:
-		bool decompress(void* dst, size_t dstCapacity, const void* src, size_t srcSize) noexcept override
+		[[nodiscard]] bool decompress(void* dst, size_t dstCapacity, const void* src, size_t srcSize) noexcept override
 		{
 			const auto result = ::ZSTD_decompressDCtx(_context, dst, dstCapacity, src, srcSize);
 			return !::ZSTD_isError(result) && result == dstCapacity;

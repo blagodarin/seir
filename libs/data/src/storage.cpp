@@ -91,5 +91,5 @@ namespace seir
 			if (auto blob = createFileBlob(name))
 				return blob;
 		return {};
-	}
+	} // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 }

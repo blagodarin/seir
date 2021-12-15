@@ -72,7 +72,7 @@ namespace seir
 		template <class>
 		friend class SharedPtr;
 		template <class R, class U, class... Args>
-		friend std::enable_if_t<std::is_base_of_v<ReferenceCounter, R> && std::is_base_of_v<R, U>, SharedPtr<R>> makeShared(Args&&...);
+		friend std::enable_if_t<std::is_base_of_v<ReferenceCounter, R> && std::is_base_of_v<R, U>, SharedPtr<R>> makeShared(Args&&...); //NOLINT(readability-redundant-declaration)
 	};
 
 	template <class T>
@@ -118,7 +118,7 @@ constexpr seir::SharedPtr<T>::SharedPtr(UniquePtr<U>&& other) noexcept
 }
 
 template <class T>
-seir::SharedPtr<T>& seir::SharedPtr<T>::operator=(const SharedPtr& other) noexcept
+seir::SharedPtr<T>& seir::SharedPtr<T>::operator=(const SharedPtr& other) noexcept // NOLINT(bugprone-unhandled-self-assignment, cert-oop54-cpp)
 {
 	if (other._pointer)
 		other._pointer->_references.fetch_add(1);
