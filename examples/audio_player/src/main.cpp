@@ -8,7 +8,9 @@
 #include <seir_data/blob.hpp>
 #include <seir_data/file.hpp>
 
+#include <cassert>
 #include <condition_variable>
+#include <filesystem>
 #include <iostream>
 #include <mutex>
 #include <optional>
@@ -54,11 +56,10 @@ int main(int argc, char** argv)
 		std::cerr << "Usage:\n\t" << std::filesystem::path{ argv[0] }.filename().string() << " FILE\n";
 		return 1;
 	}
-	const std::filesystem::path path{ argv[1] };
-	auto decoder = seir::AudioDecoder::create(seir::createFileBlob(path));
+	auto decoder = seir::AudioDecoder::create(seir::createFileBlob(argv[1]));
 	if (!decoder)
 	{
-		std::cerr << "Unable to play " << path << '\n';
+		std::cerr << "Unable to play " << argv[1] << '\n';
 		return 1;
 	}
 	AudioCallbacks callbacks;

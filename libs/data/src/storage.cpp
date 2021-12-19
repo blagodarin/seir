@@ -9,6 +9,7 @@
 #include <seir_data/file.hpp>
 #include "archive.hpp"
 
+#include <cassert>
 #include <string>
 #include <unordered_map>
 

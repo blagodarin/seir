@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <filesystem>
+#include <string>
 
 namespace seir
 {
@@ -24,23 +24,13 @@ namespace seir
 		[[nodiscard]] static UniquePtr<TemporaryFile> create();
 
 		virtual ~TemporaryFile() noexcept = default;
-
-		//
-		[[nodiscard]] const std::filesystem::path& path() const noexcept { return _path; }
-
-	protected:
-		const std::filesystem::path _path;
-		explicit TemporaryFile(std::filesystem::path&& path) noexcept
-			: _path{ std::move(path) } {}
 	};
 
 	// Creates a Blob that references a memory-mapped file.
-	// This should be a member function of Blob, but <filesystem> is extremely slow to compile.
-	[[nodiscard]] SharedPtr<Blob> createFileBlob(const std::filesystem::path&);
+	[[nodiscard]] SharedPtr<Blob> createFileBlob(const std::string&);
 	[[nodiscard]] SharedPtr<Blob> createFileBlob(TemporaryFile&);
 
 	// Creates a Writer thet writes to the specified file.
-	// This should be a member function of Writer, but <filesystem> is extremely slow to compile.
-	[[nodiscard]] UniquePtr<Writer> createFileWriter(const std::filesystem::path&);
+	[[nodiscard]] UniquePtr<Writer> createFileWriter(const std::string&);
 	[[nodiscard]] UniquePtr<Writer> createFileWriter(TemporaryFile&);
 }

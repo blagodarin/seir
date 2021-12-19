@@ -4,12 +4,12 @@
 
 #include <seir_data/file.hpp>
 
-#include <seir_base/int_utils.hpp>
 #include <seir_base/scope.hpp>
 #include <seir_data/blob.hpp>
 #include <seir_data/writer.hpp>
 
-#define NONLS
+#include <array>
+
 #define NOUSER
 #define WIN32_LEAN_AND_MEAN
 #include <seir_base/windows_utils.hpp>
@@ -24,6 +24,32 @@ namespace
 		{
 			if (!::UnmapViewOfFile(_data))
 				seir::windows::reportError("UnmapViewOfFile");
+		}
+		static seir::SharedPtr<Blob> create(const wchar_t* path)
+		{
+			if (const seir::windows::Handle file{ ::CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) }; file == INVALID_HANDLE_VALUE)
+				seir::windows::reportError("CreateFileW");
+			else if (LARGE_INTEGER size{}; !::GetFileSizeEx(file, &size))
+				seir::windows::reportError("GetFileSizeEx");
+			else
+			{
+				if (!size.QuadPart)
+					return Blob::from(nullptr, 0);
+				if (static_cast<ULONGLONG>(size.QuadPart) <= std::numeric_limits<size_t>::max())
+					if (const seir::windows::Handle mapping{ ::CreateFileMappingW(file, nullptr, PAGE_READONLY, static_cast<ULONG>(size.HighPart), size.LowPart, nullptr) }; !mapping)
+						seir::windows::reportError("CreateFileMappingW");
+					else if (auto data = ::MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, static_cast<SIZE_T>(size.QuadPart)); !data)
+						seir::windows::reportError("MapViewOfFile");
+					else
+					{
+						SEIR_FINALLY([&data] {
+							if (data && !::UnmapViewOfFile(data))
+								seir::windows::reportError("UnmapViewOfFile");
+						});
+						return seir::makeShared<Blob, FileBlob>(data, static_cast<size_t>(size.QuadPart));
+					}
+			}
+			return {};
 		}
 	};
 
@@ -44,17 +70,38 @@ namespace
 			seir::windows::reportError("UnmapViewOfFile");
 			return false;
 		}
+		static seir::UniquePtr<Writer> create(const wchar_t* path)
+		{
+			if (seir::windows::Handle file{ ::CreateFileW(path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr) }; file != INVALID_HANDLE_VALUE)
+				return seir::makeUnique<Writer, FileWriter>(std::move(file));
+			seir::windows::reportError("CreateFileW");
+			return {};
+		}
 	};
 
 	struct TemporaryFileImpl final : seir::TemporaryFile
 	{
-		explicit TemporaryFileImpl(std::filesystem::path&& path) noexcept
-			: TemporaryFile(std::move(path)) {}
+		const std::wstring _path;
+		explicit TemporaryFileImpl(std::wstring&& path) noexcept
+			: _path{ std::move(path) } {}
 		~TemporaryFileImpl() noexcept override
 		{
 			if (!::DeleteFileW(_path.c_str()))
 				seir::windows::reportError("DeleteFileW");
 		}
+	};
+
+	struct WPath
+	{
+		std::array<wchar_t, MAX_PATH + 1> _buffer;
+		WPath(std::string_view path) noexcept
+		{
+			const auto length = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.data(), static_cast<int>(path.size()), _buffer.data(), static_cast<int>(_buffer.size() - 1));
+			if (!length)
+				seir::windows::reportError("MultiByteToWideChar");
+			_buffer[static_cast<size_t>(length)] = L'\0';
+		}
+		constexpr explicit operator bool() const noexcept { return _buffer[0] != L'\0'; }
 	};
 }
 
@@ -62,68 +109,46 @@ namespace seir
 {
 	UniquePtr<TemporaryFile> TemporaryFile::create()
 	{
-		constexpr auto maxTempPathSize = MAX_PATH - 14; // GetTempFileName path length limit.
-		std::array<wchar_t, maxTempPathSize + 1> path;
-		static_assert(path.size() <= std::numeric_limits<DWORD>::max());
-		if (!::GetTempPathW(static_cast<DWORD>(path.size()), path.data()))
+		constexpr auto maxPathPrefixSize = MAX_PATH - 14; // GetTempFileNameW limit.
+		std::array<wchar_t, maxPathPrefixSize + 1> pathPrefix;
+		if (!::GetTempPathW(static_cast<DWORD>(pathPrefix.size()), pathPrefix.data()))
 			windows::reportError("GetTempPathW");
 		else
 		{
-			std::array<wchar_t, MAX_PATH> name;
-			if (const auto status = ::GetTempFileNameW(path.data(), L"Seir", 0, name.data()); !status)
-				windows::reportError("GetTempPathW");
+			std::array<wchar_t, MAX_PATH> path;
+			if (const auto status = ::GetTempFileNameW(pathPrefix.data(), L"Seir", 0, path.data()); !status)
+				windows::reportError("GetTempFileNameW");
 			else if (status == ERROR_BUFFER_OVERFLOW)
-				windows::reportError("GetTempPathW", status);
+				windows::reportError("GetTempFileNameW", status);
 			else
-				return makeUnique<TemporaryFile, TemporaryFileImpl>(name.data());
+				return makeUnique<TemporaryFile, TemporaryFileImpl>(path.data());
 		}
 		return {};
 	}
 
-	SharedPtr<Blob> createFileBlob(const std::filesystem::path& path)
+	SharedPtr<Blob> createFileBlob(const std::string& path)
 	{
-		if (windows::Handle file{ ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) }; file == INVALID_HANDLE_VALUE)
-			windows::reportError("CreateFileW");
-		else if (LARGE_INTEGER size; !::GetFileSizeEx(file, &size))
-			windows::reportError("GetFileSizeEx");
-		else
-		{
-			if (!size.QuadPart)
-				return Blob::from(nullptr, 0);
-			if (toUnsigned(size.QuadPart) <= std::numeric_limits<size_t>::max())
-				if (windows::Handle mapping{ ::CreateFileMappingW(file, nullptr, PAGE_READONLY, toUnsigned(size.HighPart), size.LowPart, nullptr) }; !mapping)
-					windows::reportError("CreateFileMappingW");
-				else if (auto data = ::MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, static_cast<SIZE_T>(size.QuadPart)); !data)
-					windows::reportError("MapViewOfFile");
-				else
-				{
-					SEIR_FINALLY([&data] {
-						if (data && !::UnmapViewOfFile(data))
-							windows::reportError("UnmapViewOfFile");
-					});
-					return makeShared<Blob, FileBlob>(data, static_cast<size_t>(size.QuadPart));
-				}
-		}
+		if (const WPath wpath{ path })
+			return FileBlob::create(wpath._buffer.data());
 		return {};
 	}
 
 	// cppcheck-suppress constParameter
 	SharedPtr<Blob> createFileBlob(TemporaryFile& file)
 	{
-		return createFileBlob(file.path());
+		return FileBlob::create(static_cast<TemporaryFileImpl&>(file)._path.c_str());
 	}
 
-	UniquePtr<Writer> createFileWriter(const std::filesystem::path& path)
+	UniquePtr<Writer> createFileWriter(const std::string& path)
 	{
-		if (windows::Handle file{ ::CreateFileW(path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr) }; file != INVALID_HANDLE_VALUE)
-			return makeUnique<Writer, FileWriter>(std::move(file));
-		windows::reportError("CreateFileW");
+		if (const WPath wpath{ path })
+			return FileWriter::create(wpath._buffer.data());
 		return {};
 	}
 
 	// cppcheck-suppress constParameter
 	UniquePtr<Writer> createFileWriter(TemporaryFile& file)
 	{
-		return createFileWriter(file.path());
+		return FileWriter::create(static_cast<TemporaryFileImpl&>(file)._path.c_str());
 	}
 }

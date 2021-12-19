@@ -9,6 +9,8 @@
 #include <seir_data/storage.hpp>
 #include <seir_data/writer.hpp>
 
+#include <algorithm>
+#include <iterator>
 #include <unordered_map>
 
 #include <doctest/doctest.h>

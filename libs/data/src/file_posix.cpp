@@ -10,6 +10,7 @@
 
 #include <cstdio>     // perror
 #include <fcntl.h>    // open
+#include <filesystem> // std::filesystem::temp_directory_path
 #include <sys/mman.h> // mmap, munmap
 #include <unistd.h>   // close, ftruncate, lseek, pwrite, unlink
 
@@ -77,13 +78,8 @@ namespace
 	struct TemporaryFileImpl final : seir::TemporaryFile
 	{
 		const Descriptor _file;
-		TemporaryFileImpl(std::filesystem::path&& path, Descriptor&& file) noexcept
-			: TemporaryFile(std::move(path)), _file{ std::move(file) } {}
-		~TemporaryFileImpl() noexcept override
-		{
-			if (::unlink(_path.c_str()))
-				::perror("unlink");
-		}
+		TemporaryFileImpl(Descriptor&& file) noexcept
+			: _file{ std::move(file) } {}
 	};
 }
 
@@ -92,13 +88,16 @@ namespace seir
 	UniquePtr<TemporaryFile> TemporaryFile::create()
 	{
 		auto path = (std::filesystem::temp_directory_path() / "SeirXXXXXX").string();
-		if (Descriptor file{ ::mkstemp(path.data()), true }; file._descriptor != -1)
-			return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(path), std::move(file));
-		::perror("mkstemp");
+		if (Descriptor file{ ::mkstemp(path.data()), true }; file._descriptor == -1)
+			::perror("mkstemp");
+		else if (::unlink(path.c_str()))
+			::perror("unlink");
+		else
+			return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(file));
 		return {};
 	}
 
-	SharedPtr<Blob> createFileBlob(const std::filesystem::path& path)
+	SharedPtr<Blob> createFileBlob(const std::string& path)
 	{
 		if (const Descriptor file{ ::open(path.c_str(), O_RDONLY | O_CLOEXEC), true }; file._descriptor != -1)
 			return FileBlob::create(file._descriptor);
@@ -111,7 +110,7 @@ namespace seir
 		return FileBlob::create(static_cast<const TemporaryFileImpl&>(file)._file._descriptor);
 	}
 
-	UniquePtr<Writer> createFileWriter(const std::filesystem::path& path)
+	UniquePtr<Writer> createFileWriter(const std::string& path)
 	{
 		if (Descriptor file{ ::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), true }; file._descriptor != -1)
 			return makeUnique<Writer, FileWriter>(std::move(file));

@@ -7,8 +7,6 @@
 #include <seir_base/buffer.hpp>
 #include <seir_base/shared_ptr.hpp>
 
-#include <cassert>
-#include <cstddef>
 #include <limits>
 
 namespace seir
