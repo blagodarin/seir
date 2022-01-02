@@ -88,7 +88,7 @@ namespace
 				for (const auto& file : _files)
 					metaSize += 1 + file._name.size();
 				seir::Buffer<std::byte> metaBuffer;
-				if (!metaBuffer.tryReserve(metaSize))
+				if (!metaBuffer.tryReserve(metaSize, 0))
 					return false;
 				{
 					const auto metaWriter = seir::Writer::create(metaBuffer);
@@ -140,7 +140,7 @@ namespace
 				if (_compressionBuffer.capacity() < maxCompressedSize)
 				{
 					constexpr auto MiB = size_t{ 1 } << 20;
-					if (!_compressionBuffer.tryReserve((maxCompressedSize + (MiB - 1)) & ~(MiB - 1), false))
+					if (!_compressionBuffer.tryReserve((maxCompressedSize + (MiB - 1)) & ~(MiB - 1), 0))
 						return false;
 				}
 				const auto compressedSize = _compressor->compress(_compressionBuffer.data(), _compressionBuffer.capacity(), dataToWrite, originalSize);
@@ -208,7 +208,7 @@ namespace seir
 		{
 			const auto decompressor = seir::Decompressor::create(compression);
 			if (!decompressor
-				|| !metaBuffer.tryReserve(fileHeader->_metaBlock._originalSize, false)
+				|| !metaBuffer.tryReserve(fileHeader->_metaBlock._originalSize, 0)
 				|| !decompressor->decompress(metaBuffer.data(), fileHeader->_metaBlock._originalSize, metaBlock, fileHeader->_metaBlock._archivedSize))
 				return false;
 			metaBlock = metaBuffer.data();

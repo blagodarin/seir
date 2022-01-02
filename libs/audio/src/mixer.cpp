@@ -17,8 +17,8 @@ namespace seir
 		assert(samplingRate > 0);
 		assert(maxBufferFrames > 0);
 		_samplingRate = samplingRate;
-		_processingBuffer.reserve(maxBufferFrames * kAudioFrameSize, false); // Enough for all supported audio frame format.
-		_resamplingBuffer.reserve((kAudioFramesPerBlock + (maxBufferFrames * AudioFormat::kMaxSamplingRate + samplingRate - 1) / samplingRate) * kAudioChannels, false);
+		_processingBuffer.reserve(maxBufferFrames * kAudioFrameSize, 0); // Enough for all supported audio frame format.
+		_resamplingBuffer.reserve((kAudioFramesPerBlock + (maxBufferFrames * AudioFormat::kMaxSamplingRate + samplingRate - 1) / samplingRate) * kAudioChannels, 0);
 	}
 
 	size_t AudioMixer::mix(float* output, size_t maxFrames, bool rewrite, AudioDecoder& decoder) noexcept

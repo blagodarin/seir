@@ -69,7 +69,7 @@ std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::cr
 			if constexpr (sizeof(uint64_t) > sizeof(size_t))
 				if (capacity > std::numeric_limits<size_t>::max())
 					return false;
-			return _buffer.tryReserve(static_cast<size_t>(capacity));
+			return _buffer.tryReserve(static_cast<size_t>(capacity), static_cast<size_t>(_size));
 		}
 		bool writeImpl(uint64_t offset64, const void* data, size_t size) noexcept override
 		{
@@ -77,9 +77,12 @@ std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::cr
 				if (offset64 > std::numeric_limits<size_t>::max())
 					return false;
 			const auto offset = static_cast<size_t>(offset64);
-			if (size > std::numeric_limits<size_t>::max() - offset
-				|| !_buffer.tryReserve(offset + size)) // TODO: Improve performance in reserve-less Writer usage scenarios.
+			if (size > std::numeric_limits<size_t>::max() - offset)
 				return false;
+			if (const auto requiredCapacity = offset + size; requiredCapacity > _buffer.capacity())
+				if (const auto grownCapacity = _buffer.capacity() + _buffer.capacity() / 2;
+					!_buffer.tryReserve(requiredCapacity > grownCapacity ? requiredCapacity : grownCapacity, static_cast<size_t>(_size)))
+					return false;
 			std::memcpy(_buffer.data() + offset, data, size);
 			return true;
 		}

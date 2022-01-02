@@ -64,14 +64,14 @@ TEST_CASE("Buffer::reserve()")
 {
 	Buffer buffer;
 	::check(buffer, {}, false);
-	buffer.reserve(3);
+	buffer.reserve(3, 4);
 	::check(buffer, { 0, 0, 0 });
 	std::iota(buffer.data(), buffer.data() + buffer.capacity(), 1);
-	buffer.reserve(4);
+	buffer.reserve(4, 4);
 	::check(buffer, { 1, 2, 3, 0 });
-	buffer.reserve(3, false);
+	buffer.reserve(3, 0);
 	::check(buffer, { 1, 2, 3, 0 });
-	buffer.reserve(5, false);
+	buffer.reserve(5, 0);
 	::check(buffer, { 0, 0, 0, 0, 0 });
 }
 
