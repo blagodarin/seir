@@ -2,18 +2,19 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_base/buffer.hpp>
 #include <seir_data/writer.hpp>
+
+#include <seir_base/buffer.hpp>
 
 #include <vector>
 
 #include <doctest/doctest.h>
 
-TEST_CASE("Writer::from(Buffer&)")
+TEST_CASE("Writer::create(Buffer&)")
 {
 	seir::Buffer<std::byte> buffer;
 	CHECK(buffer.capacity() == 0);
-	const auto writer = seir::Writer::to(buffer);
+	const auto writer = seir::Writer::create(buffer);
 	REQUIRE(writer);
 	CHECK(writer->reserve(0));
 	CHECK(buffer.capacity() == 0);

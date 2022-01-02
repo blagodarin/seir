@@ -91,7 +91,7 @@ namespace
 				if (!metaBuffer.tryReserve(metaSize))
 					return false;
 				{
-					const auto metaWriter = seir::Writer::to(metaBuffer);
+					const auto metaWriter = seir::Writer::create(metaBuffer);
 					for (const auto& file : _files)
 						metaWriter->write(file._blockInfo);
 					for (const auto& file : _files)

@@ -18,9 +18,12 @@ namespace seir
 	public:
 		// Creates a Writer that writes to the specified Buffer.
 		template <class T, class A>
-		[[nodiscard]] static std::enable_if_t<sizeof(T) == 1, UniquePtr<Writer>> to(Buffer<T, A>&);
+		[[nodiscard]] static std::enable_if_t<sizeof(T) == 1, UniquePtr<Writer>> create(Buffer<T, A>&);
 
 		virtual ~Writer() noexcept = default;
+
+		//
+		virtual bool flush() noexcept = 0;
 
 		// Returns the current offset.
 		[[nodiscard]] uint64_t offset() const noexcept { return _offset; }
@@ -52,7 +55,7 @@ namespace seir
 }
 
 template <class T, class A>
-std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::to(Buffer<T, A>& buffer)
+std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::create(Buffer<T, A>& buffer)
 {
 	struct BufferWriter final : Writer
 	{
@@ -60,6 +63,7 @@ std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::to
 		// cppcheck-suppress constParameter
 		explicit BufferWriter(Buffer<T, A>& buffer) noexcept
 			: _buffer{ buffer } {}
+		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t capacity) noexcept override
 		{
 			if constexpr (sizeof(uint64_t) > sizeof(size_t))

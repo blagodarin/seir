@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_data/archive.hpp>
+
 #include <seir_data/blob.hpp>
 #include <seir_data/compression.hpp>
-#include <seir_data/file.hpp>
 #include <seir_data/storage.hpp>
+#include <seir_data/temporary_file.hpp>
 #include <seir_data/writer.hpp>
 
 #include <algorithm>
