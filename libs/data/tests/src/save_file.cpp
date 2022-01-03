@@ -40,17 +40,18 @@ TEST_CASE("SaveFile")
 	REQUIRE(file);
 	::checkFile(path, originalData);
 	const std::string_view modifiedData{ "Modified world!" };
+	CHECK(file->reserve(modifiedData.size()));
+	CHECK(file->size() == 0);
+	REQUIRE(file->offset() == 0);
 	REQUIRE(file->write(modifiedData.data(), modifiedData.size()));
 	::checkFile(path, originalData);
-	REQUIRE(file->flush());
-	::checkFile(path, originalData);
-	SUBCASE("commit")
+	SUBCASE("SaveFile::commit")
 	{
 		REQUIRE(seir::SaveFile::commit(std::move(file)));
 		CHECK_FALSE(file);
 		::checkFile(path, modifiedData);
 	}
-	SUBCASE("rollback")
+	SUBCASE("SaveFile::~SaveFile")
 	{
 		CHECK(file->flush()); // Should successfully do nothing. Unfortunately we're unable to check that it actually does nothing.
 		::checkFile(path, originalData);
@@ -65,7 +66,12 @@ TEST_CASE("SaveFile::commit({})")
 	CHECK_FALSE(seir::SaveFile::commit({}));
 }
 
-TEST_CASE("SaveFile::create()")
+TEST_CASE("SaveFile::create({})")
+{
+	CHECK_FALSE(static_cast<bool>(seir::SaveFile::create({})));
+}
+
+TEST_CASE("SaveFile::create(\".../\")")
 {
 	auto path = std::filesystem::temp_directory_path().string();
 	if (constexpr auto separator = static_cast<char>(std::filesystem::path::preferred_separator); path.empty() || path.back() != separator)

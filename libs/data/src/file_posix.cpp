@@ -170,17 +170,16 @@ namespace seir
 	bool SaveFile::commit(UniquePtr<SaveFile>&& file) noexcept
 	{
 		if (const auto impl = staticCast<SaveFileImpl>(std::move(file)))
-		{
-			if (::fsync(impl->_file._descriptor))
-				::perror("fsync");
-			else if (::rename(impl->_temporaryPath.c_str(), impl->_path.c_str()))
-				::perror("rename");
-			else
+			if (::flushFile(impl->_file._descriptor))
 			{
-				impl->_committed = true;
-				return true;
+				if (::rename(impl->_temporaryPath.c_str(), impl->_path.c_str()))
+					::perror("rename");
+				else
+				{
+					impl->_committed = true;
+					return true;
+				}
 			}
-		}
 		return false;
 	}
 
@@ -199,12 +198,8 @@ namespace seir
 	UniquePtr<TemporaryFile> TemporaryWriter::commit(UniquePtr<TemporaryWriter>&& writer)
 	{
 		if (const auto impl = staticCast<TemporaryWriterImpl>(std::move(writer)))
-		{
-			if (::fsync(impl->_file._descriptor))
-				::perror("fsync");
-			else
+			if (::flushFile(impl->_file._descriptor))
 				return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(impl->_path), std::move(impl->_file), impl->size());
-		}
 		return {};
 	}
 

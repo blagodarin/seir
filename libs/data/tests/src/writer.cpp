@@ -26,6 +26,7 @@ TEST_CASE("Writer")
 	};
 
 	WriterTester tester;
+	CHECK(tester.flush()); // To keep test source coverage at 100%.
 	const auto check = [&tester](uint64_t size, uint64_t offset) {
 		CHECK(tester.size() == size);
 		CHECK(tester.offset() == offset);
@@ -98,11 +99,15 @@ TEST_CASE("Writer::create(Buffer&)")
 TEST_CASE("Writer::create(const std::string&)")
 {
 	const auto path = std::filesystem::temp_directory_path() / "test.txt";
+	std::filesystem::remove(path);
 	const std::string_view data{ "Hello world!\n" };
 	{
 		const auto writer = seir::Writer::create(path.string());
 		REQUIRE(writer);
+		REQUIRE(std::filesystem::exists(path));
 		CHECK(writer->reserve(2 * data.size()));
+		CHECK(writer->flush());
+		CHECK(std::filesystem::file_size(path) == 0);
 		REQUIRE(writer->write(data.data(), data.size()));
 		REQUIRE(writer->write(data.data(), data.size()));
 	}
@@ -116,4 +121,9 @@ TEST_CASE("Writer::create(const std::string&)")
 		CHECK_FALSE(std::memcmp(static_cast<const std::byte*>(blob->data()) + data.size(), data.data(), data.size()));
 	}
 	std::filesystem::remove(path);
+}
+
+TEST_CASE("Writer::create({})")
+{
+	CHECK_FALSE(static_cast<bool>(seir::Writer::create({})));
 }
