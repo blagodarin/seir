@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_data/blob.hpp>
-#include <seir_data/temporary_file.hpp>
+#include <seir_data/temporary.hpp>
 
 #include <array>
 #include <filesystem>
@@ -19,8 +19,10 @@ TEST_CASE("TemporaryFile")
 	CHECK(writer->reserve(2 * data.size()));
 	REQUIRE(writer->write(data.data(), data.size()));
 	REQUIRE(writer->write(data.data(), data.size()));
+	CHECK(writer->flush()); // Should successfully do nothing. Unfortunately we're unable to check that it actually does nothing.
 	auto file = seir::TemporaryWriter::commit(std::move(writer));
 	REQUIRE(file);
+	MESSAGE("TemporaryFile: ", file->path());
 	CHECK_FALSE(writer);
 	const std::filesystem::path path{ file->path() };
 	CHECK(std::filesystem::exists(path));

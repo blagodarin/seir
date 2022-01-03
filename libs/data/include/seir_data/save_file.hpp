@@ -12,10 +12,10 @@ namespace seir
 	class SaveFile : public Writer
 	{
 	public:
-		//
+		// Creates a temporary file to replace the specified file.
 		[[nodiscard]] static UniquePtr<SaveFile> create(std::string&& path);
 
-		//
+		// Replaces the target file with the temporary file contents.
 		static bool commit(UniquePtr<SaveFile>&&) noexcept;
 	};
 }

@@ -9,7 +9,7 @@ set(SOURCES
 	src/reader.cpp
 	src/save_file.cpp
 	src/storage.cpp
-	src/temporary_file.cpp
+	src/temporary.cpp
 	src/writer.cpp
 	)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

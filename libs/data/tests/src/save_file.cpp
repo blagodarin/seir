@@ -52,6 +52,8 @@ TEST_CASE("SaveFile")
 	}
 	SUBCASE("rollback")
 	{
+		CHECK(file->flush()); // Should successfully do nothing. Unfortunately we're unable to check that it actually does nothing.
+		::checkFile(path, originalData);
 		file.reset();
 		::checkFile(path, originalData);
 	}
@@ -61,4 +63,12 @@ TEST_CASE("SaveFile")
 TEST_CASE("SaveFile::commit({})")
 {
 	CHECK_FALSE(seir::SaveFile::commit({}));
+}
+
+TEST_CASE("SaveFile::create()")
+{
+	auto path = std::filesystem::temp_directory_path().string();
+	if (constexpr auto separator = static_cast<char>(std::filesystem::path::preferred_separator); path.empty() || path.back() != separator)
+		path += separator;
+	CHECK_FALSE(static_cast<bool>(seir::SaveFile::create(std::move(path))));
 }

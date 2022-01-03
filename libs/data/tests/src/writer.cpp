@@ -12,6 +12,52 @@
 
 #include <doctest/doctest.h>
 
+TEST_CASE("Writer")
+{
+	struct WriterTester final : public seir::Writer
+	{
+		bool _reserveResult = true;
+		bool _writeResult = true;
+		bool flush() noexcept override { return true; }
+
+	private:
+		bool reserveImpl(uint64_t) noexcept override { return _reserveResult; }
+		bool writeImpl(uint64_t, const void*, size_t) noexcept override { return _writeResult; }
+	};
+
+	WriterTester tester;
+	const auto check = [&tester](uint64_t size, uint64_t offset) {
+		CHECK(tester.size() == size);
+		CHECK(tester.offset() == offset);
+	};
+	check(0, 0);
+	SUBCASE("reserve() == true")
+	{
+		CHECK(tester.reserve(7));
+		check(0, 0);
+	}
+	SUBCASE("reserve() == false")
+	{
+		tester._reserveResult = false;
+		CHECK_FALSE(tester.reserve(7));
+		check(0, 0);
+	}
+	SUBCASE("write() == true")
+	{
+		CHECK(tester.write(nullptr, 7));
+		check(7, 7);
+		tester._writeResult = false;
+		CHECK_FALSE(tester.write(nullptr, 13));
+		check(7, 7);
+	}
+	SUBCASE("write() == false")
+	{
+		tester._writeResult = false;
+		CHECK_FALSE(tester.write(nullptr, 7));
+		check(0, 0);
+	}
+}
+
 TEST_CASE("Writer::create(Buffer&)")
 {
 	seir::Buffer<std::byte> buffer;

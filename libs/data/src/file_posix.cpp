@@ -5,7 +5,7 @@
 #include <seir_base/scope.hpp>
 #include <seir_data/blob.hpp>
 #include <seir_data/save_file.hpp>
-#include <seir_data/temporary_file.hpp>
+#include <seir_data/temporary.hpp>
 
 #include <cstdio>     // perror, rename
 #include <fcntl.h>    // open
@@ -94,7 +94,7 @@ namespace
 			if (!_committed && ::unlink(_temporaryPath.c_str()))
 				::perror("unlink");
 		}
-		bool flush() noexcept override { return ::flushFile(_file._descriptor); }
+		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t) noexcept override { return true; }
 		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_file._descriptor, offset, data, size); }
 	};
@@ -110,7 +110,7 @@ namespace
 			if (_file._descriptor != -1 && ::unlink(_path.c_str()))
 				::perror("unlink");
 		}
-		bool flush() noexcept override { return ::flushFile(_file._descriptor); }
+		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t) noexcept override { return true; }
 		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_file._descriptor, offset, data, size); }
 	};
@@ -155,14 +155,15 @@ namespace seir
 
 	UniquePtr<SaveFile> SaveFile::create(std::string&& path)
 	{
-		const auto separator = path.rfind('/');
-		if (separator == path.size() - 1)
-			return {};
-		auto temporaryPath = path + ".XXXXXX";
-		if (Descriptor file{ ::mkstemp(temporaryPath.data()) }; file._descriptor == -1)
-			::perror("mkstemp");
-		else // TODO: Copy access mode from the original file.
-			return makeUnique<SaveFile, SaveFileImpl>(std::move(file), std::move(path), std::move(temporaryPath));
+		if (!path.empty() && path.back() != '/')
+		{
+			// TODO: Use open() with O_TMPFILE on Linux.
+			auto temporaryPath = path + ".XXXXXX";
+			if (Descriptor file{ ::mkstemp(temporaryPath.data()) }; file._descriptor == -1)
+				::perror("mkstemp");
+			else // TODO: Copy access mode from the original file.
+				return makeUnique<SaveFile, SaveFileImpl>(std::move(file), std::move(path), std::move(temporaryPath));
+		}
 		return {};
 	}
 
@@ -198,7 +199,12 @@ namespace seir
 	UniquePtr<TemporaryFile> TemporaryWriter::commit(UniquePtr<TemporaryWriter>&& writer)
 	{
 		if (const auto impl = staticCast<TemporaryWriterImpl>(std::move(writer)))
-			return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(impl->_path), std::move(impl->_file), impl->size());
+		{
+			if (::fsync(impl->_file._descriptor))
+				::perror("fsync");
+			else
+				return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(impl->_path), std::move(impl->_file), impl->size());
+		}
 		return {};
 	}
 

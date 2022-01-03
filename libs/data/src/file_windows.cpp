@@ -5,7 +5,7 @@
 #include <seir_base/scope.hpp>
 #include <seir_data/blob.hpp>
 #include <seir_data/save_file.hpp>
-#include <seir_data/temporary_file.hpp>
+#include <seir_data/temporary.hpp>
 
 #include <array>
 
@@ -105,7 +105,7 @@ namespace
 			if (!_committed && !::DeleteFileW(_temporaryPath.c_str()))
 				seir::windows::reportError("DeleteFileW");
 		}
-		bool flush() noexcept override { return ::flushFile(_handle); }
+		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t) noexcept override { return true; }
 		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_handle, offset, data, size); }
 	};
@@ -116,7 +116,7 @@ namespace
 		std::string _path;
 		explicit TemporaryWriterImpl(seir::windows::Handle&& handle, std::string&& path) noexcept
 			: _handle{ std::move(handle) }, _path{ std::move(path) } {}
-		bool flush() noexcept override { return ::flushFile(_handle); }
+		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t) noexcept override { return true; }
 		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_handle, offset, data, size); }
 	};
@@ -184,7 +184,7 @@ namespace seir
 			std::wstring directory;
 			if (const auto separator = wpath.find_last_of(L"/\\"); separator == std::string::npos)
 				directory = L".";
-			else if (separator <= wpath.size() - 1)
+			else if (separator < wpath.size() - 1)
 				directory = wpath.substr(0, separator);
 			else
 				return {};
@@ -248,7 +248,8 @@ namespace seir
 	UniquePtr<TemporaryFile> TemporaryWriter::commit(UniquePtr<TemporaryWriter>&& writer)
 	{
 		if (const auto impl = staticCast<TemporaryWriterImpl>(std::move(writer)))
-			return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(impl->_path), std::move(impl->_handle), impl->size());
+			if (::flushFile(impl->_handle))
+				return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(impl->_path), std::move(impl->_handle), impl->size());
 		return {};
 	}
 
