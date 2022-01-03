@@ -134,7 +134,7 @@ namespace
 	{
 		size_t _size = 0;
 		std::array<wchar_t, MAX_PATH + 1> _buffer;
-		WPath(std::string_view path) noexcept
+		explicit WPath(std::string_view path) noexcept
 		{
 			const auto length = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.data(), static_cast<int>(path.size()), _buffer.data(), static_cast<int>(_buffer.size() - 1));
 			if (!length)

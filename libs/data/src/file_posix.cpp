@@ -120,7 +120,7 @@ namespace
 		const Descriptor _file;
 		const uint64_t _size;
 		TemporaryFileImpl(std::string&& path, Descriptor&& file, uint64_t size) noexcept
-			: TemporaryFile{ std::move(path) }, _file{ std::move(file) }, _size{size} {}
+			: TemporaryFile{ std::move(path) }, _file{ std::move(file) }, _size{ size } {}
 		~TemporaryFileImpl() noexcept override
 		{
 			if (::unlink(_path.c_str()))
@@ -149,7 +149,7 @@ namespace seir
 
 	SharedPtr<Blob> Blob::from(TemporaryFile& file)
 	{
-		auto& impl = static_cast<const TemporaryFileImpl&>(file);
+		const auto& impl = static_cast<const TemporaryFileImpl&>(file);
 		return FileBlob::create(impl._file._descriptor, impl._size);
 	}
 

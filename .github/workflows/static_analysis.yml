@@ -24,7 +24,6 @@ jobs:
             -I libs/u8main/include \
             --template="({file}:{line}) ({severity}/{id}) {message}" .
       - name: Run clang-format
-        continue-on-error: true
         run: |
           clang-format-12 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
           git diff --color=always --exit-code --histogram

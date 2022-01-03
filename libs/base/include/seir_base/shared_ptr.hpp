@@ -72,7 +72,7 @@ namespace seir
 		template <class>
 		friend class SharedPtr;
 		template <class R, class U, class... Args>
-		friend std::enable_if_t<std::is_base_of_v<ReferenceCounter, R> && std::is_base_of_v<R, U>, SharedPtr<R>> makeShared(Args&&...); //NOLINT(readability-redundant-declaration)
+		friend std::enable_if_t<std::is_base_of_v<ReferenceCounter, R> && std::is_base_of_v<R, U>, SharedPtr<R>> makeShared(Args&&...); // NOLINT(readability-redundant-declaration)
 	};
 
 	template <class T>
