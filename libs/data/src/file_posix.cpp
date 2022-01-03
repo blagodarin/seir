@@ -4,31 +4,26 @@
 
 #include <seir_base/scope.hpp>
 #include <seir_data/blob.hpp>
-#include <seir_data/file.hpp>
 #include <seir_data/save_file.hpp>
 #include <seir_data/temporary_file.hpp>
-#include <seir_data/writer.hpp>
-
-#include <array>
 
 #include <cstdio>     // perror, rename
 #include <fcntl.h>    // open
 #include <sys/mman.h> // mmap, munmap
-#include <unistd.h>   // close, fsync, ftruncate, lseek, pwrite, unlink
+#include <unistd.h>   // close, fsync, lseek, pwrite, unlink
 
 namespace
 {
 	struct Descriptor
 	{
 		int _descriptor = -1;
-		bool _close = true;
-		constexpr Descriptor(int descriptor, bool close) noexcept
-			: _descriptor{ descriptor }, _close{ close } {}
+		constexpr explicit Descriptor(int descriptor) noexcept
+			: _descriptor{ descriptor } {}
 		constexpr Descriptor(Descriptor&& other) noexcept
-			: _descriptor{ other._descriptor }, _close{ other._close } { other._descriptor = -1; }
+			: _descriptor{ other._descriptor } { other._descriptor = -1; }
 		~Descriptor() noexcept
 		{
-			if (_close && _descriptor != -1 && ::close(_descriptor) == -1)
+			if (_descriptor != -1 && ::close(_descriptor) == -1)
 				::perror("close");
 		}
 	};
@@ -44,19 +39,17 @@ namespace
 			if (_data != kMapFailed && ::munmap(const_cast<void*>(_data), _size) == -1)
 				::perror("munmap");
 		}
-		static seir::SharedPtr<seir::Blob> create(int descriptor)
+		static seir::SharedPtr<seir::Blob> create(int descriptor, size_t size)
 		{
-			if (const auto size = ::lseek(descriptor, 0, SEEK_END); size == -1)
-				::perror("lseek");
-			else if (auto data = ::mmap(nullptr, static_cast<size_t>(size), PROT_READ, MAP_PRIVATE, descriptor, 0); data == kMapFailed)
+			if (auto data = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, descriptor, 0); data == kMapFailed)
 				::perror("mmap");
 			else
 			{
 				SEIR_FINALLY([&] {
-					if (data != kMapFailed && ::munmap(data, static_cast<size_t>(size)) == -1)
+					if (data != kMapFailed && ::munmap(data, size) == -1)
 						::perror("munmap");
 				});
-				return seir::makeShared<seir::Blob, FileBlob>(data, static_cast<size_t>(size));
+				return seir::makeShared<seir::Blob, FileBlob>(data, size);
 			}
 			return {};
 		}
@@ -81,10 +74,42 @@ namespace
 	struct FileWriter final : seir::Writer
 	{
 		const Descriptor _file;
-		constexpr explicit FileWriter(int descriptor) noexcept
-			: _file{ descriptor, false } {}
 		constexpr explicit FileWriter(Descriptor&& file) noexcept
 			: _file{ std::move(file) } {}
+		bool flush() noexcept override { return ::flushFile(_file._descriptor); }
+		bool reserveImpl(uint64_t) noexcept override { return true; }
+		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_file._descriptor, offset, data, size); }
+	};
+
+	struct SaveFileImpl final : seir::SaveFile
+	{
+		const Descriptor _file;
+		const std::string _path;
+		const std::string _temporaryPath;
+		bool _committed = false;
+		SaveFileImpl(Descriptor&& file, std::string&& path, std::string&& temporaryPath) noexcept
+			: _file{ std::move(file) }, _path{ std::move(path) }, _temporaryPath{ std::move(temporaryPath) } {}
+		~SaveFileImpl() noexcept override
+		{
+			if (!_committed && ::unlink(_temporaryPath.c_str()))
+				::perror("unlink");
+		}
+		bool flush() noexcept override { return ::flushFile(_file._descriptor); }
+		bool reserveImpl(uint64_t) noexcept override { return true; }
+		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_file._descriptor, offset, data, size); }
+	};
+
+	struct TemporaryWriterImpl final : seir::TemporaryWriter
+	{
+		Descriptor _file;
+		std::string _path;
+		TemporaryWriterImpl(Descriptor&& file, std::string&& path) noexcept
+			: _file{ std::move(file) }, _path{ std::move(path) } {}
+		~TemporaryWriterImpl() noexcept override
+		{
+			if (_file._descriptor != -1 && ::unlink(_path.c_str()))
+				::perror("unlink");
+		}
 		bool flush() noexcept override { return ::flushFile(_file._descriptor); }
 		bool reserveImpl(uint64_t) noexcept override { return true; }
 		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_file._descriptor, offset, data, size); }
@@ -93,115 +118,100 @@ namespace
 	struct TemporaryFileImpl final : seir::TemporaryFile
 	{
 		const Descriptor _file;
-		TemporaryFileImpl(Descriptor&& file) noexcept
-			: _file{ std::move(file) } {}
-	};
-
-	struct SaveFileImpl final : seir::SaveFile
-	{
-		Descriptor _file;
-		const std::string _path;
-		const std::string _temporaryPath;
-		SaveFileImpl(Descriptor&& file, std::string&& path, std::string&& temporaryPath) noexcept
-			: _file{ std::move(file) }, _path{ std::move(path) }, _temporaryPath{ std::move(temporaryPath) } {}
-		~SaveFileImpl() noexcept override
+		const uint64_t _size;
+		TemporaryFileImpl(std::string&& path, Descriptor&& file, uint64_t size) noexcept
+			: TemporaryFile{ std::move(path) }, _file{ std::move(file) }, _size{size} {}
+		~TemporaryFileImpl() noexcept override
 		{
-			if (_file._descriptor != -1 && ::unlink(_temporaryPath.c_str()))
+			if (::unlink(_path.c_str()))
 				::perror("unlink");
 		}
-		bool commit() override
-		{
-			if (_file._descriptor != -1)
-			{
-				if (auto file = std::move(_file); ::fsync(file._descriptor) == -1)
-				{
-					::perror("fsync");
-					return false;
-				}
-				if (!::rename(_temporaryPath.c_str(), _path.c_str()))
-					return true;
-				if (::unlink(_temporaryPath.c_str()))
-					::perror("unlink");
-			}
-			return false;
-		}
-		bool flush() noexcept override { return ::flushFile(_file._descriptor); }
-		bool reserveImpl(uint64_t) noexcept override { return true; }
-		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_file._descriptor, offset, data, size); }
 	};
 }
 
 namespace seir
 {
-	UniquePtr<SaveFile> SaveFile::create(std::string&& path)
-	{
-		const auto separator = path.rfind('/');
-		if (separator == path.size() - 1)
-			return {};
-		auto temporaryPath = path + ".XXXXXX";
-		if (Descriptor file{ ::mkstemp(temporaryPath.data()), true }; file._descriptor == -1)
-			::perror("mkstemp");
-		else // TODO: Copy access mode from the original file.
-			return makeUnique<SaveFile, SaveFileImpl>(std::move(file), std::move(path), std::move(temporaryPath));
-		return {};
-	}
-
-	UniquePtr<TemporaryFile> TemporaryFile::create()
-	{
-#ifdef __linux__
-		if (Descriptor file{ ::open("/tmp", O_RDWR | O_NOATIME | O_CLOEXEC | O_TMPFILE, S_IRUSR | S_IWUSR), true }; file._descriptor != -1)
-			return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(file));
-		::perror("open");
-#endif
-		auto path = std::to_array("/tmp/seir.XXXXXX");
-		if (Descriptor file{ ::mkstemp(path.data()), true }; file._descriptor == -1)
-			::perror("mkstemp");
-		else if (::unlink(path.data()))
-			::perror("unlink");
-		else
-			return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(file));
-		return {};
-	}
-
-	SharedPtr<Blob> createFileBlob(const std::string& path)
+	SharedPtr<Blob> Blob::from(const std::string& path)
 	{
 		constexpr int flags = O_RDONLY | O_CLOEXEC
 #ifdef __linux__
 			| O_NOATIME
 #endif
 			;
-		if (const Descriptor file{ ::open(path.c_str(), flags), true }; file._descriptor != -1)
-			return FileBlob::create(file._descriptor);
-		::perror("open");
+		if (const Descriptor file{ ::open(path.c_str(), flags) }; file._descriptor == -1)
+			::perror("open");
+		else if (const auto size = ::lseek(file._descriptor, 0, SEEK_END); size == -1)
+			::perror("lseek");
+		else
+			return FileBlob::create(file._descriptor, static_cast<uint64_t>(size));
 		return {};
 	}
 
-	SharedPtr<Blob> createFileBlob(TemporaryFile& file)
+	SharedPtr<Blob> Blob::from(TemporaryFile& file)
 	{
-		return FileBlob::create(static_cast<const TemporaryFileImpl&>(file)._file._descriptor);
+		auto& impl = static_cast<const TemporaryFileImpl&>(file);
+		return FileBlob::create(impl._file._descriptor, impl._size);
 	}
 
-	UniquePtr<Writer> createFileWriter(const std::string& path)
+	UniquePtr<SaveFile> SaveFile::create(std::string&& path)
+	{
+		const auto separator = path.rfind('/');
+		if (separator == path.size() - 1)
+			return {};
+		auto temporaryPath = path + ".XXXXXX";
+		if (Descriptor file{ ::mkstemp(temporaryPath.data()) }; file._descriptor == -1)
+			::perror("mkstemp");
+		else // TODO: Copy access mode from the original file.
+			return makeUnique<SaveFile, SaveFileImpl>(std::move(file), std::move(path), std::move(temporaryPath));
+		return {};
+	}
+
+	bool SaveFile::commit(UniquePtr<SaveFile>&& file) noexcept
+	{
+		if (const auto impl = staticCast<SaveFileImpl>(std::move(file)))
+		{
+			if (::fsync(impl->_file._descriptor))
+				::perror("fsync");
+			else if (::rename(impl->_temporaryPath.c_str(), impl->_path.c_str()))
+				::perror("rename");
+			else
+			{
+				impl->_committed = true;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	UniquePtr<TemporaryWriter> TemporaryWriter::create()
+	{
+		// TODO: Use TMPDIR environment variable.
+		// TODO: Use O_TMPFILE on Linux.
+		std::string path = "/tmp/seir.XXXXXX";
+		if (Descriptor file{ ::mkstemp(path.data()) }; file._descriptor == -1)
+			::perror("mkstemp");
+		else
+			return makeUnique<TemporaryWriter, TemporaryWriterImpl>(std::move(file), std::move(path));
+		return {};
+	}
+
+	UniquePtr<TemporaryFile> TemporaryWriter::commit(UniquePtr<TemporaryWriter>&& writer)
+	{
+		if (const auto impl = staticCast<TemporaryWriterImpl>(std::move(writer)))
+			return makeUnique<TemporaryFile, TemporaryFileImpl>(std::move(impl->_path), std::move(impl->_file), impl->size());
+		return {};
+	}
+
+	UniquePtr<Writer> Writer::create(const std::string& path)
 	{
 		constexpr int flags = O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC
 #ifdef __linux__
 			| O_NOATIME
 #endif
 			;
-		if (Descriptor file{ ::open(path.c_str(), flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), true }; file._descriptor != -1)
+		if (Descriptor file{ ::open(path.c_str(), flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) }; file._descriptor != -1)
 			return makeUnique<Writer, FileWriter>(std::move(file));
 		::perror("open");
 		return {};
-	}
-
-	UniquePtr<Writer> createFileWriter(TemporaryFile& file)
-	{
-		const auto descriptor = static_cast<const TemporaryFileImpl&>(file)._file._descriptor;
-		if (::ftruncate(descriptor, 0) == -1)
-		{
-			::perror("ftruncate");
-			return {};
-		}
-		return makeUnique<Writer, FileWriter>(descriptor);
 	}
 }

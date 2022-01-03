@@ -8,7 +8,16 @@
 
 #include <doctest/doctest.h>
 
-TEST_CASE("Blob::from")
+TEST_CASE("Blob::from(const std::string&)")
+{
+	const auto blob = seir::Blob::from(SEIR_TEST_DIR "file.txt");
+	REQUIRE(blob);
+	const std::string_view expected{ "contents" };
+	CHECK(blob->size() == expected.size());
+	CHECK_FALSE(std::memcmp(blob->data(), expected.data(), expected.size()));
+}
+
+TEST_CASE("Blob::from(...)")
 {
 	SUBCASE("size() == 0")
 	{

@@ -6,7 +6,6 @@ set(HEADERS
 	include/seir_data/archive.hpp
 	include/seir_data/blob.hpp
 	include/seir_data/compression.hpp
-	include/seir_data/file.hpp
 	include/seir_data/reader.hpp
 	include/seir_data/save_file.hpp
 	include/seir_data/storage.hpp

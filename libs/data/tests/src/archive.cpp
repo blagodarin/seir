@@ -7,7 +7,6 @@
 #include <seir_data/blob.hpp>
 #include <seir_data/compression.hpp>
 #include <seir_data/storage.hpp>
-#include <seir_data/temporary_file.hpp>
 #include <seir_data/writer.hpp>
 
 #include <algorithm>
@@ -22,10 +21,10 @@ TEST_CASE("Archiver")
 	std::generate_n(std::back_inserter(entries["digits.txt"]), 10 * 1024, [i = 0]() mutable { return static_cast<char>('0' + (i++ % 10)); });
 	std::generate_n(std::back_inserter(entries["lowercase.txt"]), 26 * 1024, [i = 0]() mutable { return static_cast<char>('a' + (i++ % 26)); });
 	std::generate_n(std::back_inserter(entries["uppercase.txt"]), 26 * 1024, [i = 0]() mutable { return static_cast<char>('A' + (i++ % 26)); });
-	const auto file = seir::TemporaryFile::create();
-	REQUIRE(file);
+	seir::Buffer<std::byte> buffer;
+	uint64_t bufferSize = 0;
 	{
-		auto writer = seir::createFileWriter(*file);
+		auto writer = seir::Writer::create(buffer, &bufferSize);
 		REQUIRE(writer);
 		seir::UniquePtr<seir::Archiver> archiver;
 		SUBCASE("Compression::None")
@@ -51,7 +50,7 @@ TEST_CASE("Archiver")
 	}
 	seir::Storage storage{ seir::Storage::UseFileSystem::Never };
 	{
-		auto blob = seir::createFileBlob(*file);
+		auto blob = seir::Blob::from(buffer.data(), static_cast<size_t>(bufferSize));
 		REQUIRE(blob);
 		REQUIRE(storage.attachArchive(std::move(blob)));
 	}

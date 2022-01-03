@@ -4,29 +4,33 @@
 
 #pragma once
 
+#include <seir_data/writer.hpp>
+
 namespace seir
 {
-	class Blob;
-	template <class>
-	class SharedPtr;
-	template <class>
-	class UniquePtr;
-	class Writer;
-
 	//
 	class TemporaryFile
 	{
 	public:
-		// Creates a temporary file.
-		// The file is deleted when the object is destroyed.
-		[[nodiscard]] static UniquePtr<TemporaryFile> create();
+		virtual ~TemporaryFile() = default;
 
-		virtual ~TemporaryFile() noexcept = default;
+		//
+		[[nodiscard]] const std::string& path() const noexcept { return _path; }
+
+	protected:
+		const std::string _path;
+		TemporaryFile(std::string&& path) noexcept
+			: _path{ std::move(path) } {}
 	};
 
 	//
-	[[nodiscard]] SharedPtr<Blob> createFileBlob(TemporaryFile&);
+	class TemporaryWriter : public Writer
+	{
+	public:
+		//
+		[[nodiscard]] static UniquePtr<TemporaryWriter> create();
 
-	//
-	[[nodiscard]] UniquePtr<Writer> createFileWriter(TemporaryFile&);
+		//
+		[[nodiscard]] static UniquePtr<TemporaryFile> commit(UniquePtr<TemporaryWriter>&&);
+	};
 }

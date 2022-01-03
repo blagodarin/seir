@@ -8,9 +8,12 @@
 #include <seir_base/shared_ptr.hpp>
 
 #include <limits>
+#include <string>
 
 namespace seir
 {
+	class TemporaryFile;
+
 	// Memory-based data source.
 	class Blob : public ReferenceCounter
 	{
@@ -25,6 +28,13 @@ namespace seir
 
 		// Creates a Blob that references a part of another Blob.
 		[[nodiscard]] static SharedPtr<Blob> from(SharedPtr<Blob>&&, size_t offset, size_t size);
+
+		// Creates a Blob that references a memory-mapped file.
+		[[nodiscard]] static SharedPtr<Blob> from(const std::string&);
+
+		// Creates a Blob from a TemporaryFile.
+		// NOTE: The TemporaryFile must stay valid for the lifetime of the Blob.
+		[[nodiscard]] static SharedPtr<Blob> from(TemporaryFile&);
 
 		// Returns the data pointer.
 		[[nodiscard]] constexpr const void* data() const noexcept { return _data; }

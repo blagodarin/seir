@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <string>
 
 namespace seir
 {
@@ -18,7 +19,10 @@ namespace seir
 	public:
 		// Creates a Writer that writes to the specified Buffer.
 		template <class T, class A>
-		[[nodiscard]] static std::enable_if_t<sizeof(T) == 1, UniquePtr<Writer>> create(Buffer<T, A>&);
+		[[nodiscard]] static std::enable_if_t<sizeof(T) == 1, UniquePtr<Writer>> create(Buffer<T, A>&, uint64_t* bufferBytes = nullptr);
+
+		// Creates a Writer thet writes to the specified file.
+		[[nodiscard]] static UniquePtr<Writer> create(const std::string&);
 
 		virtual ~Writer() noexcept = default;
 
@@ -55,14 +59,15 @@ namespace seir
 }
 
 template <class T, class A>
-std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::create(Buffer<T, A>& buffer)
+std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::create(Buffer<T, A>& buffer, uint64_t* bufferBytes)
 {
 	struct BufferWriter final : Writer
 	{
 		Buffer<T, A>& _buffer;
+		uint64_t* const _bufferBytes;
 		// cppcheck-suppress constParameter
-		explicit BufferWriter(Buffer<T, A>& buffer) noexcept
-			: _buffer{ buffer } {}
+		explicit BufferWriter(Buffer<T, A>& buffer, uint64_t* bufferBytes) noexcept
+			: _buffer{ buffer }, _bufferBytes{ bufferBytes } {}
 		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t capacity) noexcept override
 		{
@@ -79,13 +84,20 @@ std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::cr
 			const auto offset = static_cast<size_t>(offset64);
 			if (size > std::numeric_limits<size_t>::max() - offset)
 				return false;
-			if (const auto requiredCapacity = offset + size; requiredCapacity > _buffer.capacity())
-				if (const auto grownCapacity = _buffer.capacity() + _buffer.capacity() / 2;
-					!_buffer.tryReserve(requiredCapacity > grownCapacity ? requiredCapacity : grownCapacity, static_cast<size_t>(_size)))
+			const auto requiredCapacity = offset + size;
+			if (requiredCapacity > _buffer.capacity())
+			{
+				const auto grownCapacity = _buffer.capacity() + _buffer.capacity() / 2;
+				if (!_buffer.tryReserve(requiredCapacity > grownCapacity ? requiredCapacity : grownCapacity, static_cast<size_t>(_size)))
 					return false;
+			}
 			std::memcpy(_buffer.data() + offset, data, size);
+			if (_bufferBytes && *_bufferBytes < requiredCapacity)
+				*_bufferBytes = requiredCapacity;
 			return true;
 		}
 	};
-	return makeUnique<Writer, BufferWriter>(buffer);
+	if (bufferBytes)
+		*bufferBytes = 0;
+	return makeUnique<Writer, BufferWriter>(buffer, bufferBytes);
 }

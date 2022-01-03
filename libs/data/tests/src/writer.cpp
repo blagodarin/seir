@@ -5,7 +5,9 @@
 #include <seir_data/writer.hpp>
 
 #include <seir_base/buffer.hpp>
+#include <seir_data/blob.hpp>
 
+#include <filesystem>
 #include <vector>
 
 #include <doctest/doctest.h>
@@ -45,4 +47,27 @@ TEST_CASE("Writer::create(Buffer&)")
 	CHECK(writer->offset() == 4);
 	CHECK(writer->seek(6));
 	CHECK(writer->offset() == 6);
+}
+
+TEST_CASE("Writer::create(const std::string&)")
+{
+	const auto path = std::filesystem::temp_directory_path() / "test.txt";
+	const std::string_view data{ "Hello world!\n" };
+	{
+		const auto writer = seir::Writer::create(path.string());
+		REQUIRE(writer);
+		CHECK(writer->reserve(2 * data.size()));
+		REQUIRE(writer->write(data.data(), data.size()));
+		REQUIRE(writer->write(data.data(), data.size()));
+	}
+	REQUIRE(std::filesystem::exists(path));
+	CHECK(std::filesystem::file_size(path) == 2 * data.size());
+	{
+		const auto blob = seir::Blob::from(path.string());
+		REQUIRE(blob);
+		REQUIRE(blob->size() == 2 * data.size());
+		CHECK_FALSE(std::memcmp(blob->data(), data.data(), data.size()));
+		CHECK_FALSE(std::memcmp(static_cast<const std::byte*>(blob->data()) + data.size(), data.data(), data.size()));
+	}
+	std::filesystem::remove(path);
 }

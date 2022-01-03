@@ -6,7 +6,6 @@
 
 #include <seir_data/blob.hpp>
 #include <seir_data/compression.hpp>
-#include <seir_data/file.hpp>
 
 #include <algorithm>
 #include <cstring>
@@ -50,7 +49,7 @@ TEST_CASE("Storage::attach")
 TEST_CASE("Storage::open")
 {
 	const std::string path{ SEIR_TEST_DIR "file.txt" };
-	const auto file = seir::createFileBlob(path);
+	const auto file = seir::Blob::from(path);
 	REQUIRE(file);
 	const auto dummy = seir::Blob::from(&file, sizeof file);
 	const auto checkEqual = [](const seir::SharedPtr<seir::Blob>& left, const seir::SharedPtr<seir::Blob>& right) {

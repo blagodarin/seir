@@ -43,12 +43,20 @@ namespace seir
 		friend class SharedPtr;
 		template <class R, class U, class... Args>
 		friend std::enable_if_t<std::is_base_of_v<R, U>, UniquePtr<R>> makeUnique(Args&&...); //NOLINT(readability-redundant-declaration)
+		template <class To, class From>
+		friend UniquePtr<To> staticCast(UniquePtr<From>&&) noexcept;
 	};
 
 	template <class R, class U = R, class... Args>
 	[[nodiscard]] std::enable_if_t<std::is_base_of_v<R, U>, UniquePtr<R>> makeUnique(Args&&... args)
 	{
 		return UniquePtr<R>{ new U{ std::forward<Args>(args)... } };
+	}
+
+	template <class To, class From>
+	UniquePtr<To> staticCast(UniquePtr<From>&& from) noexcept
+	{
+		return UniquePtr{ static_cast<To*>(std::exchange(from._pointer, nullptr)) };
 	}
 }
 

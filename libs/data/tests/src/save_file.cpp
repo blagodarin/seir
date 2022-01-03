@@ -44,19 +44,21 @@ TEST_CASE("SaveFile")
 	::checkFile(path, originalData);
 	REQUIRE(file->flush());
 	::checkFile(path, originalData);
-	SUBCASE("commit()")
+	SUBCASE("commit")
 	{
-		REQUIRE(file->commit());
-		::checkFile(path, modifiedData);
-		CHECK_FALSE(file->commit());
-		::checkFile(path, modifiedData);
-		file.reset();
+		REQUIRE(seir::SaveFile::commit(std::move(file)));
+		CHECK_FALSE(file);
 		::checkFile(path, modifiedData);
 	}
-	SUBCASE("rollback()")
+	SUBCASE("rollback")
 	{
 		file.reset();
 		::checkFile(path, originalData);
 	}
 	std::filesystem::remove(path);
+}
+
+TEST_CASE("SaveFile::commit({})")
+{
+	CHECK_FALSE(seir::SaveFile::commit({}));
 }

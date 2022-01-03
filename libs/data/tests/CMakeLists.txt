@@ -6,7 +6,6 @@ set(SOURCES
 	src/archive.cpp
 	src/blob.cpp
 	src/compression.cpp
-	src/file.cpp
 	src/reader.cpp
 	src/save_file.cpp
 	src/storage.cpp

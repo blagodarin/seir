@@ -6,8 +6,6 @@
 
 #include <seir_data/writer.hpp>
 
-#include <string>
-
 namespace seir
 {
 	//
@@ -18,6 +16,6 @@ namespace seir
 		[[nodiscard]] static UniquePtr<SaveFile> create(std::string&& path);
 
 		//
-		virtual bool commit() = 0;
+		static bool commit(UniquePtr<SaveFile>&&) noexcept;
 	};
 }

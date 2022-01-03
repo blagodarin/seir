@@ -6,11 +6,9 @@
 
 #include <seir_data/blob.hpp>
 #include <seir_data/compression.hpp>
-#include <seir_data/file.hpp>
 #include "archive.hpp"
 
 #include <cassert>
-#include <string>
 #include <unordered_map>
 
 namespace
@@ -70,7 +68,7 @@ namespace seir
 	SharedPtr<Blob> Storage::open(const std::string& name) const
 	{
 		if (_impl->_useFileSystem == UseFileSystem::BeforeAttachments)
-			if (auto blob = createFileBlob(name))
+			if (auto blob = Blob::from(name))
 				return blob;
 		if (const auto i = _impl->_attachments.find(name); i != _impl->_attachments.end())
 		{
@@ -89,7 +87,7 @@ namespace seir
 			return {};
 		}
 		if (_impl->_useFileSystem == UseFileSystem::AfterAttachments)
-			if (auto blob = createFileBlob(name))
+			if (auto blob = Blob::from(name))
 				return blob;
 		return {};
 	} // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)

@@ -6,7 +6,6 @@
 #include <seir_audio/format.hpp>
 #include <seir_audio/player.hpp>
 #include <seir_data/blob.hpp>
-#include <seir_data/file.hpp>
 
 #include <cassert>
 #include <condition_variable>
@@ -56,7 +55,7 @@ int main(int argc, char** argv)
 		std::cerr << "Usage:\n\t" << std::filesystem::path{ argv[0] }.filename().string() << " FILE\n";
 		return 1;
 	}
-	auto decoder = seir::AudioDecoder::create(seir::createFileBlob(argv[1]));
+	auto decoder = seir::AudioDecoder::create(seir::Blob::from(argv[1]));
 	if (!decoder)
 	{
 		std::cerr << "Unable to play " << argv[1] << '\n';
