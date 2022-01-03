@@ -21,6 +21,7 @@ jobs:
             -I libs/audio/include \
             -I libs/base/include \
             -I libs/data/include \
+            -I libs/image/include \
             -I libs/u8main/include \
             --template="({file}:{line}) ({severity}/{id}) {message}" .
       - name: Run clang-format
@@ -43,6 +44,7 @@ jobs:
             -DSEIR_COMPRESSION_ZSTD=ON \
             -DSEIR_DATA=ON \
             -DSEIR_EXAMPLES=ON \
+            -DSEIR_IMAGE=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
       - name: Run clang-tidy

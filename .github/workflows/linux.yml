@@ -45,6 +45,7 @@ jobs:
             -DSEIR_COMPRESSION_ZSTD=ON \
             -DSEIR_DATA=ON \
             -DSEIR_EXAMPLES=ON \
+            -DSEIR_IMAGE=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
       - name: Build
