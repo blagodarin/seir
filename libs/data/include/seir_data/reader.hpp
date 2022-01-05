@@ -20,6 +20,9 @@ namespace seir
 		// Returns the current offset.
 		[[nodiscard]] constexpr size_t offset() const noexcept { return _offset; }
 
+		//
+		[[nodiscard]] constexpr const void* peek(size_t bytes) const noexcept;
+
 		// If there are at least sizeof(T) bytes from the current offset to the end of the blob,
 		// returns the pointer to the data at the current offset and advances the offset.
 		// Otherwise, returns nullptr and doesn't change the offset.
@@ -51,6 +54,13 @@ namespace seir
 		const Blob& _blob;
 		size_t _offset = 0;
 	};
+}
+
+constexpr const void* seir::Reader::peek(size_t bytes) const noexcept
+{
+	return _blob.size() - _offset >= bytes
+		? static_cast<const std::byte*>(_blob.data()) + _offset
+		: nullptr;
 }
 
 template <class T>

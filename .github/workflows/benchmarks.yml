@@ -26,6 +26,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release `
             -DSEIR_AUDIO=ON `
             -DSEIR_BENCHMARKS=ON `
+            -DSEIR_IMAGE=ON `
             -DSEIR_STATIC_RUNTIME=ON
       - name: Build
         run: |
@@ -55,7 +56,8 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DSEIR_AUDIO=ON \
-            -DSEIR_BENCHMARKS=ON
+            -DSEIR_BENCHMARKS=ON \
+            -DSEIR_IMAGE=ON
       - name: Build
         run: |
           cmake --build build

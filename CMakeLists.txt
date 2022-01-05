@@ -16,9 +16,11 @@ option(SEIR_AUDIO_OGGVORBIS "Enable Ogg Vorbis audio support")
 option(SEIR_AUDIO_WAV "Enable Waveform audio support")
 option(SEIR_COMPRESSION_ZLIB "Enable zlib compression support")
 option(SEIR_COMPRESSION_ZSTD "Enable zstd compression support")
-option(SEIR_IMAGE "Build image library")
+option(SEIR_IMAGE_BMP "Enable BMP image support")
+option(SEIR_IMAGE_ICO "Enable ICO image support")
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_AULOS;NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO;NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD" ON)
+cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_ICO" ON)
 option(SEIR_U8MAIN "Build u8main library")
 
 # Options.
@@ -72,10 +74,14 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		-Wno-c++98-compat
 		-Wno-c++98-compat-pedantic
 		-Wno-ctad-maybe-unsupported
+		-Wno-nested-anon-types
 		-Wno-padded
 		-Wno-tautological-type-limit-compare # https://reviews.llvm.org/D41512
 		-Wno-weak-vtables
 		)
+	if(NOT APPLE)
+		add_compile_options(-Wno-return-std-move-in-c++11)
+	endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

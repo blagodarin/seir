@@ -61,11 +61,6 @@ namespace seir
 		ImageAxes _axes = ImageAxes::XRightYDown;
 	};
 
-	[[nodiscard]] constexpr bool operator==(const ImageInfo& a, const ImageInfo& b) noexcept
-	{
-		return a.width() == b.width() && a.height() == b.height() && a.stride() == b.stride() && a.pixelFormat() == b.pixelFormat() && a.axes() == b.axes();
-	}
-
 	//
 	class Image
 	{
@@ -79,6 +74,9 @@ namespace seir
 		Image& operator=(Image&) = delete;
 		Image& operator=(Image&&) noexcept;
 		~Image() noexcept;
+
+		//
+		Image(const ImageInfo&, Buffer<std::byte>&&) noexcept;
 
 		//
 		[[nodiscard]] const void* data() const noexcept { return _data; }

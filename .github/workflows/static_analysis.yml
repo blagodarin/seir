@@ -35,16 +35,15 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DSEIR_AUDIO=ON \
             -DSEIR_AUDIO_AULOS=ON \
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_BENCHMARKS=ON \
             -DSEIR_COMPRESSION_ZLIB=ON \
             -DSEIR_COMPRESSION_ZSTD=ON \
-            -DSEIR_DATA=ON \
             -DSEIR_EXAMPLES=ON \
-            -DSEIR_IMAGE=ON \
+            -DSEIR_IMAGE_BMP=ON \
+            -DSEIR_IMAGE_ICO=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
       - name: Run clang-tidy
