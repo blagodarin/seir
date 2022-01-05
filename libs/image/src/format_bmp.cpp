@@ -108,6 +108,7 @@ namespace seir
 			|| fileHeader->fileType != BmpFileType::Bm
 			|| fileHeader->reserved != 0)
 			return nullptr;
+
 		const auto bitmapHeader = reader.read<BmpInfoHeader>();
 		if (!bitmapHeader
 			|| bitmapHeader->headerSize < sizeof *bitmapHeader
@@ -116,6 +117,7 @@ namespace seir
 			|| bitmapHeader->planes != 1
 			|| bitmapHeader->compression != BmpCompression::Rgb)
 			return nullptr;
+
 		PixelFormat pixelFormat;
 		switch (bitmapHeader->bitsPerPixel)
 		{
@@ -125,12 +127,14 @@ namespace seir
 		}
 		if (!reader.seek(fileHeader->dataOffset))
 			return nullptr;
+
 		const auto width = static_cast<uint32_t>(bitmapHeader->width);
 		const auto stride = ((width + 3) & ~uint32_t{ 3 }) * pixelSize(pixelFormat);
 		const auto height = static_cast<uint32_t>(bitmapHeader->height >= 0 ? bitmapHeader->height : -bitmapHeader->height);
 		const auto data = reader.peek(size_t{ stride } * height);
 		if (!data)
 			return nullptr;
+
 		info = { width, height, stride, pixelFormat, bitmapHeader->height >= 0 ? ImageAxes::XRightYUp : ImageAxes::XRightYDown };
 		return data;
 	}
@@ -144,6 +148,7 @@ namespace seir
 			|| fileHeader->type != IcoFileType::Ico
 			|| fileHeader->count != 1)
 			return nullptr;
+
 		const auto imageHeader = reader.read<IcoImageHeader>();
 		if (!imageHeader
 			|| imageHeader->colorCount != 0
@@ -152,6 +157,7 @@ namespace seir
 			|| imageHeader->ico.bitsPerPixel != 32
 			|| !reader.seek(imageHeader->dataOffset))
 			return nullptr;
+
 		const uint16_t width = imageHeader->width ? imageHeader->width : 256u;
 		const uint16_t height = imageHeader->height ? imageHeader->height : 256u;
 		if (const auto bitmapHeader = reader.read<BmpInfoHeader>(); !bitmapHeader
@@ -162,11 +168,13 @@ namespace seir
 			|| bitmapHeader->bitsPerPixel != imageHeader->ico.bitsPerPixel
 			|| bitmapHeader->compression != BmpCompression::Rgb)
 			return nullptr;
+
 		constexpr auto pixelFormat = PixelFormat::Bgra32;
 		const auto stride = ((width + 3) & ~uint32_t{ 3 }) * pixelSize(pixelFormat);
 		const auto data = reader.peek(size_t{ stride } * height);
 		if (!data)
 			return nullptr;
+
 		info = { width, height, stride, pixelFormat, ImageAxes::XRightYUp };
 		return data;
 	}

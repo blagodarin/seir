@@ -32,16 +32,19 @@ namespace seir
 				// TODO: Load PNG image.
 				break;
 			default:
+				// ICO files start with [00 00] (reserved, must be zero) followed by [01 00] (file type, 1 is ICO).
+				// Supported TGA files start with [xx 00 02 00] or [xx 00 03 00] (xx is usually zero).
 				if (*static_cast<const uint32_t*>(blob->data()) == makeCC('\x00', '\x00', '\x01', '\x00'))
 				{
-					// ICO files start with [00 00] (reserved, must be zero) followed by [01 00] (file type, 1 is ICO).
 #if SEIR_IMAGE_ICO
 					result._data = loadIcoImage(reader, result._info);
 #endif
 				}
 				else
 				{
-					// Supported TGA files start with [xx 00 02 00] or [xx 00 03 00] (xx is usually zero).
+#if SEIR_IMAGE_TGA
+					result._data = loadTgaImage(reader, result._info);
+#endif
 				}
 			}
 			if (result._data)

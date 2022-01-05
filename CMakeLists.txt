@@ -18,9 +18,10 @@ option(SEIR_COMPRESSION_ZLIB "Enable zlib compression support")
 option(SEIR_COMPRESSION_ZSTD "Enable zstd compression support")
 option(SEIR_IMAGE_BMP "Enable BMP image support")
 option(SEIR_IMAGE_ICO "Enable ICO image support")
+option(SEIR_IMAGE_TGA "Enable TGA image support")
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_AULOS;NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO;NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD" ON)
-cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_ICO" ON)
+cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_ICO;NOT SEIR_IMAGE_TGA" ON)
 option(SEIR_U8MAIN "Build u8main library")
 
 # Options.

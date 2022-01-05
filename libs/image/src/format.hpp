@@ -15,4 +15,7 @@ namespace seir
 #if SEIR_IMAGE_ICO
 	const void* loadIcoImage(Reader&, ImageInfo&);
 #endif
+#if SEIR_IMAGE_TGA
+	const void* loadTgaImage(Reader&, ImageInfo&);
+#endif
 }
