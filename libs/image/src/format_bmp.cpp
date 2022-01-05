@@ -5,8 +5,6 @@
 #include "format.hpp"
 
 #include <seir_base/endian.hpp>
-#include <seir_data/reader.hpp>
-#include <seir_image/image.hpp>
 
 namespace
 {

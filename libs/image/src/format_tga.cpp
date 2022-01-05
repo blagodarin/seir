@@ -4,9 +4,6 @@
 
 #include "format.hpp"
 
-#include <seir_data/reader.hpp>
-#include <seir_image/image.hpp>
-
 namespace
 {
 	enum class TgaColorMapType : uint8_t

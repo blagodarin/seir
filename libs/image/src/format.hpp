@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <seir_data/reader.hpp>
+#include <seir_image/image.hpp>
+
 namespace seir
 {
 	class ImageInfo;
@@ -14,6 +17,9 @@ namespace seir
 #endif
 #if SEIR_IMAGE_ICO
 	const void* loadIcoImage(Reader&, ImageInfo&);
+#endif
+#if SEIR_IMAGE_JPEG
+	const void* loadJpegImage(Reader&, ImageInfo&, Buffer<std::byte>&);
 #endif
 #if SEIR_IMAGE_TGA
 	const void* loadTgaImage(Reader&, ImageInfo&);

@@ -45,6 +45,7 @@ jobs:
             -DSEIR_EXAMPLES=ON \
             -DSEIR_IMAGE_BMP=ON \
             -DSEIR_IMAGE_ICO=ON \
+            -DSEIR_IMAGE_JPEG=ON \
             -DSEIR_IMAGE_TGA=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
@@ -86,6 +87,7 @@ jobs:
             -DSEIR_COMPRESSION_ZSTD=ON \
             -DSEIR_IMAGE_BMP=ON \
             -DSEIR_IMAGE_ICO=ON \
+            -DSEIR_IMAGE_JPEG=ON \
             -DSEIR_IMAGE_TGA=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON

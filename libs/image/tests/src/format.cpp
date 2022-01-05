@@ -10,6 +10,15 @@
 
 namespace
 {
+	seir::Image loadImage(const std::string& name)
+	{
+		auto blob = seir::Blob::from(SEIR_TEST_DIR + name);
+		REQUIRE(blob);
+		auto image = seir::Image::load(blob);
+		REQUIRE(image);
+		return std::move(*image);
+	}
+
 	seir::Image makeColorImage(bool withAlpha, seir::ImageAxes axes)
 	{
 		seir::Buffer<std::byte> buffer{ static_cast<size_t>(16 * 16 * (withAlpha ? 4 : 3)) };
@@ -65,22 +74,30 @@ namespace
 #if SEIR_IMAGE_BMP
 TEST_CASE("BMP")
 {
-	const auto blob = seir::Blob::from(SEIR_TEST_DIR "bgr24_rd.bmp");
-	REQUIRE(blob);
-	const auto image = seir::Image::load(blob);
-	REQUIRE(image);
-	CHECK(*image == ::makeColorImage(false, seir::ImageAxes::XRightYDown));
+	const auto image = ::loadImage("bgr24_rd.bmp");
+	CHECK(image == ::makeColorImage(false, seir::ImageAxes::XRightYDown));
 }
 #endif
 
 #if SEIR_IMAGE_ICO
 TEST_CASE("ICO")
 {
-	const auto blob = seir::Blob::from(SEIR_TEST_DIR "bgra32_ru.ico");
-	REQUIRE(blob);
-	const auto image = seir::Image::load(blob);
-	REQUIRE(image);
-	CHECK(*image == ::makeColorImage(true, seir::ImageAxes::XRightYUp));
+	const auto image = ::loadImage("bgra32_ru.ico");
+	CHECK(image == ::makeColorImage(true, seir::ImageAxes::XRightYUp));
+}
+#endif
+
+#if SEIR_IMAGE_JPEG
+TEST_CASE("JPEG")
+{
+#	if SEIR_IMAGE_TGA
+	SUBCASE("load bgr24")
+	{
+		const auto jpegImage = ::loadImage("bgr24_rd.jpg");
+		const auto tgaImage = ::loadImage("bgr24_rd.jpg.tga");
+		CHECK(jpegImage == tgaImage);
+	}
+#	endif
 }
 #endif
 
@@ -89,27 +106,18 @@ TEST_CASE("TGA")
 {
 	SUBCASE("load gray8")
 	{
-		const auto blob = seir::Blob::from(SEIR_TEST_DIR "gray8_rd.tga");
-		REQUIRE(blob);
-		const auto image = seir::Image::load(blob);
-		REQUIRE(image);
-		CHECK(*image == ::makeGrayscaleImage());
+		const auto image = ::loadImage("gray8_rd.tga");
+		CHECK(image == ::makeGrayscaleImage());
 	}
 	SUBCASE("load bgr32")
 	{
-		const auto blob = seir::Blob::from(SEIR_TEST_DIR "bgr24_rd.tga");
-		REQUIRE(blob);
-		const auto image = seir::Image::load(blob);
-		REQUIRE(image);
-		CHECK(*image == ::makeColorImage(false, seir::ImageAxes::XRightYDown));
+		const auto image = ::loadImage("bgr24_rd.tga");
+		CHECK(image == ::makeColorImage(false, seir::ImageAxes::XRightYDown));
 	}
 	SUBCASE("load bgra32")
 	{
-		const auto blob = seir::Blob::from(SEIR_TEST_DIR "bgra32_rd.tga");
-		REQUIRE(blob);
-		const auto image = seir::Image::load(blob);
-		REQUIRE(image);
-		CHECK(*image == ::makeColorImage(true, seir::ImageAxes::XRightYDown));
+		const auto image = ::loadImage("bgra32_rd.tga");
+		CHECK(image == ::makeColorImage(true, seir::ImageAxes::XRightYDown));
 	}
 }
 #endif

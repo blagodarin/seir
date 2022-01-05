@@ -5,7 +5,6 @@
 #include <seir_image/image.hpp>
 
 #include <seir_base/endian.hpp>
-#include <seir_data/reader.hpp>
 #include "format.hpp"
 
 namespace seir
@@ -26,7 +25,9 @@ namespace seir
 				// TODO: Load DDS image.
 				break;
 			case makeCC('\xff', '\xd8'): // SOI marker.
-				// TODO: Load JPEG image.
+#if SEIR_IMAGE_JPEG
+				result._data = loadJpegImage(reader, result._info, result._buffer);
+#endif
 				break;
 			case makeCC('\x89', 'P'):
 				// TODO: Load PNG image.
@@ -48,7 +49,11 @@ namespace seir
 				}
 			}
 			if (result._data)
+			{
+				if (!result._buffer.capacity())
+					result._blob = blob;
 				return result;
+			}
 		}
 		return {};
 	}
