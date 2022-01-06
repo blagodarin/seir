@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 function(seir_provide_zstd _output)
+	if("zstd" IN_LIST SEIR_3RDPARTY_SKIP)
+		unset(${_output} PARENT_SCOPE)
+		return()
+	endif()
 	cmake_parse_arguments(_arg "" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	if(_arg_SET_UPDATED)
 		set(${_arg_SET_UPDATED} OFF PARENT_SCOPE)
@@ -13,7 +17,7 @@ function(seir_provide_zstd _output)
 		SHA1 "7d7537e68325cf509aba0d1448cc03fce182457e"
 		EXTRACT_DIR "${_package}"
 		RESULT _downloaded)
-	set(_install_dir ${SEIR_PACKAGE_DIR}/zstd)
+	set(_install_dir ${SEIR_3RDPARTY_DIR}/zstd)
 	if(_downloaded OR NOT EXISTS ${_install_dir})
 		set(_source_dir ${CMAKE_BINARY_DIR}/${_package})
 		set(_build_dir ${_source_dir}-build)

@@ -14,7 +14,11 @@ if(SEIR_IMAGE_BMP OR SEIR_IMAGE_ICO)
 endif()
 if(SEIR_IMAGE_JPEG)
 	list(APPEND SOURCES src/format_jpeg.cpp)
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		set_property(SOURCE src/format_jpeg.cpp APPEND PROPERTY COMPILE_OPTIONS
+			-Wno-disabled-macro-expansion # Clang issues a warning for libc++'s setjmp.
+			)
+	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		set_property(SOURCE src/format_jpeg.cpp APPEND PROPERTY COMPILE_OPTIONS
 			/wd4324 # '`anonymous-namespace'::JpegErrorHandler': structure was padded due to alignment specifier
 			/wd4611 # interaction between '_setjmp' and C++ object destruction is non-portable

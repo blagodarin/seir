@@ -4,8 +4,9 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/SeirUtils.cmake)
 
-set(SEIR_PACKAGE_DIR ${CMAKE_BINARY_DIR}/_SeirPackages CACHE PATH "Directory for Seir packages")
-mark_as_advanced(SEIR_PACKAGE_DIR)
+set(SEIR_3RDPARTY_DIR ${CMAKE_BINARY_DIR}/_SeirPackages CACHE PATH "Directory for provided third-party packages")
+set(SEIR_3RDPARTY_SKIP "" CACHE STRING "List of third-party packages to skip providing")
+mark_as_advanced(SEIR_3RDPARTY_DIR SEIR_3RDPARTY_SKIP)
 
 function(_seir_cmake _source_dir _build_dir _install_dir)
 	cmake_parse_arguments(_arg "" "TARGET" "MSVC_WARNINGS;OPTIONS" ${ARGN})

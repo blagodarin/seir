@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 function(seir_provide_plf_colony _output)
+	if("plf_colony" IN_LIST SEIR_3RDPARTY_SKIP)
+		unset(${_output} PARENT_SCOPE)
+		return()
+	endif()
 	cmake_parse_arguments(_arg "" "SET_UPDATED" "" ${ARGN})
 	if(_arg_SET_UPDATED)
 		set(${_arg_SET_UPDATED} OFF PARENT_SCOPE)
@@ -11,7 +15,7 @@ function(seir_provide_plf_colony _output)
 	seir_download("https://raw.githubusercontent.com/mattreecebentley/plf_colony/${_version}/plf_colony.h"
 		SHA1 "578d689d86da218f35598c7b8f31a9b32703198c"
 		RESULT _downloaded)
-	set(_install_dir ${SEIR_PACKAGE_DIR}/plf_colony)
+	set(_install_dir ${SEIR_3RDPARTY_DIR}/plf_colony)
 	if(_downloaded OR NOT EXISTS ${_install_dir})
 		file(INSTALL ${SEIR_DOWNLOAD_DIR}/plf_colony.h DESTINATION ${_install_dir}/include)
 		file(INSTALL ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/plf_colony-config.cmake DESTINATION ${_install_dir}/lib/cmake/plf_colony)

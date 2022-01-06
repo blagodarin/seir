@@ -36,6 +36,7 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
+            -DSEIR_3RDPARTY_SKIP="jpeg;vorbis;zlib;zstd" \
             -DSEIR_AUDIO_AULOS=ON \
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
@@ -80,6 +81,7 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
+            -DSEIR_3RDPARTY_SKIP="jpeg;vorbis;zlib;zstd" \
             -DSEIR_AUDIO_AULOS=ON \
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \

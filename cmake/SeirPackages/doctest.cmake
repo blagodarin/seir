@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 function(seir_provide_doctest _output)
+	if("doctest" IN_LIST SEIR_3RDPARTY_SKIP)
+		unset(${_output} PARENT_SCOPE)
+		return()
+	endif()
 	cmake_parse_arguments(_arg "" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	if(_arg_SET_UPDATED)
 		set(${_arg_SET_UPDATED} OFF PARENT_SCOPE)
@@ -20,7 +24,7 @@ function(seir_provide_doctest _output)
 		EXTRACT_DIR "${_package}"
 		PATCH ${_patch}
 		RESULT _downloaded)
-	set(_install_dir ${SEIR_PACKAGE_DIR}/doctest)
+	set(_install_dir ${SEIR_3RDPARTY_DIR}/doctest)
 	if(_downloaded OR NOT EXISTS ${_install_dir})
 		set(_source_dir ${CMAKE_BINARY_DIR}/${_package})
 		set(_build_dir ${_source_dir}-build)
