@@ -33,7 +33,10 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_TESTS "Build Seir tests")
 endif()
 
-set(CMAKE_FOLDER ".external")
+if(NOT DEFINED CMAKE_FOLDER)
+	seir_select(CMAKE_FOLDER ${PROJECT_IS_TOP_LEVEL} ".external" "Seir")
+endif()
+
 seir_defaults()
 
 find_package(Threads REQUIRED)
@@ -123,10 +126,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		/wd5027 # move assignment operator was implicitly defined as deleted
 		/wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 		)
-endif()
-
-if(NOT DEFINED CMAKE_FOLDER)
-	set(CMAKE_FOLDER "Seir") # Default folder for top-level projects.
 endif()
 
 if(SEIR_AUDIO)

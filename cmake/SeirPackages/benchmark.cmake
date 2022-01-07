@@ -2,43 +2,33 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-function(seir_provide_benchmark _output)
-	if("benchmark" IN_LIST SEIR_3RDPARTY_SKIP)
-		unset(${_output} PARENT_SCOPE)
-		return()
-	endif()
-	cmake_parse_arguments(_arg "" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
-	if(_arg_SET_UPDATED)
-		set(${_arg_SET_UPDATED} OFF PARENT_SCOPE)
-	endif()
-	if(_arg_STATIC_RUNTIME)
-		set(_patch ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/benchmark.patch)
-	else()
-		set(_patch "")
-	endif()
-	set(_version "1.6.0")
-	set(_package "benchmark-${_version}")
-	seir_download("https://github.com/google/benchmark/archive/refs/tags/v${_version}.tar.gz"
-		NAME "${_package}.tar.gz"
+function(seir_provide_benchmark result)
+	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
+	_seir_provide_begin("benchmark")
+	set(version "1.6.0")
+	set(package "benchmark-${version}")
+	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/benchmark.patch)
+	seir_download("https://github.com/google/benchmark/archive/refs/tags/v${version}.tar.gz"
+		NAME "${package}.tar.gz"
 		SHA1 "c4d1a9135e779c5507015ccc8c428cb4aca69cef"
-		EXTRACT_DIR "${_package}"
-		PATCH ${_patch}
-		RESULT _downloaded)
-	set(_install_dir ${SEIR_3RDPARTY_DIR}/benchmark)
-	if(_downloaded OR NOT EXISTS ${_install_dir})
-		set(_source_dir ${CMAKE_BINARY_DIR}/${_package})
-		set(_build_dir ${_source_dir}-build)
-		message(STATUS "[SEIR] Building benchmark from ${_source_dir}")
-		_seir_cmake(${_source_dir} ${_build_dir} ${_install_dir} OPTIONS
+		EXTRACT_DIR "${package}"
+		PATCH ${patch}
+		RESULT downloaded)
+	set(install_dir ${SEIR_3RDPARTY_DIR}/benchmark)
+	if(downloaded OR NOT EXISTS ${install_dir})
+		set(source_dir ${CMAKE_BINARY_DIR}/${package})
+		set(build_dir ${source_dir}-build)
+		message(STATUS "[SEIR] Building benchmark from ${source_dir}")
+		_seir_cmake(${source_dir} ${build_dir} ${install_dir} OPTIONS
 			-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
 			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
 			-DBENCHMARK_ENABLE_GTEST_TESTS=OFF
 			-DBENCHMARK_ENABLE_TESTING=OFF
 			)
-		message(STATUS "[SEIR] Provided benchmark at ${_install_dir}")
-		if(_arg_SET_UPDATED)
-			set(${_arg_SET_UPDATED} ON PARENT_SCOPE)
+		message(STATUS "[SEIR] Provided benchmark at ${install_dir}")
+		if(arg_SET_UPDATED)
+			set(${arg_SET_UPDATED} ON PARENT_SCOPE)
 		endif()
 	endif()
-	set(${_output} ${_install_dir} PARENT_SCOPE)
+	_seir_provide_end_library("benchmark")
 endfunction()
