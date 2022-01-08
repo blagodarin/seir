@@ -5,6 +5,7 @@
 #include "image.hpp"
 
 #include <seir_data/blob.hpp>
+#include <seir_data/writer.hpp>
 
 #include <doctest/doctest.h>
 
@@ -98,6 +99,26 @@ TEST_CASE("JPEG")
 		CHECK(jpegImage == tgaImage);
 	}
 #	endif
+	SUBCASE("save bgr24")
+	{
+		seir::Buffer<std::byte> buffer;
+		const auto writer = seir::Writer::create(buffer);
+		REQUIRE(writer);
+		SUBCASE("ImageAxes::XRightYDown")
+		{
+			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYDown);
+			REQUIRE(image.saveJpeg(*writer, 100));
+		}
+		SUBCASE("ImageAxes::XRightYUp")
+		{
+			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYUp);
+			REQUIRE(image.saveJpeg(*writer, 100));
+		}
+		const auto blob = seir::Blob::from(SEIR_TEST_DIR "bgr24_rd.jpg");
+		REQUIRE(blob);
+		REQUIRE(writer->size() == blob->size());
+		CHECK(std::memcmp(buffer.data(), blob->data(), blob->size()) == 0);
+	}
 }
 #endif
 

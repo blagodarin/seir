@@ -13,6 +13,7 @@
 namespace seir
 {
 	class Blob;
+	class Writer;
 
 	// Pixel format.
 	enum class PixelFormat
@@ -83,6 +84,11 @@ namespace seir
 
 		//
 		[[nodiscard]] const ImageInfo& info() const noexcept { return _info; }
+
+#if SEIR_IMAGE_JPEG
+		//
+		bool saveJpeg(Writer&, int quality) const noexcept;
+#endif
 
 	private:
 		ImageInfo _info;
