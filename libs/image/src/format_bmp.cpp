@@ -99,7 +99,7 @@ namespace
 namespace seir
 {
 #if SEIR_IMAGE_BMP
-	const void* loadBmpImage(Reader& reader, ImageInfo& info)
+	const void* loadBmpImage(Reader& reader, ImageInfo& info) noexcept
 	{
 		const auto fileHeader = reader.read<BmpFileHeader>();
 		if (!fileHeader
@@ -139,7 +139,7 @@ namespace seir
 #endif
 
 #if SEIR_IMAGE_ICO
-	const void* loadIcoImage(Reader& reader, ImageInfo& info)
+	const void* loadIcoImage(Reader& reader, ImageInfo& info) noexcept
 	{
 		if (const auto fileHeader = reader.read<IcoFileHeader>(); !fileHeader
 			|| fileHeader->reserved != 0

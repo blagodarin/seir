@@ -11,6 +11,14 @@
 
 namespace
 {
+	void checkSavedImage(const void* data, uint64_t size, const std::string& name)
+	{
+		const auto blob = seir::Blob::from(SEIR_TEST_DIR + name);
+		REQUIRE(blob);
+		REQUIRE(size == blob->size());
+		CHECK(std::memcmp(data, blob->data(), blob->size()) == 0);
+	}
+
 	seir::Image loadImage(const std::string& name)
 	{
 		auto blob = seir::Blob::from(SEIR_TEST_DIR + name);
@@ -92,14 +100,14 @@ TEST_CASE("ICO")
 TEST_CASE("JPEG")
 {
 #	if SEIR_IMAGE_TGA
-	SUBCASE("load bgr24")
+	SUBCASE("load Bgr24")
 	{
 		const auto jpegImage = ::loadImage("bgr24_rd.jpg");
 		const auto tgaImage = ::loadImage("bgr24_rd.jpg.tga");
 		CHECK(jpegImage == tgaImage);
 	}
 #	endif
-	SUBCASE("save bgr24")
+	SUBCASE("save Bgr24")
 	{
 		seir::Buffer<std::byte> buffer;
 		const auto writer = seir::Writer::create(buffer);
@@ -107,17 +115,14 @@ TEST_CASE("JPEG")
 		SUBCASE("ImageAxes::XRightYDown")
 		{
 			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYDown);
-			REQUIRE(image.saveJpeg(*writer, 100));
+			REQUIRE(image.save(seir::ImageFormat::Jpeg, *writer, 0));
 		}
 		SUBCASE("ImageAxes::XRightYUp")
 		{
 			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYUp);
-			REQUIRE(image.saveJpeg(*writer, 100));
+			REQUIRE(image.save(seir::ImageFormat::Jpeg, *writer, 0));
 		}
-		const auto blob = seir::Blob::from(SEIR_TEST_DIR "bgr24_rd.jpg");
-		REQUIRE(blob);
-		REQUIRE(writer->size() == blob->size());
-		CHECK(std::memcmp(buffer.data(), blob->data(), blob->size()) == 0);
+		::checkSavedImage(buffer.data(), writer->size(), "bgr24_rd.jpg");
 	}
 }
 #endif
@@ -125,20 +130,38 @@ TEST_CASE("JPEG")
 #if SEIR_IMAGE_TGA
 TEST_CASE("TGA")
 {
-	SUBCASE("load gray8")
+	SUBCASE("load Gray8")
 	{
 		const auto image = ::loadImage("gray8_rd.tga");
 		CHECK(image == ::makeGrayscaleImage());
 	}
-	SUBCASE("load bgr32")
+	SUBCASE("load Bgr32")
 	{
 		const auto image = ::loadImage("bgr24_rd.tga");
 		CHECK(image == ::makeColorImage(false, seir::ImageAxes::XRightYDown));
 	}
-	SUBCASE("load bgra32")
+	SUBCASE("load Bgra32")
 	{
 		const auto image = ::loadImage("bgra32_rd.tga");
 		CHECK(image == ::makeColorImage(true, seir::ImageAxes::XRightYDown));
+	}
+	SUBCASE("save")
+	{
+		seir::Buffer<std::byte> buffer;
+		const auto writer = seir::Writer::create(buffer);
+		REQUIRE(writer);
+		SUBCASE("Bgr24")
+		{
+			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYDown);
+			REQUIRE(image.save(seir::ImageFormat::Tga, *writer, 0));
+			::checkSavedImage(buffer.data(), writer->size(), "bgr24_rd.tga");
+		}
+		SUBCASE("Bgra32")
+		{
+			const auto image = ::makeColorImage(true, seir::ImageAxes::XRightYDown);
+			REQUIRE(image.save(seir::ImageFormat::Tga, *writer, 0));
+			::checkSavedImage(buffer.data(), writer->size(), "bgra32_rd.tga");
+		}
 	}
 }
 #endif

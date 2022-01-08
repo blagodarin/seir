@@ -58,7 +58,7 @@ namespace
 			};
 		}
 
-		bool compress(const seir::ImageInfo& info, const void* data, J_COLOR_SPACE colorSpace, int quality) noexcept
+		bool compress(const seir::ImageInfo& info, const void* data, J_COLOR_SPACE colorSpace, int compressionLevel) noexcept
 		{
 			if (!_buffer.tryReserve(65'536, 0))
 				return false;
@@ -76,7 +76,7 @@ namespace
 			::jpeg_set_defaults(&compressor);
 			compressor.optimize_coding = TRUE;
 			compressor.dct_method = JDCT_ISLOW;
-			::jpeg_set_quality(&compressor, quality, TRUE);
+			::jpeg_set_quality(&compressor, 100 - compressionLevel, TRUE);
 			::jpeg_start_compress(&compressor, TRUE);
 			if (info.axes() == seir::ImageAxes::XRightYDown)
 				for (auto row = static_cast<const JSAMPLE*>(data); compressor.next_scanline < compressor.image_height; row += info.stride())
@@ -152,19 +152,19 @@ namespace
 
 namespace seir
 {
-	const void* loadJpegImage(Reader& reader, ImageInfo& info, Buffer<std::byte>& buffer)
+	const void* loadJpegImage(Reader& reader, ImageInfo& info, Buffer<std::byte>& buffer) noexcept
 	{
 		return JpegDecompressor{ reader }.decompress(info, buffer) ? buffer.data() : nullptr;
 	}
 
-	bool Image::saveJpeg(Writer& writer, int quality) const noexcept
+	bool saveJpegImage(Writer& writer, const ImageInfo& info, const void* data, int compressionLevel) noexcept
 	{
-		if (_info.axes() != ImageAxes::XRightYDown && _info.axes() != ImageAxes::XRightYUp)
+		if (info.axes() != ImageAxes::XRightYDown && info.axes() != ImageAxes::XRightYUp)
 			return false;
-		if (_info.width() > JPEG_MAX_DIMENSION || _info.height() > JPEG_MAX_DIMENSION)
+		if (info.width() > JPEG_MAX_DIMENSION || info.height() > JPEG_MAX_DIMENSION)
 			return false;
 		J_COLOR_SPACE colorSpace = JCS_UNKNOWN;
-		switch (_info.pixelFormat())
+		switch (info.pixelFormat())
 		{
 		case PixelFormat::Gray8: colorSpace = JCS_GRAYSCALE; break;
 		case PixelFormat::Intensity8: return false;
@@ -174,6 +174,6 @@ namespace seir
 		case PixelFormat::Rgba32: colorSpace = JCS_EXT_RGBX; break;
 		case PixelFormat::Bgra32: colorSpace = JCS_EXT_BGRX; break;
 		}
-		return JpegCompressor{ writer }.compress(_info, _data, colorSpace, quality);
+		return JpegCompressor{ writer }.compress(info, data, colorSpace, compressionLevel);
 	}
 }

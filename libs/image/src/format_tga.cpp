@@ -4,6 +4,8 @@
 
 #include "format.hpp"
 
+#include <seir_data/writer.hpp>
+
 namespace
 {
 	enum class TgaColorMapType : uint8_t
@@ -70,11 +72,13 @@ namespace
 	};
 
 #pragma pack(pop)
+
+	static_assert(sizeof(TgaHeader) == 18);
 }
 
 namespace seir
 {
-	const void* loadTgaImage(Reader& reader, ImageInfo& info)
+	const void* loadTgaImage(Reader& reader, ImageInfo& info) noexcept
 	{
 		const auto header = reader.read<TgaHeader>();
 		if (!header
@@ -122,5 +126,58 @@ namespace seir
 
 		info = { header->image.width, header->image.height, stride, pixelFormat, axes };
 		return data;
+	}
+
+	bool saveTgaImage(Writer& writer, const ImageInfo& info, const void* data) noexcept
+	{
+		if (!info.width()
+			|| info.width() > std::numeric_limits<uint16_t>::max()
+			|| !info.height()
+			|| info.height() > std::numeric_limits<uint16_t>::max())
+			return false;
+		TgaHeader header{};
+		header.colorMapType = TgaColorMapType::None;
+		header.image.width = static_cast<uint16_t>(info.width());
+		header.image.height = static_cast<uint16_t>(info.height());
+		switch (info.pixelFormat())
+		{
+		case PixelFormat::Gray8:
+			header.imageType = TgaImageType::BlackAndWhite;
+			header.image.pixelDepth = 8;
+			break;
+		case PixelFormat::Intensity8:
+		case PixelFormat::GrayAlpha16:
+		case PixelFormat::Rgb24:
+			return false;
+		case PixelFormat::Bgr24:
+			header.imageType = TgaImageType::TrueColor;
+			header.image.pixelDepth = 24;
+			break;
+		case PixelFormat::Rgba32:
+			return false;
+		case PixelFormat::Bgra32:
+			header.imageType = TgaImageType::TrueColor;
+			header.image.pixelDepth = 32;
+			header.image.descriptor = 8;
+			break;
+		}
+		switch (info.axes())
+		{
+		case ImageAxes::XRightYDown: header.image.descriptor |= kTgaTopLeft; break;
+		case ImageAxes::XRightYUp: header.image.descriptor |= kTgaBottomLeft; break;
+		}
+		if (!writer.reserve(sizeof header + info.frameSize()) || !writer.write(header))
+			return false;
+		const auto scanlineSize = info.width() * pixelSize(info.pixelFormat());
+		if (scanlineSize == info.stride())
+			return writer.write(data, info.frameSize());
+		auto scanline = static_cast<const std::byte*>(data);
+		for (size_t row = 0; row < info.height(); ++row)
+		{
+			if (!writer.write(scanline, scanlineSize))
+				return false;
+			scanline += info.stride();
+		}
+		return true;
 	}
 }

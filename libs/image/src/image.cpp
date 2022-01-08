@@ -7,6 +7,8 @@
 #include <seir_base/endian.hpp>
 #include "format.hpp"
 
+#include <algorithm>
+
 namespace seir
 {
 	std::optional<Image> Image::load(const SharedPtr<Blob>& blob)
@@ -65,4 +67,24 @@ namespace seir
 
 	Image::Image(const ImageInfo& info, Buffer<std::byte>&& buffer) noexcept
 		: _info{ info }, _data{ buffer.data() }, _buffer{ std::move(buffer) } {}
+
+	bool Image::save(ImageFormat format, Writer& writer, [[maybe_unused]] int compressionLevel) const noexcept
+	{
+		switch (format)
+		{
+		case ImageFormat::Tga:
+#if SEIR_IMAGE_TGA
+			return saveTgaImage(writer, _info, _data);
+#else
+			break;
+#endif
+		case ImageFormat::Jpeg:
+#if SEIR_IMAGE_JPEG
+			return saveJpegImage(writer, _info, _data, std::clamp(compressionLevel, 0, 100));
+#else
+			break;
+#endif
+		}
+		return false;
+	}
 }

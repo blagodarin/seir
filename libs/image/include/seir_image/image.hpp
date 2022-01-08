@@ -62,6 +62,13 @@ namespace seir
 		ImageAxes _axes = ImageAxes::XRightYDown;
 	};
 
+	// Supported formats for saving images.
+	enum class ImageFormat
+	{
+		Tga,  // Truevision TARGA (TGA) file format.
+		Jpeg, // Joint Photographic Experts Group (JPEG) file format.
+	};
+
 	//
 	class Image
 	{
@@ -85,10 +92,8 @@ namespace seir
 		//
 		[[nodiscard]] const ImageInfo& info() const noexcept { return _info; }
 
-#if SEIR_IMAGE_JPEG
 		//
-		bool saveJpeg(Writer&, int quality) const noexcept;
-#endif
+		bool save(ImageFormat, Writer&, int compressionLevel) const noexcept;
 
 	private:
 		ImageInfo _info;
