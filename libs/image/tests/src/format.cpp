@@ -28,9 +28,13 @@ namespace
 		return std::move(*image);
 	}
 
-	seir::Image makeColorImage(bool withAlpha, seir::ImageAxes axes)
+	seir::Image makeColorImage(bool withAlpha, seir::ImageAxes axes, bool padding = false)
 	{
-		seir::Buffer<std::byte> buffer{ static_cast<size_t>(16 * 16 * (withAlpha ? 4 : 3)) };
+		constexpr uint32_t width = 16;
+		constexpr uint32_t height = 16;
+		const uint32_t pixelSize = withAlpha ? 4u : 3u;
+		const auto stride = (16 + static_cast<uint32_t>(padding)) * pixelSize;
+		seir::Buffer<std::byte> buffer{ stride * height };
 		auto data = reinterpret_cast<uint8_t*>(buffer.data());
 		for (int row = 0; row < 16; ++row)
 		{
@@ -64,19 +68,35 @@ namespace
 				if (withAlpha)
 					*data++ = static_cast<uint8_t>(x * 16 + 15);
 			}
+			if (padding)
+				for (uint32_t i = 0; i < pixelSize; ++i)
+					*data++ = 0xCC;
 		}
-		return { { 16, 16, withAlpha ? seir::PixelFormat::Bgra32 : seir::PixelFormat::Bgr24, axes }, std::move(buffer) };
+		return { { width, height, stride, withAlpha ? seir::PixelFormat::Bgra32 : seir::PixelFormat::Bgr24, axes }, std::move(buffer) };
 	}
 
-	seir::Image makeGrayscaleImage()
+	seir::Image makeGrayscaleImage(seir::ImageAxes axes, bool padding = false)
 	{
-		constexpr uint32_t kSize = 16;
-		seir::Buffer<std::byte> buffer{ kSize * kSize };
+		constexpr uint32_t width = 32;
+		constexpr uint32_t height = 16;
+		const auto stride = width + static_cast<uint32_t>(padding);
+		seir::Buffer<std::byte> buffer{ stride * height };
 		auto data = reinterpret_cast<uint8_t*>(buffer.data());
-		for (uint32_t y = 0; y < kSize; ++y)
-			for (uint32_t x = 0; x < kSize; ++x)
-				*data++ = static_cast<uint8_t>(y < kSize / 2 ? x * kSize + y / 2 : (kSize - 1 - x) * kSize + (kSize - 1 - y) / 2);
-		return { { kSize, kSize, seir::PixelFormat::Gray8, seir::ImageAxes::XRightYDown }, std::move(buffer) };
+		for (uint32_t row = 0; row < height; ++row)
+		{
+			const auto y = axes == seir::ImageAxes::XRightYDown ? row : height - 1 - row;
+			for (uint32_t x = 0; x < width; ++x)
+			{
+				constexpr auto halfHeight = height / 2;
+				if (y < halfHeight)
+					*data++ = static_cast<uint8_t>(x * 256 / width + y);
+				else
+					*data++ = static_cast<uint8_t>((y - halfHeight) * 256 / halfHeight + x);
+			}
+			if (padding)
+				*data++ = 0xCC;
+		}
+		return { { width, height, stride, seir::PixelFormat::Gray8, axes }, std::move(buffer) };
 	}
 }
 
@@ -100,29 +120,75 @@ TEST_CASE("ICO")
 TEST_CASE("JPEG")
 {
 #	if SEIR_IMAGE_TGA
-	SUBCASE("load Bgr24")
+	SUBCASE("load")
 	{
-		const auto jpegImage = ::loadImage("bgr24_rd.jpg");
-		const auto tgaImage = ::loadImage("bgr24_rd.jpg.tga");
-		CHECK(jpegImage == tgaImage);
+		// NOTE: All TGA images are actually Bgra32 because we always decode JPEG into Bgra32.
+		// Perhaps we should reconsider this behavior.
+		SUBCASE("Gray8")
+		{
+			const auto jpegImage = ::loadImage("gray8_rd.jpg");
+			const auto tgaImage = ::loadImage("gray8_rd.jpg.tga");
+			CHECK(jpegImage == tgaImage);
+		}
+		SUBCASE("Bgr24")
+		{
+			const auto jpegImage = ::loadImage("bgr24_rd.jpg");
+			const auto tgaImage = ::loadImage("bgr24_rd.jpg.tga");
+			CHECK(jpegImage == tgaImage);
+		}
 	}
 #	endif
-	SUBCASE("save Bgr24")
+	SUBCASE("save")
 	{
 		seir::Buffer<std::byte> buffer;
 		const auto writer = seir::Writer::create(buffer);
 		REQUIRE(writer);
-		SUBCASE("ImageAxes::XRightYDown")
+		seir::Image image;
+		std::string fileName;
+		SUBCASE("Gray8")
 		{
-			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYDown);
-			REQUIRE(image.save(seir::ImageFormat::Jpeg, *writer, 0));
+			fileName = "gray8_rd.jpg";
+			SUBCASE("XRightYDown")
+			{
+				SUBCASE("without padding") { image = ::makeGrayscaleImage(seir::ImageAxes::XRightYDown); }
+				SUBCASE("with padding") { image = ::makeGrayscaleImage(seir::ImageAxes::XRightYDown, true); }
+			}
+			SUBCASE("XRightYUp")
+			{
+				SUBCASE("without padding") { image = ::makeGrayscaleImage(seir::ImageAxes::XRightYUp); }
+				SUBCASE("with padding") { image = ::makeGrayscaleImage(seir::ImageAxes::XRightYUp, true); }
+			}
 		}
-		SUBCASE("ImageAxes::XRightYUp")
+		SUBCASE("Bgr24")
 		{
-			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYUp);
-			REQUIRE(image.save(seir::ImageFormat::Jpeg, *writer, 0));
+			fileName = "bgr24_rd.jpg";
+			SUBCASE("XRightYDown")
+			{
+				SUBCASE("without padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYDown); }
+				SUBCASE("with padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYDown, true); }
+			}
+			SUBCASE("XRightYUp")
+			{
+				SUBCASE("without padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYUp); }
+				SUBCASE("with padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYUp, true); }
+			}
 		}
-		::checkSavedImage(buffer.data(), writer->size(), "bgr24_rd.jpg");
+		SUBCASE("Bgra24")
+		{
+			fileName = "bgr24_rd.jpg";
+			SUBCASE("XRightYDown")
+			{
+				SUBCASE("without padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYDown); }
+				SUBCASE("with padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYDown, true); }
+			}
+			SUBCASE("XRightYUp")
+			{
+				SUBCASE("without padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYUp); }
+				SUBCASE("with padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYUp, true); }
+			}
+		}
+		REQUIRE(image.save(seir::ImageFormat::Jpeg, *writer, 0));
+		::checkSavedImage(buffer.data(), writer->size(), fileName);
 	}
 }
 #endif
@@ -130,38 +196,51 @@ TEST_CASE("JPEG")
 #if SEIR_IMAGE_TGA
 TEST_CASE("TGA")
 {
-	SUBCASE("load Gray8")
+	SUBCASE("load")
 	{
-		const auto image = ::loadImage("gray8_rd.tga");
-		CHECK(image == ::makeGrayscaleImage());
-	}
-	SUBCASE("load Bgr32")
-	{
-		const auto image = ::loadImage("bgr24_rd.tga");
-		CHECK(image == ::makeColorImage(false, seir::ImageAxes::XRightYDown));
-	}
-	SUBCASE("load Bgra32")
-	{
-		const auto image = ::loadImage("bgra32_rd.tga");
-		CHECK(image == ::makeColorImage(true, seir::ImageAxes::XRightYDown));
+		SUBCASE("Gray8")
+		{
+			const auto image = ::loadImage("gray8_rd.tga");
+			CHECK(image == ::makeGrayscaleImage(seir::ImageAxes::XRightYDown));
+		}
+		SUBCASE("Bgr32")
+		{
+			const auto image = ::loadImage("bgr24_rd.tga");
+			CHECK(image == ::makeColorImage(false, seir::ImageAxes::XRightYDown));
+		}
+		SUBCASE("Bgra32")
+		{
+			const auto image = ::loadImage("bgra32_rd.tga");
+			CHECK(image == ::makeColorImage(true, seir::ImageAxes::XRightYDown));
+		}
 	}
 	SUBCASE("save")
 	{
 		seir::Buffer<std::byte> buffer;
 		const auto writer = seir::Writer::create(buffer);
 		REQUIRE(writer);
+		seir::Image image;
+		std::string fileName;
+		SUBCASE("Gray8")
+		{
+			fileName = "gray8_rd.tga";
+			SUBCASE("padding = false") { image = ::makeGrayscaleImage(seir::ImageAxes::XRightYDown); }
+			SUBCASE("padding = true") { image = ::makeGrayscaleImage(seir::ImageAxes::XRightYDown, true); }
+		}
 		SUBCASE("Bgr24")
 		{
-			const auto image = ::makeColorImage(false, seir::ImageAxes::XRightYDown);
-			REQUIRE(image.save(seir::ImageFormat::Tga, *writer, 0));
-			::checkSavedImage(buffer.data(), writer->size(), "bgr24_rd.tga");
+			fileName = "bgr24_rd.tga";
+			SUBCASE("without padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYDown); }
+			SUBCASE("with padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYDown, true); }
 		}
 		SUBCASE("Bgra32")
 		{
-			const auto image = ::makeColorImage(true, seir::ImageAxes::XRightYDown);
-			REQUIRE(image.save(seir::ImageFormat::Tga, *writer, 0));
-			::checkSavedImage(buffer.data(), writer->size(), "bgra32_rd.tga");
+			fileName = "bgra32_rd.tga";
+			SUBCASE("without padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYDown); }
+			SUBCASE("with padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYDown, true); }
 		}
+		REQUIRE(image.save(seir::ImageFormat::Tga, *writer, 0));
+		::checkSavedImage(buffer.data(), writer->size(), fileName);
 	}
 }
 #endif

@@ -23,20 +23,20 @@ namespace
 			::jpeg_std_error(&_errorMgr);
 			_errorMgr.error_exit = [](jpeg_common_struct* common) noexcept {
 				::jpeg_destroy(common);
-				std::longjmp(reinterpret_cast<JpegErrorManager*>(common->client_data)->_jmpBuf, 1);
+				std::longjmp(reinterpret_cast<JpegErrorManager*>(common->client_data)->_jmpBuf, 1); // NOLINT(cert-err52-cpp)
 			};
 			_errorMgr.output_message = [](jpeg_common_struct*) noexcept {};
 		}
 
 	protected:
-		std::jmp_buf _jmpBuf;
-		jpeg_error_mgr _errorMgr;
+		std::jmp_buf _jmpBuf{};
+		jpeg_error_mgr _errorMgr{};
 	};
 
 	class JpegCompressor : private JpegErrorManager
 	{
 	public:
-		JpegCompressor(seir::Writer& writer) noexcept
+		explicit JpegCompressor(seir::Writer& writer) noexcept
 			: _writer{ writer }
 		{
 			_destinationMgr.init_destination = [](jpeg_compress_struct* compressor) noexcept {
@@ -62,9 +62,9 @@ namespace
 		{
 			if (!_buffer.tryReserve(65'536, 0))
 				return false;
-			if (setjmp(_jmpBuf))
+			if (setjmp(_jmpBuf)) // NOLINT(cert-err52-cpp)
 				return false;
-			jpeg_compress_struct compressor;
+			jpeg_compress_struct compressor{};
 			compressor.err = &_errorMgr;
 			compressor.client_data = this;
 			::jpeg_create_compress(&compressor);
@@ -90,7 +90,7 @@ namespace
 		}
 
 	private:
-		jpeg_destination_mgr _destinationMgr;
+		jpeg_destination_mgr _destinationMgr{};
 		seir::Writer& _writer;
 		seir::Buffer<std::byte> _buffer;
 	};
@@ -98,7 +98,7 @@ namespace
 	class JpegDecompressor : private JpegErrorManager
 	{
 	public:
-		JpegDecompressor(seir::Reader& reader) noexcept
+		explicit JpegDecompressor(seir::Reader& reader) noexcept
 		{
 			_sourceMgr.next_input_byte = static_cast<const JOCTET*>(reader.peek(0));
 			_sourceMgr.bytes_in_buffer = reader.size() - reader.offset();
@@ -120,15 +120,15 @@ namespace
 
 		bool decompress(seir::ImageInfo& info, seir::Buffer<std::byte>& buffer) noexcept
 		{
-			if (setjmp(_jmpBuf))
+			if (setjmp(_jmpBuf)) // NOLINT(cert-err52-cpp)
 				return false;
-			jpeg_decompress_struct decompressor;
+			jpeg_decompress_struct decompressor{};
 			decompressor.err = &_errorMgr;
 			decompressor.client_data = this;
 			::jpeg_create_decompress(&decompressor);
 			decompressor.src = &_sourceMgr;
 			::jpeg_read_header(&decompressor, TRUE);
-			decompressor.out_color_space = JCS_EXT_BGRA;
+			decompressor.out_color_space = JCS_EXT_BGRA; // TODO: Load grayscale images as Gray8.
 			::jpeg_calc_output_dimensions(&decompressor);
 			info = { decompressor.output_width, decompressor.output_height, seir::PixelFormat::Bgra32 };
 			if (!buffer.tryReserve(info.frameSize(), 0))
@@ -146,7 +146,7 @@ namespace
 		}
 
 	private:
-		jpeg_source_mgr _sourceMgr;
+		jpeg_source_mgr _sourceMgr{};
 	};
 }
 
@@ -167,8 +167,9 @@ namespace seir
 		switch (info.pixelFormat())
 		{
 		case PixelFormat::Gray8: colorSpace = JCS_GRAYSCALE; break;
-		case PixelFormat::Intensity8: return false;
-		case PixelFormat::GrayAlpha16: return false;
+		case PixelFormat::Intensity8:
+		case PixelFormat::GrayAlpha16:
+			return false;
 		case PixelFormat::Rgb24: colorSpace = JCS_EXT_RGB; break;
 		case PixelFormat::Bgr24: colorSpace = JCS_EXT_BGR; break;
 		case PixelFormat::Rgba32: colorSpace = JCS_EXT_RGBX; break;

@@ -9,6 +9,14 @@
 
 #include <algorithm>
 
+// TODO: Add support for:
+// - saving screenshots (with default names and to the default screenshot location);
+// - loading image data into the specified buffer (e.g. mapped texture memory);
+// - compressed pixel formats (e.g. S3TC);
+// - multi-layer images (e.g. textures with mipmaps);
+// - separate image header/data loading;
+// - some sort of image packs (to be able to pre-load image headers and load image data separately).
+
 namespace seir
 {
 	std::optional<Image> Image::load(const SharedPtr<Blob>& blob)
@@ -18,7 +26,7 @@ namespace seir
 			Image result;
 			switch (Reader reader{ *blob }; *static_cast<const uint16_t*>(blob->data()))
 			{
-			case makeCC('B', 'M'):
+			case kBmpFileID:
 #if SEIR_IMAGE_BMP
 				result._data = loadBmpImage(reader, result._info);
 #endif
@@ -26,7 +34,7 @@ namespace seir
 			case makeCC('D', 'D'):
 				// TODO: Load DDS image.
 				break;
-			case makeCC('\xff', '\xd8'): // SOI marker.
+			case kJpegFileID:
 #if SEIR_IMAGE_JPEG
 				result._data = loadJpegImage(reader, result._info, result._buffer);
 #endif

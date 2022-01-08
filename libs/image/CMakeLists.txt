@@ -6,11 +6,15 @@ set(HEADERS
 	include/seir_image/image.hpp
 	)
 set(SOURCES
+	src/bmp.hpp
 	src/format.hpp
 	src/image.cpp
 	)
-if(SEIR_IMAGE_BMP OR SEIR_IMAGE_ICO)
+if(SEIR_IMAGE_BMP)
 	list(APPEND SOURCES src/format_bmp.cpp)
+endif()
+if(SEIR_IMAGE_ICO)
+	list(APPEND SOURCES src/format_ico.cpp)
 endif()
 if(SEIR_IMAGE_JPEG)
 	list(APPEND SOURCES src/format_jpeg.cpp)
