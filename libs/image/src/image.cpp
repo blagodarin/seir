@@ -10,6 +10,7 @@
 #include <algorithm>
 
 // TODO: Add support for:
+// - writing image data at aligned offsets (for more efficient copying of memory-mapped data);
 // - saving screenshots (with default names and to the default screenshot location);
 // - loading image data into the specified buffer (e.g. mapped texture memory);
 // - compressed pixel formats (e.g. S3TC);

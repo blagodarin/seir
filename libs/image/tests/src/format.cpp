@@ -108,6 +108,13 @@ TEST_CASE("BMP")
 }
 #endif
 
+TEST_CASE("DDS")
+{
+	auto blob = seir::Blob::from(SEIR_TEST_DIR "bgra32.dds");
+	REQUIRE(blob);
+	CHECK_FALSE(static_cast<bool>(seir::Image::load(blob)));
+}
+
 #if SEIR_IMAGE_ICO
 TEST_CASE("ICO")
 {
@@ -122,12 +129,10 @@ TEST_CASE("JPEG")
 #	if SEIR_IMAGE_TGA
 	SUBCASE("load")
 	{
-		// NOTE: All TGA images are actually Bgra32 because we always decode JPEG into Bgra32.
-		// Perhaps we should reconsider this behavior.
 		SUBCASE("Gray8")
 		{
 			const auto jpegImage = ::loadImage("gray8_rd.jpg");
-			const auto tgaImage = ::loadImage("gray8_rd.jpg.tga");
+			const auto tgaImage = ::loadImage("gray8_rd.tga"); // JPEG is actually lossless in this case.
 			CHECK(jpegImage == tgaImage);
 		}
 		SUBCASE("Bgr24")
@@ -192,6 +197,13 @@ TEST_CASE("JPEG")
 	}
 }
 #endif
+
+TEST_CASE("PNG")
+{
+	auto blob = seir::Blob::from(SEIR_TEST_DIR "rgb24.png");
+	REQUIRE(blob);
+	CHECK_FALSE(static_cast<bool>(seir::Image::load(blob)));
+}
 
 #if SEIR_IMAGE_TGA
 TEST_CASE("TGA")

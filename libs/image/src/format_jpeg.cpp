@@ -128,9 +128,16 @@ namespace
 			::jpeg_create_decompress(&decompressor);
 			decompressor.src = &_sourceMgr;
 			::jpeg_read_header(&decompressor, TRUE);
-			decompressor.out_color_space = JCS_EXT_BGRA; // TODO: Load grayscale images as Gray8.
+			seir::PixelFormat pixelFormat;
+			if (decompressor.out_color_space == JCS_GRAYSCALE)
+				pixelFormat = seir::PixelFormat::Gray8;
+			else
+			{
+				decompressor.out_color_space = JCS_EXT_BGRA;
+				pixelFormat = seir::PixelFormat::Bgra32;
+			}
 			::jpeg_calc_output_dimensions(&decompressor);
-			info = { decompressor.output_width, decompressor.output_height, seir::PixelFormat::Bgra32 };
+			info = { decompressor.output_width, decompressor.output_height, pixelFormat };
 			if (!buffer.tryReserve(info.frameSize(), 0))
 			{
 				::jpeg_destroy_decompress(&decompressor);
