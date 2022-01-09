@@ -10,6 +10,9 @@
 #include <cstring>
 #include <type_traits>
 
+// TODO: All Buffers should be std::byte-typed.
+// TODO: Buffers should probably have a single specialized allocator optimized for large-ish memory blocks.
+
 namespace seir
 {
 	//
