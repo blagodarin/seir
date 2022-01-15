@@ -21,7 +21,7 @@ TEST_CASE("Archiver")
 	std::generate_n(std::back_inserter(entries["digits.txt"]), 10 * 1024, [i = 0]() mutable { return static_cast<char>('0' + (i++ % 10)); });
 	std::generate_n(std::back_inserter(entries["lowercase.txt"]), 26 * 1024, [i = 0]() mutable { return static_cast<char>('a' + (i++ % 26)); });
 	std::generate_n(std::back_inserter(entries["uppercase.txt"]), 26 * 1024, [i = 0]() mutable { return static_cast<char>('A' + (i++ % 26)); });
-	seir::Buffer<std::byte> buffer;
+	seir::Buffer<> buffer;
 	uint64_t bufferSize = 0;
 	{
 		auto writer = seir::Writer::create(buffer, &bufferSize);

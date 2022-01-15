@@ -18,7 +18,7 @@ namespace seir
 		assert(maxBufferFrames > 0);
 		_samplingRate = samplingRate;
 		_processingBuffer.reserve(maxBufferFrames * kAudioFrameSize, 0); // Enough for all supported audio frame format.
-		_resamplingBuffer.reserve((kAudioFramesPerBlock + (maxBufferFrames * AudioFormat::kMaxSamplingRate + samplingRate - 1) / samplingRate) * kAudioChannels, 0);
+		_resamplingBuffer.reserve(kAudioBlockSize + (maxBufferFrames * AudioFormat::kMaxSamplingRate + samplingRate - 1) / samplingRate * kAudioFrameSize, 0);
 	}
 
 	size_t AudioMixer::mix(float* output, size_t maxFrames, bool rewrite, AudioDecoder& decoder) noexcept
@@ -29,7 +29,7 @@ namespace seir
 		{
 			assert(maxFrames > 0);
 			const auto step = (samplingRate << kAudioResamplingFractionBits) / _samplingRate;
-			auto input = _resamplingBuffer.data() + kAudioFramesPerBlock;
+			auto input = _resamplingBuffer.data() + kAudioBlockSize; // We have to keep input+readyFrames aligned.
 			auto offset = decoder._internal._resamplingOffset;
 			size_t readyFrames = 0;
 			if (offset >= step)
@@ -37,13 +37,13 @@ namespace seir
 				// The decoded audio is being upsampled and
 				// we aren't done with the last decoded frame.
 				assert(samplingRate < _samplingRate);
-				input -= kAudioChannels;
+				input -= kAudioFrameSize;
 				++readyFrames;
 				static_assert(sizeof decoder._internal._resamplingBuffer == kAudioFrameSize);
 				std::memcpy(input, decoder._internal._resamplingBuffer, kAudioFrameSize);
 			}
 			const auto maxInputFrames = ((offset + (maxFrames - 1) * step) >> kAudioResamplingFractionBits) + 1; // Index of the first input frame we won't touch.
-			const auto inputFrames = readyFrames + process(input + readyFrames, maxInputFrames - readyFrames, true, decoder);
+			const auto inputFrames = readyFrames + process(reinterpret_cast<float*>(input + readyFrames * kAudioFrameSize), maxInputFrames - readyFrames, true, decoder);
 			if (inputFrames > 0) [[likely]]
 			{
 				auto stepCount = ((inputFrames << kAudioResamplingFractionBits) - offset + step - 1) / step;
@@ -57,13 +57,13 @@ namespace seir
 				}
 				assert((offset + (stepCount - 1) * step) >> kAudioResamplingFractionBits == inputFrames - 1);
 				if (rewrite)
-					resampleCopy2x1D(output, stepCount, input, offset, step);
+					resampleCopy2x1D(output, stepCount, reinterpret_cast<const float*>(input), offset, step);
 				else
-					resampleAdd2x1D(output, stepCount, input, offset, step);
+					resampleAdd2x1D(output, stepCount, reinterpret_cast<const float*>(input), offset, step);
 				frames += stepCount;
 				decoder._internal._resamplingOffset = offset & kAudioResamplingFractionMask;
 				static_assert(sizeof decoder._internal._resamplingBuffer == kAudioFrameSize);
-				std::memcpy(decoder._internal._resamplingBuffer, input + (inputFrames - 1) * kAudioChannels, kAudioFrameSize);
+				std::memcpy(decoder._internal._resamplingBuffer, input + (inputFrames - 1) * kAudioFrameSize, kAudioFrameSize);
 			}
 		}
 		else

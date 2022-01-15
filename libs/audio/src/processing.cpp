@@ -6,10 +6,14 @@
 
 #include "common.hpp"
 
+#include <cassert>
+
 namespace seir
 {
 	void addSamples1D(float* dst, const float* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 		// No manual SSE optimization succeeded.
 		for (size_t i = 0; i < length; ++i)
 			dst[i] += src[i];
@@ -17,6 +21,8 @@ namespace seir
 
 	void addSamples1D(float* dst, const int16_t* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 		constexpr auto unit = 1.f / 32768.f;
 #if SEIR_INTRINSICS_SSE // 10-20% faster with MSVC.
 		for (; length >= 8; length -= 8)
@@ -38,6 +44,8 @@ namespace seir
 
 	void addSamples2x1D(float* dst, const float* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 #if SEIR_INTRINSICS_SSE // 150-200% faster with MSVC.
 		for (; length >= 4; length -= 4)
 		{
@@ -59,6 +67,8 @@ namespace seir
 
 	void addSamples2x1D(float* dst, const int16_t* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 		constexpr auto unit = 1.f / 32768.f;
 #if SEIR_INTRINSICS_SSE // 150-170% faster with MSVC.
 		for (; length >= 8; length -= 8)
@@ -87,6 +97,8 @@ namespace seir
 
 	void convertSamples1D(float* dst, const int16_t* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 		constexpr auto unit = 1.f / 32768.f;
 #if SEIR_INTRINSICS_SSE // 1-5% faster with MSVC.
 		for (; length >= 8; length -= 8)
@@ -108,6 +120,8 @@ namespace seir
 
 	void convertSamples2x1D(float* dst, const int16_t* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 		constexpr auto unit = 1.f / 32768.f;
 #if SEIR_INTRINSICS_SSE // 120-160% faster with MSVC.
 		for (; length >= 8; length -= 8)
@@ -136,6 +150,8 @@ namespace seir
 
 	void duplicate1D_16(void* dst, const void* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 		size_t i = 0;
 #if SEIR_INTRINSICS_SSE // 4-8x faster with MSVC.
 		for (; i < (length & ~size_t{ 0b111 }); i += 8)
@@ -155,6 +171,8 @@ namespace seir
 
 	void duplicate1D_32(void* dst, const void* src, size_t length) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
+		assert(reinterpret_cast<uintptr_t>(src) % kAudioBlockAlignment == 0);
 		size_t i = 0;
 #if SEIR_INTRINSICS_SSE // 2-4x faster with MSVC.
 		for (; i < (length & ~size_t{ 0b11 }); i += 4)
@@ -174,6 +192,7 @@ namespace seir
 
 	void resampleAdd2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
 		size_t i = 0;
 		size_t j = srcOffset;
 #if SEIR_INTRINSICS_SSE // 40-85% faster with MSVC.
@@ -195,6 +214,7 @@ namespace seir
 
 	void resampleCopy2x1D(float* dst, size_t dstLength, const float* src, size_t srcOffset, size_t srcStep) noexcept
 	{
+		assert(reinterpret_cast<uintptr_t>(dst) % kAudioBlockAlignment == 0);
 		size_t i = 0;
 		size_t j = srcOffset;
 #if SEIR_INTRINSICS_SSE // 35-65% faster with MSVC.

@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/build/_SeirDownloads
+          key: linux-${{ hashFiles('cmake/SeirPackages/*.cmake') }}
       - name: Install prerequisites
         run: |
           sudo apt-get update

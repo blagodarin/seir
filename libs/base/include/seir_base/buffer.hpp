@@ -8,20 +8,16 @@
 #include <seir_base/pointer.hpp>
 
 #include <cstring>
-#include <type_traits>
 
-// TODO: All Buffers should be std::byte-typed.
 // TODO: Buffers should probably have a single specialized allocator optimized for large-ish memory blocks.
 
 namespace seir
 {
 	//
-	template <class T, class A = Allocator>
+	template <class A = Allocator>
 	class Buffer
 	{
 	public:
-		static_assert(std::is_trivially_default_constructible_v<T> && std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>);
-
 		constexpr Buffer() noexcept = default;
 		Buffer(const Buffer&) = delete;
 		constexpr Buffer(Buffer&& other) noexcept
@@ -32,16 +28,16 @@ namespace seir
 
 		//
 		explicit Buffer(size_t capacity)
-			: _data{ static_cast<T*>(A::allocate(capacity * sizeof(T))) }, _capacity{ capacity } {}
+			: _data{ static_cast<std::byte*>(A::allocate(capacity)) }, _capacity{ capacity } {}
 
 		//
 		[[nodiscard]] constexpr size_t capacity() const noexcept { return _capacity; }
 
 		//
-		[[nodiscard]] constexpr T* data() noexcept { return _data; }
+		[[nodiscard]] constexpr std::byte* data() noexcept { return _data; }
 
 		//
-		[[nodiscard]] constexpr const T* data() const noexcept { return _data; }
+		[[nodiscard]] constexpr const std::byte* data() const noexcept { return _data; }
 
 		//
 		void reserve(size_t totalCapacity, size_t preservedCapacity);
@@ -57,35 +53,36 @@ namespace seir
 		}
 
 	private:
-		CPtr<T, A::deallocate> _data;
+		CPtr<std::byte, A::deallocate> _data;
 		size_t _capacity = 0;
 	};
 }
 
-template <class T, class A>
-constexpr seir::Buffer<T, A>& seir::Buffer<T, A>::operator=(Buffer&& other) noexcept
+template <class A>
+constexpr seir::Buffer<A>& seir::Buffer<A>::operator=(Buffer&& other) noexcept
 {
-	swap(*this, other);
+	_data = std::move(other._data);
+	_capacity = other._capacity;
 	return *this;
 }
 
-template <class T, class A>
-void seir::Buffer<T, A>::reserve(size_t totalCapacity, size_t preservedCapacity)
+template <class A>
+void seir::Buffer<A>::reserve(size_t totalCapacity, size_t preservedCapacity)
 {
 	if (!tryReserve(totalCapacity, preservedCapacity)) [[unlikely]]
 		throw std::bad_alloc{};
 }
 
-template <class T, class A>
-bool seir::Buffer<T, A>::tryReserve(size_t totalCapacity, size_t preservedCapacity) noexcept
+template <class A>
+bool seir::Buffer<A>::tryReserve(size_t totalCapacity, size_t preservedCapacity) noexcept
 {
 	if (totalCapacity <= _capacity)
 		return true;
-	decltype(_data) newData{ static_cast<T*>(A::tryAllocate(totalCapacity * sizeof(T))) };
+	decltype(_data) newData{ static_cast<std::byte*>(A::tryAllocate(totalCapacity)) };
 	if (!newData) [[unlikely]]
 		return false;
 	if (preservedCapacity > 0)
-		std::memcpy(newData, _data, (preservedCapacity < _capacity ? preservedCapacity : _capacity) * sizeof(T));
+		std::memcpy(newData, _data, (preservedCapacity < _capacity ? preservedCapacity : _capacity));
 	_data = std::move(newData);
 	_capacity = totalCapacity;
 	return true;

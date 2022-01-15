@@ -18,8 +18,8 @@ namespace seir
 	{
 	public:
 		// Creates a Writer that writes to the specified Buffer.
-		template <class T, class A>
-		[[nodiscard]] static std::enable_if_t<sizeof(T) == 1, UniquePtr<Writer>> create(Buffer<T, A>&, uint64_t* bufferBytes = nullptr);
+		template <class A>
+		[[nodiscard]] static UniquePtr<Writer> create(Buffer<A>&, uint64_t* bufferBytes = nullptr);
 
 		// Creates a Writer thet writes to the specified file.
 		[[nodiscard]] static UniquePtr<Writer> create(const std::string&);
@@ -58,15 +58,15 @@ namespace seir
 	};
 }
 
-template <class T, class A>
-std::enable_if_t<sizeof(T) == 1, seir::UniquePtr<seir::Writer>> seir::Writer::create(Buffer<T, A>& buffer, uint64_t* bufferBytes)
+template <class A>
+seir::UniquePtr<seir::Writer> seir::Writer::create(Buffer<A>& buffer, uint64_t* bufferBytes)
 {
 	struct BufferWriter final : Writer
 	{
-		Buffer<T, A>& _buffer;
+		Buffer<A>& _buffer;
 		uint64_t* const _bufferBytes;
 		// cppcheck-suppress constParameter
-		explicit BufferWriter(Buffer<T, A>& buffer, uint64_t* bufferBytes) noexcept
+		explicit BufferWriter(Buffer<A>& buffer, uint64_t* bufferBytes) noexcept
 			: _buffer{ buffer }, _bufferBytes{ bufferBytes } {}
 		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t capacity) noexcept override

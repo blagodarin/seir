@@ -2,14 +2,68 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_base/buffer.hpp>
+#include <seir_base/allocator.hpp>
 #include "../../src/common.hpp"
 #include "../../src/processing.hpp"
 
 #include <algorithm>
-#include <numeric>
+#include <iterator>
 
 #include <benchmark/benchmark.h>
+
+namespace
+{
+	template <class T>
+	class StdAllocator
+	{
+	public:
+		using value_type = T;
+
+		constexpr StdAllocator() noexcept = default;
+
+		template <class U>
+		constexpr StdAllocator(const StdAllocator<U>&) noexcept {}
+
+		[[nodiscard]] T* allocate(size_t n)
+		{
+			if (n > std::numeric_limits<size_t>::max() / sizeof(T))
+				throw std::bad_array_new_length{};
+			return static_cast<T*>(Allocator::allocate(n * sizeof(T)));
+		}
+
+		void deallocate(T* p, size_t) noexcept
+		{
+			Allocator::deallocate(p);
+		}
+
+	private:
+		using Allocator = seir::AlignedAllocator<seir::kAudioBlockAlignment>;
+	};
+
+	template <class T>
+	using StdVector = std::vector<T, StdAllocator<T>>;
+
+	template <class Dst, class Src>
+	struct Buffers
+	{
+		StdVector<Dst> _dst;
+		StdVector<Src> _src;
+
+		Buffers(const benchmark::State& state, size_t dstSizeFactor = 1)
+		{
+			const auto srcSize = static_cast<size_t>(state.range(0) - 1) / sizeof(Src);
+			_src.reserve(srcSize);
+			std::generate_n(std::back_inserter(_src), srcSize, [i = Src{}]() mutable { return ++i; });
+			_dst.reserve(srcSize * dstSizeFactor);
+			std::generate_n(std::back_inserter(_dst), srcSize * dstSizeFactor, [i = Dst{}]() mutable { return ++i; });
+		}
+
+		[[nodiscard]] auto dst() noexcept { return _dst.data(); }
+		[[nodiscard]] auto dstSize() const noexcept { return _dst.size(); }
+		[[nodiscard]] auto src() noexcept { return _src.data(); }
+		[[nodiscard]] auto srcSize() const noexcept { return _src.size(); }
+	};
+}
 
 namespace
 {
@@ -23,12 +77,9 @@ namespace
 	template <typename T, auto function>
 	void benchmark_addSamples1D(benchmark::State& state)
 	{
-		seir::Buffer<T, seir::AlignedAllocator<seir::kAudioBlockAlignment>> src{ static_cast<size_t>(state.range(0) - 1) / sizeof(T) };
-		std::iota(src.data(), src.data() + src.capacity(), T{});
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() };
-		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		Buffers<float, T> buffers{ state };
 		for (auto _ : state)
-			function(dst.data(), src.data(), src.capacity());
+			function(buffers.dst(), buffers.src(), buffers.srcSize());
 	}
 
 	void addSamples1D_i16_Opt(benchmark::State& state) { benchmark_addSamples1D<int16_t, static_cast<void (*)(float*, const int16_t*, size_t)>(seir::addSamples1D)>(state); }
@@ -64,12 +115,9 @@ namespace
 	template <typename T, auto function>
 	void benchmark_addSamples2x1D(benchmark::State& state)
 	{
-		seir::Buffer<T, seir::AlignedAllocator<seir::kAudioBlockAlignment>> src{ static_cast<size_t>(state.range(0) - 1) / sizeof(T) };
-		std::iota(src.data(), src.data() + src.capacity(), T{});
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() * 2 };
-		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		Buffers<float, T> buffers{ state, 2 };
 		for (auto _ : state)
-			function(dst.data(), src.data(), src.capacity());
+			function(buffers.dst(), buffers.src(), buffers.srcSize());
 	}
 
 	void addSamples2x1D_i16_Opt(benchmark::State& state) { benchmark_addSamples2x1D<int16_t, static_cast<void (*)(float*, const int16_t*, size_t)>(seir::addSamples2x1D)>(state); }
@@ -95,12 +143,9 @@ namespace
 	template <typename T, auto function>
 	void benchmark_convertSamples1D(benchmark::State& state)
 	{
-		seir::Buffer<T, seir::AlignedAllocator<seir::kAudioBlockAlignment>> src{ static_cast<size_t>(state.range(0) - 1) / sizeof(T) };
-		std::iota(src.data(), src.data() + src.capacity(), T{});
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() };
-		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		Buffers<float, T> buffers{ state };
 		for (auto _ : state)
-			function(dst.data(), src.data(), src.capacity());
+			function(buffers.dst(), buffers.src(), buffers.srcSize());
 	}
 
 	void convertSamples1D_i16_Opt(benchmark::State& state) { benchmark_convertSamples1D<int16_t, static_cast<void (*)(float*, const int16_t*, size_t)>(seir::convertSamples1D)>(state); }
@@ -126,12 +171,9 @@ namespace
 	template <typename T, auto function>
 	void benchmark_convertSamples2x1D(benchmark::State& state)
 	{
-		seir::Buffer<T, seir::AlignedAllocator<seir::kAudioBlockAlignment>> src{ static_cast<size_t>(state.range(0) - 1) / sizeof(T) };
-		std::iota(src.data(), src.data() + src.capacity(), T{});
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() * 2 };
-		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		Buffers<float, T> buffers{ state, 2 };
 		for (auto _ : state)
-			function(dst.data(), src.data(), src.capacity());
+			function(buffers.dst(), buffers.src(), buffers.srcSize());
 	}
 
 	void convertSamples2x1D_i16_Opt(benchmark::State& state) { benchmark_convertSamples2x1D<int16_t, static_cast<void (*)(float*, const int16_t*, size_t)>(seir::convertSamples2x1D)>(state); }
@@ -166,11 +208,9 @@ namespace
 	template <typename T, auto function>
 	void benchmark_duplicate1D(benchmark::State& state)
 	{
-		seir::Buffer<T, seir::AlignedAllocator<seir::kAudioBlockAlignment>> src{ static_cast<size_t>(state.range(0) - 1) / sizeof(T) };
-		std::iota(src.data(), src.data() + src.capacity(), T{});
-		seir::Buffer<T, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() * 2 };
+		Buffers<T, T> buffers{ state, 2 };
 		for (auto _ : state)
-			function(dst.data(), src.data(), src.capacity());
+			function(buffers.dst(), buffers.src(), buffers.srcSize());
 	}
 
 	void duplicate1D_i16_Opt(benchmark::State& state) { benchmark_duplicate1D<int16_t, seir::duplicate1D_16>(state); }
@@ -198,12 +238,9 @@ namespace
 	template <auto function>
 	void benchmark_resampleAdd2x1D(benchmark::State& state)
 	{
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> src{ static_cast<size_t>(state.range(0) - 2) / sizeof(float) };
-		std::iota(src.data(), src.data() + src.capacity(), 0.f);
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() };
-		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		Buffers<float, float> buffers{ state };
 		for (auto _ : state)
-			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kAudioResamplingFractionBits) / 13);
+			function(buffers.dst(), buffers.dstSize() / 2, buffers.src(), 0, (5 << seir::kAudioResamplingFractionBits) / 13);
 	}
 
 	void resampleAdd2x1D_Opt(benchmark::State& state) { benchmark_resampleAdd2x1D<seir::resampleAdd2x1D>(state); }
@@ -227,12 +264,9 @@ namespace
 	template <auto function>
 	void benchmark_resampleCopy2x1D(benchmark::State& state)
 	{
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> src{ static_cast<size_t>(state.range(0) - 2) / sizeof(float) };
-		std::iota(src.data(), src.data() + src.capacity(), 0.f);
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> dst{ src.capacity() };
-		std::iota(dst.data(), dst.data() + dst.capacity(), 0.f);
+		Buffers<float, float> buffers{ state };
 		for (auto _ : state)
-			function(dst.data(), dst.capacity() / 2, src.data(), 0, (5 << seir::kAudioResamplingFractionBits) / 13);
+			function(buffers.dst(), buffers.dstSize() / 2, buffers.src(), 0, (5 << seir::kAudioResamplingFractionBits) / 13);
 	}
 
 	void resampleCopy2x1D_Opt(benchmark::State& state) { benchmark_resampleCopy2x1D<seir::resampleCopy2x1D>(state); }

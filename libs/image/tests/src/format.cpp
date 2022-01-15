@@ -34,7 +34,7 @@ namespace
 		constexpr uint32_t height = 16;
 		const uint32_t pixelSize = withAlpha ? 4u : 3u;
 		const auto stride = (16 + static_cast<uint32_t>(padding)) * pixelSize;
-		seir::Buffer<std::byte> buffer{ stride * height };
+		seir::Buffer<> buffer{ stride * height };
 		auto data = reinterpret_cast<uint8_t*>(buffer.data());
 		for (int row = 0; row < 16; ++row)
 		{
@@ -80,7 +80,7 @@ namespace
 		constexpr uint32_t width = 32;
 		constexpr uint32_t height = 16;
 		const auto stride = width + static_cast<uint32_t>(padding);
-		seir::Buffer<std::byte> buffer{ stride * height };
+		seir::Buffer<> buffer{ stride * height };
 		auto data = reinterpret_cast<uint8_t*>(buffer.data());
 		for (uint32_t row = 0; row < height; ++row)
 		{
@@ -145,7 +145,7 @@ TEST_CASE("JPEG")
 #	endif
 	SUBCASE("save")
 	{
-		seir::Buffer<std::byte> buffer;
+		seir::Buffer<> buffer;
 		const auto writer = seir::Writer::create(buffer);
 		REQUIRE(writer);
 		seir::Image image;
@@ -228,7 +228,7 @@ TEST_CASE("TGA")
 	}
 	SUBCASE("save")
 	{
-		seir::Buffer<std::byte> buffer;
+		seir::Buffer<> buffer;
 		const auto writer = seir::Writer::create(buffer);
 		REQUIRE(writer);
 		seir::Image image;

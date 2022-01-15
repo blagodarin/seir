@@ -87,7 +87,7 @@ namespace
 				size_t metaSize = _files.size() * sizeof(SeirBlockInfo);
 				for (const auto& file : _files)
 					metaSize += 1 + file._name.size();
-				seir::Buffer<std::byte> metaBuffer;
+				seir::Buffer<> metaBuffer;
 				if (!metaBuffer.tryReserve(metaSize, 0))
 					return false;
 				{
@@ -172,7 +172,7 @@ namespace
 	private:
 		const seir::UniquePtr<seir::Writer> _writer;
 		const seir::UniquePtr<seir::Compressor> _compressor;
-		seir::Buffer<std::byte> _compressionBuffer;
+		seir::Buffer<> _compressionBuffer;
 		SeirFileHeader _header;
 		std::vector<FileInfo> _files;
 		uint64_t _lastOffset = 0;
@@ -203,7 +203,7 @@ namespace seir
 		case SeirCompression::Zlib: compression = Compression::Zlib; break;
 		case SeirCompression::Zstd: compression = Compression::Zstd; break;
 		}
-		seir::Buffer<std::byte> metaBuffer;
+		seir::Buffer<> metaBuffer;
 		if (fileHeader->_metaBlock._archivedSize < fileHeader->_metaBlock._originalSize)
 		{
 			const auto decompressor = seir::Decompressor::create(compression);

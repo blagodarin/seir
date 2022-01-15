@@ -74,7 +74,7 @@ namespace seir
 	Image& Image::operator=(Image&&) noexcept = default;
 	Image::~Image() noexcept = default;
 
-	Image::Image(const ImageInfo& info, Buffer<std::byte>&& buffer) noexcept
+	Image::Image(const ImageInfo& info, Buffer<>&& buffer) noexcept
 		: _info{ info }, _data{ buffer.data() }, _buffer{ std::move(buffer) } {}
 
 	bool Image::save(ImageFormat format, Writer& writer, [[maybe_unused]] int compressionLevel) const noexcept

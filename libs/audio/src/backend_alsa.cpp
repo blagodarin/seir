@@ -68,14 +68,14 @@ namespace seir
 			CHECK_ALSA(::snd_pcm_sw_params_set_stop_threshold(pcm, sw, bufferFrames));
 			CHECK_ALSA(::snd_pcm_sw_params(pcm, sw));
 		}
-		seir::Buffer<float, seir::AlignedAllocator<seir::kAudioBlockAlignment>> period{ periodFrames * kAudioChannels };
+		seir::Buffer<seir::AlignedAllocator<seir::kAudioBlockAlignment>> period{ periodFrames * kAudioFrameSize };
 		callbacks.onBackendAvailable(preferredSamplingRate, periodFrames);
 		SEIR_FINALLY([&] { ::snd_pcm_drain(pcm); });
 		while (callbacks.onBackendIdle())
 		{
 			auto data = period.data();
-			const auto writtenFrames = callbacks.onBackendRead(data, periodFrames);
-			std::memset(data + writtenFrames * kAudioChannels, 0, (periodFrames - writtenFrames) * kAudioFrameSize);
+			const auto writtenFrames = callbacks.onBackendRead(reinterpret_cast<float*>(data), periodFrames);
+			std::memset(data + writtenFrames * kAudioFrameSize, 0, (periodFrames - writtenFrames) * kAudioFrameSize);
 			for (auto framesLeft = periodFrames; framesLeft > 0;)
 			{
 				const auto result = ::snd_pcm_writei(pcm, data, framesLeft);
@@ -90,7 +90,7 @@ namespace seir
 					::snd_pcm_wait(pcm, static_cast<int>((bufferFrames * 1000 + preferredSamplingRate - 1) / preferredSamplingRate));
 					continue;
 				}
-				data += static_cast<snd_pcm_uframes_t>(result) * kAudioChannels;
+				data += static_cast<snd_pcm_uframes_t>(result) * kAudioFrameSize;
 				framesLeft -= static_cast<snd_pcm_uframes_t>(result);
 			}
 		}

@@ -24,7 +24,7 @@ namespace seir
 
 	constexpr auto kJpegFileID = makeCC('\xff', '\xd8'); // SOI marker.
 #if SEIR_IMAGE_JPEG
-	const void* loadJpegImage(Reader&, ImageInfo&, Buffer<std::byte>&) noexcept;
+	const void* loadJpegImage(Reader&, ImageInfo&, Buffer<>&) noexcept;
 	bool saveJpegImage(Writer&, const ImageInfo&, const void* data, int compressionLevel) noexcept;
 #endif
 

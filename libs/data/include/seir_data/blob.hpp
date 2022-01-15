@@ -23,8 +23,8 @@ namespace seir
 		[[nodiscard]] static SharedPtr<Blob> from(const void* data, size_t size);
 
 		// Creates a Blob from a Buffer.
-		template <class T, class A>
-		[[nodiscard]] static SharedPtr<Blob> from(Buffer<T, A>&&, size_t maxSize = std::numeric_limits<size_t>::max());
+		template <class A>
+		[[nodiscard]] static SharedPtr<Blob> from(Buffer<A>&&, size_t maxSize = std::numeric_limits<size_t>::max());
 
 		// Creates a Blob that references a part of another Blob.
 		[[nodiscard]] static SharedPtr<Blob> from(SharedPtr<Blob>&&, size_t offset, size_t size);
@@ -64,17 +64,16 @@ inline seir::SharedPtr<seir::Blob> seir::Blob::from(const void* data, size_t siz
 	return makeShared<Blob, ReferenceBlob>(data, size);
 }
 
-template <class T, class A>
-seir::SharedPtr<seir::Blob> seir::Blob::from(Buffer<T, A>&& buffer, size_t maxSize)
+template <class A>
+seir::SharedPtr<seir::Blob> seir::Blob::from(Buffer<A>&& buffer, size_t maxSize)
 {
 	struct BufferBlob final : Blob
 	{
-		const Buffer<T, A> _buffer;
-		constexpr BufferBlob(Buffer<T, A>&& buffer, size_t size) noexcept
+		const Buffer<A> _buffer;
+		constexpr BufferBlob(Buffer<A>&& buffer, size_t size) noexcept
 			: Blob{ buffer.data(), size }, _buffer{ std::move(buffer) } {}
 	};
-	const auto maxMaxSize = buffer.capacity() * sizeof(T);
-	return makeShared<Blob, BufferBlob>(std::move(buffer), maxSize < maxMaxSize ? maxSize : maxMaxSize);
+	return makeShared<Blob, BufferBlob>(std::move(buffer), maxSize < buffer.capacity() ? maxSize : buffer.capacity());
 }
 
 inline seir::SharedPtr<seir::Blob> seir::Blob::from(SharedPtr<Blob>&& parent, size_t offset, size_t size)
