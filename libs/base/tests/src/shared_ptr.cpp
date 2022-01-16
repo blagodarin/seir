@@ -40,7 +40,6 @@ TEST_CASE("SharedPtr")
 		seir::SharedPtr<Base> ptr;
 		CHECK_FALSE(ptr);
 		CHECK_FALSE(ptr.get());
-		CHECK_FALSE(&ptr.operator*());
 		CHECK_FALSE(ptr.operator->());
 		SUBCASE("self-copy")
 		{

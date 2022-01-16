@@ -80,7 +80,7 @@ namespace seir
 			}
 			if (const auto decompressor = Decompressor::create(i->second._compression))
 			{
-				Buffer<> buffer{ i->second._uncompressedSize };
+				Buffer buffer{ i->second._uncompressedSize };
 				if (decompressor->decompress(buffer.data(), i->second._uncompressedSize, static_cast<const std::byte*>(i->second._blob->data()) + i->second._offset, i->second._compressedSize))
 					return Blob::from(std::move(buffer), i->second._uncompressedSize);
 			}

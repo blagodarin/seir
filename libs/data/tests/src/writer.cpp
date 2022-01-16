@@ -61,7 +61,7 @@ TEST_CASE("Writer")
 
 TEST_CASE("Writer::create(Buffer&)")
 {
-	seir::Buffer<> buffer;
+	seir::Buffer buffer;
 	CHECK(buffer.capacity() == 0);
 	const auto writer = seir::Writer::create(buffer);
 	REQUIRE(writer);

@@ -94,9 +94,10 @@ namespace seir
 		void reserve(size_t capacity)
 		{
 			assert(!_data);
-			_data = static_cast<T*>(A::allocate(capacity * sizeof(T)));
+			auto capacityBytes = capacity * sizeof(T);
+			_data = static_cast<T*>(A::allocate(capacityBytes));
 #ifndef NDEBUG
-			_capacity = capacity;
+			_capacity = capacityBytes / sizeof(T);
 #endif
 		}
 

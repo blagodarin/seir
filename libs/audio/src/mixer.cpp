@@ -8,6 +8,7 @@
 #include "processing.hpp"
 
 #include <cassert>
+#include <cstring>
 #include <numeric>
 
 namespace seir

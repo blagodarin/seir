@@ -4,7 +4,6 @@
 
 #include <seir_base/allocator.hpp>
 
-#include <algorithm>
 #include <cstddef>
 #include <limits>
 #include <memory>
@@ -26,14 +25,12 @@ namespace
 	constexpr size_t kAlignment = 16'384;
 	using AlignedAllocator = TestAllocator<seir::AlignedAllocator<kAlignment>>;
 	using AlignedAllocatorPtr = std::unique_ptr<void, AlignedAllocator>;
-
-	using CleanAllocator = TestAllocator<seir::CleanAllocator<seir::Allocator>>;
-	using CleanAllocatorPtr = std::unique_ptr<void, CleanAllocator>;
 }
 
 TEST_CASE("Allocator::allocate(1)")
 {
-	AllocatorPtr pointer{ seir::Allocator::allocate(1) };
+	size_t size = 1;
+	AllocatorPtr pointer{ seir::Allocator::allocate(size) };
 	CHECK(pointer);
 	const auto misalignment = reinterpret_cast<uintptr_t>(pointer.get()) % kAlignment;
 	MESSAGE("Default allocator misalignment: ", misalignment, " % ", kAlignment);
@@ -42,18 +39,10 @@ TEST_CASE("Allocator::allocate(1)")
 
 TEST_CASE("AlignedAllocator::allocate(1)")
 {
-	AlignedAllocatorPtr pointer{ AlignedAllocator::allocate(1) };
+	size_t size = 1;
+	AlignedAllocatorPtr pointer{ AlignedAllocator::allocate(size) };
 	CHECK(pointer);
 	CHECK(reinterpret_cast<uintptr_t>(pointer.get()) % kAlignment == 0);
-}
-
-TEST_CASE("CleanAllocator::allocate()")
-{
-	constexpr size_t size = 512;
-	CleanAllocatorPtr pointer{ CleanAllocator::allocate(size) };
-	REQUIRE(pointer);
-	const auto data = reinterpret_cast<std::byte*>(pointer.get());
-	CHECK(data + size == std::find_if(data, data + size, [](std::byte byte) { return std::to_integer<int>(byte) != 0; }));
 }
 
 // std::malloc doesn't return nullptr in ASAN-less Clang builds.
@@ -64,12 +53,14 @@ constexpr auto kMaxSize = static_cast<size_t>(std::numeric_limits<std::make_sign
 
 TEST_CASE("Allocator::allocate(SIZE_MAX)")
 {
-	CHECK_THROWS_AS(AllocatorPtr pointer{ seir::Allocator::allocate(kMaxSize) }, std::bad_alloc);
+	auto size = kMaxSize;
+	CHECK_THROWS_AS(AllocatorPtr pointer{ seir::Allocator::allocate(size) }, std::bad_alloc);
 }
 
 TEST_CASE("AlignedAllocator::allocate(SIZE_MAX)")
 {
-	CHECK_THROWS_AS(AlignedAllocatorPtr pointer{ AlignedAllocator::allocate(kMaxSize - kMaxSize % kAlignment) }, std::bad_alloc);
+	auto size = kMaxSize - kMaxSize % kAlignment;
+	CHECK_THROWS_AS(AlignedAllocatorPtr pointer{ AlignedAllocator::allocate(size) }, std::bad_alloc);
 }
 
 #endif

@@ -84,7 +84,7 @@ namespace seir
 		~Image() noexcept;
 
 		//
-		Image(const ImageInfo&, Buffer<>&&) noexcept;
+		Image(const ImageInfo&, Buffer&&) noexcept;
 
 		//
 		[[nodiscard]] const void* data() const noexcept { return _data; }
@@ -99,6 +99,6 @@ namespace seir
 		ImageInfo _info;
 		const void* _data = nullptr;
 		SharedPtr<Blob> _blob; // If we managed to memory-map image contents...
-		Buffer<> _buffer;      // ...and if we didn't.
+		Buffer _buffer;        // ...and if we didn't.
 	};
 }

@@ -8,6 +8,7 @@
 #include <seir_base/unique_ptr.hpp>
 
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <string>
 
@@ -18,8 +19,7 @@ namespace seir
 	{
 	public:
 		// Creates a Writer that writes to the specified Buffer.
-		template <class A>
-		[[nodiscard]] static UniquePtr<Writer> create(Buffer<A>&, uint64_t* bufferBytes = nullptr);
+		[[nodiscard]] static UniquePtr<Writer> create(Buffer&, uint64_t* bufferBytes = nullptr);
 
 		// Creates a Writer thet writes to the specified file.
 		[[nodiscard]] static UniquePtr<Writer> create(const std::string&);
@@ -58,15 +58,14 @@ namespace seir
 	};
 }
 
-template <class A>
-seir::UniquePtr<seir::Writer> seir::Writer::create(Buffer<A>& buffer, uint64_t* bufferBytes)
+inline seir::UniquePtr<seir::Writer> seir::Writer::create(Buffer& buffer, uint64_t* bufferBytes)
 {
 	struct BufferWriter final : Writer
 	{
-		Buffer<A>& _buffer;
+		Buffer& _buffer;
 		uint64_t* const _bufferBytes;
 		// cppcheck-suppress constParameter
-		explicit BufferWriter(Buffer<A>& buffer, uint64_t* bufferBytes) noexcept
+		explicit BufferWriter(Buffer& buffer, uint64_t* bufferBytes) noexcept
 			: _buffer{ buffer }, _bufferBytes{ bufferBytes } {}
 		bool flush() noexcept override { return true; }
 		bool reserveImpl(uint64_t capacity) noexcept override

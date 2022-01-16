@@ -92,7 +92,7 @@ namespace
 	private:
 		jpeg_destination_mgr _destinationMgr{};
 		seir::Writer& _writer;
-		seir::Buffer<> _buffer;
+		seir::Buffer _buffer;
 	};
 
 	class JpegDecompressor : private JpegErrorManager
@@ -118,7 +118,7 @@ namespace
 			_sourceMgr.term_source = [](jpeg_decompress_struct*) {};
 		}
 
-		bool decompress(seir::ImageInfo& info, seir::Buffer<>& buffer) noexcept
+		bool decompress(seir::ImageInfo& info, seir::Buffer& buffer) noexcept
 		{
 			if (setjmp(_jmpBuf)) // NOLINT(cert-err52-cpp)
 				return false;
@@ -159,7 +159,7 @@ namespace
 
 namespace seir
 {
-	const void* loadJpegImage(Reader& reader, ImageInfo& info, Buffer<>& buffer) noexcept
+	const void* loadJpegImage(Reader& reader, ImageInfo& info, Buffer& buffer) noexcept
 	{
 		return JpegDecompressor{ reader }.decompress(info, buffer) ? buffer.data() : nullptr;
 	}

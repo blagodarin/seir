@@ -4,94 +4,63 @@
 
 #pragma once
 
-#include <seir_base/macros.hpp>
-
 #include <bit>
 #include <cstdlib>
-#include <cstring>
 #include <new>
 
 namespace seir
 {
+	//
 	class Allocator
 	{
 	public:
-		[[nodiscard]] static void* allocate(size_t size)
-		{
-			if (const auto memory = tryAllocate(size); memory) [[likely]]
-				return memory;
-			throw std::bad_alloc{};
-		}
+		//
+		[[nodiscard]] static void* allocate(size_t& size);
 
-		static void deallocate(void* memory) noexcept
-		{
-			std::free(memory);
-		}
+		//
+		static void deallocate(void* memory) noexcept { std::free(memory); }
 
-		[[nodiscard]] static void* tryAllocate(size_t size) noexcept
-		{
-			return std::malloc(size);
-		}
+		//
+		[[nodiscard]] static void* tryAllocate(size_t& size) noexcept { return std::malloc(size); }
 	};
 
+	class AlignedAllocatorImpl
+	{
+		template <size_t>
+		friend class AlignedAllocator;
+		static void deallocate(void* memory) noexcept;
+		[[nodiscard]] static void* tryAllocate(size_t& size, size_t alignment) noexcept;
+	};
+
+	//
 	template <size_t kAlignment>
 	class AlignedAllocator
 	{
 	public:
 		static_assert(std::has_single_bit(kAlignment));
 
-		[[nodiscard]] static void* allocate(size_t size)
-		{
-			if (const auto memory = tryAllocate(size); memory) [[likely]]
-				return memory;
-			throw std::bad_alloc{};
-		}
+		//
+		[[nodiscard]] static void* allocate(size_t& size);
 
-		static void deallocate(void* memory) noexcept
-		{
-#ifdef _MSC_VER
-			::_aligned_free(memory);
-#else
-			std::free(memory);
-#endif
-		}
+		//
+		static void deallocate(void* memory) noexcept { AlignedAllocatorImpl::deallocate(memory); }
 
-		[[nodiscard]] static void* tryAllocate(size_t size) noexcept
-		{
-			constexpr auto kAlignmentMask = kAlignment - 1;
-			const auto alignedSize = (size + kAlignmentMask) & ~kAlignmentMask;
-#ifdef _MSC_VER
-			return ::_aligned_malloc(alignedSize, kAlignment);
-#else
-			return std::aligned_alloc(kAlignment, alignedSize);
-#endif
-		}
+		//
+		[[nodiscard]] static void* tryAllocate(size_t& size) noexcept { return AlignedAllocatorImpl::tryAllocate(size, kAlignment); }
 	};
+}
 
-	template <typename A>
-	class CleanAllocator
-	{
-	public:
-		[[nodiscard]] static void* allocate(size_t size)
-		{
-			const auto memory = A::allocate(size);
-			std::memset(memory, 0, size);
-			return memory;
-		}
+inline void* seir::Allocator::allocate(size_t& size)
+{
+	if (const auto memory = tryAllocate(size); memory) [[likely]]
+		return memory;
+	throw std::bad_alloc{};
+}
 
-		static void deallocate(void* memory) noexcept
-		{
-			A::deallocate(memory);
-		}
-
-		[[nodiscard]] static void* tryAllocate(size_t size) noexcept
-		{
-			if (const auto memory = A::tryAllocate(size); memory) [[likely]]
-			{
-				std::memset(memory, 0, size);
-				return memory;
-			}
-			return nullptr;
-		}
-	};
+template <size_t kAlignment>
+void* seir::AlignedAllocator<kAlignment>::allocate(size_t& size)
+{
+	if (const auto memory = tryAllocate(size); memory) [[likely]]
+		return memory;
+	throw std::bad_alloc{};
 }

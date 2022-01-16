@@ -26,7 +26,7 @@ namespace seir
 
 	private:
 		unsigned _samplingRate = 0;
-		Buffer<AlignedAllocator<kAudioBlockAlignment>> _processingBuffer;
-		Buffer<AlignedAllocator<kAudioBlockAlignment>> _resamplingBuffer;
+		Buffer _processingBuffer;
+		Buffer _resamplingBuffer;
 	};
 }

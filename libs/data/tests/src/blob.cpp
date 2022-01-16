@@ -5,6 +5,7 @@
 #include <seir_data/blob.hpp>
 
 #include <array>
+#include <cstring>
 
 #include <doctest/doctest.h>
 

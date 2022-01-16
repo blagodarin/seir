@@ -35,7 +35,6 @@ TEST_CASE("UniquePtr")
 		seir::UniquePtr<Base> ptr;
 		CHECK_FALSE(ptr);
 		CHECK_FALSE(ptr.get());
-		CHECK_FALSE(&ptr.operator*());
 		CHECK_FALSE(ptr.operator->());
 		ptr = std::move(ptr);
 		CHECK_FALSE(ptr);

@@ -68,7 +68,7 @@ namespace seir
 			CHECK_ALSA(::snd_pcm_sw_params_set_stop_threshold(pcm, sw, bufferFrames));
 			CHECK_ALSA(::snd_pcm_sw_params(pcm, sw));
 		}
-		seir::Buffer<seir::AlignedAllocator<seir::kAudioBlockAlignment>> period{ periodFrames * kAudioFrameSize };
+		seir::Buffer period{ periodFrames * kAudioFrameSize };
 		callbacks.onBackendAvailable(preferredSamplingRate, periodFrames);
 		SEIR_FINALLY([&] { ::snd_pcm_drain(pcm); });
 		while (callbacks.onBackendIdle())

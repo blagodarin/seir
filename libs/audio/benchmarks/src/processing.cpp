@@ -28,7 +28,8 @@ namespace
 		{
 			if (n > std::numeric_limits<size_t>::max() / sizeof(T))
 				throw std::bad_array_new_length{};
-			return static_cast<T*>(Allocator::allocate(n * sizeof(T)));
+			auto capacityBytes = n * sizeof(T);
+			return static_cast<T*>(Allocator::allocate(capacityBytes));
 		}
 
 		void deallocate(T* p, size_t) noexcept
