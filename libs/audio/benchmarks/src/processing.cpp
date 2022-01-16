@@ -50,7 +50,7 @@ namespace
 		StdVector<Dst> _dst;
 		StdVector<Src> _src;
 
-		Buffers(const benchmark::State& state, size_t dstSizeFactor = 1)
+		explicit Buffers(const benchmark::State& state, size_t dstSizeFactor = 1)
 		{
 			const auto srcSize = static_cast<size_t>(state.range(0) - 1) / sizeof(Src);
 			_src.reserve(srcSize);
@@ -114,6 +114,7 @@ namespace
 	}
 
 	template <typename T, auto function>
+	// cppcheck-suppress constParameter
 	void benchmark_addSamples2x1D(benchmark::State& state)
 	{
 		Buffers<float, T> buffers{ state, 2 };
@@ -237,6 +238,7 @@ namespace
 	}
 
 	template <auto function>
+	// cppcheck-suppress constParameter
 	void benchmark_resampleAdd2x1D(benchmark::State& state)
 	{
 		Buffers<float, float> buffers{ state };
@@ -263,6 +265,7 @@ namespace
 	}
 
 	template <auto function>
+	// cppcheck-suppress constParameter
 	void benchmark_resampleCopy2x1D(benchmark::State& state)
 	{
 		Buffers<float, float> buffers{ state };

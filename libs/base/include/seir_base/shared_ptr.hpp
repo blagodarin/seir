@@ -49,14 +49,14 @@ namespace seir
 		template <class U>
 		constexpr explicit SharedPtr(UniquePtr<U>&&) noexcept;
 		~SharedPtr() noexcept { reset(nullptr); }
-		SharedPtr& operator=(const SharedPtr& other) noexcept; // NOLINT(bugprone-unhandled-self-assignment, cert-oop54-cpp)
+		SharedPtr& operator=(const SharedPtr&) noexcept; // NOLINT(bugprone-unhandled-self-assignment, cert-oop54-cpp)
 		template <class U>
-		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(const SharedPtr<U>& other) noexcept;
+		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(const SharedPtr<U>&) noexcept;
 		SharedPtr& operator=(SharedPtr&& other) noexcept;
 		template <class U>
-		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(SharedPtr<U>&& other) noexcept;
+		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(SharedPtr<U>&&) noexcept;
 		template <class U>
-		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(UniquePtr<U>&& other) noexcept;
+		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(UniquePtr<U>&&) noexcept;
 		[[nodiscard]] constexpr T& operator*() const noexcept { return *_pointer; }
 		[[nodiscard]] constexpr T* operator->() const noexcept { return _pointer; }
 		[[nodiscard]] constexpr explicit operator bool() const noexcept { return static_cast<bool>(_pointer); }
@@ -118,7 +118,7 @@ constexpr seir::SharedPtr<T>::SharedPtr(UniquePtr<U>&& other) noexcept
 }
 
 template <class T>
-seir::SharedPtr<T>& seir::SharedPtr<T>::operator=(const SharedPtr& other) noexcept
+seir::SharedPtr<T>& seir::SharedPtr<T>::operator=(const SharedPtr& other) noexcept // NOLINT(bugprone-unhandled-self-assignment, cert-oop54-cpp)
 {
 	if (other._pointer)
 		other._pointer->_references.fetch_add(1);

@@ -41,12 +41,12 @@ namespace seir
 
 		friend constexpr void swap(Buffer& first, Buffer& second) noexcept
 		{
-			const auto data = first._data;
-			const auto capacity = first._capacity;
+			const auto firstData = first._data;
+			const auto firstCapacity = first._capacity;
 			first._data = second._data;
 			first._capacity = second._capacity;
-			second._data = data;
-			second._capacity = capacity;
+			second._data = firstData;
+			second._capacity = firstCapacity;
 		}
 
 	private:

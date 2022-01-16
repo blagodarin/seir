@@ -36,6 +36,7 @@ namespace
 	class JpegCompressor : private JpegErrorManager
 	{
 	public:
+		// cppcheck-suppress constParameter
 		explicit JpegCompressor(seir::Writer& writer) noexcept
 			: _writer{ writer }
 		{
@@ -98,7 +99,7 @@ namespace
 	class JpegDecompressor : private JpegErrorManager
 	{
 	public:
-		explicit JpegDecompressor(seir::Reader& reader) noexcept
+		explicit JpegDecompressor(const seir::Reader& reader) noexcept
 		{
 			_sourceMgr.next_input_byte = static_cast<const JOCTET*>(reader.peek(0));
 			_sourceMgr.bytes_in_buffer = reader.size() - reader.offset();
