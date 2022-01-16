@@ -4,6 +4,7 @@
 
 #include <seir_base/buffer.hpp>
 
+#include <limits>
 #include <span>
 #include <vector>
 
@@ -138,6 +139,13 @@ TEST_CASE("Buffer::reserve()")
 		REQUIRE(buffer.capacity() == capacity);
 		::checkValues({ buffer.data(), N }, 1);
 	}
+#ifndef __clang__ // Memory allocation functions don't return nullptr in ASAN-less Clang builds.
+	SUBCASE("newCapacity == SIZE_MAX")
+	{
+		constexpr auto newCapacity = std::numeric_limits<size_t>::max() << 16; // To prevent size_t overflow on aligning the requested capacity.
+		CHECK_THROWS_AS(buffer.reserve(newCapacity, 0), std::bad_alloc);
+	}
+#endif
 }
 
 TEST_CASE("swap(Buffer&, Buffer&)")

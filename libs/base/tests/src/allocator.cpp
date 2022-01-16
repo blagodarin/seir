@@ -45,8 +45,7 @@ TEST_CASE("AlignedAllocator::allocate(1)")
 	CHECK(reinterpret_cast<uintptr_t>(pointer.get()) % kAlignment == 0);
 }
 
-// std::malloc doesn't return nullptr in ASAN-less Clang builds.
-#if !defined(__clang__)
+#ifndef __clang__ // Memory allocation functions don't return nullptr in ASAN-less Clang builds.
 
 // GCC issues a warning if the allocation size is known at compile time and exceeds this value.
 constexpr auto kMaxSize = static_cast<size_t>(std::numeric_limits<std::make_signed_t<size_t>>::max());
