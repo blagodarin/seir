@@ -4,7 +4,7 @@
 
 #include <seir_data/storage.hpp>
 
-#include <seir_data/blob.hpp>
+#include <seir_data/buffer_blob.hpp>
 #include <seir_data/compression.hpp>
 
 #include <algorithm>
@@ -32,11 +32,12 @@ TEST_CASE("Storage::attach")
 		REQUIRE(compressor);
 		REQUIRE(compressor->prepare(seir::CompressionLevel::BestCompression));
 		const std::string_view garbage = "garbage";
-		seir::Buffer buffer{ garbage.size() + compressor->maxCompressedSize(contents.size()) + garbage.size() };
+		const auto dataSize = garbage.size() + compressor->maxCompressedSize(contents.size()) + garbage.size();
+		seir::Buffer buffer{ dataSize };
 		std::memcpy(buffer.data(), garbage.data(), garbage.size());
-		const auto compressedSize = compressor->compress(buffer.data() + garbage.size(), buffer.capacity() - 2 * garbage.size(), contents.data(), contents.size());
+		const auto compressedSize = compressor->compress(buffer.data() + garbage.size(), dataSize - 2 * garbage.size(), contents.data(), contents.size());
 		std::memcpy(buffer.data() + garbage.size() + compressedSize, garbage.data(), garbage.size());
-		storage.attach("present", seir::Blob::from(std::move(buffer)), garbage.size(), contents.size(), seir::Compression::Zlib, compressedSize);
+		storage.attach("present", seir::makeShared<seir::Blob, seir::BufferBlob>(std::move(buffer), dataSize), garbage.size(), contents.size(), seir::Compression::Zlib, compressedSize);
 	}
 #endif
 	CHECK_FALSE(storage.open("absent"));

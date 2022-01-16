@@ -6,6 +6,7 @@
 #include <seir_data/temporary.hpp>
 
 #include <array>
+#include <cstring>
 #include <filesystem>
 
 #include <doctest/doctest.h>

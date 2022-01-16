@@ -6,6 +6,7 @@
 
 #include <seir_data/blob.hpp>
 #include <seir_data/writer.hpp>
+#include <seir_data/buffer_writer.hpp>
 
 #include <doctest/doctest.h>
 
@@ -145,9 +146,6 @@ TEST_CASE("JPEG")
 #	endif
 	SUBCASE("save")
 	{
-		seir::Buffer buffer;
-		const auto writer = seir::Writer::create(buffer);
-		REQUIRE(writer);
 		seir::Image image;
 		std::string fileName;
 		SUBCASE("Gray8")
@@ -192,8 +190,10 @@ TEST_CASE("JPEG")
 				SUBCASE("with padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYUp, true); }
 			}
 		}
-		REQUIRE(image.save(seir::ImageFormat::Jpeg, *writer, 0));
-		::checkSavedImage(buffer.data(), writer->size(), fileName);
+		seir::Buffer buffer;
+		seir::BufferWriter writer{ buffer };
+		REQUIRE(image.save(seir::ImageFormat::Jpeg, writer, 0));
+		::checkSavedImage(buffer.data(), writer.size(), fileName);
 	}
 }
 #endif
@@ -228,9 +228,6 @@ TEST_CASE("TGA")
 	}
 	SUBCASE("save")
 	{
-		seir::Buffer buffer;
-		const auto writer = seir::Writer::create(buffer);
-		REQUIRE(writer);
 		seir::Image image;
 		std::string fileName;
 		SUBCASE("Gray8")
@@ -251,8 +248,10 @@ TEST_CASE("TGA")
 			SUBCASE("without padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYDown); }
 			SUBCASE("with padding") { image = ::makeColorImage(true, seir::ImageAxes::XRightYDown, true); }
 		}
-		REQUIRE(image.save(seir::ImageFormat::Tga, *writer, 0));
-		::checkSavedImage(buffer.data(), writer->size(), fileName);
+		seir::Buffer buffer;
+		seir::BufferWriter writer{ buffer };
+		REQUIRE(image.save(seir::ImageFormat::Tga, writer, 0));
+		::checkSavedImage(buffer.data(), writer.size(), fileName);
 	}
 }
 #endif

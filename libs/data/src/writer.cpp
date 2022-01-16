@@ -4,6 +4,8 @@
 
 #include <seir_data/writer.hpp>
 
+#include <limits>
+
 namespace seir
 {
 	bool Writer::seek(uint64_t offset) noexcept

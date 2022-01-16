@@ -49,7 +49,7 @@ namespace seir
 		template <class U>
 		constexpr explicit SharedPtr(UniquePtr<U>&&) noexcept;
 		~SharedPtr() noexcept { reset(nullptr); }
-		SharedPtr& operator=(const SharedPtr& other) noexcept;
+		SharedPtr& operator=(const SharedPtr& other) noexcept; // NOLINT(bugprone-unhandled-self-assignment, cert-oop54-cpp)
 		template <class U>
 		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(const SharedPtr<U>& other) noexcept;
 		SharedPtr& operator=(SharedPtr&& other) noexcept;
@@ -118,7 +118,7 @@ constexpr seir::SharedPtr<T>::SharedPtr(UniquePtr<U>&& other) noexcept
 }
 
 template <class T>
-seir::SharedPtr<T>& seir::SharedPtr<T>::operator=(const SharedPtr& other) noexcept // NOLINT(bugprone-unhandled-self-assignment, cert-oop54-cpp)
+seir::SharedPtr<T>& seir::SharedPtr<T>::operator=(const SharedPtr& other) noexcept
 {
 	if (other._pointer)
 		other._pointer->_references.fetch_add(1);

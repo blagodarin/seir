@@ -5,6 +5,8 @@
 set(SOURCES
 	src/archive.cpp
 	src/blob.cpp
+	src/buffer_blob.cpp
+	src/buffer_writer.cpp
 	src/compression.cpp
 	src/reader.cpp
 	src/save_file.cpp

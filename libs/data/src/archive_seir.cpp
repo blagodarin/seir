@@ -4,7 +4,9 @@
 
 #include "archive.hpp"
 
+#include <seir_base/buffer.hpp>
 #include <seir_data/blob.hpp>
+#include <seir_data/buffer_writer.hpp>
 #include <seir_data/compression.hpp>
 #include <seir_data/storage.hpp>
 #include <seir_data/writer.hpp>
@@ -91,13 +93,13 @@ namespace
 				if (!metaBuffer.tryReserve(metaSize, 0))
 					return false;
 				{
-					const auto metaWriter = seir::Writer::create(metaBuffer);
+					seir::BufferWriter metaWriter{ metaBuffer };
 					for (const auto& file : _files)
-						metaWriter->write(file._blockInfo);
+						metaWriter.write(file._blockInfo);
 					for (const auto& file : _files)
 					{
-						metaWriter->write(static_cast<uint8_t>(file._name.size()));
-						metaWriter->write(file._name.data(), file._name.size());
+						metaWriter.write(static_cast<uint8_t>(file._name.size()));
+						metaWriter.write(file._name.data(), file._name.size());
 					}
 				}
 				if (!writeBlock(_header._metaBlock, metaBuffer.data(), metaSize, seir::CompressionLevel::BestCompression))

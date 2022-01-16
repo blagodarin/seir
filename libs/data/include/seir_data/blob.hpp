@@ -4,10 +4,8 @@
 
 #pragma once
 
-#include <seir_base/buffer.hpp>
 #include <seir_base/shared_ptr.hpp>
 
-#include <limits>
 #include <string>
 
 namespace seir
@@ -21,9 +19,6 @@ namespace seir
 		// Creates a Blob that references a memory range.
 		// NOTE: The range must stay valid for the lifetime of the Blob.
 		[[nodiscard]] static SharedPtr<Blob> from(const void* data, size_t size);
-
-		// Creates a Blob from a Buffer.
-		[[nodiscard]] static SharedPtr<Blob> from(Buffer&&, size_t maxSize = std::numeric_limits<size_t>::max());
 
 		// Creates a Blob that references a part of another Blob.
 		[[nodiscard]] static SharedPtr<Blob> from(SharedPtr<Blob>&&, size_t offset, size_t size);
@@ -61,17 +56,6 @@ inline seir::SharedPtr<seir::Blob> seir::Blob::from(const void* data, size_t siz
 			: Blob{ data, size } {}
 	};
 	return makeShared<Blob, ReferenceBlob>(data, size);
-}
-
-inline seir::SharedPtr<seir::Blob> seir::Blob::from(Buffer&& buffer, size_t maxSize)
-{
-	struct BufferBlob final : Blob
-	{
-		const Buffer _buffer;
-		constexpr BufferBlob(Buffer&& buffer, size_t size) noexcept
-			: Blob{ buffer.data(), size }, _buffer{ std::move(buffer) } {}
-	};
-	return makeShared<Blob, BufferBlob>(std::move(buffer), maxSize < buffer.capacity() ? maxSize : buffer.capacity());
 }
 
 inline seir::SharedPtr<seir::Blob> seir::Blob::from(SharedPtr<Blob>&& parent, size_t offset, size_t size)

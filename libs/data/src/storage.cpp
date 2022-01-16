@@ -4,7 +4,7 @@
 
 #include <seir_data/storage.hpp>
 
-#include <seir_data/blob.hpp>
+#include <seir_data/buffer_blob.hpp>
 #include <seir_data/compression.hpp>
 #include "archive.hpp"
 
@@ -82,7 +82,7 @@ namespace seir
 			{
 				Buffer buffer{ i->second._uncompressedSize };
 				if (decompressor->decompress(buffer.data(), i->second._uncompressedSize, static_cast<const std::byte*>(i->second._blob->data()) + i->second._offset, i->second._compressedSize))
-					return Blob::from(std::move(buffer), i->second._uncompressedSize);
+					return makeShared<Blob, BufferBlob>(std::move(buffer), i->second._uncompressedSize);
 			}
 			return {};
 		}
