@@ -23,6 +23,13 @@ TEST_CASE("bigEndian(T)")
 	}
 }
 
+TEST_CASE("first16(T)")
+{
+	const std::array<uint8_t, 8> bytes{ 0, 1, 2, 3, 4, 5, 6, 7 };
+	CHECK(seir::first16(*reinterpret_cast<const uint32_t*>(bytes.data())) == *reinterpret_cast<const uint16_t*>(bytes.data()));
+	CHECK(seir::first16(*reinterpret_cast<const uint64_t*>(bytes.data())) == *reinterpret_cast<const uint16_t*>(bytes.data()));
+}
+
 TEST_CASE("littleEndian(T)")
 {
 	if constexpr (std::endian::native == std::endian::little)

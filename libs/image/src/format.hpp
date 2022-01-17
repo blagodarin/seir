@@ -15,6 +15,8 @@ namespace seir
 	const void* loadBmpImage(Reader&, ImageInfo&) noexcept;
 #endif
 
+	constexpr auto kDdsFileID = makeCC('D', 'D', 'S', ' ');
+
 #if SEIR_IMAGE_ICO
 	const void* loadIcoImage(Reader&, ImageInfo&) noexcept;
 #endif
@@ -24,6 +26,8 @@ namespace seir
 	const void* loadJpegImage(Reader&, ImageInfo&, Buffer&) noexcept;
 	bool saveJpegImage(Writer&, const ImageInfo&, const void* data, int compressionLevel) noexcept;
 #endif
+
+	constexpr auto kPngFileID = makeCC('\x89', 'P', 'N', 'G', '\r', '\n', '\x1a', '\n');
 
 #if SEIR_IMAGE_TGA
 	const void* loadTgaImage(Reader&, ImageInfo&) noexcept;

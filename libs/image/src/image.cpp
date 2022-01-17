@@ -32,16 +32,14 @@ namespace seir
 				result._data = loadBmpImage(reader, result._info);
 #endif
 				break;
-			case makeCC('D', 'D'):
-				// TODO: Load DDS image.
+			case first16(kDdsFileID):
 				break;
 			case kJpegFileID:
 #if SEIR_IMAGE_JPEG
 				result._data = loadJpegImage(reader, result._info, result._buffer);
 #endif
 				break;
-			case makeCC('\x89', 'P'):
-				// TODO: Load PNG image.
+			case first16(kPngFileID):
 				break;
 			default:
 				// ICO files start with [00 00] (reserved, must be zero) followed by [01 00] (file type, 1 is ICO).
