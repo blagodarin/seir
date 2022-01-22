@@ -5,6 +5,8 @@
 #include "compression.hpp"
 
 #include <cassert>
+#include <limits>
+#include <optional>
 
 #include <zlib.h>
 
@@ -20,16 +22,26 @@ namespace
 
 		[[nodiscard]] bool prepare(seir::CompressionLevel level) noexcept override
 		{
-			// TODO: Use a previously-prepared compressor without unnecessary deallocations (in deflateEnd)
-			// and allocations (in deflateInit). Using deflateParams (and maybe deflateReset) may help.
+			if (_level)
+			{
+				if (::deflateReset(&_stream) != Z_OK)
+					return false;
+				if (_level == level)
+					return true;
+			}
 			int levelValue = Z_NO_COMPRESSION;
 			switch (level)
 			{
 			case seir::CompressionLevel::BestSpeed: levelValue = Z_BEST_SPEED; break;
 			case seir::CompressionLevel::BestCompression: levelValue = Z_BEST_COMPRESSION; break;
 			}
-			::deflateEnd(&_stream);
-			return deflateInit(&_stream, levelValue) == Z_OK;
+			if (_level
+					? ::deflateParams(&_stream, levelValue, Z_DEFAULT_STRATEGY) != Z_OK
+						|| ::deflateReset(&_stream) != Z_OK
+					: deflateInit(&_stream, levelValue) != Z_OK)
+				return false;
+			_level = level;
+			return true;
 		}
 
 		[[nodiscard]] size_t maxCompressedSize(size_t uncompressedSize) const noexcept override
@@ -42,37 +54,60 @@ namespace
 
 		[[nodiscard]] size_t compress(void* dst, size_t dstCapacity, const void* src, size_t srcSize) noexcept override
 		{
+			if constexpr (constexpr auto maxSize = std::numeric_limits<uInt>::max(); maxSize < std::numeric_limits<size_t>::max())
+			{
+				if (srcSize > maxSize)
+					return 0;
+				if (dstCapacity > maxSize)
+					dstCapacity = maxSize;
+			}
 			_stream.next_in = static_cast<const Bytef*>(src);
-			_stream.avail_in = static_cast<uInt>(srcSize); // TODO: Check for overflow.
+			_stream.avail_in = static_cast<uInt>(srcSize);
 			_stream.next_out = static_cast<Bytef*>(dst);
-			_stream.avail_out = static_cast<uInt>(dstCapacity); // TODO: Check for overflow.
-			const auto status = ::deflate(&_stream, Z_FINISH);
-			::deflateEnd(&_stream);
-			return status == Z_STREAM_END ? dstCapacity - _stream.avail_out : 0;
+			_stream.avail_out = static_cast<uInt>(dstCapacity);
+			return ::deflate(&_stream, Z_FINISH) == Z_STREAM_END ? dstCapacity - _stream.avail_out : 0;
 		}
 
 	private:
 		z_stream _stream{};
+		std::optional<seir::CompressionLevel> _level;
 	};
 
 	class ZlibDecompressor final : public seir::Decompressor
 	{
 	public:
+		~ZlibDecompressor() noexcept override
+		{
+			::inflateEnd(&_stream);
+		}
+
 		[[nodiscard]] bool decompress(void* dst, size_t dstCapacity, const void* src, size_t srcSize) noexcept override
 		{
-			if (inflateInit(&_stream) != Z_OK)
+			if constexpr (constexpr auto maxSize = std::numeric_limits<uInt>::max(); maxSize < std::numeric_limits<size_t>::max())
+			{
+				if (srcSize > maxSize)
+					return false;
+				if (dstCapacity > maxSize)
+					dstCapacity = maxSize;
+			}
+			if (!_initialized)
+			{
+				if (inflateInit(&_stream) != Z_OK)
+					return false;
+				_initialized = true;
+			}
+			else if (::inflateReset(&_stream) != Z_OK)
 				return false;
 			_stream.next_in = static_cast<const Bytef*>(src);
-			_stream.avail_in = static_cast<uInt>(srcSize); // TODO: Check for overflow.
+			_stream.avail_in = static_cast<uInt>(srcSize);
 			_stream.next_out = static_cast<Bytef*>(dst);
-			_stream.avail_out = static_cast<uInt>(dstCapacity); // TODO: Check for overflow.
-			const auto status = ::inflate(&_stream, Z_FINISH);
-			::inflateEnd(&_stream);
-			return status == Z_STREAM_END;
+			_stream.avail_out = static_cast<uInt>(dstCapacity);
+			return ::inflate(&_stream, Z_FINISH) == Z_STREAM_END;
 		}
 
 	private:
 		z_stream _stream{};
+		bool _initialized = false;
 	};
 }
 
