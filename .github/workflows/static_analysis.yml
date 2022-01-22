@@ -22,6 +22,7 @@ jobs:
         continue-on-error: true
         run: |
           cppcheck --enable=all --error-exitcode=1 --inline-suppr --quiet \
+            -I libs/app/include \
             -I libs/audio/include \
             -I libs/base/include \
             -I libs/data/include \
@@ -40,6 +41,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DSEIR_3RDPARTY_SKIP="jpeg;vorbis;zlib;zstd" \
+            -DSEIR_APP=ON \
             -DSEIR_AUDIO_AULOS=ON \
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
