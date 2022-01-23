@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#define NOGDI
 #define NOUSER
 #include <seir_base/windows_utils.hpp>
 

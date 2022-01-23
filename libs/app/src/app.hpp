@@ -13,7 +13,7 @@ namespace seir
 	protected:
 		AppHelper() noexcept = default;
 
-		bool beginQuit() noexcept
+		[[nodiscard]] bool beginQuit() noexcept
 		{
 			auto expected = State::Running;
 			return _state.compare_exchange_strong(expected, State::Stopping, std::memory_order::acq_rel);
@@ -24,7 +24,7 @@ namespace seir
 			_state.store(State::Stopped, std::memory_order::release);
 		}
 
-		bool hasQuit() const noexcept
+		[[nodiscard]] bool hasQuit() const noexcept
 		{
 			return _state.load(std::memory_order::acquire) == State::Stopped;
 		}

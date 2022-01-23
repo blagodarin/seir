@@ -24,7 +24,7 @@ namespace
 			return false;
 		}
 
-		void quit() override
+		void quit() noexcept override
 		{
 			if (beginQuit())
 				_quit = true;

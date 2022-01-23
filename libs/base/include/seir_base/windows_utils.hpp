@@ -7,7 +7,6 @@
 // This header is intentionally kept without any dependencies except <windows.h>.
 
 #define NOBITMAP
-#define NOGDI
 #define NOIME
 #define NOKERNEL
 #define NOMCX

@@ -9,6 +9,7 @@
 #include <seir_base/scope.hpp>
 #include "common.hpp"
 
+#define NOGDI
 #define WIN32_LEAN_AND_MEAN
 #include <seir_base/windows_utils.hpp>
 #pragma warning(push)

@@ -23,6 +23,6 @@ namespace seir
 		[[nodiscard]] virtual bool processEvents() = 0;
 
 		//
-		virtual void quit() = 0;
+		virtual void quit() noexcept = 0;
 	};
 }
