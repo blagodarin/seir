@@ -4,6 +4,7 @@
 
 set(HEADERS
 	include/seir_app/app.hpp
+	include/seir_app/window.hpp
 	)
 set(SOURCES
 	src/app.hpp
@@ -12,11 +13,14 @@ if(WIN32)
 	list(APPEND SOURCES
 		src/app_windows.cpp
 		src/app_windows.hpp
+		src/window_windows.cpp
+		src/window_windows.hpp
 		)
 else()
 	# TODO: Implement.
 	list(APPEND SOURCES
 		src/app_stub.cpp
+		src/window_stub.cpp
 		)
 endif()
 source_group("include" FILES ${HEADERS})
@@ -24,7 +28,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(seir_app STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::app ALIAS seir_app)
 target_include_directories(seir_app PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_app PRIVATE Seir::base)
+target_link_libraries(seir_app PUBLIC Seir::base)
 seir_target(seir_app FOLDER libs/app STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_app EXPORT SeirTargets)
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_app)

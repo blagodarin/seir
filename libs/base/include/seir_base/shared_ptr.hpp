@@ -10,6 +10,9 @@
 
 namespace seir
 {
+	template <class>
+	class SharedPtr;
+
 	// Base class for SharedPtr-managed objects.
 	class ReferenceCounter
 	{
@@ -25,6 +28,8 @@ namespace seir
 		mutable std::atomic<int> _references{ 1 };
 		template <class>
 		friend class SharedPtr;
+		template <class To, class From>
+		friend SharedPtr<To> staticCast(const SharedPtr<From>&) noexcept; // NOLINT(readability-redundant-declaration)
 	};
 
 	// Smart pointer for ReferenceCounter-derived classes that provides the following advantages over std::shared_ptr:
@@ -73,6 +78,8 @@ namespace seir
 		friend class SharedPtr;
 		template <class R, class U, class... Args>
 		friend std::enable_if_t<std::is_base_of_v<ReferenceCounter, R> && std::is_base_of_v<R, U>, SharedPtr<R>> makeShared(Args&&...); // NOLINT(readability-redundant-declaration)
+		template <class To, class From>
+		friend SharedPtr<To> staticCast(const SharedPtr<From>&) noexcept; // NOLINT(readability-redundant-declaration)
 	};
 
 	template <class T>
@@ -82,6 +89,14 @@ namespace seir
 	[[nodiscard]] inline std::enable_if_t<std::is_base_of_v<ReferenceCounter, R> && std::is_base_of_v<R, U>, SharedPtr<R>> makeShared(Args&&... args)
 	{
 		return SharedPtr<R>{ new U{ std::forward<Args>(args)... } };
+	}
+
+	template <class To, class From>
+	[[nodiscard]] SharedPtr<To> staticCast(const SharedPtr<From>& from) noexcept
+	{
+		if (from)
+			from->_references.fetch_add(1);
+		return SharedPtr{ static_cast<To*>(from._pointer) };
 	}
 
 	template <class A, class B>

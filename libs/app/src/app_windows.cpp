@@ -4,13 +4,13 @@
 
 #include "app_windows.hpp"
 
-#include <seir_base/unique_ptr.hpp>
+#include "window_windows.hpp"
 
 #include <memory>
 
 namespace
 {
-	seir::WindowsCursor createEmptyCursor(HINSTANCE instance)
+	seir::Hcursor createEmptyCursor(HINSTANCE instance)
 	{
 		const auto width = ::GetSystemMetrics(SM_CXCURSOR);
 		const auto height = ::GetSystemMetrics(SM_CYCURSOR);
@@ -19,12 +19,10 @@ namespace
 		std::memset(buffer.get(), 0xff, maskSize);            // AND mask;
 		std::memset(buffer.get() + maskSize, 0x00, maskSize); // XOR mask.
 		if (const auto cursor = ::CreateCursor(instance, 0, 0, width, height, buffer.get(), buffer.get() + maskSize))
-			return seir::WindowsCursor{ cursor };
+			return seir::Hcursor{ cursor };
 		seir::windows::reportError("CreateCursor");
 		return {};
 	}
-
-	const wchar_t* const kWindowClass = L"Seir";
 
 	bool registerWindowClass(HINSTANCE instance, HCURSOR cursor) noexcept
 	{
@@ -35,7 +33,7 @@ namespace
 		windowClass.hIcon = ::LoadIconA(nullptr, IDI_APPLICATION);
 		windowClass.hCursor = cursor;
 		windowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
-		windowClass.lpszClassName = kWindowClass;
+		windowClass.lpszClassName = seir::WindowsApp::kWindowClass;
 		if (::RegisterClassExW(&windowClass))
 			return true;
 		seir::windows::reportError("RegisterClassExW");
@@ -44,20 +42,20 @@ namespace
 
 	void unregisterWindowClass(HINSTANCE instance) noexcept
 	{
-		if (!::UnregisterClassW(kWindowClass, instance))
+		if (!::UnregisterClassW(seir::WindowsApp::kWindowClass, instance))
 			seir::windows::reportError("UnregisterClassW");
 	}
 }
 
 namespace seir
 {
-	void WindowsCursorDeleter::free(HCURSOR handle) noexcept
+	void HcursorDeleter::free(HCURSOR handle) noexcept
 	{
 		if (handle && !::DestroyCursor(handle))
 			windows::reportError("DestroyCursor");
 	}
 
-	WindowsApp::WindowsApp(HINSTANCE instance, WindowsCursor&& emptyCursor)
+	WindowsApp::WindowsApp(HINSTANCE instance, Hcursor&& emptyCursor)
 		: _instance{ instance }
 		, _emptyCursor{ std::move(emptyCursor) }
 	{
@@ -92,6 +90,11 @@ namespace seir
 			::PostQuitMessage(0);
 	}
 
+	void WindowsApp::addWindow(HWND hwnd, WindowsWindow* window)
+	{
+		_windows.emplace(hwnd, window);
+	}
+
 	LRESULT CALLBACK WindowsApp::staticWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) noexcept
 	{
 		WindowsApp* app = nullptr;
@@ -107,7 +110,26 @@ namespace seir
 
 	LRESULT WindowsApp::windowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) noexcept
 	{
-		return ::DefWindowProcW(hwnd, msg, wparam, lparam);
+		switch (msg)
+		{
+		case WM_DESTROY:
+			if (const auto i = _windows.find(hwnd); i != _windows.end())
+			{
+				_windows.erase(i);
+				if (_windows.empty())
+					::PostQuitMessage(0);
+			}
+			break;
+
+		case WM_SYSKEYDOWN:
+		case WM_KEYDOWN:
+			::SendMessageW(hwnd, WM_CLOSE, 0, 0);
+			break;
+
+		default:
+			return ::DefWindowProcW(hwnd, msg, wparam, lparam);
+		}
+		return 0;
 	}
 
 	UniquePtr<App> App::create()

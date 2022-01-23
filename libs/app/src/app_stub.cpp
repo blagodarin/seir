@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_app/app.hpp>
-#include "app.hpp"
 
-#include <seir_base/unique_ptr.hpp>
+#include "app.hpp"
 
 namespace
 {

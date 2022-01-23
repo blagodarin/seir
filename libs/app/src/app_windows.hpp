@@ -5,28 +5,36 @@
 #pragma once
 
 #include <seir_app/app.hpp>
+
 #include <seir_base/pointer.hpp>
 #include "app.hpp"
+
+#include <unordered_map>
 
 #define WIN32_LEAN_AND_MEAN
 #include <seir_base/windows_utils.hpp>
 
 namespace seir
 {
-	struct WindowsCursorDeleter
+	class WindowsWindow;
+
+	struct HcursorDeleter
 	{
 		static void free(HCURSOR) noexcept;
 	};
 
-	using WindowsCursor = Pointer<std::remove_pointer_t<HCURSOR>, WindowsCursorDeleter>;
+	using Hcursor = Pointer<std::remove_pointer_t<HCURSOR>, HcursorDeleter>;
 
 	class WindowsApp : public App
 		, private AppHelper
 	{
 	public:
-		WindowsApp(HINSTANCE, WindowsCursor&& emptyCursor);
+		static constexpr const wchar_t* kWindowClass = L"Seir";
+
+		WindowsApp(HINSTANCE, Hcursor&& emptyCursor);
 		~WindowsApp() noexcept;
 
+		void addWindow(HWND, WindowsWindow*);
 		[[nodiscard]] constexpr HCURSOR emptyCursor() const noexcept { return _emptyCursor; }
 		[[nodiscard]] constexpr HINSTANCE instance() const noexcept { return _instance; }
 
@@ -41,6 +49,7 @@ namespace seir
 
 	private:
 		const HINSTANCE _instance;
-		const WindowsCursor _emptyCursor;
+		const Hcursor _emptyCursor;
+		std::unordered_map<HWND, WindowsWindow*> _windows;
 	};
 }

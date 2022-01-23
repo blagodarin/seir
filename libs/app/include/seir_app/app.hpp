@@ -4,19 +4,16 @@
 
 #pragma once
 
+#include <seir_base/shared_ptr.hpp>
+
 namespace seir
 {
-	template <class>
-	class UniquePtr;
-
 	//
-	class App
+	class App : public ReferenceCounter
 	{
 	public:
 		//
 		[[nodiscard]] static UniquePtr<App> create();
-
-		virtual ~App() noexcept = default;
 
 		// Processes application events.
 		// Returns false if the application was requested to quit.
