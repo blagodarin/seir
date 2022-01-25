@@ -23,10 +23,13 @@ namespace seir
 
 	using Hwnd = Pointer<std::remove_pointer_t<HWND>, HwndDeleter>;
 
-	class WindowsWindow : public Window
+	class WindowsWindow final : public Window
 	{
 	public:
 		WindowsWindow(SharedPtr<WindowsApp>&&, Hwnd&&) noexcept;
+
+		void close() noexcept override;
+		void show() noexcept override;
 
 	private:
 		const SharedPtr<WindowsApp> _app;

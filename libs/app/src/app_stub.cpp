@@ -4,29 +4,19 @@
 
 #include <seir_app/app.hpp>
 
-#include "app.hpp"
-
 namespace
 {
-	class StubApp : public seir::App
-		, private seir::AppHelper
+	class StubApp final : public seir::App
 	{
 	public:
 		bool processEvents() override
 		{
-			if (!hasQuit())
-			{
-				if (!_quit)
-					return true;
-				endQuit();
-			}
-			return false;
+			return !_quit;
 		}
 
 		void quit() noexcept override
 		{
-			if (beginQuit())
-				_quit = true;
+			_quit = true;
 		}
 
 	private:

@@ -16,7 +16,4 @@ TEST_CASE("App")
 	CHECK(app->processEvents());
 	app->quit();
 	CHECK_FALSE(app->processEvents());
-	CHECK_FALSE(app->processEvents());
-	app->quit();
-	CHECK_FALSE(app->processEvents());
 }

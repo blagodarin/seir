@@ -7,7 +7,6 @@
 #include <seir_app/app.hpp>
 
 #include <seir_base/pointer.hpp>
-#include "app.hpp"
 
 #include <unordered_map>
 
@@ -25,8 +24,7 @@ namespace seir
 
 	using Hcursor = Pointer<std::remove_pointer_t<HCURSOR>, HcursorDeleter>;
 
-	class WindowsApp : public App
-		, private AppHelper
+	class WindowsApp final : public App
 	{
 	public:
 		static constexpr const wchar_t* kWindowClass = L"Seir";
@@ -40,7 +38,7 @@ namespace seir
 
 		static LRESULT CALLBACK staticWindowProc(HWND, UINT, WPARAM, LPARAM) noexcept;
 
-	protected:
+	private:
 		bool processEvents() override;
 		void quit() noexcept override;
 
@@ -50,6 +48,7 @@ namespace seir
 	private:
 		const HINSTANCE _instance;
 		const Hcursor _emptyCursor;
+		bool _quit = false;
 		std::unordered_map<HWND, WindowsWindow*> _windows;
 	};
 }

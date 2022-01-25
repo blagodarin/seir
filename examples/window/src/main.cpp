@@ -12,6 +12,7 @@ int u8main(int, char**)
 {
 	const auto app = seir::SharedPtr{ seir::App::create() };
 	const auto window = seir::Window::create(app);
+	window->show();
 	while (app->processEvents())
 		std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
 	return 0;

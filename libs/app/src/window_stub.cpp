@@ -14,6 +14,9 @@ namespace
 		StubWindow(const seir::SharedPtr<seir::App>& app) noexcept
 			: _app{ app } {}
 
+		void close() noexcept override { _app->quit(); }
+		void show() noexcept override {}
+
 	private:
 		const seir::SharedPtr<seir::App> _app;
 	};

@@ -7,7 +7,6 @@ set(HEADERS
 	include/seir_app/window.hpp
 	)
 set(SOURCES
-	src/app.hpp
 	)
 if(WIN32)
 	list(APPEND SOURCES

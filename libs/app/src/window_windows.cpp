@@ -19,6 +19,15 @@ namespace seir
 		, _hwnd{ std::move(hwnd) }
 	{
 		_app->addWindow(_hwnd, this);
+	}
+
+	void WindowsWindow::close() noexcept
+	{
+		::SendMessageW(_hwnd, WM_CLOSE, 0, 0);
+	}
+
+	void WindowsWindow::show() noexcept
+	{
 		::ShowWindow(_hwnd, SW_SHOW);
 		::UpdateWindow(_hwnd);
 		::SetForegroundWindow(_hwnd);

@@ -13,5 +13,9 @@ TEST_CASE("Window")
 	const auto app = seir::SharedPtr{ seir::App::create() };
 	REQUIRE(app);
 	const auto window = seir::Window::create(app);
-	CHECK(window);
+	REQUIRE(window);
+	CHECK(app->processEvents());
+	CHECK(app->processEvents());
+	window->close();
+	CHECK_FALSE(app->processEvents());
 }

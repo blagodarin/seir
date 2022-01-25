@@ -20,5 +20,11 @@ namespace seir
 		[[nodiscard]] static UniquePtr<Window> create(const SharedPtr<App>&);
 
 		virtual ~Window() noexcept = default;
+
+		//
+		virtual void close() noexcept = 0;
+
+		//
+		virtual void show() noexcept = 0;
 	};
 }

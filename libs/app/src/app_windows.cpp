@@ -68,16 +68,11 @@ namespace seir
 
 	bool WindowsApp::processEvents()
 	{
-		if (hasQuit())
-			return false;
 		MSG msg;
 		while (::PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT)
-			{
-				endQuit();
 				return false;
-			}
 			::TranslateMessage(&msg);
 			::DispatchMessageW(&msg);
 		}
@@ -86,8 +81,7 @@ namespace seir
 
 	void WindowsApp::quit() noexcept
 	{
-		if (beginQuit())
-			::PostQuitMessage(0);
+		::PostQuitMessage(0);
 	}
 
 	void WindowsApp::addWindow(HWND hwnd, WindowsWindow* window)
@@ -123,7 +117,8 @@ namespace seir
 
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
-			::SendMessageW(hwnd, WM_CLOSE, 0, 0);
+			if (const auto i = _windows.find(hwnd); i != _windows.end())
+				i->second->close();
 			break;
 
 		default:
