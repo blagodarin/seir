@@ -4,16 +4,25 @@
 
 #include <seir_app/app.hpp>
 
+#include <seir_app/events.hpp>
 #include <seir_base/unique_ptr.hpp>
 
 #include <doctest/doctest.h>
+
+namespace
+{
+	struct EventCallbacks : seir::EventCallbacks
+	{
+	};
+}
 
 TEST_CASE("App")
 {
 	const auto app = seir::App::create();
 	REQUIRE(app);
-	CHECK(app->processEvents());
-	CHECK(app->processEvents());
+	EventCallbacks callbacks;
+	CHECK(app->processEvents(callbacks));
+	CHECK(app->processEvents(callbacks));
 	app->quit();
-	CHECK_FALSE(app->processEvents());
+	CHECK_FALSE(app->processEvents(callbacks));
 }

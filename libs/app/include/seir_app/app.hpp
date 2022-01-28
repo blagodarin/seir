@@ -8,6 +8,8 @@
 
 namespace seir
 {
+	class EventCallbacks;
+
 	//
 	class App : public ReferenceCounter
 	{
@@ -17,7 +19,7 @@ namespace seir
 
 		// Processes application events.
 		// Returns false if the application was requested to quit.
-		[[nodiscard]] virtual bool processEvents() = 0;
+		[[nodiscard]] virtual bool processEvents(EventCallbacks&) = 0;
 
 		//
 		virtual void quit() noexcept = 0;

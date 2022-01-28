@@ -4,8 +4,11 @@
 
 #include "app_windows.hpp"
 
+#include <seir_app/events.hpp>
+#include <seir_base/scope.hpp>
 #include "window_windows.hpp"
 
+#include <cassert>
 #include <memory>
 
 namespace
@@ -66,8 +69,11 @@ namespace seir
 		::unregisterWindowClass(_instance);
 	}
 
-	bool WindowsApp::processEvents()
+	bool WindowsApp::processEvents(EventCallbacks& callbacks)
 	{
+		assert(!_callbacks);
+		_callbacks = &callbacks;
+		SEIR_FINALLY([this] { _callbacks = nullptr; });
 		MSG msg;
 		while (::PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{
@@ -115,10 +121,16 @@ namespace seir
 			}
 			break;
 
-		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN:
 			if (const auto i = _windows.find(hwnd); i != _windows.end())
-				i->second->close();
+				_callbacks->onKeyEvent(*i->second, { true, static_cast<bool>(lparam & 0x40000000) });
+			break;
+
+		case WM_KEYUP:
+		case WM_SYSKEYUP:
+			if (const auto i = _windows.find(hwnd); i != _windows.end())
+				_callbacks->onKeyEvent(*i->second, { false, false });
 			break;
 
 		default:

@@ -39,16 +39,15 @@ namespace seir
 		static LRESULT CALLBACK staticWindowProc(HWND, UINT, WPARAM, LPARAM) noexcept;
 
 	private:
-		bool processEvents() override;
+		bool processEvents(EventCallbacks&) override;
 		void quit() noexcept override;
 
-	private:
 		LRESULT windowProc(HWND, UINT, WPARAM, LPARAM) noexcept;
 
 	private:
 		const HINSTANCE _instance;
 		const Hcursor _emptyCursor;
-		bool _quit = false;
+		EventCallbacks* _callbacks = nullptr;
 		std::unordered_map<HWND, WindowsWindow*> _windows;
 	};
 }

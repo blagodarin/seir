@@ -4,6 +4,7 @@
 
 set(HEADERS
 	include/seir_app/app.hpp
+	include/seir_app/events.hpp
 	include/seir_app/window.hpp
 	)
 set(SOURCES

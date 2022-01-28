@@ -9,7 +9,7 @@ namespace
 	class StubApp final : public seir::App
 	{
 	public:
-		bool processEvents() override
+		bool processEvents(seir::EventCallbacks&) override
 		{
 			return !_quit;
 		}
