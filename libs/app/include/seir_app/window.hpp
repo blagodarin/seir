@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace seir
 {
 	class App;
@@ -17,7 +19,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<Window> create(const SharedPtr<App>&);
+		[[nodiscard]] static UniquePtr<Window> create(const SharedPtr<App>&, const std::string& title);
 
 		virtual ~Window() noexcept = default;
 

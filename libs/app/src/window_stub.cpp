@@ -11,7 +11,7 @@ namespace
 	class StubWindow : public seir::Window
 	{
 	public:
-		StubWindow(const seir::SharedPtr<seir::App>& app) noexcept
+		explicit StubWindow(const seir::SharedPtr<seir::App>& app) noexcept
 			: _app{ app } {}
 
 		void close() noexcept override { _app->quit(); }
@@ -24,7 +24,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<Window> Window::create(const SharedPtr<App>& app)
+	UniquePtr<Window> Window::create(const SharedPtr<App>& app, const std::string&)
 	{
 		return makeUnique<Window, StubWindow>(app);
 	}

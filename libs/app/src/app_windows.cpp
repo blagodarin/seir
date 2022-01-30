@@ -47,6 +47,8 @@ namespace
 			Key::F12, Key::None, Key::None, Key::LGui, Key::RGui, Key::App, Key::None, Key::None,               // 0x58 - 0x5F
 		};
 		const auto scanCode = seir::toUnsigned((lparam >> 16) & 0xFF);
+		if (!scanCode)
+			return Key::None; // TODO: Handle keys without scan codes.
 		if (scanCode >= kScanCodeTable.size())
 			return Key::None;
 		auto key = kScanCodeTable[scanCode];

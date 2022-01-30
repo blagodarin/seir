@@ -6,6 +6,29 @@
 
 #include "app_windows.hpp"
 
+#include <memory>
+
+namespace
+{
+	std::unique_ptr<wchar_t[]> toWChar(const std::string& text)
+	{
+		const auto wtextSize = ::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), nullptr, 0);
+		if (!wtextSize)
+		{
+			seir::windows::reportError("MultiByteToWideChar");
+			return {};
+		}
+		auto wtext = std::make_unique<wchar_t[]>(wtextSize + 1u);
+		if (!::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), wtext.get(), wtextSize))
+		{
+			seir::windows::reportError("MultiByteToWideChar");
+			return {};
+		}
+		wtext[static_cast<size_t>(wtextSize)] = L'\0';
+		return wtext;
+	}
+}
+
 namespace seir
 {
 	void HwndDeleter::free(HWND hwnd) noexcept
@@ -34,11 +57,12 @@ namespace seir
 		::SetFocus(_hwnd);
 	}
 
-	UniquePtr<Window> Window::create(const SharedPtr<App>& app)
+	UniquePtr<Window> Window::create(const SharedPtr<App>& app, const std::string& title)
 	{
+		const auto wtitle = ::toWChar(title);
 		auto windowsApp = staticCast<WindowsApp>(app);
-		if (Hwnd hwnd{ ::CreateWindowExW(WS_EX_APPWINDOW, WindowsApp::kWindowClass, L"", WS_OVERLAPPEDWINDOW,
-				0, 0, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, windowsApp->instance(), windowsApp.get()) })
+		if (Hwnd hwnd{ ::CreateWindowExW(WS_EX_APPWINDOW, WindowsApp::kWindowClass, wtitle ? wtitle.get() : L"", WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, windowsApp->instance(), windowsApp.get()) })
 			return makeUnique<Window, WindowsWindow>(std::move(windowsApp), std::move(hwnd));
 		return {};
 	}

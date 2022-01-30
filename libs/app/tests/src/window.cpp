@@ -21,7 +21,7 @@ TEST_CASE("Window")
 	const auto app = seir::SharedPtr{ seir::App::create() };
 	REQUIRE(app);
 	EventCallbacks callbacks;
-	const auto window = seir::Window::create(app);
+	const auto window = seir::Window::create(app, {});
 	REQUIRE(window);
 	CHECK(app->processEvents(callbacks));
 	CHECK(app->processEvents(callbacks));
