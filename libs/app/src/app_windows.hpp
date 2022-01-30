@@ -48,6 +48,7 @@ namespace seir
 		const HINSTANCE _instance;
 		const Hcursor _emptyCursor;
 		EventCallbacks* _callbacks = nullptr;
+		uint16_t _highSurrogate = 0; // High (first) code unit of UTF-16 surrogate pair.
 		std::unordered_map<HWND, WindowsWindow*> _windows;
 	};
 }

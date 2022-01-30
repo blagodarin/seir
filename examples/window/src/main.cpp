@@ -15,7 +15,7 @@ namespace
 	{
 		void onKeyEvent(seir::Window& window, const seir::KeyEvent& event) override
 		{
-			if (event._pressed)
+			if (event._key == seir::Key::Escape && event._pressed)
 				window.close();
 		}
 	};

@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include <seir_app/key.hpp>
+
+#include <string_view>
+
 namespace seir
 {
 	class Window;
@@ -11,6 +15,7 @@ namespace seir
 	//
 	struct KeyEvent
 	{
+		Key _key = Key::None;
 		bool _pressed = false;
 		bool _repeated = false;
 	};
@@ -23,5 +28,8 @@ namespace seir
 
 		//
 		virtual void onKeyEvent(Window&, const KeyEvent&) {}
+
+		//
+		virtual void onTextEvent(Window&, std::string_view) {}
 	};
 }
