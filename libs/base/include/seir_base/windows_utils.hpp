@@ -12,6 +12,7 @@
 #define NOMCX
 #define NOMINMAX
 #define NOSERVICE
+#define UNICODE
 #pragma warning(push)
 #pragma warning(disable : 4668) // '___' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 #pragma warning(disable : 5039) // pointer or reference to potentially throwing function passed to 'extern "C"' function under -EHc. Undefined behavior may occur if this function throws an exception.

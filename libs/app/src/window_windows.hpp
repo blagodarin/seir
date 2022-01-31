@@ -31,8 +31,10 @@ namespace seir
 		void close() noexcept override;
 		void show() noexcept override;
 
+		void reset() noexcept;
+
 	private:
 		const SharedPtr<WindowsApp> _app;
-		const Hwnd _hwnd;
+		Hwnd _hwnd;
 	};
 }

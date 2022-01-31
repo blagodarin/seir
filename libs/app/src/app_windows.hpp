@@ -24,12 +24,19 @@ namespace seir
 
 	using Hcursor = Pointer<std::remove_pointer_t<HCURSOR>, HcursorDeleter>;
 
+	struct HiconDeleter
+	{
+		static void free(HICON) noexcept;
+	};
+
+	using Hicon = Pointer<std::remove_pointer_t<HICON>, HiconDeleter>;
+
 	class WindowsApp final : public App
 	{
 	public:
 		static constexpr const wchar_t* kWindowClass = L"Seir";
 
-		WindowsApp(HINSTANCE, Hcursor&& emptyCursor);
+		WindowsApp(HINSTANCE, Hicon&& icon, Hcursor&& emptyCursor);
 		~WindowsApp() noexcept;
 
 		void addWindow(HWND, WindowsWindow*);
@@ -46,6 +53,7 @@ namespace seir
 
 	private:
 		const HINSTANCE _instance;
+		const Hicon _icon;
 		const Hcursor _emptyCursor;
 		EventCallbacks* _callbacks = nullptr;
 		uint16_t _highSurrogate = 0; // High (first) code unit of UTF-16 surrogate pair.

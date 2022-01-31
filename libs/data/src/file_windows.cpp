@@ -137,10 +137,13 @@ namespace
 		std::array<wchar_t, MAX_PATH + 1> _buffer;
 		explicit WPath(std::string_view path) noexcept
 		{
-			const auto length = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.data(), static_cast<int>(path.size()), _buffer.data(), static_cast<int>(_buffer.size() - 1));
-			if (!length)
-				seir::windows::reportError("MultiByteToWideChar");
-			_size = static_cast<size_t>(length);
+			if (!path.empty())
+			{
+				const auto length = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.data(), static_cast<int>(path.size()), _buffer.data(), static_cast<int>(_buffer.size() - 1));
+				if (!length)
+					seir::windows::reportError("MultiByteToWideChar");
+				_size = static_cast<size_t>(length);
+			}
 			_buffer[_size] = L'\0';
 		}
 		constexpr explicit operator bool() const noexcept { return _size > 0; }

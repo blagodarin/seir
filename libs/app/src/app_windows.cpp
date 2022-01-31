@@ -21,12 +21,30 @@ namespace
 		const auto height = ::GetSystemMetrics(SM_CYCURSOR);
 		const auto maskSize = static_cast<size_t>(width * height / 8);
 		const auto buffer = std::make_unique<uint8_t[]>(2 * maskSize);
-		std::memset(buffer.get(), 0xff, maskSize);            // AND mask;
+		std::memset(buffer.get(), 0xff, maskSize);            // AND mask.
 		std::memset(buffer.get() + maskSize, 0x00, maskSize); // XOR mask.
 		if (const auto cursor = ::CreateCursor(instance, 0, 0, width, height, buffer.get(), buffer.get() + maskSize))
 			return seir::Hcursor{ cursor };
 		seir::windows::reportError("CreateCursor");
 		return {};
+	}
+
+	seir::Hicon loadDefaultIcon(HINSTANCE instance)
+	{
+		HRSRC resource = nullptr;
+		::EnumResourceNamesW(
+			instance, RT_ICON, [](HMODULE module, LPCWSTR type, LPWSTR name, LONG_PTR param) noexcept -> BOOL {
+				const auto resource = ::FindResourceW(module, name, type);
+				if (!resource)
+					return TRUE;
+				*reinterpret_cast<HRSRC*>(param) = resource;
+				return FALSE;
+			},
+			reinterpret_cast<LONG_PTR>(&resource));
+		return resource
+			? seir::Hicon{ ::CreateIconFromResourceEx(static_cast<BYTE*>(::LockResource(::LoadResource(instance, resource))),
+				::SizeofResource(instance, resource), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR) }
+			: seir::Hicon{};
 	}
 
 	seir::Key mapKey(WPARAM, LPARAM lparam) // TODO: Add key code testing utility.
@@ -86,13 +104,13 @@ namespace
 		return key;
 	}
 
-	bool registerWindowClass(HINSTANCE instance, HCURSOR cursor) noexcept
+	bool registerWindowClass(HINSTANCE instance, HICON icon, HCURSOR cursor) noexcept
 	{
 		WNDCLASSEXW windowClass{ sizeof windowClass };
 		windowClass.style = CS_VREDRAW | CS_HREDRAW | CS_OWNDC;
 		windowClass.lpfnWndProc = seir::WindowsApp::staticWindowProc;
 		windowClass.hInstance = instance;
-		windowClass.hIcon = ::LoadIconA(nullptr, IDI_APPLICATION);
+		windowClass.hIcon = icon;
 		windowClass.hCursor = cursor;
 		windowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
 		windowClass.lpszClassName = seir::WindowsApp::kWindowClass;
@@ -114,11 +132,19 @@ namespace seir
 	void HcursorDeleter::free(HCURSOR handle) noexcept
 	{
 		if (handle && !::DestroyCursor(handle))
-			windows::reportError("DestroyCursor");
+			if (const auto error = ::GetLastError(); error != ERROR_SUCCESS)
+				windows::reportError("DestroyCursor", error);
 	}
 
-	WindowsApp::WindowsApp(HINSTANCE instance, Hcursor&& emptyCursor)
+	void HiconDeleter::free(HICON handle) noexcept
+	{
+		if (handle && !::DestroyIcon(handle))
+			windows::reportError("DestroyIcon");
+	}
+
+	WindowsApp::WindowsApp(HINSTANCE instance, Hicon&& icon, Hcursor&& emptyCursor)
 		: _instance{ instance }
+		, _icon{ std::move(icon) }
 		, _emptyCursor{ std::move(emptyCursor) }
 	{
 	}
@@ -195,6 +221,11 @@ namespace seir
 			}
 			break;
 
+		case WM_CLOSE:
+			if (const auto i = _windows.find(hwnd); i != _windows.end())
+				i->second->reset();
+			break;
+
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 			if (const auto key = ::mapKey(wparam, lparam); key != Key::None)
@@ -256,9 +287,10 @@ namespace seir
 	UniquePtr<App> App::create()
 	{
 		const auto instance = ::GetModuleHandleW(nullptr);
+		auto icon = ::loadDefaultIcon(instance);
 		if (auto emptyCursor = ::createEmptyCursor(instance))
-			if (::registerWindowClass(instance, emptyCursor))
-				return makeUnique<App, WindowsApp>(instance, std::move(emptyCursor));
+			if (::registerWindowClass(instance, icon, emptyCursor))
+				return makeUnique<App, WindowsApp>(instance, std::move(icon), std::move(emptyCursor));
 		return nullptr;
 	}
 }

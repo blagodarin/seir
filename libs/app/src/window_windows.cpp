@@ -12,20 +12,20 @@ namespace
 {
 	std::unique_ptr<wchar_t[]> toWChar(const std::string& text)
 	{
-		const auto wtextSize = ::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), nullptr, 0);
-		if (!wtextSize)
+		if (!text.empty())
 		{
+			if (const auto wtextSize = ::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), nullptr, 0))
+			{
+				auto wtext = std::make_unique<wchar_t[]>(wtextSize + 1u);
+				if (::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), wtext.get(), wtextSize))
+				{
+					wtext[static_cast<size_t>(wtextSize)] = L'\0';
+					return wtext;
+				}
+			}
 			seir::windows::reportError("MultiByteToWideChar");
-			return {};
 		}
-		auto wtext = std::make_unique<wchar_t[]>(wtextSize + 1u);
-		if (!::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), wtext.get(), wtextSize))
-		{
-			seir::windows::reportError("MultiByteToWideChar");
-			return {};
-		}
-		wtext[static_cast<size_t>(wtextSize)] = L'\0';
-		return wtext;
+		return {};
 	}
 }
 
@@ -55,6 +55,11 @@ namespace seir
 		::UpdateWindow(_hwnd);
 		::SetForegroundWindow(_hwnd);
 		::SetFocus(_hwnd);
+	}
+
+	void WindowsWindow::reset() noexcept
+	{
+		_hwnd.reset();
 	}
 
 	UniquePtr<Window> Window::create(const SharedPtr<App>& app, const std::string& title)
