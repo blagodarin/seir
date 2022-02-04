@@ -7,7 +7,7 @@ set(SOURCES
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(window WIN32 ${SOURCES})
-target_link_libraries(window PRIVATE Seir::app Seir::u8main)
+target_link_libraries(window PRIVATE Seir::app Seir::renderer Seir::u8main)
 seir_target(window FOLDER examples STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 if(WIN32)
 	target_sources(window PRIVATE window.rc)

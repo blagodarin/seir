@@ -27,6 +27,7 @@ jobs:
             -I libs/base/include \
             -I libs/data/include \
             -I libs/image/include \
+            -I libs/renderer/include \
             -I libs/u8main/include \
             --template="({file}:{line}) ({severity}/{id}) {message}" .
       - name: Run clang-format
@@ -41,7 +42,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DSEIR_3RDPARTY_SKIP="jpeg;vorbis;zlib;zstd" \
-            -DSEIR_APP=ON \
             -DSEIR_AUDIO_AULOS=ON \
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
@@ -53,6 +53,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \
             -DSEIR_IMAGE_TGA=ON \
+            -DSEIR_RENDERER=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
       - name: Run clang-tidy

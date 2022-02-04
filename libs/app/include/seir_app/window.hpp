@@ -4,24 +4,20 @@
 
 #pragma once
 
+#include <seir_base/shared_ptr.hpp>
+
 #include <string>
 
 namespace seir
 {
 	class App;
-	template <class>
-	class SharedPtr;
-	template <class>
-	class UniquePtr;
 
 	//
-	class Window
+	class Window : public ReferenceCounter
 	{
 	public:
 		//
 		[[nodiscard]] static UniquePtr<Window> create(const SharedPtr<App>&, const std::string& title);
-
-		virtual ~Window() noexcept = default;
 
 		//
 		virtual void close() noexcept = 0;
