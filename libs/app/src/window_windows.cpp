@@ -49,6 +49,11 @@ namespace seir
 		::SendMessageW(_hwnd, WM_CLOSE, 0, 0);
 	}
 
+	Window::Descriptor WindowsWindow::descriptor() const noexcept
+	{
+		return { _app->instance(), reinterpret_cast<intptr_t>(_hwnd.get()) };
+	}
+
 	void WindowsWindow::show() noexcept
 	{
 		::ShowWindow(_hwnd, SW_SHOW);

@@ -52,7 +52,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \
             -DSEIR_IMAGE_TGA=ON \
-            -DSEIR_RENDERER=ON \
+            -DSEIR_RENDERER=Dummy \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
       - name: Build
@@ -100,7 +100,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \
             -DSEIR_IMAGE_TGA=ON \
-            -DSEIR_RENDERER=ON \
+            -DSEIR_RENDERER=Dummy \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
       - name: Build

@@ -21,8 +21,10 @@ option(SEIR_IMAGE_ICO "Enable ICO image support")
 option(SEIR_IMAGE_JPEG "Enable JPEG image support")
 option(SEIR_IMAGE_TGA "Enable TGA image support")
 
+set(SEIR_RENDERER "" CACHE STRING "Renderer backend")
+set_property(CACHE SEIR_RENDERER PROPERTY STRINGS "" "Dummy" "Vulkan")
+
 # Components.
-option(SEIR_RENDERER "Build renderer library")
 cmake_dependent_option(SEIR_APP "Build app library" OFF "NOT SEIR_RENDERER" ON)
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_AULOS;NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO;NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD" ON)
@@ -77,6 +79,12 @@ if(SEIR_IMAGE_JPEG)
 	seir_provide_jpeg(JPEG_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 	set(CMAKE_FIND_FRAMEWORK NEVER) # https://gitlab.kitware.com/cmake/cmake/-/issues/18921
 	find_package(JPEG REQUIRED)
+endif()
+if(SEIR_RENDERER STREQUAL "Vulkan")
+	find_package(Vulkan REQUIRED)
+	if(NOT TARGET Vulkan::glslc)
+		message(SEND_ERROR "Could not find glslc, please install Vulkan SDK")
+	endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

@@ -26,9 +26,10 @@ jobs:
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
       - name: Install prerequisites
         run: |
-          cinst --no-progress ninja
+          cinst --no-progress ninja vulkan-sdk
       - name: Run CMake
         run: |
+          $Env:VULKAN_SDK = "C:\VulkanSDK\$(Get-ChildItem 'C:\VulkanSDK' -Name)"
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install" `
@@ -43,7 +44,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON `
             -DSEIR_IMAGE_JPEG=ON `
             -DSEIR_IMAGE_TGA=ON `
-            -DSEIR_RENDERER=ON `
+            -DSEIR_RENDERER=Vulkan `
             -DSEIR_STATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }} `
             -DSEIR_TESTS=ON `
             -DSEIR_U8MAIN=ON
@@ -89,7 +90,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON `
             -DSEIR_IMAGE_JPEG=ON `
             -DSEIR_IMAGE_TGA=ON `
-            -DSEIR_RENDERER=ON `
+            -DSEIR_RENDERER=Dummy `
             -DSEIR_TESTS=ON
       - name: Build Debug
         run: |

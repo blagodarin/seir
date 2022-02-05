@@ -29,6 +29,7 @@ namespace seir
 		WindowsWindow(SharedPtr<WindowsApp>&&, Hwnd&&) noexcept;
 
 		void close() noexcept override;
+		Descriptor descriptor() const noexcept override;
 		void show() noexcept override;
 
 		void reset() noexcept;

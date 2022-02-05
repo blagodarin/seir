@@ -15,6 +15,7 @@ namespace
 			: _app{ app } {}
 
 		void close() noexcept override { _app->quit(); }
+		seir::Window::Descriptor descriptor() const noexcept override { return { nullptr, 0 }; }
 		void show() noexcept override {}
 
 	private:
