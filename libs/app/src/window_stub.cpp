@@ -17,6 +17,7 @@ namespace
 		void close() noexcept override { _app->quit(); }
 		seir::Window::Descriptor descriptor() const noexcept override { return { nullptr, 0 }; }
 		void show() noexcept override {}
+		seir::Size2D size() const noexcept override { return {}; }
 
 	private:
 		const seir::SharedPtr<seir::App> _app;

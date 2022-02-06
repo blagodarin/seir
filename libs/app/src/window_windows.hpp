@@ -31,6 +31,7 @@ namespace seir
 		void close() noexcept override;
 		Descriptor descriptor() const noexcept override;
 		void show() noexcept override;
+		Size2D size() const noexcept override;
 
 		void reset() noexcept;
 

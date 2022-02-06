@@ -12,6 +12,15 @@ namespace seir
 {
 	class App;
 
+	struct Size2D
+	{
+		int _width = 0;
+		int _height = 0;
+		constexpr Size2D() noexcept = default;
+		constexpr Size2D(int width, int height) noexcept
+			: _width{ width }, _height{ height } {}
+	};
+
 	//
 	class Window : public ReferenceCounter
 	{
@@ -32,9 +41,12 @@ namespace seir
 		virtual void close() noexcept = 0;
 
 		//
-		virtual Descriptor descriptor() const noexcept = 0;
+		[[nodiscard]] virtual Descriptor descriptor() const noexcept = 0;
 
 		//
 		virtual void show() noexcept = 0;
+
+		//
+		[[nodiscard]] virtual Size2D size() const noexcept = 0;
 	};
 }

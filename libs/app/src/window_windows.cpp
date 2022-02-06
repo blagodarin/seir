@@ -62,6 +62,13 @@ namespace seir
 		::SetFocus(_hwnd);
 	}
 
+	Size2D WindowsWindow::size() const noexcept
+	{
+		RECT clientRect{};
+		::GetClientRect(_hwnd, &clientRect);
+		return { clientRect.right - clientRect.left, clientRect.bottom - clientRect.top };
+	}
+
 	void WindowsWindow::reset() noexcept
 	{
 		_hwnd.reset();

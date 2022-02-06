@@ -11,11 +11,13 @@ if(SEIR_RENDERER STREQUAL "Dummy")
 		)
 elseif(SEIR_RENDERER STREQUAL "Vulkan")
 	set(SOURCES
+		src/vulkan/context.cpp
+		src/vulkan/context.hpp
 		src/vulkan/renderer.cpp
 		src/vulkan/vulkan.hpp
 		)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-		set_property(SOURCE src/vulkan/renderer.cpp APPEND PROPERTY COMPILE_OPTIONS
+		set_property(SOURCE src/vulkan/context.cpp APPEND PROPERTY COMPILE_OPTIONS
 			/wd4191 # 'reinterpret_cast': unsafe conversion from 'PFN_vkVoidFunction' to '...'
 			)
 	endif()

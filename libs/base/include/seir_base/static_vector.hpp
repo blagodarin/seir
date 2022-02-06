@@ -60,9 +60,9 @@ namespace seir
 		T& emplace_back(Args&&... args)
 		{
 			assert(_size < kCapacity);
-			T* value = new (_data + _size) T{ std::forward<Args>(args)... };
+			T* item = new (_data + _size) T{ std::forward<Args>(args)... };
 			++_size;
-			return *value;
+			return *item;
 		}
 
 		void pop_back() noexcept
@@ -70,6 +70,14 @@ namespace seir
 			assert(_size > 0);
 			--_size;
 			std::destroy_at(reinterpret_cast<T*>(_data) + _size);
+		}
+
+		T& push_back(const T& value)
+		{
+			assert(_size < kCapacity);
+			T* item = new (_data + _size) T{ value };
+			++_size;
+			return *item;
 		}
 
 		[[nodiscard]] T& operator[](size_t index) noexcept
