@@ -30,6 +30,7 @@ namespace seir
 		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
 		VkExtent2D _swapchainExtent{};
 		std::vector<VkImage> _swapchainImages;
+		std::vector<VkImageView> _swapchainImageViews;
 
 		~VulkanContext() noexcept;
 
@@ -44,5 +45,6 @@ namespace seir
 		void selectPhysicalDevice();
 		void createDevice();
 		void createSwapchain(const Window&);
+		void createSwapchainImageViews();
 	};
 }

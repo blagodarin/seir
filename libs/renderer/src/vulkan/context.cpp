@@ -148,6 +148,8 @@ namespace seir
 {
 	VulkanContext::~VulkanContext() noexcept
 	{
+		for (auto imageView : _swapchainImageViews)
+			vkDestroyImageView(_device, imageView, nullptr);
 		vkDestroySwapchainKHR(_device, _swapchain, nullptr);
 		vkDestroyDevice(_device, nullptr);
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
@@ -174,6 +176,7 @@ namespace seir
 			selectPhysicalDevice();
 			createDevice();
 			createSwapchain(window);
+			createSwapchainImageViews();
 			return true;
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
@@ -187,9 +190,10 @@ namespace seir
 
 	void VulkanContext::createInstance()
 	{
-		VkApplicationInfo applicationInfo{};
-		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		applicationInfo.apiVersion = VK_API_VERSION_1_0;
+		const VkApplicationInfo applicationInfo{
+			.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+			.apiVersion = VK_API_VERSION_1_0,
+		};
 		static const std::array layers{
 #ifndef NDEBUG
 			"VK_LAYER_KHRONOS_validation",
@@ -205,13 +209,14 @@ namespace seir
 			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #endif
 		};
-		VkInstanceCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		createInfo.pApplicationInfo = &applicationInfo;
-		createInfo.enabledLayerCount = static_cast<uint32_t>(layers.size() - 1);
-		createInfo.ppEnabledLayerNames = layers.data();
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-		createInfo.ppEnabledExtensionNames = extensions.data();
+		VkInstanceCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+			.pApplicationInfo = &applicationInfo,
+			.enabledLayerCount = static_cast<uint32_t>(layers.size() - 1),
+			.ppEnabledLayerNames = layers.data(),
+			.enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+			.ppEnabledExtensionNames = extensions.data(),
+		};
 #ifndef NDEBUG
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 		::fillDebugUtilsMessengerCreateInfo(debugCreateInfo);
@@ -235,10 +240,11 @@ namespace seir
 	{
 		const auto descriptor = window.descriptor();
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-		VkWin32SurfaceCreateInfoKHR createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		createInfo.hinstance = static_cast<HINSTANCE>(descriptor._app);
-		createInfo.hwnd = reinterpret_cast<HWND>(descriptor._window);
+		const VkWin32SurfaceCreateInfoKHR createInfo{
+			.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+			.hinstance = static_cast<HINSTANCE>(descriptor._app),
+			.hwnd = reinterpret_cast<HWND>(descriptor._window),
+		};
 		SEIR_VK(vkCreateWin32SurfaceKHR(_instance, &createInfo, nullptr, &_surface));
 #endif
 	}
@@ -327,16 +333,17 @@ namespace seir
 #endif
 			"", // Extra value for std::array type deduction.
 		};
-		VkPhysicalDeviceFeatures features{};
-		VkDeviceCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queues.size());
-		createInfo.pQueueCreateInfos = queues.data();
-		createInfo.enabledLayerCount = static_cast<uint32_t>(layers.size() - 1);
-		createInfo.ppEnabledLayerNames = layers.data();
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(kRequiredDeviceExtensions.size());
-		createInfo.ppEnabledExtensionNames = kRequiredDeviceExtensions.data();
-		createInfo.pEnabledFeatures = &features;
+		const VkPhysicalDeviceFeatures features{};
+		const VkDeviceCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+			.queueCreateInfoCount = static_cast<uint32_t>(queues.size()),
+			.pQueueCreateInfos = queues.data(),
+			.enabledLayerCount = static_cast<uint32_t>(layers.size() - 1),
+			.ppEnabledLayerNames = layers.data(),
+			.enabledExtensionCount = static_cast<uint32_t>(kRequiredDeviceExtensions.size()),
+			.ppEnabledExtensionNames = kRequiredDeviceExtensions.data(),
+			.pEnabledFeatures = &features,
+		};
 		SEIR_VK(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device));
 		vkGetDeviceQueue(_device, _graphicsQueueFamily, 0, &_graphicsQueue);
 		vkGetDeviceQueue(_device, _presentQueueFamily, 0, &_presentQueue);
@@ -386,5 +393,33 @@ namespace seir
 		SEIR_VK(vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, nullptr));
 		_swapchainImages.resize(imageCount);
 		SEIR_VK(vkGetSwapchainImagesKHR(_device, _swapchain, &imageCount, _swapchainImages.data()));
+	}
+
+	void VulkanContext::createSwapchainImageViews()
+	{
+		_swapchainImageViews.assign(_swapchainImages.size(), VK_NULL_HANDLE);
+		for (size_t i = 0; i < _swapchainImages.size(); ++i)
+		{
+			const VkImageViewCreateInfo createInfo{
+				.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+				.image = _swapchainImages[i],
+				.viewType = VK_IMAGE_VIEW_TYPE_2D,
+				.format = _surfaceFormat.format,
+				.components{
+					.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+					.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+					.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+					.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+				},
+				.subresourceRange{
+					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+					.baseMipLevel = 0,
+					.levelCount = 1,
+					.baseArrayLayer = 0,
+					.layerCount = 1,
+				},
+			};
+			SEIR_VK(vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]));
+		}
 	}
 }
