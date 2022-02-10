@@ -142,12 +142,27 @@ namespace
 			return VK_PRESENT_MODE_FIFO_KHR;
 		return {};
 	}
+
+	const uint32_t kVertexShader[]{
+#include "vertex_shader.glsl.spirv.inc"
+	};
+
+	const uint32_t kFragmentShader[]{
+#include "fragment_shader.glsl.spirv.inc"
+	};
 }
 
 namespace seir
 {
 	VulkanContext::~VulkanContext() noexcept
 	{
+		for (auto framebuffer : _swapchainFramebuffers)
+			vkDestroyFramebuffer(_device, framebuffer, nullptr);
+		vkDestroyPipeline(_device, _pipeline, nullptr);
+		vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
+		vkDestroyRenderPass(_device, _renderPass, nullptr);
+		vkDestroyShaderModule(_device, _fragmentShader, nullptr);
+		vkDestroyShaderModule(_device, _vertexShader, nullptr);
 		for (auto imageView : _swapchainImageViews)
 			vkDestroyImageView(_device, imageView, nullptr);
 		vkDestroySwapchainKHR(_device, _swapchain, nullptr);
@@ -160,7 +175,7 @@ namespace seir
 		vkDestroyInstance(_instance, nullptr);
 	}
 
-	bool VulkanContext::initialize(Window& window)
+	bool VulkanContext::initialize(const Window& window)
 	{
 		try
 		{
@@ -177,6 +192,12 @@ namespace seir
 			createDevice();
 			createSwapchain(window);
 			createSwapchainImageViews();
+			_vertexShader = loadShader(kVertexShader, sizeof kVertexShader);
+			_fragmentShader = loadShader(kFragmentShader, sizeof kFragmentShader);
+			createRenderPass();
+			createPipelineLayout();
+			createPipeline();
+			createFramebuffers();
 			return true;
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
@@ -420,6 +441,200 @@ namespace seir
 				},
 			};
 			SEIR_VK(vkCreateImageView(_device, &createInfo, nullptr, &_swapchainImageViews[i]));
+		}
+	}
+
+	VkShaderModule VulkanContext::loadShader(const uint32_t* data, size_t size)
+	{
+		const VkShaderModuleCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+			.codeSize = size,
+			.pCode = data,
+		};
+		VkShaderModule shaderModule = VK_NULL_HANDLE;
+		SEIR_VK(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule));
+		return shaderModule;
+	}
+
+	void VulkanContext::createRenderPass()
+	{
+		const VkAttachmentDescription colorAttachment{
+			.format = _surfaceFormat.format,
+			.samples = VK_SAMPLE_COUNT_1_BIT,
+			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		};
+
+		const VkAttachmentReference colorReference{
+			.attachment = 0,
+			.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		};
+
+		const VkSubpassDescription subpass{
+			.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+			.colorAttachmentCount = 1,
+			.pColorAttachments = &colorReference,
+		};
+
+		const VkRenderPassCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+			.attachmentCount = 1,
+			.pAttachments = &colorAttachment,
+			.subpassCount = 1,
+			.pSubpasses = &subpass,
+		};
+
+		SEIR_VK(vkCreateRenderPass(_device, &createInfo, nullptr, &_renderPass));
+	}
+
+	void VulkanContext::createPipelineLayout()
+	{
+		const VkPipelineLayoutCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+			.setLayoutCount = 0,
+			.pSetLayouts = nullptr,
+			.pushConstantRangeCount = 0,
+			.pPushConstantRanges = nullptr,
+		};
+
+		SEIR_VK(vkCreatePipelineLayout(_device, &createInfo, nullptr, &_pipelineLayout));
+	}
+
+	void VulkanContext::createPipeline()
+	{
+		const std::array shaderStages{
+			VkPipelineShaderStageCreateInfo{
+				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+				.stage = VK_SHADER_STAGE_VERTEX_BIT,
+				.module = _vertexShader,
+				.pName = "main",
+			},
+			VkPipelineShaderStageCreateInfo{
+				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+				.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+				.module = _fragmentShader,
+				.pName = "main",
+			},
+		};
+
+		const VkPipelineVertexInputStateCreateInfo vertexInputState{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		};
+
+		const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+			.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			.primitiveRestartEnable = VK_FALSE,
+		};
+
+		const VkViewport viewport{
+			.x = 0.f,
+			.y = 0.f,
+			.width = static_cast<float>(_swapchainExtent.width),
+			.height = static_cast<float>(_swapchainExtent.height),
+			.minDepth = 0.f,
+			.maxDepth = 1.f,
+		};
+
+		const VkRect2D scissor{
+			.offset = { 0, 0 },
+			.extent = _swapchainExtent,
+		};
+
+		const VkPipelineViewportStateCreateInfo viewportState{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+			.viewportCount = 1,
+			.pViewports = &viewport,
+			.scissorCount = 1,
+			.pScissors = &scissor,
+		};
+
+		const VkPipelineRasterizationStateCreateInfo rasterizationState{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+			.depthClampEnable = VK_FALSE,
+			.rasterizerDiscardEnable = VK_FALSE,
+			.polygonMode = VK_POLYGON_MODE_FILL,
+			.cullMode = VK_CULL_MODE_BACK_BIT,
+			.frontFace = VK_FRONT_FACE_CLOCKWISE,
+			.depthBiasEnable = VK_FALSE,
+			.depthBiasConstantFactor = 0.f,
+			.depthBiasClamp = 0.f,
+			.depthBiasSlopeFactor = 0.f,
+			.lineWidth = 1.f,
+		};
+
+		const VkPipelineMultisampleStateCreateInfo multisampleState{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+			.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+			.sampleShadingEnable = VK_FALSE,
+			.minSampleShading = 1.f,
+			.pSampleMask = nullptr,
+			.alphaToCoverageEnable = VK_FALSE,
+			.alphaToOneEnable = VK_FALSE,
+		};
+
+		const VkPipelineColorBlendAttachmentState colorBlendAttachment{
+			.blendEnable = VK_FALSE,
+			.srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+			.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+			.colorBlendOp = VK_BLEND_OP_ADD,
+			.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+			.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+			.alphaBlendOp = VK_BLEND_OP_ADD,
+			.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+		};
+
+		const VkPipelineColorBlendStateCreateInfo colorBlendState{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+			.logicOpEnable = VK_FALSE,
+			.logicOp = VK_LOGIC_OP_COPY,
+			.attachmentCount = 1,
+			.pAttachments = &colorBlendAttachment,
+			.blendConstants{ 0.f, 0.f, 0.f, 0.f },
+		};
+
+		const VkGraphicsPipelineCreateInfo pipelineInfo{
+			.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+			.stageCount = static_cast<uint32_t>(shaderStages.size()),
+			.pStages = shaderStages.data(),
+			.pVertexInputState = &vertexInputState,
+			.pInputAssemblyState = &inputAssemblyState,
+			.pTessellationState = nullptr,
+			.pViewportState = &viewportState,
+			.pRasterizationState = &rasterizationState,
+			.pMultisampleState = &multisampleState,
+			.pDepthStencilState = nullptr,
+			.pColorBlendState = &colorBlendState,
+			.pDynamicState = nullptr,
+			.layout = _pipelineLayout,
+			.renderPass = _renderPass,
+			.subpass = 0,
+			.basePipelineHandle = VK_NULL_HANDLE,
+			.basePipelineIndex = 0,
+		};
+
+		SEIR_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_pipeline));
+	}
+
+	void VulkanContext::createFramebuffers()
+	{
+		_swapchainFramebuffers.assign(_swapchainImageViews.size(), VK_NULL_HANDLE);
+		for (size_t i = 0; i < _swapchainImageViews.size(); ++i)
+		{
+			const VkFramebufferCreateInfo createInfo{
+				.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+				.renderPass = _renderPass,
+				.attachmentCount = 1,
+				.pAttachments = &_swapchainImageViews[i],
+				.width = _swapchainExtent.width,
+				.height = _swapchainExtent.height,
+				.layers = 1,
+			};
+			SEIR_VK(vkCreateFramebuffer(_device, &createInfo, nullptr, &_swapchainFramebuffers[i]));
 		}
 	}
 }

@@ -38,5 +38,11 @@ target_link_libraries(seir_renderer PRIVATE Seir::app
 	$<$<STREQUAL:${SEIR_RENDERER},Vulkan>:Vulkan::Vulkan>
 	)
 seir_target(seir_renderer FOLDER libs/renderer STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+if(SEIR_RENDERER STREQUAL "Vulkan")
+	seir_embed_spirv(seir_renderer
+		VERTEX src/vulkan/vertex_shader.glsl
+		FRAGMENT src/vulkan/fragment_shader.glsl
+		)
+endif()
 seir_install(seir_renderer EXPORT SeirTargets)
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_renderer)

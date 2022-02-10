@@ -31,10 +31,16 @@ namespace seir
 		VkExtent2D _swapchainExtent{};
 		std::vector<VkImage> _swapchainImages;
 		std::vector<VkImageView> _swapchainImageViews;
+		VkShaderModule _vertexShader = VK_NULL_HANDLE;
+		VkShaderModule _fragmentShader = VK_NULL_HANDLE;
+		VkRenderPass _renderPass = VK_NULL_HANDLE;
+		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
+		VkPipeline _pipeline = VK_NULL_HANDLE;
+		std::vector<VkFramebuffer> _swapchainFramebuffers;
 
 		~VulkanContext() noexcept;
 
-		bool initialize(Window&);
+		bool initialize(const Window&);
 
 	private:
 		void createInstance();
@@ -46,5 +52,10 @@ namespace seir
 		void createDevice();
 		void createSwapchain(const Window&);
 		void createSwapchainImageViews();
+		VkShaderModule loadShader(const uint32_t* data, size_t size);
+		void createRenderPass();
+		void createPipelineLayout();
+		void createPipeline();
+		void createFramebuffers();
 	};
 }
