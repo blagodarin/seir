@@ -156,6 +156,10 @@ namespace seir
 {
 	VulkanContext::~VulkanContext() noexcept
 	{
+		vkDestroySemaphore(_device, _renderFinishedSemaphore, nullptr);
+		vkDestroySemaphore(_device, _imageAvailableSemaphore, nullptr);
+		vkFreeCommandBuffers(_device, _commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
+		vkDestroyCommandPool(_device, _commandPool, nullptr);
 		for (auto framebuffer : _swapchainFramebuffers)
 			vkDestroyFramebuffer(_device, framebuffer, nullptr);
 		vkDestroyPipeline(_device, _pipeline, nullptr);
@@ -198,6 +202,9 @@ namespace seir
 			createPipelineLayout();
 			createPipeline();
 			createFramebuffers();
+			createCommandPool();
+			createCommandBuffers();
+			createSemaphores();
 			return true;
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
@@ -207,6 +214,38 @@ namespace seir
 #endif
 			return false;
 		}
+	}
+
+	void VulkanContext::draw()
+	{
+		uint32_t index = 0;
+		SEIR_VK(vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _imageAvailableSemaphore, VK_NULL_HANDLE, &index));
+		const VkSemaphore waitSemaphores[]{ _imageAvailableSemaphore };
+		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		const VkSemaphore signalSemaphores[]{ _renderFinishedSemaphore };
+		const VkSubmitInfo submitInfo{
+			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = waitSemaphores,
+			.pWaitDstStageMask = waitStages,
+			.commandBufferCount = 1,
+			.pCommandBuffers = &_commandBuffers[index],
+			.signalSemaphoreCount = 1,
+			.pSignalSemaphores = signalSemaphores,
+		};
+		SEIR_VK(vkQueueSubmit(_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+		const VkSwapchainKHR swapchains[]{ _swapchain };
+		const VkPresentInfoKHR presentInfo{
+			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = signalSemaphores,
+			.swapchainCount = 1,
+			.pSwapchains = swapchains,
+			.pImageIndices = &index,
+			.pResults = nullptr,
+		};
+		SEIR_VK(vkQueuePresentKHR(_presentQueue, &presentInfo));
+		SEIR_VK(vkQueueWaitIdle(_presentQueue));
 	}
 
 	void VulkanContext::createInstance()
@@ -480,12 +519,24 @@ namespace seir
 			.pColorAttachments = &colorReference,
 		};
 
+		const VkSubpassDependency subpassDependency{
+			.srcSubpass = VK_SUBPASS_EXTERNAL,
+			.dstSubpass = 0,
+			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			.srcAccessMask = 0,
+			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			.dependencyFlags = 0,
+		};
+
 		const VkRenderPassCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
 			.attachmentCount = 1,
 			.pAttachments = &colorAttachment,
 			.subpassCount = 1,
 			.pSubpasses = &subpass,
+			.dependencyCount = 1,
+			.pDependencies = &subpassDependency,
 		};
 
 		SEIR_VK(vkCreateRenderPass(_device, &createInfo, nullptr, &_renderPass));
@@ -636,5 +687,65 @@ namespace seir
 			};
 			SEIR_VK(vkCreateFramebuffer(_device, &createInfo, nullptr, &_swapchainFramebuffers[i]));
 		}
+	}
+
+	void VulkanContext::createCommandPool()
+	{
+		const VkCommandPoolCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+			.queueFamilyIndex = _graphicsQueueFamily,
+		};
+		SEIR_VK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
+	}
+
+	void VulkanContext::createCommandBuffers()
+	{
+		_commandBuffers.assign(_swapchainFramebuffers.size(), VK_NULL_HANDLE);
+		const VkCommandBufferAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.commandPool = _commandPool,
+			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.commandBufferCount = static_cast<uint32_t>(_commandBuffers.size()),
+		};
+		SEIR_VK(vkAllocateCommandBuffers(_device, &allocateInfo, _commandBuffers.data()));
+		for (size_t i = 0; i < _commandBuffers.size(); ++i)
+		{
+			const VkCommandBufferBeginInfo info{
+				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+				.flags = 0,
+				.pInheritanceInfo = nullptr,
+			};
+			SEIR_VK(vkBeginCommandBuffer(_commandBuffers[i], &info));
+			const VkClearValue clearColor{
+				.color{
+					.float32{ 0.f, 0.f, 0.f, 1.f },
+				},
+			};
+			const VkRenderPassBeginInfo renderPassInfo{
+				.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+				.renderPass = _renderPass,
+				.framebuffer = _swapchainFramebuffers[i],
+				.renderArea{
+					.offset{ 0, 0 },
+					.extent = _swapchainExtent,
+				},
+				.clearValueCount = 1,
+				.pClearValues = &clearColor,
+			};
+			vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
+			vkCmdDraw(_commandBuffers[i], 3, 1, 0, 0);
+			vkCmdEndRenderPass(_commandBuffers[i]);
+			SEIR_VK(vkEndCommandBuffer(_commandBuffers[i]));
+		}
+	}
+
+	void VulkanContext::createSemaphores()
+	{
+		const VkSemaphoreCreateInfo info{
+			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		};
+		SEIR_VK(vkCreateSemaphore(_device, &info, nullptr, &_imageAvailableSemaphore));
+		SEIR_VK(vkCreateSemaphore(_device, &info, nullptr, &_renderFinishedSemaphore));
 	}
 }

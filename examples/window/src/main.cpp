@@ -8,8 +8,6 @@
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
-#include <thread>
-
 namespace
 {
 	struct EventCallbacks : seir::EventCallbacks
@@ -33,6 +31,6 @@ int u8main(int, char**)
 	const auto renderer = seir::Renderer::create(window);
 	window->show();
 	for (EventCallbacks callbacks; app->processEvents(callbacks);)
-		std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
+		renderer->draw();
 	return 0;
 }

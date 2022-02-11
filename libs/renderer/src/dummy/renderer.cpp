@@ -14,6 +14,8 @@ namespace
 		explicit DummyRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
 			: _window{ window } {}
 
+		void draw() override {}
+
 	private:
 		const seir::SharedPtr<seir::Window> _window;
 	};

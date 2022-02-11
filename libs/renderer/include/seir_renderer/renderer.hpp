@@ -20,5 +20,8 @@ namespace seir
 		[[nodiscard]] static UniquePtr<Renderer> create(const SharedPtr<Window>&);
 
 		virtual ~Renderer() noexcept = default;
+
+		//
+		virtual void draw() = 0;
 	};
 }

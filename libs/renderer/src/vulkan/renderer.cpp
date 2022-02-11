@@ -20,6 +20,11 @@ namespace
 			return _context.initialize(*_window);
 		}
 
+		void draw() override
+		{
+			return _context.draw();
+		}
+
 	private:
 		const seir::SharedPtr<seir::Window> _window;
 		seir::VulkanContext _context;

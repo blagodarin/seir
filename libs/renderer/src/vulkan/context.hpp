@@ -37,10 +37,15 @@ namespace seir
 		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline _pipeline = VK_NULL_HANDLE;
 		std::vector<VkFramebuffer> _swapchainFramebuffers;
+		VkCommandPool _commandPool = VK_NULL_HANDLE;
+		std::vector<VkCommandBuffer> _commandBuffers;
+		VkSemaphore _imageAvailableSemaphore = VK_NULL_HANDLE;
+		VkSemaphore _renderFinishedSemaphore = VK_NULL_HANDLE;
 
 		~VulkanContext() noexcept;
 
 		bool initialize(const Window&);
+		void draw();
 
 	private:
 		void createInstance();
@@ -57,5 +62,8 @@ namespace seir
 		void createPipelineLayout();
 		void createPipeline();
 		void createFramebuffers();
+		void createCommandPool();
+		void createCommandBuffers();
+		void createSemaphores();
 	};
 }
