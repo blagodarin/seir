@@ -20,6 +20,7 @@ elseif(SEIR_RENDERER STREQUAL "Vulkan")
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		set_property(SOURCE src/vulkan/context.cpp APPEND PROPERTY COMPILE_OPTIONS
 			/wd4191 # 'reinterpret_cast': unsafe conversion from 'PFN_vkVoidFunction' to '...'
+			/wd5246 # the initialization of a subobject should be wrapped in braces
 			)
 	endif()
 endif()
@@ -35,7 +36,7 @@ target_compile_definitions(seir_renderer
 		$<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>
 	)
 target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_renderer PRIVATE Seir::app
+target_link_libraries(seir_renderer PRIVATE Seir::app Seir::math
 	$<$<STREQUAL:${SEIR_RENDERER},Vulkan>:Vulkan::Vulkan>
 	)
 seir_target(seir_renderer FOLDER libs/renderer STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})

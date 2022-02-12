@@ -6,6 +6,7 @@
 
 #include <seir_app/window.hpp>
 #include <seir_base/static_vector.hpp>
+#include <seir_math/vec.hpp>
 
 #include <algorithm>
 #include <optional>
@@ -120,6 +121,39 @@ namespace
 	const uint32_t kFragmentShader[]{
 #include "fragment_shader.glsl.spirv.inc"
 	};
+
+	struct Vertex
+	{
+		seir::Vec2 position;
+		seir::Vec3 color;
+	};
+
+	constexpr std::array kVertexData{
+		Vertex{ .position{ -.75f, -.75f }, .color{ 1.f, 0.f, 0.f } },
+		Vertex{ .position{ .75f, .75f }, .color{ 0.f, 1.f, 0.f } },
+		Vertex{ .position{ -.75f, .75f }, .color{ 0.f, 0.f, 1.f } },
+	};
+
+	constexpr VkVertexInputBindingDescription kVertexBinding{
+		.binding = 0,
+		.stride = sizeof(Vertex),
+		.inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+	};
+
+	constexpr std::array kVertexAttributes{
+		VkVertexInputAttributeDescription{
+			.location = 0,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32_SFLOAT,
+			.offset = offsetof(Vertex, position),
+		},
+		VkVertexInputAttributeDescription{
+			.location = 1,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32B32_SFLOAT,
+			.offset = offsetof(Vertex, color),
+		},
+	};
 }
 
 namespace seir
@@ -170,7 +204,7 @@ namespace seir
 		createPipelineLayout(context._device);
 		createPipeline(context._device, context._vertexShader, context._fragmentShader);
 		createFramebuffers(context._device);
-		createCommandBuffers(context._device, context._commandPool);
+		createCommandBuffers(context._device, context._commandPool, context._vertexBuffer);
 		_swapchainImageFences.assign(_swapchainImages.size(), VK_NULL_HANDLE);
 	}
 
@@ -350,6 +384,10 @@ namespace seir
 
 		const VkPipelineVertexInputStateCreateInfo vertexInputState{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+			.vertexBindingDescriptionCount = 1,
+			.pVertexBindingDescriptions = &kVertexBinding,
+			.vertexAttributeDescriptionCount = static_cast<uint32_t>(kVertexAttributes.size()),
+			.pVertexAttributeDescriptions = kVertexAttributes.data(),
 		};
 
 		const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{
@@ -465,7 +503,7 @@ namespace seir
 		}
 	}
 
-	void VulkanSwapchain::createCommandBuffers(VkDevice device, VkCommandPool commandPool)
+	void VulkanSwapchain::createCommandBuffers(VkDevice device, VkCommandPool commandPool, VkBuffer vertexBuffer)
 	{
 		_commandBuffers.assign(_swapchainFramebuffers.size(), VK_NULL_HANDLE);
 		const VkCommandBufferAllocateInfo allocateInfo{
@@ -501,7 +539,10 @@ namespace seir
 			};
 			vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
-			vkCmdDraw(_commandBuffers[i], 3, 1, 0, 0);
+			VkBuffer vertexBuffers[]{ vertexBuffer };
+			VkDeviceSize offsets[]{ 0 };
+			vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
+			vkCmdDraw(_commandBuffers[i], static_cast<uint32_t>(kVertexData.size()), 1, 0, 0);
 			vkCmdEndRenderPass(_commandBuffers[i]);
 			SEIR_VK(vkEndCommandBuffer(_commandBuffers[i]));
 		}
@@ -509,6 +550,8 @@ namespace seir
 
 	VulkanContext::~VulkanContext() noexcept
 	{
+		vkDestroyBuffer(_device, _vertexBuffer, nullptr);
+		vkFreeMemory(_device, _vertexBufferMemory, nullptr);
 		vkDestroyShaderModule(_device, _fragmentShader, nullptr);
 		vkDestroyShaderModule(_device, _vertexShader, nullptr);
 		vkDestroyCommandPool(_device, _commandPool, nullptr);
@@ -536,6 +579,7 @@ namespace seir
 		createCommandPool();
 		_vertexShader = loadShader(kVertexShader, sizeof kVertexShader);
 		_fragmentShader = loadShader(kFragmentShader, sizeof kFragmentShader);
+		createVertexBuffer();
 	}
 
 	void VulkanContext::createInstance()
@@ -717,5 +761,39 @@ namespace seir
 		VkShaderModule shaderModule = VK_NULL_HANDLE;
 		SEIR_VK(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule));
 		return shaderModule;
+	}
+
+	uint32_t VulkanContext::findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties)
+	{
+		VkPhysicalDeviceMemoryProperties memoryProperties{};
+		vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &memoryProperties);
+		for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i)
+			if (filter & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+				return i;
+		SEIR_VK_THROW("vkGetPhysicalDeviceMemoryProperties", "No suitable memory type found");
+	}
+
+	void VulkanContext::createVertexBuffer()
+	{
+		constexpr VkBufferCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+			.size = kVertexData.size() * sizeof(Vertex),
+			.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		};
+		SEIR_VK(vkCreateBuffer(_device, &createInfo, nullptr, &_vertexBuffer));
+		VkMemoryRequirements memoryRequirements{};
+		vkGetBufferMemoryRequirements(_device, _vertexBuffer, &memoryRequirements);
+		const VkMemoryAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+			.allocationSize = memoryRequirements.size,
+			.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+		};
+		SEIR_VK(vkAllocateMemory(_device, &allocateInfo, nullptr, &_vertexBufferMemory));
+		SEIR_VK(vkBindBufferMemory(_device, _vertexBuffer, _vertexBufferMemory, 0));
+		void* data = nullptr;
+		SEIR_VK(vkMapMemory(_device, _vertexBufferMemory, 0, createInfo.size, 0, &data));
+		std::memcpy(data, kVertexData.data(), createInfo.size);
+		vkUnmapMemory(_device, _vertexBufferMemory);
 	}
 }

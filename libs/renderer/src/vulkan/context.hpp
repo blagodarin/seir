@@ -96,7 +96,7 @@ namespace seir
 		void createPipelineLayout(VkDevice);
 		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
 		void createFramebuffers(VkDevice);
-		void createCommandBuffers(VkDevice, VkCommandPool);
+		void createCommandBuffers(VkDevice, VkCommandPool, VkBuffer vertexBuffer);
 	};
 
 	class VulkanContext
@@ -118,6 +118,8 @@ namespace seir
 		VkQueue _presentQueue = VK_NULL_HANDLE;
 		VkShaderModule _vertexShader = VK_NULL_HANDLE;
 		VkShaderModule _fragmentShader = VK_NULL_HANDLE;
+		VkBuffer _vertexBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory _vertexBufferMemory = VK_NULL_HANDLE;
 		VkCommandPool _commandPool = VK_NULL_HANDLE;
 
 		~VulkanContext() noexcept;
@@ -134,5 +136,7 @@ namespace seir
 		void createDevice();
 		void createCommandPool();
 		VkShaderModule loadShader(const uint32_t* data, size_t size);
+		uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
+		void createVertexBuffer();
 	};
 }
