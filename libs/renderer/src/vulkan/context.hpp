@@ -11,7 +11,55 @@
 
 namespace seir
 {
+	struct Size2D;
+	class VulkanContext;
 	class Window;
+
+	class VulkanFrameSync
+	{
+	public:
+		struct Item
+		{
+			VkSemaphore _imageAvailableSemaphore = VK_NULL_HANDLE;
+			VkSemaphore _renderFinishedSemaphore = VK_NULL_HANDLE;
+			VkFence _fence = VK_NULL_HANDLE;
+		};
+
+		void create(VkDevice);
+		void destroy(VkDevice) noexcept;
+		Item switchFrame(VkDevice);
+
+	private:
+		size_t _index = 0;
+		std::array<Item, 2> _items;
+	};
+
+	class VulkanSwapchain
+	{
+	public:
+		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
+		VkExtent2D _swapchainExtent{};
+		std::vector<VkImage> _swapchainImages;
+		std::vector<VkImageView> _swapchainImageViews;
+		VkRenderPass _renderPass = VK_NULL_HANDLE;
+		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
+		VkPipeline _pipeline = VK_NULL_HANDLE;
+		std::vector<VkFramebuffer> _swapchainFramebuffers;
+		std::vector<VkCommandBuffer> _commandBuffers;
+		std::vector<VkFence> _swapchainImageFences;
+
+		void create(const VulkanContext&, const Size2D& windowSize);
+		void destroy(VkDevice, VkCommandPool) noexcept;
+
+	private:
+		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
+		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
+		void createRenderPass(VkDevice, const VkSurfaceFormatKHR&);
+		void createPipelineLayout(VkDevice);
+		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
+		void createFramebuffers(VkDevice);
+		void createCommandBuffers(VkDevice, VkCommandPool);
+	};
 
 	class VulkanContext
 	{
@@ -24,44 +72,17 @@ namespace seir
 		VkSurfaceKHR _surface = VK_NULL_HANDLE;
 		VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
 		VkSurfaceFormatKHR _surfaceFormat{};
-		VkPresentModeKHR _presentMode{};
+		VkPresentModeKHR _presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		uint32_t _graphicsQueueFamily = 0;
 		uint32_t _presentQueueFamily = 0;
 		VkDevice _device = VK_NULL_HANDLE;
 		VkQueue _graphicsQueue = VK_NULL_HANDLE;
 		VkQueue _presentQueue = VK_NULL_HANDLE;
-		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
-		VkExtent2D _swapchainExtent{};
-		std::vector<VkImage> _swapchainImages;
-		std::vector<VkImageView> _swapchainImageViews;
 		VkShaderModule _vertexShader = VK_NULL_HANDLE;
 		VkShaderModule _fragmentShader = VK_NULL_HANDLE;
-		VkRenderPass _renderPass = VK_NULL_HANDLE;
-		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline _pipeline = VK_NULL_HANDLE;
-		std::vector<VkFramebuffer> _swapchainFramebuffers;
 		VkCommandPool _commandPool = VK_NULL_HANDLE;
-		std::vector<VkCommandBuffer> _commandBuffers;
-		std::vector<VkFence> _swapchainImageFences;
-
-		struct FrameSync
-		{
-			struct Item
-			{
-				VkSemaphore _imageAvailableSemaphore = VK_NULL_HANDLE;
-				VkSemaphore _renderFinishedSemaphore = VK_NULL_HANDLE;
-				VkFence _fence = VK_NULL_HANDLE;
-			};
-
-			std::array<Item, 2> _items;
-			size_t _index = 0;
-
-			void createObjects(VkDevice);
-			void destroyObjects(VkDevice) noexcept;
-			Item nextFrameObjects(VkDevice);
-		};
-
-		FrameSync _frameSync;
+		VulkanFrameSync _frameSync;
+		VulkanSwapchain _swapchain;
 
 		VulkanContext(const SharedPtr<Window>& window) noexcept
 			: _window{ window } {}
@@ -78,17 +99,8 @@ namespace seir
 		void createSurface(const Window&);
 		void selectPhysicalDevice();
 		void createDevice();
-		void createSwapchain(const Window&);
-		void createSwapchainImageViews();
-		VkShaderModule loadShader(const uint32_t* data, size_t size);
-		void createRenderPass();
-		void createPipelineLayout();
-		void createPipeline();
-		void createFramebuffers();
 		void createCommandPool();
-		void createCommandBuffers();
-		void createSwapchainObjects();
-		void destroySwapchainObjects();
+		VkShaderModule loadShader(const uint32_t* data, size_t size);
 
 	private:
 		const SharedPtr<Window> _window;
