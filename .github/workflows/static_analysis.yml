@@ -27,6 +27,7 @@ jobs:
             -I libs/base/include \
             -I libs/data/include \
             -I libs/image/include \
+            -I libs/math/include \
             -I libs/renderer/include \
             -I libs/u8main/include \
             --template="({file}:{line}) ({severity}/{id}) {message}" .
