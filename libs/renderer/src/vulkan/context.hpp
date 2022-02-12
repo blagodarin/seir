@@ -5,7 +5,12 @@
 #include <seir_base/shared_ptr.hpp>
 
 #include <array>
+#include <cassert>
 #include <vector>
+
+#ifndef NDEBUG
+#	include <string>
+#endif
 
 #include "vulkan.hpp"
 
@@ -14,6 +19,37 @@ namespace seir
 	struct Size2D;
 	class VulkanContext;
 	class Window;
+	struct WindowDescriptor;
+
+	struct VulkanError
+	{
+#ifndef NDEBUG
+		const std::string_view _function;
+		const std::string _message;
+		VulkanError(std::string_view function, std::string&& message) noexcept
+			: _function{ function.substr(0, function.find('(')) }, _message{ std::move(message) } {}
+		VulkanError(std::string_view function, VkResult status)
+			: VulkanError(function, std::to_string(status)) {}
+#endif
+	};
+
+#ifndef NDEBUG
+#	define SEIR_VK_THROW(call, message) \
+		throw seir::VulkanError(call, message)
+#else
+#	define SEIR_VK_THROW(call, message) \
+		throw seir::VulkanError()
+#endif
+
+#define SEIR_VK(call) \
+	do \
+	{ \
+		if (const auto status = (call); status != VK_SUCCESS) \
+		{ \
+			assert(!#call); \
+			SEIR_VK_THROW(#call, std::to_string(status)); \
+		} \
+	} while (false)
 
 	class VulkanFrameSync
 	{
@@ -81,28 +117,20 @@ namespace seir
 		VkShaderModule _vertexShader = VK_NULL_HANDLE;
 		VkShaderModule _fragmentShader = VK_NULL_HANDLE;
 		VkCommandPool _commandPool = VK_NULL_HANDLE;
-		VulkanFrameSync _frameSync;
-		VulkanSwapchain _swapchain;
 
-		VulkanContext(const SharedPtr<Window>& window) noexcept
-			: _window{ window } {}
 		~VulkanContext() noexcept;
 
-		bool initialize();
-		void draw();
+		void create(const WindowDescriptor&);
 
 	private:
 		void createInstance();
 #ifndef NDEBUG
 		void createDebugUtilsMessenger();
 #endif
-		void createSurface(const Window&);
+		void createSurface(const WindowDescriptor&);
 		void selectPhysicalDevice();
 		void createDevice();
 		void createCommandPool();
 		VkShaderModule loadShader(const uint32_t* data, size_t size);
-
-	private:
-		const SharedPtr<Window> _window;
 	};
 }

@@ -12,6 +12,7 @@ namespace seir
 {
 	class App;
 
+	//
 	struct Size2D
 	{
 		int _width = 0;
@@ -22,18 +23,18 @@ namespace seir
 	};
 
 	//
+	struct WindowDescriptor
+	{
+		void* _app = nullptr;
+		intptr_t _window = 0;
+		constexpr WindowDescriptor(void* app, intptr_t window) noexcept
+			: _app{ app }, _window{ window } {}
+	};
+
+	//
 	class Window : public ReferenceCounter
 	{
 	public:
-		//
-		struct Descriptor
-		{
-			void* _app = nullptr;
-			intptr_t _window = 0;
-			constexpr Descriptor(void* app, intptr_t window) noexcept
-				: _app{ app }, _window{ window } {}
-		};
-
 		//
 		[[nodiscard]] static UniquePtr<Window> create(const SharedPtr<App>&, const std::string& title);
 
@@ -41,7 +42,7 @@ namespace seir
 		virtual void close() noexcept = 0;
 
 		//
-		[[nodiscard]] virtual Descriptor descriptor() const noexcept = 0;
+		[[nodiscard]] virtual WindowDescriptor descriptor() const noexcept = 0;
 
 		//
 		virtual void show() noexcept = 0;
