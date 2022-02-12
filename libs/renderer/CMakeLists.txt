@@ -14,6 +14,7 @@ elseif(SEIR_RENDERER STREQUAL "Vulkan")
 		src/vulkan/context.cpp
 		src/vulkan/context.hpp
 		src/vulkan/renderer.cpp
+		src/vulkan/renderer.hpp
 		src/vulkan/vulkan.hpp
 		)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

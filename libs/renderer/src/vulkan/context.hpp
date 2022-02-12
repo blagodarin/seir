@@ -2,6 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma once
+
 #include <seir_base/shared_ptr.hpp>
 
 #include <array>
