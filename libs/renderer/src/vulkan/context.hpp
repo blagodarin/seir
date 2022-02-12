@@ -2,9 +2,12 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "vulkan.hpp"
+#include <seir_base/shared_ptr.hpp>
 
+#include <array>
 #include <vector>
+
+#include "vulkan.hpp"
 
 namespace seir
 {
@@ -39,12 +42,32 @@ namespace seir
 		std::vector<VkFramebuffer> _swapchainFramebuffers;
 		VkCommandPool _commandPool = VK_NULL_HANDLE;
 		std::vector<VkCommandBuffer> _commandBuffers;
-		VkSemaphore _imageAvailableSemaphore = VK_NULL_HANDLE;
-		VkSemaphore _renderFinishedSemaphore = VK_NULL_HANDLE;
+		std::vector<VkFence> _swapchainImageFences;
 
+		struct FrameSync
+		{
+			struct Item
+			{
+				VkSemaphore _imageAvailableSemaphore = VK_NULL_HANDLE;
+				VkSemaphore _renderFinishedSemaphore = VK_NULL_HANDLE;
+				VkFence _fence = VK_NULL_HANDLE;
+			};
+
+			std::array<Item, 2> _items;
+			size_t _index = 0;
+
+			void createObjects(VkDevice);
+			void destroyObjects(VkDevice) noexcept;
+			Item nextFrameObjects(VkDevice);
+		};
+
+		FrameSync _frameSync;
+
+		VulkanContext(const SharedPtr<Window>& window) noexcept
+			: _window{ window } {}
 		~VulkanContext() noexcept;
 
-		bool initialize(const Window&);
+		bool initialize();
 		void draw();
 
 	private:
@@ -64,6 +87,10 @@ namespace seir
 		void createFramebuffers();
 		void createCommandPool();
 		void createCommandBuffers();
-		void createSemaphores();
+		void createSwapchainObjects();
+		void destroySwapchainObjects();
+
+	private:
+		const SharedPtr<Window> _window;
 	};
 }

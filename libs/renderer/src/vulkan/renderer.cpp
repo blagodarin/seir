@@ -13,11 +13,11 @@ namespace
 	{
 	public:
 		explicit VulkanRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
-			: _window{ window } {}
+			: _window{ window }, _context{ _window } {}
 
 		bool initialize()
 		{
-			return _context.initialize(*_window);
+			return _context.initialize();
 		}
 
 		void draw() override

@@ -26,6 +26,8 @@ namespace
 		const std::string _message;
 		VulkanError(std::string_view function, std::string&& message) noexcept
 			: _function{ function.substr(0, function.find('(')) }, _message{ std::move(message) } {}
+		VulkanError(std::string_view function, VkResult status)
+			: VulkanError(function, std::to_string(status)) {}
 #endif
 	};
 
@@ -154,22 +156,49 @@ namespace
 
 namespace seir
 {
+	void VulkanContext::FrameSync::createObjects(VkDevice device)
+	{
+		const VkSemaphoreCreateInfo semaphoreInfo{
+			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		};
+		const VkFenceCreateInfo fenceInfo{
+			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+			.flags = VK_FENCE_CREATE_SIGNALED_BIT,
+		};
+		for (auto& item : _items)
+		{
+			SEIR_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &item._imageAvailableSemaphore));
+			SEIR_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &item._renderFinishedSemaphore));
+			SEIR_VK(vkCreateFence(device, &fenceInfo, nullptr, &item._fence));
+		}
+	}
+
+	void VulkanContext::FrameSync::destroyObjects(VkDevice device) noexcept
+	{
+		for (const auto& item : _items)
+		{
+			vkDestroySemaphore(device, item._imageAvailableSemaphore, nullptr);
+			vkDestroySemaphore(device, item._renderFinishedSemaphore, nullptr);
+			vkDestroyFence(device, item._fence, nullptr);
+		}
+	}
+
+	VulkanContext::FrameSync::Item VulkanContext::FrameSync::nextFrameObjects(VkDevice device)
+	{
+		SEIR_VK(vkWaitForFences(device, 1, &_items[_index]._fence, VK_TRUE, UINT64_MAX));
+		const auto index = _index;
+		_index = (index + 1) % _items.size();
+		return _items[index];
+	}
+
 	VulkanContext::~VulkanContext() noexcept
 	{
-		vkDestroySemaphore(_device, _renderFinishedSemaphore, nullptr);
-		vkDestroySemaphore(_device, _imageAvailableSemaphore, nullptr);
-		vkFreeCommandBuffers(_device, _commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
+		vkDeviceWaitIdle(_device);
+		destroySwapchainObjects();
+		_frameSync.destroyObjects(_device);
 		vkDestroyCommandPool(_device, _commandPool, nullptr);
-		for (auto framebuffer : _swapchainFramebuffers)
-			vkDestroyFramebuffer(_device, framebuffer, nullptr);
-		vkDestroyPipeline(_device, _pipeline, nullptr);
-		vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
-		vkDestroyRenderPass(_device, _renderPass, nullptr);
 		vkDestroyShaderModule(_device, _fragmentShader, nullptr);
 		vkDestroyShaderModule(_device, _vertexShader, nullptr);
-		for (auto imageView : _swapchainImageViews)
-			vkDestroyImageView(_device, imageView, nullptr);
-		vkDestroySwapchainKHR(_device, _swapchain, nullptr);
 		vkDestroyDevice(_device, nullptr);
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
 #ifndef NDEBUG
@@ -179,7 +208,7 @@ namespace seir
 		vkDestroyInstance(_instance, nullptr);
 	}
 
-	bool VulkanContext::initialize(const Window& window)
+	bool VulkanContext::initialize()
 	{
 		try
 		{
@@ -191,20 +220,14 @@ namespace seir
 #ifndef NDEBUG
 			createDebugUtilsMessenger();
 #endif
-			createSurface(window);
+			createSurface(*_window);
 			selectPhysicalDevice();
 			createDevice();
-			createSwapchain(window);
-			createSwapchainImageViews();
 			_vertexShader = loadShader(kVertexShader, sizeof kVertexShader);
 			_fragmentShader = loadShader(kFragmentShader, sizeof kFragmentShader);
-			createRenderPass();
-			createPipelineLayout();
-			createPipeline();
-			createFramebuffers();
 			createCommandPool();
-			createCommandBuffers();
-			createSemaphores();
+			_frameSync.createObjects(_device);
+			createSwapchainObjects();
 			return true;
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
@@ -218,11 +241,23 @@ namespace seir
 
 	void VulkanContext::draw()
 	{
+		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.nextFrameObjects(_device);
 		uint32_t index = 0;
-		SEIR_VK(vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _imageAvailableSemaphore, VK_NULL_HANDLE, &index));
-		const VkSemaphore waitSemaphores[]{ _imageAvailableSemaphore };
+		if (const auto status = vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index); status == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			vkDeviceWaitIdle(_device);
+			destroySwapchainObjects();
+			createSwapchainObjects();
+			return;
+		}
+		else if (status != VK_SUCCESS && status != VK_SUBOPTIMAL_KHR)
+			SEIR_VK_THROW("vkAcquireNextImageKHR", status);
+		if (_swapchainImageFences[index])
+			SEIR_VK(vkWaitForFences(_device, 1, &_swapchainImageFences[index], VK_TRUE, UINT64_MAX));
+		_swapchainImageFences[index] = fence;
+		const VkSemaphore waitSemaphores[]{ imageAvailableSemaphore };
 		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		const VkSemaphore signalSemaphores[]{ _renderFinishedSemaphore };
+		const VkSemaphore signalSemaphores[]{ renderFinishedSemaphore };
 		const VkSubmitInfo submitInfo{
 			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 			.waitSemaphoreCount = 1,
@@ -233,7 +268,8 @@ namespace seir
 			.signalSemaphoreCount = 1,
 			.pSignalSemaphores = signalSemaphores,
 		};
-		SEIR_VK(vkQueueSubmit(_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+		SEIR_VK(vkResetFences(_device, 1, &fence));
+		SEIR_VK(vkQueueSubmit(_graphicsQueue, 1, &submitInfo, fence));
 		const VkSwapchainKHR swapchains[]{ _swapchain };
 		const VkPresentInfoKHR presentInfo{
 			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -244,7 +280,15 @@ namespace seir
 			.pImageIndices = &index,
 			.pResults = nullptr,
 		};
-		SEIR_VK(vkQueuePresentKHR(_presentQueue, &presentInfo));
+		if (const auto status = vkQueuePresentKHR(_presentQueue, &presentInfo); status == VK_ERROR_OUT_OF_DATE_KHR || status == VK_SUBOPTIMAL_KHR)
+		{
+			vkDeviceWaitIdle(_device);
+			destroySwapchainObjects();
+			createSwapchainObjects();
+			return;
+		}
+		else if (status != VK_SUCCESS)
+			SEIR_VK_THROW("vkQueuePresentKHR", status);
 		SEIR_VK(vkQueueWaitIdle(_presentQueue));
 	}
 
@@ -375,7 +419,7 @@ namespace seir
 
 	void VulkanContext::createDevice()
 	{
-		seir::StaticVector<VkDeviceQueueCreateInfo, 2> queues;
+		StaticVector<VkDeviceQueueCreateInfo, 2> queues;
 		const float queuePriority = 1;
 		queues.push_back({ .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 			.queueFamilyIndex = _graphicsQueueFamily,
@@ -740,12 +784,28 @@ namespace seir
 		}
 	}
 
-	void VulkanContext::createSemaphores()
+	void VulkanContext::createSwapchainObjects()
 	{
-		const VkSemaphoreCreateInfo info{
-			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-		};
-		SEIR_VK(vkCreateSemaphore(_device, &info, nullptr, &_imageAvailableSemaphore));
-		SEIR_VK(vkCreateSemaphore(_device, &info, nullptr, &_renderFinishedSemaphore));
+		createSwapchain(*_window);
+		createSwapchainImageViews();
+		createRenderPass();
+		createPipelineLayout();
+		createPipeline();
+		createFramebuffers();
+		createCommandBuffers();
+		_swapchainImageFences.assign(_swapchainImages.size(), VK_NULL_HANDLE);
+	}
+
+	void VulkanContext::destroySwapchainObjects()
+	{
+		vkFreeCommandBuffers(_device, _commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
+		for (auto framebuffer : _swapchainFramebuffers)
+			vkDestroyFramebuffer(_device, framebuffer, nullptr);
+		vkDestroyPipeline(_device, _pipeline, nullptr);
+		vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
+		vkDestroyRenderPass(_device, _renderPass, nullptr);
+		for (auto imageView : _swapchainImageViews)
+			vkDestroyImageView(_device, imageView, nullptr);
+		vkDestroySwapchainKHR(_device, _swapchain, nullptr);
 	}
 }
