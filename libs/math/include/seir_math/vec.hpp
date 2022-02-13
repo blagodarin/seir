@@ -129,4 +129,5 @@ namespace seir
 	[[nodiscard]] constexpr Vec4 operator/(float a, const Vec4& b) noexcept { return { a / b.x, a / b.y, a / b.z, a / b.w }; }
 
 	[[nodiscard]] constexpr auto dotProduct(const Vec3& a, const Vec3& b) noexcept { return a.x * b.x + a.y * b.y + a.z * b.z; }
+	[[nodiscard]] Vec3 normalize(const Vec3&) noexcept;
 }

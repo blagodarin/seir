@@ -79,3 +79,10 @@ TEST_CASE("dotProduct")
 {
 	CHECK(seir::dotProduct({ 1.f, 10.f, 100.f }, { 2.f, 3.f, 4.f }) == 432.f);
 }
+
+TEST_CASE("normalize")
+{
+	const seir::Vec3 v{ 1, 4, 8 };
+	const auto n = seir::normalize(v);
+	CHECK(n == v / 9);
+}
