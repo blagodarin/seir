@@ -68,6 +68,7 @@ namespace seir
 		if (_swapchain._swapchainImageFences[index])
 			SEIR_VK(vkWaitForFences(_context._device, 1, &_swapchain._swapchainImageFences[index], VK_TRUE, UINT64_MAX));
 		_swapchain._swapchainImageFences[index] = fence;
+		_swapchain.updateUniformBuffer(_context._device, index);
 		const VkSemaphore waitSemaphores[]{ imageAvailableSemaphore };
 		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		const VkSemaphore signalSemaphores[]{ renderFinishedSemaphore };

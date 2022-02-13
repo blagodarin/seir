@@ -72,33 +72,6 @@ namespace seir
 		std::array<Item, 2> _items;
 	};
 
-	class VulkanSwapchain
-	{
-	public:
-		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
-		VkExtent2D _swapchainExtent{};
-		std::vector<VkImage> _swapchainImages;
-		std::vector<VkImageView> _swapchainImageViews;
-		VkRenderPass _renderPass = VK_NULL_HANDLE;
-		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline _pipeline = VK_NULL_HANDLE;
-		std::vector<VkFramebuffer> _swapchainFramebuffers;
-		std::vector<VkCommandBuffer> _commandBuffers;
-		std::vector<VkFence> _swapchainImageFences;
-
-		void create(const VulkanContext&, const Size2D& windowSize);
-		void destroy(VkDevice, VkCommandPool) noexcept;
-
-	private:
-		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
-		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
-		void createRenderPass(VkDevice, const VkSurfaceFormatKHR&);
-		void createPipelineLayout(VkDevice);
-		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
-		void createFramebuffers(VkDevice);
-		void createCommandBuffers(VkDevice, VkCommandPool, VkBuffer vertexBuffer, VkBuffer indexBuffer);
-	};
-
 	class VulkanBuffer
 	{
 	public:
@@ -108,6 +81,42 @@ namespace seir
 		void create(const VulkanContext&, VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags);
 		void destroy(VkDevice) noexcept;
 		void write(VkDevice, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+	};
+
+	class VulkanSwapchain
+	{
+	public:
+		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
+		VkExtent2D _swapchainExtent{};
+		std::vector<VkImage> _swapchainImages;
+		std::vector<VkImageView> _swapchainImageViews;
+		VkRenderPass _renderPass = VK_NULL_HANDLE;
+		VkDescriptorSetLayout _descriptorSetLayout = VK_NULL_HANDLE;
+		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
+		VkPipeline _pipeline = VK_NULL_HANDLE;
+		std::vector<VkFramebuffer> _swapchainFramebuffers;
+		std::vector<VkCommandBuffer> _commandBuffers;
+		std::vector<VulkanBuffer> _uniformBuffers;
+		VkDescriptorPool _descriptorPool = VK_NULL_HANDLE;
+		std::vector<VkDescriptorSet> _descriptorSets;
+		std::vector<VkFence> _swapchainImageFences;
+
+		void create(const VulkanContext&, const Size2D& windowSize);
+		void destroy(VkDevice, VkCommandPool) noexcept;
+		void updateUniformBuffer(VkDevice, uint32_t imageIndex);
+
+	private:
+		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
+		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
+		void createRenderPass(VkDevice, const VkSurfaceFormatKHR&);
+		void createDescriptorSetLayout(VkDevice);
+		void createPipelineLayout(VkDevice);
+		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
+		void createFramebuffers(VkDevice);
+		void createUniformBuffers(const VulkanContext&);
+		void createDescriptorPool(VkDevice);
+		void createDescriptorSets(VkDevice);
+		void createCommandBuffers(VkDevice, VkCommandPool, VkBuffer vertexBuffer, VkBuffer indexBuffer);
 	};
 
 	class VulkanContext
