@@ -130,9 +130,12 @@ namespace
 
 	constexpr std::array kVertexData{
 		Vertex{ .position{ -.75f, -.75f }, .color{ 1.f, 0.f, 0.f } },
-		Vertex{ .position{ .75f, .75f }, .color{ 0.f, 1.f, 0.f } },
-		Vertex{ .position{ -.75f, .75f }, .color{ 0.f, 0.f, 1.f } },
+		Vertex{ .position{ .75f, -.75f }, .color{ 0.f, 1.f, 0.f } },
+		Vertex{ .position{ -.75f, .75f }, .color{ 0.f, 1.f, 0.f } },
+		Vertex{ .position{ .75f, .75f }, .color{ 0.f, 0.f, 1.f } },
 	};
+
+	constexpr std::array<uint16_t, 4> kIndexData{ 0, 1, 2, 3 };
 
 	constexpr VkVertexInputBindingDescription kVertexBinding{
 		.binding = 0,
@@ -204,7 +207,7 @@ namespace seir
 		createPipelineLayout(context._device);
 		createPipeline(context._device, context._vertexShader, context._fragmentShader);
 		createFramebuffers(context._device);
-		createCommandBuffers(context._device, context._commandPool, context._vertexBuffer);
+		createCommandBuffers(context._device, context._commandPool, context._vertexBuffer._buffer, context._indexBuffer._buffer);
 		_swapchainImageFences.assign(_swapchainImages.size(), VK_NULL_HANDLE);
 	}
 
@@ -392,7 +395,7 @@ namespace seir
 
 		const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-			.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
 			.primitiveRestartEnable = VK_FALSE,
 		};
 
@@ -503,7 +506,7 @@ namespace seir
 		}
 	}
 
-	void VulkanSwapchain::createCommandBuffers(VkDevice device, VkCommandPool commandPool, VkBuffer vertexBuffer)
+	void VulkanSwapchain::createCommandBuffers(VkDevice device, VkCommandPool commandPool, VkBuffer vertexBuffer, VkBuffer indexBuffer)
 	{
 		_commandBuffers.assign(_swapchainFramebuffers.size(), VK_NULL_HANDLE);
 		const VkCommandBufferAllocateInfo allocateInfo{
@@ -542,16 +545,52 @@ namespace seir
 			VkBuffer vertexBuffers[]{ vertexBuffer };
 			VkDeviceSize offsets[]{ 0 };
 			vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdDraw(_commandBuffers[i], static_cast<uint32_t>(kVertexData.size()), 1, 0, 0);
+			vkCmdBindIndexBuffer(_commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(kIndexData.size()), 1, 0, 0, 0);
 			vkCmdEndRenderPass(_commandBuffers[i]);
 			SEIR_VK(vkEndCommandBuffer(_commandBuffers[i]));
 		}
 	}
 
+	void VulkanBuffer::create(const VulkanContext& context, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+	{
+		assert(_buffer == VK_NULL_HANDLE);
+		const VkBufferCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+			.size = size,
+			.usage = usage,
+			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		};
+		SEIR_VK(vkCreateBuffer(context._device, &createInfo, nullptr, &_buffer));
+		VkMemoryRequirements memoryRequirements{};
+		vkGetBufferMemoryRequirements(context._device, _buffer, &memoryRequirements);
+		const VkMemoryAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+			.allocationSize = memoryRequirements.size,
+			.memoryTypeIndex = context.findMemoryType(memoryRequirements.memoryTypeBits, properties)
+		};
+		SEIR_VK(vkAllocateMemory(context._device, &allocateInfo, nullptr, &_memory));
+		SEIR_VK(vkBindBufferMemory(context._device, _buffer, _memory, 0));
+	}
+
+	void VulkanBuffer::destroy(VkDevice device) noexcept
+	{
+		vkDestroyBuffer(device, _buffer, nullptr);
+		vkFreeMemory(device, _memory, nullptr);
+	}
+
+	void VulkanBuffer::write(VkDevice device, const void* data, VkDeviceSize size, VkDeviceSize offset)
+	{
+		void* mapped = nullptr;
+		SEIR_VK(vkMapMemory(device, _memory, offset, size, 0, &mapped));
+		std::memcpy(mapped, data, size);
+		vkUnmapMemory(device, _memory);
+	}
+
 	VulkanContext::~VulkanContext() noexcept
 	{
-		vkDestroyBuffer(_device, _vertexBuffer, nullptr);
-		vkFreeMemory(_device, _vertexBufferMemory, nullptr);
+		_indexBuffer.destroy(_device);
+		_vertexBuffer.destroy(_device);
 		vkDestroyShaderModule(_device, _fragmentShader, nullptr);
 		vkDestroyShaderModule(_device, _vertexShader, nullptr);
 		vkDestroyCommandPool(_device, _commandPool, nullptr);
@@ -580,6 +619,7 @@ namespace seir
 		_vertexShader = loadShader(kVertexShader, sizeof kVertexShader);
 		_fragmentShader = loadShader(kFragmentShader, sizeof kFragmentShader);
 		createVertexBuffer();
+		createIndexBuffer();
 	}
 
 	void VulkanContext::createInstance()
@@ -763,7 +803,7 @@ namespace seir
 		return shaderModule;
 	}
 
-	uint32_t VulkanContext::findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties)
+	uint32_t VulkanContext::findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const
 	{
 		VkPhysicalDeviceMemoryProperties memoryProperties{};
 		vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &memoryProperties);
@@ -775,25 +815,55 @@ namespace seir
 
 	void VulkanContext::createVertexBuffer()
 	{
-		constexpr VkBufferCreateInfo createInfo{
-			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-			.size = kVertexData.size() * sizeof(Vertex),
-			.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		const auto size = kVertexData.size() * sizeof(Vertex);
+		VulkanBuffer stagingBuffer; // TODO: Fix resource leak.
+		stagingBuffer.create(*this, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		stagingBuffer.write(_device, kVertexData.data(), size);
+		_vertexBuffer.create(*this, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		copyBuffer(_vertexBuffer._buffer, stagingBuffer._buffer, size);
+		stagingBuffer.destroy(_device);
+	}
+
+	void VulkanContext::createIndexBuffer()
+	{
+		const auto size = kIndexData.size() * sizeof(uint16_t);
+		VulkanBuffer stagingBuffer; // TODO: Fix resource leak.
+		stagingBuffer.create(*this, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		stagingBuffer.write(_device, kIndexData.data(), size);
+		_indexBuffer.create(*this, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		copyBuffer(_indexBuffer._buffer, stagingBuffer._buffer, size);
+		stagingBuffer.destroy(_device);
+	}
+
+	void VulkanContext::copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize size)
+	{
+		const VkCommandBufferAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.commandPool = _commandPool,
+			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.commandBufferCount = 1,
 		};
-		SEIR_VK(vkCreateBuffer(_device, &createInfo, nullptr, &_vertexBuffer));
-		VkMemoryRequirements memoryRequirements{};
-		vkGetBufferMemoryRequirements(_device, _vertexBuffer, &memoryRequirements);
-		const VkMemoryAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = memoryRequirements.size,
-			.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+		VkCommandBuffer commandBuffer = VK_NULL_HANDLE; // TODO: Fix resource leak.
+		SEIR_VK(vkAllocateCommandBuffers(_device, &allocateInfo, &commandBuffer));
+		const VkCommandBufferBeginInfo beginInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 		};
-		SEIR_VK(vkAllocateMemory(_device, &allocateInfo, nullptr, &_vertexBufferMemory));
-		SEIR_VK(vkBindBufferMemory(_device, _vertexBuffer, _vertexBufferMemory, 0));
-		void* data = nullptr;
-		SEIR_VK(vkMapMemory(_device, _vertexBufferMemory, 0, createInfo.size, 0, &data));
-		std::memcpy(data, kVertexData.data(), createInfo.size);
-		vkUnmapMemory(_device, _vertexBufferMemory);
+		SEIR_VK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+		const VkBufferCopy region{
+			.srcOffset = 0,
+			.dstOffset = 0,
+			.size = size,
+		};
+		vkCmdCopyBuffer(commandBuffer, src, dst, 1, &region);
+		SEIR_VK(vkEndCommandBuffer(commandBuffer));
+		VkSubmitInfo submitInfo{
+			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			.commandBufferCount = 1,
+			.pCommandBuffers = &commandBuffer,
+		};
+		SEIR_VK(vkQueueSubmit(_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+		SEIR_VK(vkQueueWaitIdle(_graphicsQueue));
+		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
 	}
 }

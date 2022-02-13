@@ -96,7 +96,18 @@ namespace seir
 		void createPipelineLayout(VkDevice);
 		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
 		void createFramebuffers(VkDevice);
-		void createCommandBuffers(VkDevice, VkCommandPool, VkBuffer vertexBuffer);
+		void createCommandBuffers(VkDevice, VkCommandPool, VkBuffer vertexBuffer, VkBuffer indexBuffer);
+	};
+
+	class VulkanBuffer
+	{
+	public:
+		VkBuffer _buffer = VK_NULL_HANDLE;
+		VkDeviceMemory _memory = VK_NULL_HANDLE;
+
+		void create(const VulkanContext&, VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags);
+		void destroy(VkDevice) noexcept;
+		void write(VkDevice, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
 	};
 
 	class VulkanContext
@@ -116,15 +127,16 @@ namespace seir
 		VkDevice _device = VK_NULL_HANDLE;
 		VkQueue _graphicsQueue = VK_NULL_HANDLE;
 		VkQueue _presentQueue = VK_NULL_HANDLE;
+		VkCommandPool _commandPool = VK_NULL_HANDLE;
 		VkShaderModule _vertexShader = VK_NULL_HANDLE;
 		VkShaderModule _fragmentShader = VK_NULL_HANDLE;
-		VkBuffer _vertexBuffer = VK_NULL_HANDLE;
-		VkDeviceMemory _vertexBufferMemory = VK_NULL_HANDLE;
-		VkCommandPool _commandPool = VK_NULL_HANDLE;
+		VulkanBuffer _vertexBuffer;
+		VulkanBuffer _indexBuffer;
 
 		~VulkanContext() noexcept;
 
 		void create(const WindowDescriptor&);
+		uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const;
 
 	private:
 		void createInstance();
@@ -136,7 +148,8 @@ namespace seir
 		void createDevice();
 		void createCommandPool();
 		VkShaderModule loadShader(const uint32_t* data, size_t size);
-		uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties);
 		void createVertexBuffer();
+		void createIndexBuffer();
+		void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize);
 	};
 }
