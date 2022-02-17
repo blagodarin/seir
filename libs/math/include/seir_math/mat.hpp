@@ -21,12 +21,28 @@ namespace seir
 			: x{ xx, xy, xz, xw }, y{ yx, yy, yz, yw }, z{ zx, zy, zz, zw }, t{ tx, ty, tz, tw } {}
 		explicit Mat4(const Euler&) noexcept;
 
+		//
 		[[nodiscard]] static inline Mat4 camera(const Vec3& position, const Euler& orientation) noexcept;
+
+		//
 		[[nodiscard]] static constexpr Mat4 identity() noexcept;
-		[[nodiscard]] static Mat4 perspective(float width, float height, float verticalFov, float nearPlane, float farPlane) noexcept;
-		[[nodiscard]] static constexpr Mat4 projection2D(float width, float height, float nearPlane = -1.f, float farPlane = 1.f) noexcept;
+
+		// Creates an orthographic projection matrix that maps:
+		// - X from [0, width] to [-1, 1];
+		// - Y from [0, height] to [-1, 1];
+		// - Z from [0, depth] to [1, 0].
+		[[nodiscard]] static constexpr Mat4 projection2D(float width, float height, float depth = 1.f) noexcept;
+
+		// Creates a perspective projection matrix.
+		[[nodiscard]] static Mat4 projection3D(float aspectRatio, float verticalFov, float nearPlane) noexcept;
+
+		//
 		[[nodiscard]] static Mat4 rotation(float degrees, const Vec3& axis) noexcept;
+
+		//
 		[[nodiscard]] static constexpr Mat4 scaling(float) noexcept;
+
+		//
 		[[nodiscard]] static constexpr Mat4 translation(const Vec3&) noexcept;
 	};
 
@@ -59,18 +75,15 @@ constexpr seir::Mat4 seir::Mat4::identity() noexcept
 	};
 }
 
-constexpr seir::Mat4 seir::Mat4::projection2D(float width, float height, float nearPlane, float farPlane) noexcept
+constexpr seir::Mat4 seir::Mat4::projection2D(float width, float height, float depth) noexcept
 {
 	const auto xx = 2 / width;
-	const auto yy = -2 / height;
-	const auto zz = -2 / (farPlane - nearPlane);
-	const auto tx = -1.f;
-	const auto ty = 1.f;
-	const auto tz = (farPlane + nearPlane) / (farPlane - nearPlane);
+	const auto yy = 2 / height;
+	const auto zz = -1 / depth;
 	return {
-		xx, 0, 0, tx,
-		0, yy, 0, ty,
-		0, 0, zz, tz,
+		xx, 0, 0, -1,
+		0, yy, 0, -1,
+		0, 0, zz, 1,
 		0, 0, 0, 1
 	};
 }

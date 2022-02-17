@@ -23,10 +23,10 @@ TEST_CASE("Mat4(float...)")
 		31, 32, 33, 34,
 		41, 42, 43, 44
 	};
-	CHECK(m.x == seir::Vec4(11.f, 21.f, 31.f, 41.f));
-	CHECK(m.y == seir::Vec4(12.f, 22.f, 32.f, 42.f));
-	CHECK(m.z == seir::Vec4(13.f, 23.f, 33.f, 43.f));
-	CHECK(m.t == seir::Vec4(14.f, 24.f, 34.f, 44.f));
+	CHECK(m.x == seir::Vec4(11, 21, 31, 41));
+	CHECK(m.y == seir::Vec4(12, 22, 32, 42));
+	CHECK(m.z == seir::Vec4(13, 23, 33, 43));
+	CHECK(m.t == seir::Vec4(14, 24, 34, 44));
 }
 
 TEST_CASE("Mat4(Euler)")
@@ -73,111 +73,124 @@ TEST_CASE("Mat4::camera")
 	CHECK(actual.t.w == doctest::Approx{ expected.t.w }.epsilon(3e-5));
 }
 
-TEST_CASE("Mat4::perspective")
-{
-	using seir::Vec3;
-	const auto m = Mat4::perspective(1, 1, 90, 1, 2);
-	{
-		const auto v = m * Vec3{ -1, -1, -1 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
-	}
-	{
-		const auto v = m * Vec3{ -2, -2, -2 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
-	}
-	{
-		const auto v = m * Vec3{ -1, 1, -1 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
-	}
-	{
-		const auto v = m * Vec3{ -2, 2, -2 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
-	}
-	{
-		const auto v = m * Vec3{ 1, -1, -1 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
-	}
-	{
-		const auto v = m * Vec3{ 2, -2, -2 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
-	}
-	{
-		const auto v = m * Vec3{ 1, 1, -1 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
-	}
-	{
-		const auto v = m * Vec3{ 2, 2, -2 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
-	}
-}
-
 TEST_CASE("Mat4::projection2D")
 {
+	using doctest::Approx;
 	using seir::Vec3;
-	constexpr auto m = Mat4::projection2D(640, 480, -.25, .75);
+	constexpr auto m = Mat4::projection2D(640, 480, .75);
 	{
-		constexpr auto v = m * Vec3{ 0, 0, -.25 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
+		constexpr auto v = m * Vec3{ 0, 0, 0 };
+		CHECK(v.x == -1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == 1.f);
 	}
 	{
 		constexpr auto v = m * Vec3{ 0, 0, .75 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
+		CHECK(v.x == -1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == 0.f);
 	}
 	{
-		constexpr auto v = m * Vec3{ 640, 0, -.25 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
+		constexpr auto v = m * Vec3{ 640, 0, 0 };
+		CHECK(v.x == 1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == 1.f);
 	}
 	{
 		constexpr auto v = m * Vec3{ 640, 0, .75 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
+		CHECK(v.x == 1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == 0.f);
 	}
 	{
-		constexpr auto v = m * Vec3{ 0, 480, -.25 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
+		constexpr auto v = m * Vec3{ 0, 480, 0 };
+		CHECK(v.x == -1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == 1.f);
 	}
 	{
 		constexpr auto v = m * Vec3{ 0, 480, .75 };
-		CHECK(v.x == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
+		CHECK(v.x == -1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == 0.f);
 	}
 	{
-		constexpr auto v = m * Vec3{ 640, 480, -.25 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ 1.f }.epsilon(2e-5));
+		constexpr auto v = m * Vec3{ 640, 480, 0 };
+		CHECK(v.x == 1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == 1.f);
 	}
 	{
 		constexpr auto v = m * Vec3{ 640, 480, .75 };
-		CHECK(v.x == doctest::Approx{ 1.f }.epsilon(2e-5));
-		CHECK(v.y == doctest::Approx{ -1.f }.epsilon(2e-5));
-		CHECK(v.z == doctest::Approx{ -1.f }.epsilon(2e-5));
+		CHECK(v.x == 1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == 0.f);
+	}
+}
+
+TEST_CASE("Mat4::projection3D")
+{
+	using seir::Vec3;
+	const auto m = Mat4::projection3D(1, 90, 1);
+	{
+		const auto v = m * Vec3{ 0, 1, 0 };
+		CHECK(v.x == 0.f);
+		CHECK(v.y == 0.f);
+		CHECK(v.z == 1.f);
+	}
+	{
+		const auto v = m * Vec3{ -1, 1, 1 };
+		CHECK(v.x == -1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == 1.f);
+	}
+	{
+		const auto v = m * Vec3{ 1, 1, 1 };
+		CHECK(v.x == 1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == 1.f);
+	}
+	{
+		const auto v = m * Vec3{ -1, 1, -1 };
+		CHECK(v.x == -1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == 1.f);
+	}
+	{
+		const auto v = m * Vec3{ 1, 1, -1 };
+		CHECK(v.x == 1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == 1.f);
+	}
+	{
+		const auto v = m * Vec3{ 0, 2, 0 };
+		CHECK(v.x == 0.f);
+		CHECK(v.y == 0.f);
+		CHECK(v.z == .5f);
+	}
+	{
+		const auto v = m * Vec3{ -2, 2, 2 };
+		CHECK(v.x == -1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == .5f);
+	}
+	{
+		const auto v = m * Vec3{ 2, 2, 2 };
+		CHECK(v.x == 1.f);
+		CHECK(v.y == -1.f);
+		CHECK(v.z == .5f);
+	}
+	{
+		const auto v = m * Vec3{ -2, 2, -2 };
+		CHECK(v.x == -1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == .5f);
+	}
+	{
+		const auto v = m * Vec3{ 2, 2, -2 };
+		CHECK(v.x == 1.f);
+		CHECK(v.y == 1.f);
+		CHECK(v.z == .5f);
 	}
 }
 

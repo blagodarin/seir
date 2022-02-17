@@ -13,9 +13,10 @@ namespace seir
 {
 	Mat4::Mat4(const Euler& e) noexcept
 	{
-		const auto yaw = e._yaw / 180 * std::numbers::pi_v<float>;
-		const auto pitch = e._pitch / 180 * std::numbers::pi_v<float>;
-		const auto roll = e._roll / 180 * std::numbers::pi_v<float>;
+		constexpr auto toRadians = std::numbers::pi_v<float> / 180;
+		const auto yaw = e._yaw * toRadians;
+		const auto pitch = e._pitch * toRadians;
+		const auto roll = e._roll * toRadians;
 		const auto cy = std::cos(yaw);
 		const auto sy = std::sin(yaw);
 		const auto cp = std::cos(pitch);
@@ -28,20 +29,17 @@ namespace seir
 		t = { 0, 0, 0, 1 };
 	}
 
-	Mat4 Mat4::perspective(float width, float height, float verticalFov, float nearPlane, float farPlane) noexcept
+	Mat4 Mat4::projection3D(float aspectRatio, float verticalFov, float nearPlane) noexcept
 	{
-		const auto aspect = width / height;
 		const auto f = 1 / std::tan(verticalFov / 360 * std::numbers::pi_v<float>);
-		const auto xx = f / aspect;
-		const auto yy = f;
-		const auto zz = (nearPlane + farPlane) / (nearPlane - farPlane);
-		const auto tz = 2 * nearPlane * farPlane / (nearPlane - farPlane);
-		const auto zw = -1.f;
+		const auto xx = f / aspectRatio;
+		const auto yy = -f;
+		const auto tz = nearPlane;
 		return {
 			xx, 0, 0, 0,
-			0, yy, 0, 0,
-			0, 0, zz, tz,
-			0, 0, zw, 0
+			0, 0, yy, 0,
+			0, 0, 0, tz,
+			0, 1, 0, 0
 		};
 	}
 

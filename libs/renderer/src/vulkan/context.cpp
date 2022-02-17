@@ -132,7 +132,7 @@ namespace
 
 	constexpr std::array kVertexData{
 		Vertex{ .position{ -1.f, -1.f }, .color{ 1.f, 0.f, 0.f } },
-		Vertex{ .position{ 1.f, -1.f }, .color{ 0.f, 1.f, 0.f } },
+		Vertex{ .position{ 1.f, -1.f }, .color{ 1.f, 1.f, 1.f } },
 		Vertex{ .position{ -1.f, 1.f }, .color{ 0.f, 1.f, 0.f } },
 		Vertex{ .position{ 1.f, 1.f }, .color{ 0.f, 0.f, 1.f } },
 	};
@@ -261,8 +261,8 @@ namespace seir
 		const float time = std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(std::chrono::steady_clock::now() - startTime).count();
 		const UniformBufferObject ubo{
 			._model = Mat4::rotation(30 * time, { 0, 0, 1 }),
-			._view = Mat4::camera({ 2, 2, 2 }, { 45, -55, 0 }),
-			._projection = Mat4::perspective(static_cast<float>(_swapchainExtent.width), static_cast<float>(_swapchainExtent.height), 45, .1f, 10.f),
+			._view = Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
+			._projection = Mat4::projection3D(static_cast<float>(_swapchainExtent.width) / static_cast<float>(_swapchainExtent.height), 45, 1),
 		};
 		_uniformBuffers[imageIndex].write(device, &ubo, sizeof ubo);
 	}
@@ -476,7 +476,7 @@ namespace seir
 			.rasterizerDiscardEnable = VK_FALSE,
 			.polygonMode = VK_POLYGON_MODE_FILL,
 			.cullMode = VK_CULL_MODE_BACK_BIT,
-			.frontFace = VK_FRONT_FACE_CLOCKWISE,
+			.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
 			.depthBiasEnable = VK_FALSE,
 			.depthBiasConstantFactor = 0.f,
 			.depthBiasClamp = 0.f,
