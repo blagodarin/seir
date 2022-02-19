@@ -21,28 +21,31 @@ namespace seir
 			: x{ xx, xy, xz, xw }, y{ yx, yy, yz, yw }, z{ zx, zy, zz, zw }, t{ tx, ty, tz, tw } {}
 		explicit Mat4(const Euler&) noexcept;
 
-		//
+		// Creates a view matrix for the given position and orientation.
 		[[nodiscard]] static inline Mat4 camera(const Vec3& position, const Euler& orientation) noexcept;
 
-		//
+		// Creates an identity matrix.
 		[[nodiscard]] static constexpr Mat4 identity() noexcept;
 
 		// Creates an orthographic projection matrix that maps:
-		// - X from [0, width] to [-1, 1];
-		// - Y from [0, height] to [-1, 1];
-		// - Z from [0, depth] to [1, 0].
+		// - X in [0, width] to [-1, 1];
+		// - Y in [0, height] to [-1, 1];
+		// - Z in [0, depth] to [1, 0].
 		[[nodiscard]] static constexpr Mat4 projection2D(float width, float height, float depth = 1.f) noexcept;
 
-		// Creates a perspective projection matrix.
+		// Creates a perspective projection matrix that maps:
+		// - rightward X to [-1, 1];
+		// - upward Z to Y in [1, -1];
+		// - forward Y in [nearPlane, +inf) to Z in [1, 0].
 		[[nodiscard]] static Mat4 projection3D(float aspectRatio, float verticalFov, float nearPlane) noexcept;
 
-		//
+		// Creates a rotation matrix.
 		[[nodiscard]] static Mat4 rotation(float degrees, const Vec3& axis) noexcept;
 
-		//
+		// Creates a scaling matrix.
 		[[nodiscard]] static constexpr Mat4 scaling(float) noexcept;
 
-		//
+		// Creates a translation matrix.
 		[[nodiscard]] static constexpr Mat4 translation(const Vec3&) noexcept;
 	};
 
