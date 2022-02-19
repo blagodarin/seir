@@ -15,8 +15,8 @@ set(SOURCES
 	src/writer.cpp
 	)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	set_property(SOURCE src/archive.cpp APPEND PROPERTY COMPILE_OPTIONS
-		/wd4866 # compiler may not enforce left-to-right evaluation order for call to 'doctest::detail::ExpressionDecomposer::operator<<<bool>'
+	set_property(SOURCE src/archive.cpp src/reader.cpp src/save_file.cpp APPEND PROPERTY COMPILE_OPTIONS
+		/wd4866 # compiler may not enforce left-to-right evaluation order for call to 'operator<<'
 		)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
