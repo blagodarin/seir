@@ -8,6 +8,7 @@
 #include <seir_base/static_vector.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
+#include "pipeline.hpp"
 #include "utils.hpp"
 
 #include <unordered_set>
@@ -137,35 +138,8 @@ namespace
 
 	constexpr std::array<uint16_t, 10> kIndexData{
 		0, 1, 2, 3,
-		3, 4, // Degenerate.
+		0xffff,
 		4, 5, 6, 7
-	};
-
-	constexpr VkVertexInputBindingDescription kVertexBinding{
-		.binding = 0,
-		.stride = sizeof(Vertex),
-		.inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-	};
-
-	constexpr std::array kVertexAttributes{
-		VkVertexInputAttributeDescription{
-			.location = 0,
-			.binding = 0,
-			.format = VK_FORMAT_R32G32B32_SFLOAT,
-			.offset = offsetof(Vertex, position),
-		},
-		VkVertexInputAttributeDescription{
-			.location = 1,
-			.binding = 0,
-			.format = VK_FORMAT_R32G32B32_SFLOAT,
-			.offset = offsetof(Vertex, color),
-		},
-		VkVertexInputAttributeDescription{
-			.location = 2,
-			.binding = 0,
-			.format = VK_FORMAT_R32G32_SFLOAT,
-			.offset = offsetof(Vertex, color),
-		},
 	};
 
 	struct UniformBufferObject
@@ -486,135 +460,12 @@ namespace seir
 
 	void VulkanSwapchain::createPipeline(VkDevice device, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
-		const std::array shaderStages{
-			VkPipelineShaderStageCreateInfo{
-				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-				.stage = VK_SHADER_STAGE_VERTEX_BIT,
-				.module = vertexShader,
-				.pName = "main",
-			},
-			VkPipelineShaderStageCreateInfo{
-				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-				.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-				.module = fragmentShader,
-				.pName = "main",
-			},
-		};
-
-		const VkPipelineVertexInputStateCreateInfo vertexInputState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			.vertexBindingDescriptionCount = 1,
-			.pVertexBindingDescriptions = &kVertexBinding,
-			.vertexAttributeDescriptionCount = static_cast<uint32_t>(kVertexAttributes.size()),
-			.pVertexAttributeDescriptions = kVertexAttributes.data(),
-		};
-
-		const VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-			.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-			.primitiveRestartEnable = VK_FALSE,
-		};
-
-		const VkViewport viewport{
-			.x = 0.f,
-			.y = 0.f,
-			.width = static_cast<float>(_swapchainExtent.width),
-			.height = static_cast<float>(_swapchainExtent.height),
-			.minDepth = 0.f,
-			.maxDepth = 1.f,
-		};
-
-		const VkRect2D scissor{
-			.offset = { 0, 0 },
-			.extent = _swapchainExtent,
-		};
-
-		const VkPipelineViewportStateCreateInfo viewportState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-			.viewportCount = 1,
-			.pViewports = &viewport,
-			.scissorCount = 1,
-			.pScissors = &scissor,
-		};
-
-		const VkPipelineRasterizationStateCreateInfo rasterizationState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-			.depthClampEnable = VK_FALSE,
-			.rasterizerDiscardEnable = VK_FALSE,
-			.polygonMode = VK_POLYGON_MODE_FILL,
-			.cullMode = VK_CULL_MODE_BACK_BIT,
-			.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-			.depthBiasEnable = VK_FALSE,
-			.depthBiasConstantFactor = 0.f,
-			.depthBiasClamp = 0.f,
-			.depthBiasSlopeFactor = 0.f,
-			.lineWidth = 1.f,
-		};
-
-		const VkPipelineMultisampleStateCreateInfo multisampleState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-			.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-			.sampleShadingEnable = VK_FALSE,
-			.minSampleShading = 1.f,
-			.pSampleMask = nullptr,
-			.alphaToCoverageEnable = VK_FALSE,
-			.alphaToOneEnable = VK_FALSE,
-		};
-
-		const VkPipelineDepthStencilStateCreateInfo depthStencilState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-			.depthTestEnable = VK_TRUE,
-			.depthWriteEnable = VK_TRUE,
-			.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL,
-			.depthBoundsTestEnable = VK_FALSE,
-			.stencilTestEnable = VK_FALSE,
-			.front{},
-			.back{},
-			.minDepthBounds = 0,
-			.maxDepthBounds = 1,
-		};
-
-		const VkPipelineColorBlendAttachmentState colorBlendAttachment{
-			.blendEnable = VK_FALSE,
-			.srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-			.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-			.colorBlendOp = VK_BLEND_OP_ADD,
-			.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-			.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-			.alphaBlendOp = VK_BLEND_OP_ADD,
-			.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-		};
-
-		const VkPipelineColorBlendStateCreateInfo colorBlendState{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-			.logicOpEnable = VK_FALSE,
-			.logicOp = VK_LOGIC_OP_COPY,
-			.attachmentCount = 1,
-			.pAttachments = &colorBlendAttachment,
-			.blendConstants{ 0.f, 0.f, 0.f, 0.f },
-		};
-
-		const VkGraphicsPipelineCreateInfo pipelineInfo{
-			.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-			.stageCount = static_cast<uint32_t>(shaderStages.size()),
-			.pStages = shaderStages.data(),
-			.pVertexInputState = &vertexInputState,
-			.pInputAssemblyState = &inputAssemblyState,
-			.pTessellationState = nullptr,
-			.pViewportState = &viewportState,
-			.pRasterizationState = &rasterizationState,
-			.pMultisampleState = &multisampleState,
-			.pDepthStencilState = &depthStencilState,
-			.pColorBlendState = &colorBlendState,
-			.pDynamicState = nullptr,
-			.layout = _pipelineLayout,
-			.renderPass = _renderPass,
-			.subpass = 0,
-			.basePipelineHandle = VK_NULL_HANDLE,
-			.basePipelineIndex = 0,
-		};
-
-		SEIR_VK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_pipeline));
+		VulkanPipelineBuilder builder{ _swapchainExtent };
+		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
+		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
+		builder.setVertexInput(0, { VertexAttribute::f32x3, VertexAttribute::f32x3, VertexAttribute::f32x2 });
+		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
+		_pipeline = builder.build(device, _pipelineLayout, _renderPass);
 	}
 
 	void VulkanSwapchain::createFramebuffers(VkDevice device)
@@ -1098,8 +949,8 @@ namespace seir
 			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 			queueFamilies.resize(queueFamilyCount);
 			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-			uint32_t graphicsQueue = queueFamilyCount;
-			uint32_t presentQueue = queueFamilyCount;
+			auto graphicsQueue = queueFamilyCount;
+			auto presentQueue = queueFamilyCount;
 			for (uint32_t i = 0; i < queueFamilyCount; ++i)
 			{
 				if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)

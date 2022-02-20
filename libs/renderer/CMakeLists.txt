@@ -13,6 +13,8 @@ elseif(SEIR_RENDERER STREQUAL "Vulkan")
 	set(SOURCES
 		src/vulkan/context.cpp
 		src/vulkan/context.hpp
+		src/vulkan/pipeline.cpp
+		src/vulkan/pipeline.hpp
 		src/vulkan/renderer.cpp
 		src/vulkan/renderer.hpp
 		src/vulkan/utils.cpp
