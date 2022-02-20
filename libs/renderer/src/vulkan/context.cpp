@@ -126,19 +126,28 @@ namespace
 
 	struct Vertex
 	{
-		seir::Vec2 position;
+		seir::Vec3 position;
 		seir::Vec3 color;
 		seir::Vec2 texCoord;
 	};
 
 	constexpr std::array kVertexData{
-		Vertex{ .position{ -1, -1 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, -1 }, .color{ 1, 1, 1 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, 1 }, .color{ 0, 1, 0 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, 1 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, -1, .5 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, .5 }, .color{ 1, 1, 1 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, 1, .5 }, .color{ 0, 1, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1, .5 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
+
+		Vertex{ .position{ -1, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, 1, 0 }, .color{ 1, 0, 1 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1, 0 }, .color{ 0, 0, 0 }, .texCoord{ 1, 1 } },
 	};
 
-	constexpr std::array<uint16_t, 4> kIndexData{ 0, 1, 2, 3 };
+	constexpr std::array<uint16_t, 10> kIndexData{
+		0, 1, 2, 3,
+		3, 4, // Degenerate.
+		4, 5, 6, 7
+	};
 
 	constexpr VkVertexInputBindingDescription kVertexBinding{
 		.binding = 0,
@@ -150,7 +159,7 @@ namespace
 		VkVertexInputAttributeDescription{
 			.location = 0,
 			.binding = 0,
-			.format = VK_FORMAT_R32G32_SFLOAT,
+			.format = VK_FORMAT_R32G32B32_SFLOAT,
 			.offset = offsetof(Vertex, position),
 		},
 		VkVertexInputAttributeDescription{
@@ -174,7 +183,7 @@ namespace
 		seir::Mat4 _projection;
 	};
 
-	VkImageView createImageView2D(VkDevice device, VkImage image, VkFormat format)
+	VkImageView createImageView2D(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspect)
 	{
 		const VkImageViewCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -188,7 +197,7 @@ namespace
 				.a = VK_COMPONENT_SWIZZLE_IDENTITY,
 			},
 			.subresourceRange{
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.aspectMask = aspect,
 				.baseMipLevel = 0,
 				.levelCount = 1,
 				.baseArrayLayer = 0,
@@ -198,6 +207,11 @@ namespace
 		VkImageView imageView = VK_NULL_HANDLE;
 		SEIR_VK(vkCreateImageView(device, &createInfo, nullptr, &imageView));
 		return imageView;
+	}
+
+	constexpr bool hasStencilComponent(VkFormat format) noexcept
+	{
+		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
 }
 
@@ -245,6 +259,7 @@ namespace seir
 	{
 		createSwapchain(context, windowSize);
 		createSwapchainImageViews(context._device, context._surfaceFormat);
+		createDepthBuffer(context);
 		createRenderPass(context._device, context._surfaceFormat);
 		createDescriptorSetLayout(context._device);
 		createPipelineLayout(context._device);
@@ -279,6 +294,9 @@ namespace seir
 		_descriptorSetLayout = VK_NULL_HANDLE;
 		vkDestroyRenderPass(device, _renderPass, nullptr);
 		_renderPass = VK_NULL_HANDLE;
+		vkDestroyImageView(device, _depthBufferView, nullptr);
+		_depthBufferView = VK_NULL_HANDLE;
+		_depthBuffer.destroy(device);
 		for (auto& imageView : _swapchainImageViews)
 		{
 			vkDestroyImageView(device, imageView, nullptr);
@@ -349,20 +367,41 @@ namespace seir
 	{
 		_swapchainImageViews.assign(_swapchainImages.size(), VK_NULL_HANDLE);
 		for (size_t i = 0; i < _swapchainImages.size(); ++i)
-			_swapchainImageViews[i] = ::createImageView2D(device, _swapchainImages[i], surfaceFormat.format);
+			_swapchainImageViews[i] = ::createImageView2D(device, _swapchainImages[i], surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT);
+	}
+
+	void VulkanSwapchain::createDepthBuffer(const VulkanContext& context)
+	{
+		constexpr auto tiling = VK_IMAGE_TILING_OPTIMAL;
+		_depthBufferFormat = context.findFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, tiling, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		_depthBuffer.createTexture2D(context, _swapchainExtent.width, _swapchainExtent.height, _depthBufferFormat, tiling, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		_depthBuffer.transitionLayout(context, _depthBufferFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		_depthBufferView = ::createImageView2D(context._device, _depthBuffer._image, _depthBufferFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	}
 
 	void VulkanSwapchain::createRenderPass(VkDevice device, const VkSurfaceFormatKHR& surfaceFormat)
 	{
-		const VkAttachmentDescription colorAttachment{
-			.format = surfaceFormat.format,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		const std::array attachments{
+			VkAttachmentDescription{
+				.format = surfaceFormat.format,
+				.samples = VK_SAMPLE_COUNT_1_BIT,
+				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+				.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+				.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+				.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+				.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			},
+			VkAttachmentDescription{
+				.format = _depthBufferFormat,
+				.samples = VK_SAMPLE_COUNT_1_BIT,
+				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+				.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+				.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+				.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+				.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			},
 		};
 
 		const VkAttachmentReference colorReference{
@@ -370,26 +409,32 @@ namespace seir
 			.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		};
 
+		const VkAttachmentReference depthReference{
+			.attachment = 1,
+			.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		};
+
 		const VkSubpassDescription subpass{
 			.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
 			.colorAttachmentCount = 1,
 			.pColorAttachments = &colorReference,
+			.pDepthStencilAttachment = &depthReference,
 		};
 
 		const VkSubpassDependency subpassDependency{
 			.srcSubpass = VK_SUBPASS_EXTERNAL,
 			.dstSubpass = 0,
-			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
 			.srcAccessMask = 0,
-			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 			.dependencyFlags = 0,
 		};
 
 		const VkRenderPassCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-			.attachmentCount = 1,
-			.pAttachments = &colorAttachment,
+			.attachmentCount = static_cast<uint32_t>(attachments.size()),
+			.pAttachments = attachments.data(),
 			.subpassCount = 1,
 			.pSubpasses = &subpass,
 			.dependencyCount = 1,
@@ -515,6 +560,19 @@ namespace seir
 			.alphaToOneEnable = VK_FALSE,
 		};
 
+		const VkPipelineDepthStencilStateCreateInfo depthStencilState{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+			.depthTestEnable = VK_TRUE,
+			.depthWriteEnable = VK_TRUE,
+			.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL,
+			.depthBoundsTestEnable = VK_FALSE,
+			.stencilTestEnable = VK_FALSE,
+			.front{},
+			.back{},
+			.minDepthBounds = 0,
+			.maxDepthBounds = 1,
+		};
+
 		const VkPipelineColorBlendAttachmentState colorBlendAttachment{
 			.blendEnable = VK_FALSE,
 			.srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
@@ -545,7 +603,7 @@ namespace seir
 			.pViewportState = &viewportState,
 			.pRasterizationState = &rasterizationState,
 			.pMultisampleState = &multisampleState,
-			.pDepthStencilState = nullptr,
+			.pDepthStencilState = &depthStencilState,
 			.pColorBlendState = &colorBlendState,
 			.pDynamicState = nullptr,
 			.layout = _pipelineLayout,
@@ -563,11 +621,15 @@ namespace seir
 		_swapchainFramebuffers.assign(_swapchainImageViews.size(), VK_NULL_HANDLE);
 		for (size_t i = 0; i < _swapchainImageViews.size(); ++i)
 		{
+			const std::array attachments{
+				_swapchainImageViews[i],
+				_depthBufferView,
+			};
 			const VkFramebufferCreateInfo createInfo{
 				.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 				.renderPass = _renderPass,
-				.attachmentCount = 1,
-				.pAttachments = &_swapchainImageViews[i],
+				.attachmentCount = static_cast<uint32_t>(attachments.size()),
+				.pAttachments = attachments.data(),
 				.width = _swapchainExtent.width,
 				.height = _swapchainExtent.height,
 				.layers = 1,
@@ -673,10 +735,18 @@ namespace seir
 				.pInheritanceInfo = nullptr,
 			};
 			SEIR_VK(vkBeginCommandBuffer(_commandBuffers[i], &info));
-			const VkClearValue clearColor{
-				.color{
-					.float32{ 0.f, 0.f, 0.f, 1.f },
+			const std::array clearValues{
+				VkClearValue{
+					.color{
+						.float32{ 0.f, 0.f, 0.f, 1.f },
+					},
 				},
+				VkClearValue{
+					.depthStencil{
+						.depth = 0,
+						.stencil = 0,
+					},
+				}
 			};
 			const VkRenderPassBeginInfo renderPassInfo{
 				.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -686,8 +756,8 @@ namespace seir
 					.offset{ 0, 0 },
 					.extent = _swapchainExtent,
 				},
-				.clearValueCount = 1,
-				.pClearValues = &clearColor,
+				.clearValueCount = static_cast<uint32_t>(clearValues.size()),
+				.pClearValues = clearValues.data(),
 			};
 			vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
@@ -767,7 +837,7 @@ namespace seir
 		commandBuffer.submit(context._graphicsQueue);
 	}
 
-	void VulkanImage::createTexture2D(const VulkanContext& context, uint32_t width, uint32_t height, VkFormat format)
+	void VulkanImage::createTexture2D(const VulkanContext& context, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage)
 	{
 		assert(_image == VK_NULL_HANDLE);
 		const VkImageCreateInfo createInfo{
@@ -783,8 +853,8 @@ namespace seir
 			.mipLevels = 1,
 			.arrayLayers = 1,
 			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			.tiling = tiling,
+			.usage = usage,
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		};
 		SEIR_VK(vkCreateImage(context._device, &createInfo, nullptr, &_image));
@@ -807,7 +877,7 @@ namespace seir
 		_memory = VK_NULL_HANDLE;
 	}
 
-	void VulkanImage::transitionLayout(const VulkanContext& context, VkImageLayout oldLayout, VkImageLayout newLayout)
+	void VulkanImage::transitionLayout(const VulkanContext& context, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		VulkanOneTimeSubmit commandBuffer{ context._device, context._commandPool };
 		VkImageMemoryBarrier barrier{
@@ -820,7 +890,11 @@ namespace seir
 			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 			.image = _image,
 			.subresourceRange{
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.aspectMask = newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+					? (hasStencilComponent(format)
+							? static_cast<VkImageAspectFlags>(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
+							: VK_IMAGE_ASPECT_DEPTH_BIT)
+					: VK_IMAGE_ASPECT_COLOR_BIT,
 				.baseMipLevel = 0,
 				.levelCount = 1,
 				.baseArrayLayer = 0,
@@ -842,6 +916,13 @@ namespace seir
 			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		}
 		else
 			SEIR_VK_THROW("", "Unsupported layout transition");
@@ -1100,12 +1181,13 @@ namespace seir
 		VulkanBuffer stagingBuffer; // TODO: Fix resource leak.
 		stagingBuffer.create(*this, kImageData.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		stagingBuffer.write(_device, kImageData.data(), kImageData.size());
-		_texture.createTexture2D(*this, 1, 1, VK_FORMAT_B8G8R8A8_SRGB);
-		_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		constexpr auto format = VK_FORMAT_B8G8R8A8_SRGB;
+		_texture.createTexture2D(*this, 1, 1, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		_texture.transitionLayout(*this, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		_texture.copy2D(*this, stagingBuffer._buffer, 1, 1);
 		stagingBuffer.destroy(_device);
-		_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		_textureView = ::createImageView2D(_device, _texture._image, VK_FORMAT_B8G8R8A8_SRGB);
+		_texture.transitionLayout(*this, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		_textureView = ::createImageView2D(_device, _texture._image, format, VK_IMAGE_ASPECT_COLOR_BIT);
 		const VkSamplerCreateInfo samplerInfo{
 			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
 			.magFilter = VK_FILTER_NEAREST,
@@ -1147,6 +1229,26 @@ namespace seir
 			if (filter & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
 				return i;
 		SEIR_VK_THROW("vkGetPhysicalDeviceMemoryProperties", "No suitable memory type found");
+	}
+
+	VkFormat VulkanContext::findFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const
+	{
+		VkFormatProperties properties{};
+		for (const auto format : candidates)
+		{
+			vkGetPhysicalDeviceFormatProperties(_physicalDevice, format, &properties);
+			if (tiling == VK_IMAGE_TILING_OPTIMAL)
+			{
+				if ((properties.optimalTilingFeatures & features) == features)
+					return format;
+			}
+			else if (tiling == VK_IMAGE_TILING_LINEAR)
+			{
+				if ((properties.linearTilingFeatures & features) == features)
+					return format;
+			}
+		}
+		SEIR_VK_THROW("vkGetPhysicalDeviceFormatProperties", "No suitable supported format found");
 	}
 
 	void VulkanContext::createVertexBuffer()

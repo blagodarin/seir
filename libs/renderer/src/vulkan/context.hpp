@@ -90,9 +90,9 @@ namespace seir
 		VkDeviceMemory _memory = VK_NULL_HANDLE;
 
 		void copy2D(const VulkanContext&, VkBuffer, uint32_t width, uint32_t height);
-		void createTexture2D(const VulkanContext&, uint32_t width, uint32_t height, VkFormat format);
+		void createTexture2D(const VulkanContext&, uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags);
 		void destroy(VkDevice) noexcept;
-		void transitionLayout(const VulkanContext&, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void transitionLayout(const VulkanContext&, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout);
 	};
 
 	class VulkanSwapchain
@@ -102,6 +102,9 @@ namespace seir
 		VkExtent2D _swapchainExtent{};
 		std::vector<VkImage> _swapchainImages;
 		std::vector<VkImageView> _swapchainImageViews;
+		VkFormat _depthBufferFormat = VK_FORMAT_UNDEFINED;
+		VulkanImage _depthBuffer;
+		VkImageView _depthBufferView = VK_NULL_HANDLE;
 		VkRenderPass _renderPass = VK_NULL_HANDLE;
 		VkDescriptorSetLayout _descriptorSetLayout = VK_NULL_HANDLE;
 		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
@@ -120,6 +123,7 @@ namespace seir
 	private:
 		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
 		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
+		void createDepthBuffer(const VulkanContext&);
 		void createRenderPass(VkDevice, const VkSurfaceFormatKHR&);
 		void createDescriptorSetLayout(VkDevice);
 		void createPipelineLayout(VkDevice);
@@ -180,6 +184,7 @@ namespace seir
 
 		void create(const WindowDescriptor&);
 		uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const;
+		VkFormat findFormat(const std::vector<VkFormat>& candidates, VkImageTiling, VkFormatFeatureFlags) const;
 
 	private:
 		void createInstance();
