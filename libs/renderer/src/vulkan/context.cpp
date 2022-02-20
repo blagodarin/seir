@@ -227,8 +227,6 @@ namespace seir
 		createSwapchainImageViews(context._device, context._surfaceFormat);
 		createDepthBuffer(context);
 		createRenderPass(context._device, context._surfaceFormat);
-		createDescriptorSetLayout(context._device);
-		createPipelineLayout(context._device);
 		createPipeline(context._device, context._vertexShader, context._fragmentShader);
 		createFramebuffers(context._device);
 		createUniformBuffers(context);
@@ -252,12 +250,7 @@ namespace seir
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 			framebuffer = VK_NULL_HANDLE;
 		}
-		vkDestroyPipeline(device, _pipeline, nullptr);
-		_pipeline = VK_NULL_HANDLE;
-		vkDestroyPipelineLayout(device, _pipelineLayout, nullptr);
-		_pipelineLayout = VK_NULL_HANDLE;
-		vkDestroyDescriptorSetLayout(device, _descriptorSetLayout, nullptr);
-		_descriptorSetLayout = VK_NULL_HANDLE;
+		_pipeline.destroy();
 		vkDestroyRenderPass(device, _renderPass, nullptr);
 		_renderPass = VK_NULL_HANDLE;
 		vkDestroyImageView(device, _depthBufferView, nullptr);
@@ -419,53 +412,16 @@ namespace seir
 		SEIR_VK(vkCreateRenderPass(device, &createInfo, nullptr, &_renderPass));
 	}
 
-	void VulkanSwapchain::createDescriptorSetLayout(VkDevice device)
-	{
-		const std::array bindings{
-			VkDescriptorSetLayoutBinding{
-				.binding = 0,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.descriptorCount = 1,
-				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-				.pImmutableSamplers = nullptr,
-			},
-			VkDescriptorSetLayoutBinding{
-				.binding = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				.descriptorCount = 1,
-				.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-				.pImmutableSamplers = nullptr,
-			},
-		};
-		const VkDescriptorSetLayoutCreateInfo createInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-			.bindingCount = static_cast<uint32_t>(bindings.size()),
-			.pBindings = bindings.data(),
-		};
-		SEIR_VK(vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &_descriptorSetLayout));
-	}
-
-	void VulkanSwapchain::createPipelineLayout(VkDevice device)
-	{
-		const VkPipelineLayoutCreateInfo createInfo{
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-			.setLayoutCount = 1,
-			.pSetLayouts = &_descriptorSetLayout,
-			.pushConstantRangeCount = 0,
-			.pPushConstantRanges = nullptr,
-		};
-
-		SEIR_VK(vkCreatePipelineLayout(device, &createInfo, nullptr, &_pipelineLayout));
-	}
-
 	void VulkanSwapchain::createPipeline(VkDevice device, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
 		VulkanPipelineBuilder builder{ _swapchainExtent };
+		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
 		builder.setVertexInput(0, { VertexAttribute::f32x3, VertexAttribute::f32x3, VertexAttribute::f32x2 });
 		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
-		_pipeline = builder.build(device, _pipelineLayout, _renderPass);
+		_pipeline = builder.build(device, _renderPass);
 	}
 
 	void VulkanSwapchain::createFramebuffers(VkDevice device)
@@ -520,7 +476,7 @@ namespace seir
 
 	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context)
 	{
-		const std::vector<VkDescriptorSetLayout> layouts(_swapchainImages.size(), _descriptorSetLayout);
+		const std::vector<VkDescriptorSetLayout> layouts(_swapchainImages.size(), _pipeline.descriptorSetLayout());
 		VkDescriptorSetAllocateInfo allocateInfo{
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = _descriptorPool,
@@ -612,12 +568,12 @@ namespace seir
 				.pClearValues = clearValues.data(),
 			};
 			vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
+			vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
 			VkBuffer vertexBuffers[]{ vertexBuffer };
 			VkDeviceSize offsets[]{ 0 };
 			vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(_commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-			vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSets[i], 0, nullptr);
+			vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &_descriptorSets[i], 0, nullptr);
 			vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(kIndexData.size()), 1, 0, 0, 0);
 			vkCmdEndRenderPass(_commandBuffers[i]);
 			SEIR_VK(vkEndCommandBuffer(_commandBuffers[i]));

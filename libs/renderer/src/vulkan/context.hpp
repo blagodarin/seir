@@ -14,7 +14,7 @@
 #	include <string>
 #endif
 
-#include "vulkan.hpp"
+#include "pipeline.hpp"
 
 namespace seir
 {
@@ -106,9 +106,7 @@ namespace seir
 		VulkanImage _depthBuffer;
 		VkImageView _depthBufferView = VK_NULL_HANDLE;
 		VkRenderPass _renderPass = VK_NULL_HANDLE;
-		VkDescriptorSetLayout _descriptorSetLayout = VK_NULL_HANDLE;
-		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline _pipeline = VK_NULL_HANDLE;
+		VulkanPipeline _pipeline;
 		std::vector<VkFramebuffer> _swapchainFramebuffers;
 		std::vector<VkCommandBuffer> _commandBuffers;
 		std::vector<VulkanBuffer> _uniformBuffers;
@@ -125,8 +123,6 @@ namespace seir
 		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
 		void createDepthBuffer(const VulkanContext&);
 		void createRenderPass(VkDevice, const VkSurfaceFormatKHR&);
-		void createDescriptorSetLayout(VkDevice);
-		void createPipelineLayout(VkDevice);
 		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
 		void createFramebuffers(VkDevice);
 		void createUniformBuffers(const VulkanContext&);
