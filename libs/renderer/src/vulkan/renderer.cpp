@@ -5,12 +5,7 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
-
-#include <thread>
-
-#ifndef NDEBUG
-#	include <iostream>
-#endif
+#include "utils.hpp"
 
 namespace seir
 {
@@ -38,7 +33,7 @@ namespace seir
 		catch ([[maybe_unused]] const seir::VulkanError& e)
 		{
 #ifndef NDEBUG
-			std::cerr << '[' << e._function << "] " << e._message << '\n';
+			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
 #endif
 			return false;
 		}
@@ -51,7 +46,7 @@ namespace seir
 			const auto windowSize = _window->size();
 			if (windowSize._width == 0 || windowSize._height == 0)
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
+				sleepFor(1);
 				return;
 			}
 			_swapchain.create(_context, windowSize);

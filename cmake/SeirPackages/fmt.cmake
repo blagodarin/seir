@@ -5,11 +5,11 @@
 function(seir_provide_fmt result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("fmt")
-	set(version "8.0.1")
+	set(version "8.1.1")
 	set(package "fmt-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/fmt.patch)
 	seir_download("https://github.com/fmtlib/fmt/releases/download/${version}/${package}.zip"
-		SHA1 "68564915fb9e912f59eaa54575d878902f90295f"
+		SHA1 "07c3e8de31ad24d0dabaffaaa231cc7917a0fdd8"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded)

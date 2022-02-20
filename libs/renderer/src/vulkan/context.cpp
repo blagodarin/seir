@@ -8,15 +8,9 @@
 #include <seir_base/static_vector.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
+#include "utils.hpp"
 
-#include <algorithm>
-#include <chrono>
-#include <optional>
 #include <unordered_set>
-
-#ifndef NDEBUG
-#	include <iostream>
-#endif
 
 namespace
 {
@@ -27,29 +21,29 @@ namespace
 		SEIR_VK(vkEnumerateInstanceLayerProperties(&count, nullptr));
 		std::vector<VkLayerProperties> layers(count);
 		SEIR_VK(vkEnumerateInstanceLayerProperties(&count, layers.data()));
-		std::cerr << "Vulkan instance layers and extensions:\n";
+		fmt::print(stderr, "Vulkan instance layers and extensions:\n");
 		std::vector<VkExtensionProperties> extensions;
 		SEIR_VK(vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr));
 		extensions.resize(count);
 		SEIR_VK(vkEnumerateInstanceExtensionProperties(nullptr, &count, extensions.data()));
 		for (const auto& extension : extensions)
-			std::cerr << "   - " << extension.extensionName << " v." << extension.specVersion << "\n";
+			fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);
 		for (const auto& layer : layers)
 		{
-			std::cerr << " * " << layer.layerName << " -- " << layer.description << "\n";
+			fmt::print(stderr, " * {} -- {}\n", layer.layerName, layer.description);
 			SEIR_VK(vkEnumerateInstanceExtensionProperties(layer.layerName, &count, nullptr));
 			extensions.resize(count);
 			SEIR_VK(vkEnumerateInstanceExtensionProperties(layer.layerName, &count, extensions.data()));
 			for (const auto& extension : extensions)
-				std::cerr << "   - " << extension.extensionName << " - v" << extension.specVersion << "\n";
+				fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);
 		}
-		std::cerr << '\n';
+		fmt::print(stderr, "\n");
 	}
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* data, void*)
 	{
 		if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-			std::cerr << data->pMessage << '\n';
+			fmt::print(stderr, "{}\n", data->pMessage);
 		return VK_FALSE;
 	}
 
@@ -83,37 +77,35 @@ namespace
 		return true;
 	}
 
-	std::optional<VkSurfaceFormatKHR> selectSurfaceFormat(VkPhysicalDevice device, VkSurfaceKHR surface, std::vector<VkSurfaceFormatKHR>& formats)
+	const VkSurfaceFormatKHR* selectSurfaceFormat(VkPhysicalDevice device, VkSurfaceKHR surface, std::vector<VkSurfaceFormatKHR>& formats)
 	{
 		uint32_t count = 0;
 		SEIR_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &count, nullptr));
 		formats.resize(count);
 		SEIR_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &count, formats.data()));
 		if (formats.empty())
-			return {};
+			return nullptr;
 		for (const auto& format : formats)
 			if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-				return format;
-		return formats.front();
+				return &format;
+		return formats.data();
 	}
 
-	std::optional<VkPresentModeKHR> selectPresentMode(VkPhysicalDevice device, VkSurfaceKHR surface, std::vector<VkPresentModeKHR>& modes)
+	const VkPresentModeKHR* selectPresentMode(VkPhysicalDevice device, VkSurfaceKHR surface, std::vector<VkPresentModeKHR>& modes)
 	{
 		uint32_t count = 0;
 		SEIR_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &count, nullptr));
 		modes.resize(count);
 		SEIR_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &count, modes.data()));
-		bool hasFifoMode = false;
-		for (const auto mode : modes)
+		const VkPresentModeKHR* fifoMode = nullptr;
+		for (const auto& mode : modes)
 		{
 			if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
-				return mode;
-			if (!hasFifoMode && mode == VK_PRESENT_MODE_FIFO_KHR)
-				hasFifoMode = true;
+				return &mode;
+			if (!fifoMode && mode == VK_PRESENT_MODE_FIFO_KHR)
+				fifoMode = &mode;
 		}
-		if (hasFifoMode)
-			return VK_PRESENT_MODE_FIFO_KHR;
-		return {};
+		return fifoMode;
 	}
 
 	const uint32_t kVertexShader[]{
@@ -308,8 +300,7 @@ namespace seir
 
 	void VulkanSwapchain::updateUniformBuffer(VkDevice device, uint32_t imageIndex)
 	{
-		static auto startTime = std::chrono::steady_clock::now();
-		const float time = std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(std::chrono::steady_clock::now() - startTime).count();
+		const auto time = clockTime();
 		const UniformBufferObject ubo{
 			._model = Mat4::rotation(30 * time, { 0, 0, 1 }),
 			._view = Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
@@ -326,8 +317,18 @@ namespace seir
 		_swapchainExtent = surfaceCapabilities.currentExtent;
 		if (_swapchainExtent.width == std::numeric_limits<uint32_t>::max() || _swapchainExtent.height == std::numeric_limits<uint32_t>::max())
 		{
-			_swapchainExtent.width = std::clamp(static_cast<uint32_t>(windowSize._width), surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
-			_swapchainExtent.height = std::clamp(static_cast<uint32_t>(windowSize._height), surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
+			if (const auto width = static_cast<uint32_t>(windowSize._width); width < surfaceCapabilities.minImageExtent.width)
+				_swapchainExtent.width = surfaceCapabilities.minImageExtent.width;
+			else if (width > surfaceCapabilities.maxImageExtent.width)
+				_swapchainExtent.width = surfaceCapabilities.maxImageExtent.width;
+			else
+				_swapchainExtent.width = width;
+			if (const auto height = static_cast<uint32_t>(windowSize._width); height < surfaceCapabilities.minImageExtent.height)
+				_swapchainExtent.height = surfaceCapabilities.minImageExtent.height;
+			else if (height > surfaceCapabilities.maxImageExtent.height)
+				_swapchainExtent.height = surfaceCapabilities.maxImageExtent.height;
+			else
+				_swapchainExtent.height = height;
 		}
 
 		auto imageCount = surfaceCapabilities.minImageCount + 1;
@@ -1110,11 +1111,11 @@ namespace seir
 				if (graphicsQueue < queueFamilyCount && presentQueue < queueFamilyCount)
 				{
 #ifndef NDEBUG
-					std::cerr << "Vulkan physical device selected: " << _physicalDeviceProperties.deviceName << '\n';
-					std::cerr << "Vulkan device extensions:\n";
+					fmt::print(stderr, "Vulkan physical device selected: {}\n", _physicalDeviceProperties.deviceName);
+					fmt::print(stderr, "Vulkan device extensions:\n");
 					for (const auto& extension : extensions)
-						std::cerr << "   - " << extension.extensionName << " v." << extension.specVersion << "\n";
-					std::cerr << '\n';
+						fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);
+					fmt::print(stderr, "\n");
 #endif
 					_physicalDevice = device;
 					_surfaceFormat = *surfaceFormat;

@@ -86,6 +86,8 @@ if(SEIR_RENDERER STREQUAL "Vulkan")
 	if(NOT TARGET Vulkan::glslc)
 		message(SEND_ERROR "Could not find glslc, please install Vulkan SDK")
 	endif()
+	seir_provide_fmt(fmt_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+	find_package(fmt REQUIRED)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

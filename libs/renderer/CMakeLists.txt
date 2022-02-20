@@ -15,6 +15,8 @@ elseif(SEIR_RENDERER STREQUAL "Vulkan")
 		src/vulkan/context.hpp
 		src/vulkan/renderer.cpp
 		src/vulkan/renderer.hpp
+		src/vulkan/utils.cpp
+		src/vulkan/utils.hpp
 		src/vulkan/vulkan.hpp
 		)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -37,6 +39,7 @@ target_compile_definitions(seir_renderer
 	)
 target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_renderer PRIVATE Seir::app Seir::math
+	$<$<CONFIG:Debug>:fmt::fmt>
 	$<$<STREQUAL:${SEIR_RENDERER},Vulkan>:Vulkan::Vulkan>
 	)
 seir_target(seir_renderer FOLDER libs/renderer STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
