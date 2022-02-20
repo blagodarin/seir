@@ -16,6 +16,7 @@ namespace seir
 {
 	VulkanRenderer::VulkanRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
 		: _window{ window }
+		, _context{ true }
 	{
 	}
 

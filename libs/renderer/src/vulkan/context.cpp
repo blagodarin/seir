@@ -128,13 +128,14 @@ namespace
 	{
 		seir::Vec2 position;
 		seir::Vec3 color;
+		seir::Vec2 texCoord;
 	};
 
 	constexpr std::array kVertexData{
-		Vertex{ .position{ -1.f, -1.f }, .color{ 1.f, 0.f, 0.f } },
-		Vertex{ .position{ 1.f, -1.f }, .color{ 1.f, 1.f, 1.f } },
-		Vertex{ .position{ -1.f, 1.f }, .color{ 0.f, 1.f, 0.f } },
-		Vertex{ .position{ 1.f, 1.f }, .color{ 0.f, 0.f, 1.f } },
+		Vertex{ .position{ -1, -1 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1 }, .color{ 1, 1, 1 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, 1 }, .color{ 0, 1, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
 	};
 
 	constexpr std::array<uint16_t, 4> kIndexData{ 0, 1, 2, 3 };
@@ -158,6 +159,12 @@ namespace
 			.format = VK_FORMAT_R32G32B32_SFLOAT,
 			.offset = offsetof(Vertex, color),
 		},
+		VkVertexInputAttributeDescription{
+			.location = 2,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32_SFLOAT,
+			.offset = offsetof(Vertex, color),
+		},
 	};
 
 	struct UniformBufferObject
@@ -166,6 +173,32 @@ namespace
 		seir::Mat4 _view;
 		seir::Mat4 _projection;
 	};
+
+	VkImageView createImageView2D(VkDevice device, VkImage image, VkFormat format)
+	{
+		const VkImageViewCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+			.image = image,
+			.viewType = VK_IMAGE_VIEW_TYPE_2D,
+			.format = format,
+			.components{
+				.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+				.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+				.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+				.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+			},
+			.subresourceRange{
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1,
+			},
+		};
+		VkImageView imageView = VK_NULL_HANDLE;
+		SEIR_VK(vkCreateImageView(device, &createInfo, nullptr, &imageView));
+		return imageView;
+	}
 }
 
 namespace seir
@@ -219,7 +252,7 @@ namespace seir
 		createFramebuffers(context._device);
 		createUniformBuffers(context);
 		createDescriptorPool(context._device);
-		createDescriptorSets(context._device);
+		createDescriptorSets(context);
 		createCommandBuffers(context._device, context._commandPool, context._vertexBuffer._buffer, context._indexBuffer._buffer);
 		_swapchainImageFences.assign(_swapchainImages.size(), VK_NULL_HANDLE);
 	}
@@ -316,28 +349,7 @@ namespace seir
 	{
 		_swapchainImageViews.assign(_swapchainImages.size(), VK_NULL_HANDLE);
 		for (size_t i = 0; i < _swapchainImages.size(); ++i)
-		{
-			const VkImageViewCreateInfo createInfo{
-				.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-				.image = _swapchainImages[i],
-				.viewType = VK_IMAGE_VIEW_TYPE_2D,
-				.format = surfaceFormat.format,
-				.components{
-					.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-					.g = VK_COMPONENT_SWIZZLE_IDENTITY,
-					.b = VK_COMPONENT_SWIZZLE_IDENTITY,
-					.a = VK_COMPONENT_SWIZZLE_IDENTITY,
-				},
-				.subresourceRange{
-					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-					.baseMipLevel = 0,
-					.levelCount = 1,
-					.baseArrayLayer = 0,
-					.layerCount = 1,
-				},
-			};
-			SEIR_VK(vkCreateImageView(device, &createInfo, nullptr, &_swapchainImageViews[i]));
-		}
+			_swapchainImageViews[i] = ::createImageView2D(device, _swapchainImages[i], surfaceFormat.format);
 	}
 
 	void VulkanSwapchain::createRenderPass(VkDevice device, const VkSurfaceFormatKHR& surfaceFormat)
@@ -389,17 +401,26 @@ namespace seir
 
 	void VulkanSwapchain::createDescriptorSetLayout(VkDevice device)
 	{
-		constexpr VkDescriptorSetLayoutBinding binding{
-			.binding = 0,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-			.pImmutableSamplers = nullptr,
+		const std::array bindings{
+			VkDescriptorSetLayoutBinding{
+				.binding = 0,
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.descriptorCount = 1,
+				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+				.pImmutableSamplers = nullptr,
+			},
+			VkDescriptorSetLayoutBinding{
+				.binding = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				.descriptorCount = 1,
+				.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+				.pImmutableSamplers = nullptr,
+			},
 		};
 		const VkDescriptorSetLayoutCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-			.bindingCount = 1,
-			.pBindings = &binding,
+			.bindingCount = static_cast<uint32_t>(bindings.size()),
+			.pBindings = bindings.data(),
 		};
 		SEIR_VK(vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &_descriptorSetLayout));
 	}
@@ -564,20 +585,26 @@ namespace seir
 
 	void VulkanSwapchain::createDescriptorPool(VkDevice device)
 	{
-		const VkDescriptorPoolSize poolSize{
-			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = static_cast<uint32_t>(_swapchainImages.size()),
+		const std::array poolSizes{
+			VkDescriptorPoolSize{
+				.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.descriptorCount = static_cast<uint32_t>(_swapchainImages.size()),
+			},
+			VkDescriptorPoolSize{
+				.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				.descriptorCount = static_cast<uint32_t>(_swapchainImages.size()),
+			},
 		};
 		const VkDescriptorPoolCreateInfo poolInfo{
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 			.maxSets = static_cast<uint32_t>(_swapchainImages.size()),
-			.poolSizeCount = 1,
-			.pPoolSizes = &poolSize,
+			.poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+			.pPoolSizes = poolSizes.data(),
 		};
 		SEIR_VK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool));
 	}
 
-	void VulkanSwapchain::createDescriptorSets(VkDevice device)
+	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context)
 	{
 		const std::vector<VkDescriptorSetLayout> layouts(_swapchainImages.size(), _descriptorSetLayout);
 		VkDescriptorSetAllocateInfo allocateInfo{
@@ -587,7 +614,7 @@ namespace seir
 			.pSetLayouts = layouts.data(),
 		};
 		_descriptorSets.assign(_swapchainImages.size(), VK_NULL_HANDLE);
-		SEIR_VK(vkAllocateDescriptorSets(device, &allocateInfo, _descriptorSets.data()));
+		SEIR_VK(vkAllocateDescriptorSets(context._device, &allocateInfo, _descriptorSets.data()));
 		for (size_t i = 0; i < _swapchainImages.size(); ++i)
 		{
 			const VkDescriptorBufferInfo bufferInfo{
@@ -595,18 +622,36 @@ namespace seir
 				.offset = 0,
 				.range = sizeof(UniformBufferObject),
 			};
-			const VkWriteDescriptorSet descriptorWrite{
-				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet = _descriptorSets[i],
-				.dstBinding = 0,
-				.dstArrayElement = 0,
-				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.pImageInfo = nullptr,
-				.pBufferInfo = &bufferInfo,
-				.pTexelBufferView = nullptr,
+			const VkDescriptorImageInfo imageInfo{
+				.sampler = context._textureSampler,
+				.imageView = context._textureView,
+				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			};
-			vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+			const std::array descriptorWrites{
+				VkWriteDescriptorSet{
+					.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.dstSet = _descriptorSets[i],
+					.dstBinding = 0,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					.pImageInfo = nullptr,
+					.pBufferInfo = &bufferInfo,
+					.pTexelBufferView = nullptr,
+				},
+				VkWriteDescriptorSet{
+					.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.dstSet = _descriptorSets[i],
+					.dstBinding = 1,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					.pImageInfo = &imageInfo,
+					.pBufferInfo = nullptr,
+					.pTexelBufferView = nullptr,
+				},
+			};
+			vkUpdateDescriptorSets(context._device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
 	}
 
@@ -694,12 +739,159 @@ namespace seir
 		vkUnmapMemory(device, _memory);
 	}
 
+	void VulkanImage::copy2D(const VulkanContext& context, VkBuffer buffer, uint32_t width, uint32_t height)
+	{
+		VulkanOneTimeSubmit commandBuffer{ context._device, context._commandPool };
+		const VkBufferImageCopy region{
+			.bufferOffset = 0,
+			.bufferRowLength = 0,
+			.bufferImageHeight = 0,
+			.imageSubresource{
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.mipLevel = 0,
+				.baseArrayLayer = 0,
+				.layerCount = 1,
+			},
+			.imageOffset{
+				.x = 0,
+				.y = 0,
+				.z = 0,
+			},
+			.imageExtent{
+				.width = width,
+				.height = height,
+				.depth = 1,
+			}
+		};
+		vkCmdCopyBufferToImage(commandBuffer, buffer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		commandBuffer.submit(context._graphicsQueue);
+	}
+
+	void VulkanImage::createTexture2D(const VulkanContext& context, uint32_t width, uint32_t height, VkFormat format)
+	{
+		assert(_image == VK_NULL_HANDLE);
+		const VkImageCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+			.flags = 0,
+			.imageType = VK_IMAGE_TYPE_2D,
+			.format = format,
+			.extent{
+				.width = width,
+				.height = height,
+				.depth = 1,
+			},
+			.mipLevels = 1,
+			.arrayLayers = 1,
+			.samples = VK_SAMPLE_COUNT_1_BIT,
+			.tiling = VK_IMAGE_TILING_OPTIMAL,
+			.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		};
+		SEIR_VK(vkCreateImage(context._device, &createInfo, nullptr, &_image));
+		VkMemoryRequirements memoryRequirements{};
+		vkGetImageMemoryRequirements(context._device, _image, &memoryRequirements);
+		const VkMemoryAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+			.allocationSize = memoryRequirements.size,
+			.memoryTypeIndex = context.findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		};
+		SEIR_VK(vkAllocateMemory(context._device, &allocateInfo, nullptr, &_memory));
+		SEIR_VK(vkBindImageMemory(context._device, _image, _memory, 0));
+	}
+
+	void VulkanImage::destroy(VkDevice device) noexcept
+	{
+		vkDestroyImage(device, _image, nullptr);
+		_image = VK_NULL_HANDLE;
+		vkFreeMemory(device, _memory, nullptr);
+		_memory = VK_NULL_HANDLE;
+	}
+
+	void VulkanImage::transitionLayout(const VulkanContext& context, VkImageLayout oldLayout, VkImageLayout newLayout)
+	{
+		VulkanOneTimeSubmit commandBuffer{ context._device, context._commandPool };
+		VkImageMemoryBarrier barrier{
+			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			.srcAccessMask = 0,
+			.dstAccessMask = 0,
+			.oldLayout = oldLayout,
+			.newLayout = newLayout,
+			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+			.image = _image,
+			.subresourceRange{
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1,
+			}
+		};
+		VkPipelineStageFlags srcStage = 0;
+		VkPipelineStageFlags dstStage = 0;
+		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+		{
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		}
+		else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		{
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else
+			SEIR_VK_THROW("", "Unsupported layout transition");
+		vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		commandBuffer.submit(context._graphicsQueue);
+	}
+
+	VulkanOneTimeSubmit::VulkanOneTimeSubmit(VkDevice device, VkCommandPool commandPool)
+		: _device{ device }, _commandPool{ commandPool }
+	{
+		const VkCommandBufferAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.commandPool = _commandPool,
+			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.commandBufferCount = 1,
+		};
+		SEIR_VK(vkAllocateCommandBuffers(_device, &allocateInfo, &_commandBuffer));
+		const VkCommandBufferBeginInfo beginInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+		};
+		SEIR_VK(vkBeginCommandBuffer(_commandBuffer, &beginInfo)); // TODO: Fix _commandBuffer leak.
+	}
+
+	VulkanOneTimeSubmit::~VulkanOneTimeSubmit() noexcept
+	{
+		vkFreeCommandBuffers(_device, _commandPool, 1, &_commandBuffer);
+	}
+
+	void VulkanOneTimeSubmit::submit(VkQueue queue)
+	{
+		SEIR_VK(vkEndCommandBuffer(_commandBuffer));
+		VkSubmitInfo submitInfo{
+			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			.commandBufferCount = 1,
+			.pCommandBuffers = &_commandBuffer,
+		};
+		SEIR_VK(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+		SEIR_VK(vkQueueWaitIdle(queue));
+	}
+
 	VulkanContext::~VulkanContext() noexcept
 	{
 		_indexBuffer.destroy(_device);
 		_vertexBuffer.destroy(_device);
 		vkDestroyShaderModule(_device, _fragmentShader, nullptr);
 		vkDestroyShaderModule(_device, _vertexShader, nullptr);
+		vkDestroySampler(_device, _textureSampler, nullptr);
+		vkDestroyImageView(_device, _textureView, nullptr);
+		_texture.destroy(_device);
 		vkDestroyCommandPool(_device, _commandPool, nullptr);
 		vkDestroyDevice(_device, nullptr);
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
@@ -723,6 +915,7 @@ namespace seir
 		selectPhysicalDevice();
 		createDevice();
 		createCommandPool();
+		createTextureImage();
 		_vertexShader = loadShader(kVertexShader, sizeof kVertexShader);
 		_fragmentShader = loadShader(kFragmentShader, sizeof kFragmentShader);
 		createVertexBuffer();
@@ -801,11 +994,12 @@ namespace seir
 		std::vector<VkQueueFamilyProperties> queueFamilies;
 		for (const auto device : devices)
 		{
-			VkPhysicalDeviceProperties properties{}; // TODO: Use.
-			vkGetPhysicalDeviceProperties(device, &properties);
+			vkGetPhysicalDeviceProperties(device, &_physicalDeviceProperties);
 
-			VkPhysicalDeviceFeatures features{}; // TODO: Use.
+			VkPhysicalDeviceFeatures features{};
 			vkGetPhysicalDeviceFeatures(device, &features);
+			if (_useAnisotropy && !features.samplerAnisotropy)
+				continue;
 
 			if (!::checkDeviceExtensions(device, extensions))
 				continue;
@@ -835,7 +1029,7 @@ namespace seir
 				if (graphicsQueue < queueFamilyCount && presentQueue < queueFamilyCount)
 				{
 #ifndef NDEBUG
-					std::cerr << "Vulkan physical device selected: " << properties.deviceName << '\n';
+					std::cerr << "Vulkan physical device selected: " << _physicalDeviceProperties.deviceName << '\n';
 					std::cerr << "Vulkan device extensions:\n";
 					for (const auto& extension : extensions)
 						std::cerr << "   - " << extension.extensionName << " v." << extension.specVersion << "\n";
@@ -873,7 +1067,9 @@ namespace seir
 #endif
 			"", // Extra value for std::array type deduction.
 		};
-		const VkPhysicalDeviceFeatures features{};
+		const VkPhysicalDeviceFeatures features{
+			.samplerAnisotropy = _useAnisotropy ? VK_TRUE : VK_FALSE,
+		};
 		const VkDeviceCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 			.queueCreateInfoCount = static_cast<uint32_t>(queues.size()),
@@ -896,6 +1092,39 @@ namespace seir
 			.queueFamilyIndex = _graphicsQueueFamily,
 		};
 		SEIR_VK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
+	}
+
+	void VulkanContext::createTextureImage()
+	{
+		static constexpr std::array<uint8_t, 4> kImageData{ 0x99, 0xbb, 0xbb, 0xff };
+		VulkanBuffer stagingBuffer; // TODO: Fix resource leak.
+		stagingBuffer.create(*this, kImageData.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		stagingBuffer.write(_device, kImageData.data(), kImageData.size());
+		_texture.createTexture2D(*this, 1, 1, VK_FORMAT_B8G8R8A8_SRGB);
+		_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		_texture.copy2D(*this, stagingBuffer._buffer, 1, 1);
+		stagingBuffer.destroy(_device);
+		_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		_textureView = ::createImageView2D(_device, _texture._image, VK_FORMAT_B8G8R8A8_SRGB);
+		const VkSamplerCreateInfo samplerInfo{
+			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+			.magFilter = VK_FILTER_NEAREST,
+			.minFilter = VK_FILTER_NEAREST,
+			.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+			.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.mipLodBias = 0,
+			.anisotropyEnable = _useAnisotropy ? VK_TRUE : VK_FALSE,
+			.maxAnisotropy = _useAnisotropy ? _physicalDeviceProperties.limits.maxSamplerAnisotropy : 1,
+			.compareEnable = VK_FALSE,
+			.compareOp = VK_COMPARE_OP_ALWAYS,
+			.minLod = 0,
+			.maxLod = 0,
+			.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+			.unnormalizedCoordinates = VK_FALSE,
+		};
+		SEIR_VK(vkCreateSampler(_device, &samplerInfo, nullptr, &_textureSampler));
 	}
 
 	VkShaderModule VulkanContext::loadShader(const uint32_t* data, size_t size)
@@ -944,33 +1173,13 @@ namespace seir
 
 	void VulkanContext::copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize size)
 	{
-		const VkCommandBufferAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool = _commandPool,
-			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-			.commandBufferCount = 1,
-		};
-		VkCommandBuffer commandBuffer = VK_NULL_HANDLE; // TODO: Fix resource leak.
-		SEIR_VK(vkAllocateCommandBuffers(_device, &allocateInfo, &commandBuffer));
-		const VkCommandBufferBeginInfo beginInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-		};
-		SEIR_VK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+		VulkanOneTimeSubmit commandBuffer{ _device, _commandPool };
 		const VkBufferCopy region{
 			.srcOffset = 0,
 			.dstOffset = 0,
 			.size = size,
 		};
 		vkCmdCopyBuffer(commandBuffer, src, dst, 1, &region);
-		SEIR_VK(vkEndCommandBuffer(commandBuffer));
-		VkSubmitInfo submitInfo{
-			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-			.commandBufferCount = 1,
-			.pCommandBuffers = &commandBuffer,
-		};
-		SEIR_VK(vkQueueSubmit(_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
-		SEIR_VK(vkQueueWaitIdle(_graphicsQueue));
-		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
+		commandBuffer.submit(_graphicsQueue);
 	}
 }

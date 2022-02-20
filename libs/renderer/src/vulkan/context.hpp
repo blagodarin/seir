@@ -83,6 +83,18 @@ namespace seir
 		void write(VkDevice, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
 	};
 
+	class VulkanImage
+	{
+	public:
+		VkImage _image = VK_NULL_HANDLE;
+		VkDeviceMemory _memory = VK_NULL_HANDLE;
+
+		void copy2D(const VulkanContext&, VkBuffer, uint32_t width, uint32_t height);
+		void createTexture2D(const VulkanContext&, uint32_t width, uint32_t height, VkFormat format);
+		void destroy(VkDevice) noexcept;
+		void transitionLayout(const VulkanContext&, VkImageLayout oldLayout, VkImageLayout newLayout);
+	};
+
 	class VulkanSwapchain
 	{
 	public:
@@ -115,13 +127,29 @@ namespace seir
 		void createFramebuffers(VkDevice);
 		void createUniformBuffers(const VulkanContext&);
 		void createDescriptorPool(VkDevice);
-		void createDescriptorSets(VkDevice);
+		void createDescriptorSets(const VulkanContext&);
 		void createCommandBuffers(VkDevice, VkCommandPool, VkBuffer vertexBuffer, VkBuffer indexBuffer);
+	};
+
+	class VulkanOneTimeSubmit
+	{
+	public:
+		VulkanOneTimeSubmit(VkDevice, VkCommandPool);
+		~VulkanOneTimeSubmit() noexcept;
+
+		[[nodiscard]] constexpr operator VkCommandBuffer() noexcept { return _commandBuffer; }
+		void submit(VkQueue);
+
+	private:
+		const VkDevice _device;
+		const VkCommandPool _commandPool;
+		VkCommandBuffer _commandBuffer = VK_NULL_HANDLE;
 	};
 
 	class VulkanContext
 	{
 	public:
+		const bool _useAnisotropy;
 		VkInstance _instance = VK_NULL_HANDLE;
 #ifndef NDEBUG
 		PFN_vkDestroyDebugUtilsMessengerEXT _vkDestroyDebugUtilsMessenger = nullptr;
@@ -129,6 +157,7 @@ namespace seir
 #endif
 		VkSurfaceKHR _surface = VK_NULL_HANDLE;
 		VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
+		VkPhysicalDeviceProperties _physicalDeviceProperties{};
 		VkSurfaceFormatKHR _surfaceFormat{};
 		VkPresentModeKHR _presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		uint32_t _graphicsQueueFamily = 0;
@@ -137,11 +166,16 @@ namespace seir
 		VkQueue _graphicsQueue = VK_NULL_HANDLE;
 		VkQueue _presentQueue = VK_NULL_HANDLE;
 		VkCommandPool _commandPool = VK_NULL_HANDLE;
+		VulkanImage _texture;
+		VkImageView _textureView = VK_NULL_HANDLE;
+		VkSampler _textureSampler = VK_NULL_HANDLE;
 		VkShaderModule _vertexShader = VK_NULL_HANDLE;
 		VkShaderModule _fragmentShader = VK_NULL_HANDLE;
 		VulkanBuffer _vertexBuffer;
 		VulkanBuffer _indexBuffer;
 
+		VulkanContext(bool useAnisotropy) noexcept
+			: _useAnisotropy{ useAnisotropy } {}
 		~VulkanContext() noexcept;
 
 		void create(const WindowDescriptor&);
@@ -156,6 +190,7 @@ namespace seir
 		void selectPhysicalDevice();
 		void createDevice();
 		void createCommandPool();
+		void createTextureImage();
 		VkShaderModule loadShader(const uint32_t* data, size_t size);
 		void createVertexBuffer();
 		void createIndexBuffer();
