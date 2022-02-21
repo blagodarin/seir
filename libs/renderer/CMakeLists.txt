@@ -32,20 +32,16 @@ source_group("include" FILES ${HEADERS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(seir_renderer STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::renderer ALIAS seir_renderer)
-target_compile_definitions(seir_renderer
-	PUBLIC
-		SEIR_RENDERER_DUMMY=$<STREQUAL:${SEIR_RENDERER},Dummy>
-		SEIR_RENDERER_VULKAN=$<STREQUAL:${SEIR_RENDERER},Vulkan>
-	PRIVATE
-		$<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>
+target_compile_definitions(seir_renderer PUBLIC
+	SEIR_RENDERER_DUMMY=$<STREQUAL:${SEIR_RENDERER},Dummy>
+	SEIR_RENDERER_VULKAN=$<STREQUAL:${SEIR_RENDERER},Vulkan>
 	)
 target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_renderer PRIVATE Seir::app Seir::math
-	$<$<CONFIG:Debug>:fmt::fmt>
-	$<$<STREQUAL:${SEIR_RENDERER},Vulkan>:Vulkan::Vulkan>
-	)
+target_link_libraries(seir_renderer PRIVATE Seir::app Seir::math)
 seir_target(seir_renderer FOLDER libs/renderer STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 if(SEIR_RENDERER STREQUAL "Vulkan")
+	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
+	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan $<$<CONFIG:Debug>:fmt::fmt>)
 	seir_embed_spirv(seir_renderer
 		VERTEX src/vulkan/vertex_shader.glsl
 		FRAGMENT src/vulkan/fragment_shader.glsl
