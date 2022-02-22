@@ -66,6 +66,8 @@ namespace seir
 		VkExtent2D _swapchainExtent{};
 		std::vector<VkImage> _swapchainImages;
 		std::vector<VkImageView> _swapchainImageViews;
+		VulkanImage _colorBuffer;
+		VkImageView _colorBufferView = VK_NULL_HANDLE;
 		VkFormat _depthBufferFormat = VK_FORMAT_UNDEFINED;
 		VulkanImage _depthBuffer;
 		VkImageView _depthBufferView = VK_NULL_HANDLE;
@@ -85,9 +87,10 @@ namespace seir
 	private:
 		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
 		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
+		void createColorBuffer(const VulkanContext&);
 		void createDepthBuffer(const VulkanContext&);
-		void createRenderPass(VkDevice, VkFormat);
-		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
+		void createRenderPass(VkDevice, VkFormat, VkSampleCountFlagBits);
+		void createPipeline(VkDevice, VkSampleCountFlagBits, VkShaderModule vertexShader, VkShaderModule fragmentShader);
 		void createFramebuffers(VkDevice);
 		void createUniformBuffers(const VulkanContext&);
 		void createDescriptorPool(VkDevice);
@@ -114,6 +117,7 @@ namespace seir
 	{
 	public:
 		const bool _useAnisotropy;
+		const bool _useMsaa; // TODO: Support different MSAA levels.
 		VkInstance _instance = VK_NULL_HANDLE;
 #ifndef NDEBUG
 		PFN_vkDestroyDebugUtilsMessengerEXT _vkDestroyDebugUtilsMessenger = nullptr;
@@ -126,6 +130,7 @@ namespace seir
 		VkPresentModeKHR _presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		uint32_t _graphicsQueueFamily = 0;
 		uint32_t _presentQueueFamily = 0;
+		VkSampleCountFlagBits _maxSampleCount = VK_SAMPLE_COUNT_1_BIT;
 		VkDevice _device = VK_NULL_HANDLE;
 		VkQueue _graphicsQueue = VK_NULL_HANDLE;
 		VkQueue _presentQueue = VK_NULL_HANDLE;
@@ -138,8 +143,8 @@ namespace seir
 		VulkanBuffer _vertexBuffer;
 		VulkanBuffer _indexBuffer;
 
-		VulkanContext(bool useAnisotropy) noexcept
-			: _useAnisotropy{ useAnisotropy } {}
+		VulkanContext(bool useAnisotropy, bool useMsaa) noexcept
+			: _useAnisotropy{ useAnisotropy }, _useMsaa{ useMsaa } {}
 		~VulkanContext() noexcept;
 
 		void create(const WindowDescriptor&);

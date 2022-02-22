@@ -45,7 +45,7 @@ namespace seir
 	class VulkanPipelineBuilder
 	{
 	public:
-		explicit VulkanPipelineBuilder(const VkExtent2D&) noexcept;
+		explicit VulkanPipelineBuilder(const VkExtent2D&, VkSampleCountFlagBits) noexcept;
 
 		VulkanPipeline build(VkDevice, VkRenderPass);
 		void setDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType, VkShaderStageFlags) noexcept;

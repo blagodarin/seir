@@ -226,9 +226,10 @@ namespace seir
 	{
 		createSwapchain(context, windowSize);
 		createSwapchainImageViews(context._device, context._surfaceFormat);
+		createColorBuffer(context);
 		createDepthBuffer(context);
-		createRenderPass(context._device, context._surfaceFormat.format);
-		createPipeline(context._device, context._vertexShader, context._fragmentShader);
+		createRenderPass(context._device, context._surfaceFormat.format, context._maxSampleCount);
+		createPipeline(context._device, context._maxSampleCount, context._vertexShader, context._fragmentShader);
 		createFramebuffers(context._device);
 		createUniformBuffers(context);
 		createDescriptorPool(context._device);
@@ -257,6 +258,9 @@ namespace seir
 		vkDestroyImageView(device, _depthBufferView, nullptr);
 		_depthBufferView = VK_NULL_HANDLE;
 		_depthBuffer.destroy(device);
+		vkDestroyImageView(device, _colorBufferView, nullptr);
+		_colorBufferView = VK_NULL_HANDLE;
+		_colorBuffer.destroy(device);
 		for (auto& imageView : _swapchainImageViews)
 		{
 			vkDestroyImageView(device, imageView, nullptr);
@@ -270,7 +274,7 @@ namespace seir
 	{
 		const auto time = clockTime();
 		const UniformBufferObject ubo{
-			._model = Mat4::rotation(30 * time, { 0, 0, 1 }),
+			._model = Mat4::rotation(10 * time, { 0, 0, 1 }),
 			._view = Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
 			._projection = Mat4::projection3D(static_cast<float>(_swapchainExtent.width) / static_cast<float>(_swapchainExtent.height), 45, 1),
 		};
@@ -339,39 +343,60 @@ namespace seir
 			_swapchainImageViews[i] = ::createImageView2D(device, _swapchainImages[i], surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 
+	void VulkanSwapchain::createColorBuffer(const VulkanContext& context)
+	{
+		if (context._maxSampleCount != VK_SAMPLE_COUNT_1_BIT)
+		{
+			_colorBuffer.createTexture2D(context, _swapchainExtent, context._surfaceFormat.format, context._maxSampleCount, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT);
+			_colorBufferView = ::createImageView2D(context._device, _colorBuffer._image, context._surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT);
+		}
+	}
+
 	void VulkanSwapchain::createDepthBuffer(const VulkanContext& context)
 	{
 		constexpr auto tiling = VK_IMAGE_TILING_OPTIMAL;
 		_depthBufferFormat = context.findFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, tiling, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-		_depthBuffer.createTexture2D(context, _swapchainExtent, _depthBufferFormat, VK_SAMPLE_COUNT_1_BIT, tiling, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		_depthBuffer.createTexture2D(context, _swapchainExtent, _depthBufferFormat, context._maxSampleCount, tiling, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 		_depthBuffer.transitionLayout(context, _depthBufferFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		_depthBufferView = ::createImageView2D(context._device, _depthBuffer._image, _depthBufferFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	}
 
-	void VulkanSwapchain::createRenderPass(VkDevice device, VkFormat colorFormat)
+	void VulkanSwapchain::createRenderPass(VkDevice device, VkFormat colorFormat, VkSampleCountFlagBits sampleCount)
 	{
-		const std::array attachments{
-			VkAttachmentDescription{
+		StaticVector<VkAttachmentDescription, 3> attachments;
+		attachments.emplace_back(VkAttachmentDescription{
+			.format = colorFormat,
+			.samples = sampleCount,
+			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.finalLayout = sampleCount == VK_SAMPLE_COUNT_1_BIT
+				? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+				: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		});
+		attachments.emplace_back(VkAttachmentDescription{
+			.format = _depthBufferFormat,
+			.samples = sampleCount,
+			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		});
+		if (sampleCount != VK_SAMPLE_COUNT_1_BIT)
+			attachments.emplace_back(VkAttachmentDescription{
 				.format = colorFormat,
 				.samples = VK_SAMPLE_COUNT_1_BIT,
-				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 				.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 				.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 				.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 				.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			},
-			VkAttachmentDescription{
-				.format = _depthBufferFormat,
-				.samples = VK_SAMPLE_COUNT_1_BIT,
-				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-				.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-				.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-				.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-				.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-			},
-		};
+			});
 
 		const VkAttachmentReference colorReference{
 			.attachment = 0,
@@ -383,10 +408,16 @@ namespace seir
 			.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		};
 
+		const VkAttachmentReference resolveReference{
+			.attachment = 2,
+			.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		};
+
 		const VkSubpassDescription subpass{
 			.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
 			.colorAttachmentCount = 1,
 			.pColorAttachments = &colorReference,
+			.pResolveAttachments = sampleCount != VK_SAMPLE_COUNT_1_BIT ? &resolveReference : nullptr,
 			.pDepthStencilAttachment = &depthReference,
 		};
 
@@ -413,9 +444,9 @@ namespace seir
 		SEIR_VK(vkCreateRenderPass(device, &createInfo, nullptr, &_renderPass));
 	}
 
-	void VulkanSwapchain::createPipeline(VkDevice device, VkShaderModule vertexShader, VkShaderModule fragmentShader)
+	void VulkanSwapchain::createPipeline(VkDevice device, VkSampleCountFlagBits sampleCount, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
-		VulkanPipelineBuilder builder{ _swapchainExtent };
+		VulkanPipelineBuilder builder{ _swapchainExtent, sampleCount };
 		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
@@ -430,10 +461,18 @@ namespace seir
 		_swapchainFramebuffers.assign(_swapchainImageViews.size(), VK_NULL_HANDLE);
 		for (size_t i = 0; i < _swapchainImageViews.size(); ++i)
 		{
-			const std::array attachments{
-				_swapchainImageViews[i],
-				_depthBufferView,
-			};
+			StaticVector<VkImageView, 3> attachments;
+			if (_colorBufferView)
+			{
+				attachments.emplace_back(_colorBufferView);
+				attachments.emplace_back(_depthBufferView);
+				attachments.emplace_back(_swapchainImageViews[i]);
+			}
+			else
+			{
+				attachments.emplace_back(_swapchainImageViews[i]);
+				attachments.emplace_back(_depthBufferView);
+			}
 			const VkFramebufferCreateInfo createInfo{
 				.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 				.renderPass = _renderPass,
@@ -918,18 +957,35 @@ namespace seir
 					presentQueue = i;
 				if (graphicsQueue < queueFamilyCount && presentQueue < queueFamilyCount)
 				{
-#ifndef NDEBUG
-					fmt::print(stderr, "Vulkan physical device selected: {}\n", _physicalDeviceProperties.deviceName);
-					fmt::print(stderr, "Vulkan device extensions:\n");
-					for (const auto& extension : extensions)
-						fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);
-					fmt::print(stderr, "\n");
-#endif
 					_physicalDevice = device;
 					_surfaceFormat = *surfaceFormat;
 					_presentMode = *presentMode;
 					_graphicsQueueFamily = graphicsQueue;
 					_presentQueueFamily = presentQueue;
+					if (_useMsaa)
+					{
+						if (const auto sampleCountMask = _physicalDeviceProperties.limits.framebufferColorSampleCounts & _physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+							sampleCountMask & VK_SAMPLE_COUNT_64_BIT)
+							_maxSampleCount = VK_SAMPLE_COUNT_64_BIT;
+						else if (sampleCountMask & VK_SAMPLE_COUNT_32_BIT)
+							_maxSampleCount = VK_SAMPLE_COUNT_32_BIT;
+						else if (sampleCountMask & VK_SAMPLE_COUNT_16_BIT)
+							_maxSampleCount = VK_SAMPLE_COUNT_16_BIT;
+						else if (sampleCountMask & VK_SAMPLE_COUNT_8_BIT)
+							_maxSampleCount = VK_SAMPLE_COUNT_8_BIT;
+						else if (sampleCountMask & VK_SAMPLE_COUNT_4_BIT)
+							_maxSampleCount = VK_SAMPLE_COUNT_4_BIT;
+						else if (sampleCountMask & VK_SAMPLE_COUNT_2_BIT)
+							_maxSampleCount = VK_SAMPLE_COUNT_2_BIT;
+					}
+#ifndef NDEBUG
+					fmt::print(stderr, "Vulkan physical device selected: {}\n", _physicalDeviceProperties.deviceName);
+					fmt::print(stderr, "Vulkan device extensions:\n");
+					for (const auto& extension : extensions)
+						fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);
+					fmt::print(stderr, "Vulkan MSAA sample count: {}\n", _maxSampleCount);
+					fmt::print(stderr, "\n");
+#endif
 					return;
 				}
 			}
