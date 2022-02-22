@@ -5,7 +5,6 @@
 #pragma once
 
 #include <seir_renderer/renderer.hpp>
-
 #include "context.hpp"
 
 namespace seir

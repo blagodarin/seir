@@ -5,53 +5,17 @@
 #pragma once
 
 #include <seir_base/shared_ptr.hpp>
+#include "pipeline.hpp"
 
 #include <array>
 #include <cassert>
 #include <vector>
 
-#ifndef NDEBUG
-#	include <string>
-#endif
-
-#include "pipeline.hpp"
-
 namespace seir
 {
 	struct Size2D;
 	class VulkanContext;
-	class Window;
 	struct WindowDescriptor;
-
-	struct VulkanError
-	{
-#ifndef NDEBUG
-		const std::string_view _function;
-		const std::string _message;
-		VulkanError(std::string_view function, std::string&& message) noexcept
-			: _function{ function.substr(0, function.find('(')) }, _message{ std::move(message) } {}
-		VulkanError(std::string_view function, VkResult status)
-			: VulkanError(function, std::to_string(status)) {}
-#endif
-	};
-
-#ifndef NDEBUG
-#	define SEIR_VK_THROW(call, message) \
-		throw seir::VulkanError(call, message)
-#else
-#	define SEIR_VK_THROW(call, message) \
-		throw seir::VulkanError()
-#endif
-
-#define SEIR_VK(call) \
-	do \
-	{ \
-		if (const auto status = (call); status != VK_SUCCESS) \
-		{ \
-			assert(!#call); \
-			SEIR_VK_THROW(#call, std::to_string(status)); \
-		} \
-	} while (false)
 
 	class VulkanFrameSync
 	{
@@ -90,7 +54,7 @@ namespace seir
 		VkDeviceMemory _memory = VK_NULL_HANDLE;
 
 		void copy2D(const VulkanContext&, VkBuffer, uint32_t width, uint32_t height);
-		void createTexture2D(const VulkanContext&, uint32_t width, uint32_t height, VkFormat, VkImageTiling, VkImageUsageFlags);
+		void createTexture2D(const VulkanContext&, const VkExtent2D&, VkFormat, VkSampleCountFlagBits, VkImageTiling, VkImageUsageFlags);
 		void destroy(VkDevice) noexcept;
 		void transitionLayout(const VulkanContext&, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout);
 	};
@@ -122,7 +86,7 @@ namespace seir
 		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
 		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
 		void createDepthBuffer(const VulkanContext&);
-		void createRenderPass(VkDevice, const VkSurfaceFormatKHR&);
+		void createRenderPass(VkDevice, VkFormat);
 		void createPipeline(VkDevice, VkShaderModule vertexShader, VkShaderModule fragmentShader);
 		void createFramebuffers(VkDevice);
 		void createUniformBuffers(const VulkanContext&);

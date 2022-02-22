@@ -8,6 +8,7 @@
 #include <seir_base/static_vector.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
+#include "error.hpp"
 #include "pipeline.hpp"
 #include "utils.hpp"
 
@@ -226,7 +227,7 @@ namespace seir
 		createSwapchain(context, windowSize);
 		createSwapchainImageViews(context._device, context._surfaceFormat);
 		createDepthBuffer(context);
-		createRenderPass(context._device, context._surfaceFormat);
+		createRenderPass(context._device, context._surfaceFormat.format);
 		createPipeline(context._device, context._vertexShader, context._fragmentShader);
 		createFramebuffers(context._device);
 		createUniformBuffers(context);
@@ -342,16 +343,16 @@ namespace seir
 	{
 		constexpr auto tiling = VK_IMAGE_TILING_OPTIMAL;
 		_depthBufferFormat = context.findFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, tiling, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-		_depthBuffer.createTexture2D(context, _swapchainExtent.width, _swapchainExtent.height, _depthBufferFormat, tiling, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		_depthBuffer.createTexture2D(context, _swapchainExtent, _depthBufferFormat, VK_SAMPLE_COUNT_1_BIT, tiling, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 		_depthBuffer.transitionLayout(context, _depthBufferFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		_depthBufferView = ::createImageView2D(context._device, _depthBuffer._image, _depthBufferFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	}
 
-	void VulkanSwapchain::createRenderPass(VkDevice device, const VkSurfaceFormatKHR& surfaceFormat)
+	void VulkanSwapchain::createRenderPass(VkDevice device, VkFormat colorFormat)
 	{
 		const std::array attachments{
 			VkAttachmentDescription{
-				.format = surfaceFormat.format,
+				.format = colorFormat,
 				.samples = VK_SAMPLE_COUNT_1_BIT,
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -645,7 +646,7 @@ namespace seir
 		commandBuffer.submit(context._graphicsQueue);
 	}
 
-	void VulkanImage::createTexture2D(const VulkanContext& context, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage)
+	void VulkanImage::createTexture2D(const VulkanContext& context, const VkExtent2D& extent, VkFormat format, VkSampleCountFlagBits sampleCount, VkImageTiling tiling, VkImageUsageFlags usage)
 	{
 		assert(_image == VK_NULL_HANDLE);
 		const VkImageCreateInfo createInfo{
@@ -654,13 +655,13 @@ namespace seir
 			.imageType = VK_IMAGE_TYPE_2D,
 			.format = format,
 			.extent{
-				.width = width,
-				.height = height,
+				.width = extent.width,
+				.height = extent.height,
 				.depth = 1,
 			},
 			.mipLevels = 1,
 			.arrayLayers = 1,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
+			.samples = sampleCount,
 			.tiling = tiling,
 			.usage = usage,
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -990,7 +991,7 @@ namespace seir
 		stagingBuffer.create(*this, kImageData.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		stagingBuffer.write(_device, kImageData.data(), kImageData.size());
 		constexpr auto format = VK_FORMAT_B8G8R8A8_SRGB;
-		_texture.createTexture2D(*this, 1, 1, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		_texture.createTexture2D(*this, { 1, 1 }, format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		_texture.transitionLayout(*this, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		_texture.copy2D(*this, stagingBuffer._buffer, 1, 1);
 		stagingBuffer.destroy(_device);

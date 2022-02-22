@@ -5,7 +5,6 @@
 #pragma once
 
 #include <seir_base/static_vector.hpp>
-
 #include "vulkan.hpp"
 
 namespace seir

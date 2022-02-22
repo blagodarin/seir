@@ -127,7 +127,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	add_compile_options(/Wall /WX
+	add_compile_options(/MP /Wall /WX
 		/wd4464 # relative include path contains '..'
 		/wd4514 # unreferenced inline function has been removed
 		/wd4623 # default constructor was implicitly defined as deleted

@@ -4,7 +4,7 @@
 
 #include "pipeline.hpp"
 
-#include "context.hpp" // TODO: Remove (only needed for SEIR_VK).
+#include "error.hpp"
 
 namespace seir
 {

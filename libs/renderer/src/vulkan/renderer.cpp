@@ -5,6 +5,7 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
+#include "error.hpp"
 #include "utils.hpp"
 
 namespace seir
