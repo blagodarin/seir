@@ -60,7 +60,7 @@ namespace seir
 		void transitionLayout(const VulkanContext&, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout);
 	};
 
-	class VulkanSwapchain
+	class VulkanRenderTarget
 	{
 	public:
 		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
@@ -73,17 +73,11 @@ namespace seir
 		VulkanImage _depthBuffer;
 		VkImageView _depthBufferView = VK_NULL_HANDLE;
 		VkRenderPass _renderPass = VK_NULL_HANDLE;
-		VulkanPipeline _pipeline;
 		std::vector<VkFramebuffer> _swapchainFramebuffers;
-		std::vector<VkCommandBuffer> _commandBuffers;
-		std::vector<VulkanBuffer> _uniformBuffers;
-		VkDescriptorPool _descriptorPool = VK_NULL_HANDLE;
-		std::vector<VkDescriptorSet> _descriptorSets;
 		std::vector<VkFence> _swapchainImageFences;
 
 		void create(const VulkanContext&, const Size2D& windowSize);
-		void destroy(VkDevice, VkCommandPool) noexcept;
-		void updateUniformBuffer(VkDevice, uint32_t imageIndex);
+		void destroy(VkDevice) noexcept;
 
 	private:
 		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
@@ -91,12 +85,28 @@ namespace seir
 		void createColorBuffer(const VulkanContext&);
 		void createDepthBuffer(const VulkanContext&);
 		void createRenderPass(VkDevice, VkFormat, VkSampleCountFlagBits);
-		void createPipeline(const VulkanContext&, VkShaderModule vertexShader, VkShaderModule fragmentShader);
 		void createFramebuffers(VkDevice);
-		void createUniformBuffers(const VulkanContext&);
-		void createDescriptorPool(VkDevice);
-		void createDescriptorSets(const VulkanContext&);
-		void createCommandBuffers(VkDevice, VkCommandPool, VkBuffer vertexBuffer, VkBuffer indexBuffer);
+	};
+
+	class VulkanSwapchain
+	{
+	public:
+		VulkanPipeline _pipeline;
+		std::vector<VkCommandBuffer> _commandBuffers;
+		std::vector<VulkanBuffer> _uniformBuffers;
+		VkDescriptorPool _descriptorPool = VK_NULL_HANDLE;
+		std::vector<VkDescriptorSet> _descriptorSets;
+
+		void create(const VulkanContext&, const VulkanRenderTarget&);
+		void destroy(VkDevice, VkCommandPool) noexcept;
+		void updateUniformBuffer(VkDevice, uint32_t imageIndex, const VkExtent2D& screenSize);
+
+	private:
+		void createPipeline(const VulkanContext&, const VulkanRenderTarget&, VkShaderModule vertexShader, VkShaderModule fragmentShader);
+		void createUniformBuffers(const VulkanContext&, uint32_t count);
+		void createDescriptorPool(VkDevice, uint32_t count);
+		void createDescriptorSets(const VulkanContext&, uint32_t count);
+		void createCommandBuffers(VkDevice, VkCommandPool, const VulkanRenderTarget&, VkBuffer vertexBuffer, VkBuffer indexBuffer);
 	};
 
 	class VulkanOneTimeSubmit

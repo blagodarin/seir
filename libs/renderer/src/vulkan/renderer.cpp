@@ -26,6 +26,7 @@ namespace seir
 	{
 		vkDeviceWaitIdle(_context._device);
 		_swapchain.destroy(_context._device, _context._commandPool);
+		_renderTarget.destroy(_context._device);
 		_frameSync.destroy(_context._device);
 	}
 
@@ -48,7 +49,7 @@ namespace seir
 
 	void VulkanRenderer::draw()
 	{
-		if (!_swapchain._swapchain)
+		if (!_renderTarget._swapchain)
 		{
 			const auto windowSize = _window->size();
 			if (windowSize._width == 0 || windowSize._height == 0)
@@ -56,22 +57,24 @@ namespace seir
 				sleepFor(1);
 				return;
 			}
-			_swapchain.create(_context, windowSize);
+			_renderTarget.create(_context, windowSize);
+			_swapchain.create(_context, _renderTarget);
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
-		if (const auto status = vkAcquireNextImageKHR(_context._device, _swapchain._swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index); status == VK_ERROR_OUT_OF_DATE_KHR)
+		if (const auto status = vkAcquireNextImageKHR(_context._device, _renderTarget._swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index); status == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			vkDeviceWaitIdle(_context._device);
 			_swapchain.destroy(_context._device, _context._commandPool);
+			_renderTarget.destroy(_context._device);
 			return;
 		}
 		else if (status != VK_SUCCESS && status != VK_SUBOPTIMAL_KHR)
 			SEIR_VK_THROW("vkAcquireNextImageKHR", status);
-		if (_swapchain._swapchainImageFences[index])
-			SEIR_VK(vkWaitForFences(_context._device, 1, &_swapchain._swapchainImageFences[index], VK_TRUE, UINT64_MAX));
-		_swapchain._swapchainImageFences[index] = fence;
-		_swapchain.updateUniformBuffer(_context._device, index);
+		if (_renderTarget._swapchainImageFences[index])
+			SEIR_VK(vkWaitForFences(_context._device, 1, &_renderTarget._swapchainImageFences[index], VK_TRUE, UINT64_MAX));
+		_renderTarget._swapchainImageFences[index] = fence;
+		_swapchain.updateUniformBuffer(_context._device, index, _renderTarget._swapchainExtent);
 		const VkSemaphore waitSemaphores[]{ imageAvailableSemaphore };
 		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		const VkSemaphore signalSemaphores[]{ renderFinishedSemaphore };
@@ -87,7 +90,7 @@ namespace seir
 		};
 		SEIR_VK(vkResetFences(_context._device, 1, &fence));
 		SEIR_VK(vkQueueSubmit(_context._graphicsQueue, 1, &submitInfo, fence));
-		const VkSwapchainKHR swapchains[]{ _swapchain._swapchain };
+		const VkSwapchainKHR swapchains[]{ _renderTarget._swapchain };
 		const VkPresentInfoKHR presentInfo{
 			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 			.waitSemaphoreCount = 1,
@@ -101,6 +104,7 @@ namespace seir
 		{
 			vkDeviceWaitIdle(_context._device);
 			_swapchain.destroy(_context._device, _context._commandPool);
+			_renderTarget.destroy(_context._device);
 			return;
 		}
 		else if (status != VK_SUCCESS)

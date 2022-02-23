@@ -23,6 +23,7 @@ namespace seir
 		const SharedPtr<Window> _window;
 		VulkanContext _context;
 		VulkanFrameSync _frameSync;
+		VulkanRenderTarget _renderTarget;
 		VulkanSwapchain _swapchain;
 	};
 }

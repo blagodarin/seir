@@ -222,37 +222,25 @@ namespace seir
 		return _items[index];
 	}
 
-	void VulkanSwapchain::create(const VulkanContext& context, const Size2D& windowSize)
+	void VulkanRenderTarget::create(const VulkanContext& context, const Size2D& windowSize)
 	{
 		createSwapchain(context, windowSize);
 		createSwapchainImageViews(context._device, context._surfaceFormat);
 		createColorBuffer(context);
 		createDepthBuffer(context);
 		createRenderPass(context._device, context._surfaceFormat.format, context._maxSampleCount);
-		createPipeline(context, context._vertexShader, context._fragmentShader);
 		createFramebuffers(context._device);
-		createUniformBuffers(context);
-		createDescriptorPool(context._device);
-		createDescriptorSets(context);
-		createCommandBuffers(context._device, context._commandPool, context._vertexBuffer._buffer, context._indexBuffer._buffer);
 		_swapchainImageFences.assign(_swapchainImages.size(), VK_NULL_HANDLE);
 	}
 
-	void VulkanSwapchain::destroy(VkDevice device, VkCommandPool commandPool) noexcept
+	void VulkanRenderTarget::destroy(VkDevice device) noexcept
 	{
 		std::fill(_swapchainImageFences.begin(), _swapchainImageFences.end(), VK_NULL_HANDLE);
-		vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
-		std::fill(_commandBuffers.begin(), _commandBuffers.end(), VK_NULL_HANDLE);
-		std::fill(_descriptorSets.begin(), _descriptorSets.end(), VK_NULL_HANDLE);
-		vkDestroyDescriptorPool(device, _descriptorPool, nullptr);
-		for (auto& buffer : _uniformBuffers)
-			buffer.destroy(device);
 		for (auto& framebuffer : _swapchainFramebuffers)
 		{
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 			framebuffer = VK_NULL_HANDLE;
 		}
-		_pipeline.destroy();
 		vkDestroyRenderPass(device, _renderPass, nullptr);
 		_renderPass = VK_NULL_HANDLE;
 		vkDestroyImageView(device, _depthBufferView, nullptr);
@@ -270,18 +258,7 @@ namespace seir
 		_swapchain = VK_NULL_HANDLE;
 	}
 
-	void VulkanSwapchain::updateUniformBuffer(VkDevice device, uint32_t imageIndex)
-	{
-		const auto time = clockTime();
-		const UniformBufferObject ubo{
-			._model = Mat4::rotation(10 * time, { 0, 0, 1 }),
-			._view = Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
-			._projection = Mat4::projection3D(static_cast<float>(_swapchainExtent.width) / static_cast<float>(_swapchainExtent.height), 45, 1),
-		};
-		_uniformBuffers[imageIndex].write(device, &ubo, sizeof ubo);
-	}
-
-	void VulkanSwapchain::createSwapchain(const VulkanContext& context, const Size2D& windowSize)
+	void VulkanRenderTarget::createSwapchain(const VulkanContext& context, const Size2D& windowSize)
 	{
 		VkSurfaceCapabilitiesKHR surfaceCapabilities{};
 		SEIR_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context._physicalDevice, context._surface, &surfaceCapabilities));
@@ -336,14 +313,14 @@ namespace seir
 		SEIR_VK(vkGetSwapchainImagesKHR(context._device, _swapchain, &imageCount, _swapchainImages.data()));
 	}
 
-	void VulkanSwapchain::createSwapchainImageViews(VkDevice device, const VkSurfaceFormatKHR& surfaceFormat)
+	void VulkanRenderTarget::createSwapchainImageViews(VkDevice device, const VkSurfaceFormatKHR& surfaceFormat)
 	{
 		_swapchainImageViews.assign(_swapchainImages.size(), VK_NULL_HANDLE);
 		for (size_t i = 0; i < _swapchainImages.size(); ++i)
 			_swapchainImageViews[i] = ::createImageView2D(device, _swapchainImages[i], surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 
-	void VulkanSwapchain::createColorBuffer(const VulkanContext& context)
+	void VulkanRenderTarget::createColorBuffer(const VulkanContext& context)
 	{
 		if (context._maxSampleCount != VK_SAMPLE_COUNT_1_BIT)
 		{
@@ -352,7 +329,7 @@ namespace seir
 		}
 	}
 
-	void VulkanSwapchain::createDepthBuffer(const VulkanContext& context)
+	void VulkanRenderTarget::createDepthBuffer(const VulkanContext& context)
 	{
 		constexpr auto tiling = VK_IMAGE_TILING_OPTIMAL;
 		_depthBufferFormat = context.findFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, tiling, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
@@ -361,7 +338,7 @@ namespace seir
 		_depthBufferView = ::createImageView2D(context._device, _depthBuffer._image, _depthBufferFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	}
 
-	void VulkanSwapchain::createRenderPass(VkDevice device, VkFormat colorFormat, VkSampleCountFlagBits sampleCount)
+	void VulkanRenderTarget::createRenderPass(VkDevice device, VkFormat colorFormat, VkSampleCountFlagBits sampleCount)
 	{
 		StaticVector<VkAttachmentDescription, 3> attachments;
 		attachments.emplace_back(VkAttachmentDescription{
@@ -444,19 +421,7 @@ namespace seir
 		SEIR_VK(vkCreateRenderPass(device, &createInfo, nullptr, &_renderPass));
 	}
 
-	void VulkanSwapchain::createPipeline(const VulkanContext& context, VkShaderModule vertexShader, VkShaderModule fragmentShader)
-	{
-		VulkanPipelineBuilder builder{ _swapchainExtent, context._maxSampleCount, context._options.sampleShading };
-		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
-		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
-		builder.setVertexInput(0, { VertexAttribute::f32x3, VertexAttribute::f32x3, VertexAttribute::f32x2 });
-		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
-		_pipeline = builder.build(context._device, _renderPass);
-	}
-
-	void VulkanSwapchain::createFramebuffers(VkDevice device)
+	void VulkanRenderTarget::createFramebuffers(VkDevice device)
 	{
 		_swapchainFramebuffers.assign(_swapchainImageViews.size(), VK_NULL_HANDLE);
 		for (size_t i = 0; i < _swapchainImageViews.size(); ++i)
@@ -486,46 +451,90 @@ namespace seir
 		}
 	}
 
-	void VulkanSwapchain::createUniformBuffers(const VulkanContext& context)
+	void VulkanSwapchain::create(const VulkanContext& context, const VulkanRenderTarget& renderTarget)
 	{
-		_uniformBuffers.resize(_swapchainImages.size());
+		createPipeline(context, renderTarget, context._vertexShader, context._fragmentShader);
+		const auto frameCount = static_cast<uint32_t>(renderTarget._swapchainImages.size());
+		createUniformBuffers(context, frameCount);
+		createDescriptorPool(context._device, frameCount);
+		createDescriptorSets(context, frameCount);
+		createCommandBuffers(context._device, context._commandPool, renderTarget, context._vertexBuffer._buffer, context._indexBuffer._buffer);
+	}
+
+	void VulkanSwapchain::destroy(VkDevice device, VkCommandPool commandPool) noexcept
+	{
+		vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
+		std::fill(_commandBuffers.begin(), _commandBuffers.end(), VK_NULL_HANDLE);
+		std::fill(_descriptorSets.begin(), _descriptorSets.end(), VK_NULL_HANDLE);
+		vkDestroyDescriptorPool(device, _descriptorPool, nullptr);
+		for (auto& buffer : _uniformBuffers)
+			buffer.destroy(device);
+		_pipeline.destroy();
+	}
+
+	void VulkanSwapchain::updateUniformBuffer(VkDevice device, uint32_t imageIndex, const VkExtent2D& screenSize)
+	{
+		const auto time = clockTime();
+		const UniformBufferObject ubo{
+			._model = Mat4::rotation(10 * time, { 0, 0, 1 }),
+			._view = Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
+			._projection = Mat4::projection3D(static_cast<float>(screenSize.width) / static_cast<float>(screenSize.height), 45, 1),
+		};
+		_uniformBuffers[imageIndex].write(device, &ubo, sizeof ubo);
+	}
+
+	void VulkanSwapchain::createPipeline(const VulkanContext& context, const VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
+	{
+		VulkanPipelineBuilder builder{ renderTarget._swapchainExtent, context._maxSampleCount, context._options.sampleShading };
+		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
+		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
+		builder.setVertexInput(0, { VertexAttribute::f32x3, VertexAttribute::f32x3, VertexAttribute::f32x2 });
+		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
+		_pipeline = builder.build(context._device, renderTarget._renderPass);
+	}
+
+	void VulkanSwapchain::createUniformBuffers(const VulkanContext& context, uint32_t count)
+	{
+		_uniformBuffers.resize(count);
 		for (auto& buffer : _uniformBuffers)
 			buffer.create(context, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	}
 
-	void VulkanSwapchain::createDescriptorPool(VkDevice device)
+	void VulkanSwapchain::createDescriptorPool(VkDevice device, uint32_t count)
 	{
 		const std::array poolSizes{
 			VkDescriptorPoolSize{
 				.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.descriptorCount = static_cast<uint32_t>(_swapchainImages.size()),
+				.descriptorCount = count,
 			},
 			VkDescriptorPoolSize{
 				.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				.descriptorCount = static_cast<uint32_t>(_swapchainImages.size()),
+				.descriptorCount = count,
 			},
 		};
 		const VkDescriptorPoolCreateInfo poolInfo{
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets = static_cast<uint32_t>(_swapchainImages.size()),
+			.maxSets = count,
 			.poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
 			.pPoolSizes = poolSizes.data(),
 		};
 		SEIR_VK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool));
 	}
 
-	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context)
+	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context, uint32_t count)
 	{
-		const std::vector<VkDescriptorSetLayout> layouts(_swapchainImages.size(), _pipeline.descriptorSetLayout());
+		const std::vector<VkDescriptorSetLayout> layouts(count, _pipeline.descriptorSetLayout());
 		VkDescriptorSetAllocateInfo allocateInfo{
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = _descriptorPool,
-			.descriptorSetCount = static_cast<uint32_t>(_swapchainImages.size()),
+			.descriptorSetCount = count,
 			.pSetLayouts = layouts.data(),
 		};
-		_descriptorSets.assign(_swapchainImages.size(), VK_NULL_HANDLE);
+		_descriptorSets.assign(count, VK_NULL_HANDLE);
 		SEIR_VK(vkAllocateDescriptorSets(context._device, &allocateInfo, _descriptorSets.data()));
-		for (size_t i = 0; i < _swapchainImages.size(); ++i)
+		for (uint32_t i = 0; i < count; ++i)
 		{
 			const VkDescriptorBufferInfo bufferInfo{
 				.buffer = _uniformBuffers[i]._buffer,
@@ -565,9 +574,9 @@ namespace seir
 		}
 	}
 
-	void VulkanSwapchain::createCommandBuffers(VkDevice device, VkCommandPool commandPool, VkBuffer vertexBuffer, VkBuffer indexBuffer)
+	void VulkanSwapchain::createCommandBuffers(VkDevice device, VkCommandPool commandPool, const VulkanRenderTarget& renderTarget, VkBuffer vertexBuffer, VkBuffer indexBuffer)
 	{
-		_commandBuffers.assign(_swapchainFramebuffers.size(), VK_NULL_HANDLE);
+		_commandBuffers.assign(renderTarget._swapchainFramebuffers.size(), VK_NULL_HANDLE);
 		const VkCommandBufferAllocateInfo allocateInfo{
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 			.commandPool = commandPool,
@@ -598,11 +607,11 @@ namespace seir
 			};
 			const VkRenderPassBeginInfo renderPassInfo{
 				.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-				.renderPass = _renderPass,
-				.framebuffer = _swapchainFramebuffers[i],
+				.renderPass = renderTarget._renderPass,
+				.framebuffer = renderTarget._swapchainFramebuffers[i],
 				.renderArea{
 					.offset{ 0, 0 },
-					.extent = _swapchainExtent,
+					.extent = renderTarget._swapchainExtent,
 				},
 				.clearValueCount = static_cast<uint32_t>(clearValues.size()),
 				.pClearValues = clearValues.data(),
