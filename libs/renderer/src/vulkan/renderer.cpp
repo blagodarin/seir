@@ -10,6 +10,14 @@
 
 namespace
 {
+	const uint32_t kVertexShader[]{
+#include "vertex_shader.glsl.spirv.inc"
+	};
+
+	const uint32_t kFragmentShader[]{
+#include "fragment_shader.glsl.spirv.inc"
+	};
+
 	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
 		seir::VulkanPipelineBuilder builder{ renderTarget._swapchainExtent, context._maxSampleCount, context._options.sampleShading };
@@ -51,6 +59,8 @@ namespace seir
 		try
 		{
 			_context.create(_window->descriptor());
+			_vertexShader.create(_context._device, kVertexShader, sizeof kVertexShader);
+			_fragmentShader.create(_context._device, kFragmentShader, sizeof kFragmentShader);
 			_frameSync.create(_context._device);
 			return true;
 		}
@@ -74,7 +84,7 @@ namespace seir
 				return;
 			}
 			_renderTarget.create(_context, windowSize);
-			_pipeline = ::createPipeline(_context, _renderTarget, _context._vertexShader, _context._fragmentShader);
+			_pipeline = ::createPipeline(_context, _renderTarget, _vertexShader.handle(), _fragmentShader.handle());
 			_swapchain.create(_context, _renderTarget, _pipeline);
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);

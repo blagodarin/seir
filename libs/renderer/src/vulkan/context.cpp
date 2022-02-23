@@ -110,14 +110,6 @@ namespace
 		return fifoMode;
 	}
 
-	const uint32_t kVertexShader[]{
-#include "vertex_shader.glsl.spirv.inc"
-	};
-
-	const uint32_t kFragmentShader[]{
-#include "fragment_shader.glsl.spirv.inc"
-	};
-
 	struct Vertex
 	{
 		seir::Vec3 position;
@@ -807,12 +799,32 @@ namespace seir
 		SEIR_VK(vkQueueWaitIdle(queue));
 	}
 
+	void VulkanShader::create(VkDevice device, const uint32_t* data, size_t bytes)
+	{
+		assert(!_module);
+		const VkShaderModuleCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+			.codeSize = bytes,
+			.pCode = data,
+		};
+		SEIR_VK(vkCreateShaderModule(device, &createInfo, nullptr, &_module));
+		_device = device;
+	}
+
+	void VulkanShader::destroy() noexcept
+	{
+		if (_module)
+		{
+			vkDestroyShaderModule(_device, _module, nullptr);
+			_device = VK_NULL_HANDLE;
+			_module = VK_NULL_HANDLE;
+		}
+	}
+
 	VulkanContext::~VulkanContext() noexcept
 	{
 		_indexBuffer.destroy(_device);
 		_vertexBuffer.destroy(_device);
-		vkDestroyShaderModule(_device, _fragmentShader, nullptr);
-		vkDestroyShaderModule(_device, _vertexShader, nullptr);
 		vkDestroySampler(_device, _textureSampler, nullptr);
 		vkDestroyImageView(_device, _textureView, nullptr);
 		_texture.destroy(_device);
@@ -840,8 +852,6 @@ namespace seir
 		createDevice();
 		createCommandPool();
 		createTextureImage();
-		_vertexShader = loadShader(kVertexShader, sizeof kVertexShader);
-		_fragmentShader = loadShader(kFragmentShader, sizeof kFragmentShader);
 		createVertexBuffer();
 		createIndexBuffer();
 	}
@@ -1069,18 +1079,6 @@ namespace seir
 			.unnormalizedCoordinates = VK_FALSE,
 		};
 		SEIR_VK(vkCreateSampler(_device, &samplerInfo, nullptr, &_textureSampler));
-	}
-
-	VkShaderModule VulkanContext::loadShader(const uint32_t* data, size_t size)
-	{
-		const VkShaderModuleCreateInfo createInfo{
-			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-			.codeSize = size,
-			.pCode = data,
-		};
-		VkShaderModule shaderModule = VK_NULL_HANDLE;
-		SEIR_VK(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule));
-		return shaderModule;
 	}
 
 	uint32_t VulkanContext::findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const

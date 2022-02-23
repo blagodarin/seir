@@ -61,6 +61,21 @@ namespace seir
 		void transitionLayout(const VulkanContext&, VkFormat, VkImageLayout oldLayout, VkImageLayout newLayout);
 	};
 
+	class VulkanShader
+	{
+	public:
+		constexpr VulkanShader() noexcept = default;
+		~VulkanShader() noexcept { destroy(); }
+
+		void create(VkDevice, const uint32_t* data, size_t bytes);
+		void destroy() noexcept;
+		[[nodiscard]] constexpr VkShaderModule handle() const noexcept { return _module; }
+
+	private:
+		VkDevice _device = VK_NULL_HANDLE;
+		VkShaderModule _module = VK_NULL_HANDLE;
+	};
+
 	class VulkanRenderTarget
 	{
 	public:
@@ -128,8 +143,6 @@ namespace seir
 		VulkanImage _texture;
 		VkImageView _textureView = VK_NULL_HANDLE;
 		VkSampler _textureSampler = VK_NULL_HANDLE;
-		VkShaderModule _vertexShader = VK_NULL_HANDLE;
-		VkShaderModule _fragmentShader = VK_NULL_HANDLE;
 		VulkanBuffer _vertexBuffer;
 		VulkanBuffer _indexBuffer;
 
@@ -151,7 +164,6 @@ namespace seir
 		void createDevice();
 		void createCommandPool();
 		void createTextureImage();
-		VkShaderModule loadShader(const uint32_t* data, size_t size);
 		void createVertexBuffer();
 		void createIndexBuffer();
 		void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize);

@@ -23,6 +23,8 @@ namespace seir
 	private:
 		const SharedPtr<Window> _window;
 		VulkanContext _context;
+		VulkanShader _vertexShader;
+		VulkanShader _fragmentShader;
 		VulkanFrameSync _frameSync;
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
