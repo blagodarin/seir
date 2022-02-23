@@ -25,9 +25,9 @@ namespace seir
 		~VulkanPipeline() noexcept { destroy(); }
 		VulkanPipeline& operator=(VulkanPipeline&&) noexcept;
 
-		[[nodiscard]] constexpr VkDescriptorSetLayout descriptorSetLayout() noexcept { return _descriptorSetLayout; }
-		[[nodiscard]] constexpr VkPipelineLayout pipelineLayout() noexcept { return _pipelineLayout; }
-		[[nodiscard]] constexpr VkPipeline pipeline() noexcept { return _pipeline; }
+		[[nodiscard]] constexpr VkDescriptorSetLayout descriptorSetLayout() const noexcept { return _descriptorSetLayout; }
+		[[nodiscard]] constexpr VkPipelineLayout pipelineLayout() const noexcept { return _pipelineLayout; }
+		[[nodiscard]] constexpr VkPipeline pipeline() const noexcept { return _pipeline; }
 		void destroy() noexcept;
 
 	private:

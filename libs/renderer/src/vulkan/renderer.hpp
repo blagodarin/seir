@@ -6,6 +6,7 @@
 
 #include <seir_renderer/renderer.hpp>
 #include "context.hpp"
+#include "pipeline.hpp"
 
 namespace seir
 {
@@ -24,6 +25,7 @@ namespace seir
 		VulkanContext _context;
 		VulkanFrameSync _frameSync;
 		VulkanRenderTarget _renderTarget;
+		VulkanPipeline _pipeline;
 		VulkanSwapchain _swapchain;
 	};
 }

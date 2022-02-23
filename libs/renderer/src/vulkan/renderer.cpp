@@ -8,6 +8,21 @@
 #include "error.hpp"
 #include "utils.hpp"
 
+namespace
+{
+	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
+	{
+		seir::VulkanPipelineBuilder builder{ renderTarget._swapchainExtent, context._maxSampleCount, context._options.sampleShading };
+		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
+		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
+		builder.setVertexInput(0, { seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x2 });
+		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
+		return builder.build(context._device, renderTarget._renderPass);
+	}
+}
+
 namespace seir
 {
 	VulkanRenderer::VulkanRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
@@ -26,6 +41,7 @@ namespace seir
 	{
 		vkDeviceWaitIdle(_context._device);
 		_swapchain.destroy(_context._device, _context._commandPool);
+		_pipeline.destroy();
 		_renderTarget.destroy(_context._device);
 		_frameSync.destroy(_context._device);
 	}
@@ -58,7 +74,8 @@ namespace seir
 				return;
 			}
 			_renderTarget.create(_context, windowSize);
-			_swapchain.create(_context, _renderTarget);
+			_pipeline = ::createPipeline(_context, _renderTarget, _context._vertexShader, _context._fragmentShader);
+			_swapchain.create(_context, _renderTarget, _pipeline);
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
@@ -66,6 +83,7 @@ namespace seir
 		{
 			vkDeviceWaitIdle(_context._device);
 			_swapchain.destroy(_context._device, _context._commandPool);
+			_pipeline.destroy();
 			_renderTarget.destroy(_context._device);
 			return;
 		}
@@ -104,6 +122,7 @@ namespace seir
 		{
 			vkDeviceWaitIdle(_context._device);
 			_swapchain.destroy(_context._device, _context._commandPool);
+			_pipeline.destroy();
 			_renderTarget.destroy(_context._device);
 			return;
 		}
