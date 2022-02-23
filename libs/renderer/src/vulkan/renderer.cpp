@@ -5,11 +5,37 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
+#include <seir_math/vec.hpp>
 #include "error.hpp"
 #include "utils.hpp"
 
 namespace
 {
+	struct Vertex
+	{
+		seir::Vec3 position;
+		seir::Vec3 color;
+		seir::Vec2 texCoord;
+	};
+
+	constexpr std::array kVertexData{
+		Vertex{ .position{ -1, -1, .5 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, .5 }, .color{ 1, 1, 1 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, 1, .5 }, .color{ 0, 1, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1, .5 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
+
+		Vertex{ .position{ -1, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, 1, 0 }, .color{ 1, 0, 1 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1, 0 }, .color{ 0, 0, 0 }, .texCoord{ 1, 1 } },
+	};
+
+	constexpr std::array<uint16_t, 10> kIndexData{
+		0, 1, 2, 3,
+		0xffff,
+		4, 5, 6, 7
+	};
+
 	const uint32_t kVertexShader[]{
 #include "vertex_shader.glsl.spirv.inc"
 	};
@@ -59,8 +85,10 @@ namespace seir
 		try
 		{
 			_context.create(_window->descriptor());
-			_vertexShader.create(_context._device, kVertexShader, sizeof kVertexShader);
-			_fragmentShader.create(_context._device, kFragmentShader, sizeof kFragmentShader);
+			_vertexShader = _context.createShader(kVertexShader, sizeof kVertexShader);
+			_fragmentShader = _context.createShader(kFragmentShader, sizeof kFragmentShader);
+			_vertexBuffer = _context.createDeviceBuffer(kVertexData.data(), kVertexData.size() * sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+			_indexBuffer = _context.createDeviceBuffer(kIndexData.data(), kIndexData.size() * sizeof(uint16_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 			_frameSync.create(_context._device);
 			return true;
 		}
@@ -85,7 +113,7 @@ namespace seir
 			}
 			_renderTarget.create(_context, windowSize);
 			_pipeline = ::createPipeline(_context, _renderTarget, _vertexShader.handle(), _fragmentShader.handle());
-			_swapchain.create(_context, _renderTarget, _pipeline);
+			_swapchain.create(_context, _renderTarget, _pipeline, _vertexBuffer.handle(), _indexBuffer.handle(), static_cast<uint32_t>(kIndexData.size()));
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
@@ -102,7 +130,7 @@ namespace seir
 		if (_renderTarget._swapchainImageFences[index])
 			SEIR_VK(vkWaitForFences(_context._device, 1, &_renderTarget._swapchainImageFences[index], VK_TRUE, UINT64_MAX));
 		_renderTarget._swapchainImageFences[index] = fence;
-		_swapchain.updateUniformBuffer(_context._device, index, _renderTarget._swapchainExtent);
+		_swapchain.updateUniformBuffer(index, _renderTarget._swapchainExtent);
 		const VkSemaphore waitSemaphores[]{ imageAvailableSemaphore };
 		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		const VkSemaphore signalSemaphores[]{ renderFinishedSemaphore };

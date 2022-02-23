@@ -26,6 +26,8 @@ elseif(SEIR_RENDERER STREQUAL "Vulkan")
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		set_property(SOURCE src/vulkan/context.cpp APPEND PROPERTY COMPILE_OPTIONS
 			/wd4191 # 'reinterpret_cast': unsafe conversion from 'PFN_vkVoidFunction' to '...'
+			)
+		set_property(SOURCE src/vulkan/renderer.cpp APPEND PROPERTY COMPILE_OPTIONS
 			/wd5246 # the initialization of a subobject should be wrapped in braces
 			)
 	endif()

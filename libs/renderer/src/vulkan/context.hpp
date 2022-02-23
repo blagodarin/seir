@@ -41,12 +41,20 @@ namespace seir
 	class VulkanBuffer
 	{
 	public:
+		constexpr VulkanBuffer() noexcept = default;
+		constexpr VulkanBuffer(VulkanBuffer&&) noexcept;
+		~VulkanBuffer() noexcept { destroy(); }
+		VulkanBuffer& operator=(VulkanBuffer&&) noexcept;
+
+		void destroy() noexcept;
+		[[nodiscard]] constexpr VkBuffer handle() const noexcept { return _buffer; }
+		void write(const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+
+	private:
+		VkDevice _device = VK_NULL_HANDLE;
 		VkBuffer _buffer = VK_NULL_HANDLE;
 		VkDeviceMemory _memory = VK_NULL_HANDLE;
-
-		void create(const VulkanContext&, VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags);
-		void destroy(VkDevice) noexcept;
-		void write(VkDevice, const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+		friend VulkanContext;
 	};
 
 	class VulkanImage
@@ -65,15 +73,17 @@ namespace seir
 	{
 	public:
 		constexpr VulkanShader() noexcept = default;
+		constexpr VulkanShader(VulkanShader&&) noexcept;
 		~VulkanShader() noexcept { destroy(); }
+		VulkanShader& operator=(VulkanShader&&) noexcept;
 
-		void create(VkDevice, const uint32_t* data, size_t bytes);
 		void destroy() noexcept;
 		[[nodiscard]] constexpr VkShaderModule handle() const noexcept { return _module; }
 
 	private:
 		VkDevice _device = VK_NULL_HANDLE;
 		VkShaderModule _module = VK_NULL_HANDLE;
+		friend VulkanContext;
 	};
 
 	class VulkanRenderTarget
@@ -143,14 +153,15 @@ namespace seir
 		VulkanImage _texture;
 		VkImageView _textureView = VK_NULL_HANDLE;
 		VkSampler _textureSampler = VK_NULL_HANDLE;
-		VulkanBuffer _vertexBuffer;
-		VulkanBuffer _indexBuffer;
 
 		explicit VulkanContext(const RendererOptions& options) noexcept
 			: _options{ options } {}
 		~VulkanContext() noexcept;
 
 		void create(const WindowDescriptor&);
+		VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags) const;
+		VulkanBuffer createDeviceBuffer(const void* data, VkDeviceSize, VkBufferUsageFlags) const;
+		VulkanShader createShader(const uint32_t* data, size_t bytes) const;
 		uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const;
 		VkFormat findFormat(const std::vector<VkFormat>& candidates, VkImageTiling, VkFormatFeatureFlags) const;
 
@@ -164,9 +175,7 @@ namespace seir
 		void createDevice();
 		void createCommandPool();
 		void createTextureImage();
-		void createVertexBuffer();
-		void createIndexBuffer();
-		void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize);
+		void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize) const;
 	};
 
 	class VulkanSwapchain // Actually "VulkanContextPart2".
@@ -177,14 +186,32 @@ namespace seir
 		VkDescriptorPool _descriptorPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> _descriptorSets;
 
-		void create(const VulkanContext&, const VulkanRenderTarget&, const VulkanPipeline&);
+		void create(const VulkanContext&, const VulkanRenderTarget&, const VulkanPipeline&, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
 		void destroy(VkDevice, VkCommandPool) noexcept;
-		void updateUniformBuffer(VkDevice, uint32_t imageIndex, const VkExtent2D& screenSize);
+		void updateUniformBuffer(uint32_t imageIndex, const VkExtent2D& screenSize);
 
 	private:
 		void createUniformBuffers(const VulkanContext&, uint32_t count);
 		void createDescriptorPool(VkDevice, uint32_t count);
 		void createDescriptorSets(const VulkanContext&, VkDescriptorSetLayout, uint32_t count);
-		void createCommandBuffers(VkDevice, VkCommandPool, const VulkanRenderTarget&, const VulkanPipeline&, VkBuffer vertexBuffer, VkBuffer indexBuffer);
+		void createCommandBuffers(VkDevice, VkCommandPool, const VulkanRenderTarget&, const VulkanPipeline&, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
 	};
+}
+
+constexpr seir::VulkanBuffer::VulkanBuffer(VulkanBuffer&& other) noexcept
+	: _device{ other._device }
+	, _buffer{ other._buffer }
+	, _memory{ other._memory }
+{
+	other._device = VK_NULL_HANDLE;
+	other._buffer = VK_NULL_HANDLE;
+	other._memory = VK_NULL_HANDLE;
+}
+
+constexpr seir::VulkanShader::VulkanShader(VulkanShader&& other) noexcept
+	: _device{ other._device }
+	, _module{ other._module }
+{
+	other._device = VK_NULL_HANDLE;
+	other._module = VK_NULL_HANDLE;
 }

@@ -25,6 +25,8 @@ namespace seir
 		VulkanContext _context;
 		VulkanShader _vertexShader;
 		VulkanShader _fragmentShader;
+		VulkanBuffer _vertexBuffer;
+		VulkanBuffer _indexBuffer;
 		VulkanFrameSync _frameSync;
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
