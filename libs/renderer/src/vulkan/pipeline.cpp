@@ -41,7 +41,7 @@ namespace seir
 		}
 	}
 
-	VulkanPipelineBuilder::VulkanPipelineBuilder(const VkExtent2D& extent, VkSampleCountFlagBits sampleCount) noexcept
+	VulkanPipelineBuilder::VulkanPipelineBuilder(const VkExtent2D& extent, VkSampleCountFlagBits sampleCount, bool sampleShading) noexcept
 		: _descriptorSetLayoutInfo{
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 			.bindingCount = 0,
@@ -101,8 +101,8 @@ namespace seir
 		, _multisampleState{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 			.rasterizationSamples = sampleCount,
-			.sampleShadingEnable = VK_FALSE, // TODO: Add sample shading support.
-			.minSampleShading = 1.f,
+			.sampleShadingEnable = static_cast<VkBool32>(sampleShading),
+			.minSampleShading = sampleShading ? .25f : 1.f,
 			.pSampleMask = nullptr,
 			.alphaToCoverageEnable = VK_FALSE,
 			.alphaToOneEnable = VK_FALSE,

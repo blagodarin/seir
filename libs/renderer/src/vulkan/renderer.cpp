@@ -12,7 +12,13 @@ namespace seir
 {
 	VulkanRenderer::VulkanRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
 		: _window{ window }
-		, _context{ true, true }
+		, _context{
+			RendererOptions{
+				.anisotropicFiltering = true,
+				.multisampleAntialiasing = true,
+				.sampleShading = true,
+			}
+		}
 	{
 	}
 

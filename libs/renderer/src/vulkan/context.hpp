@@ -5,6 +5,7 @@
 #pragma once
 
 #include <seir_base/shared_ptr.hpp>
+#include "options.hpp"
 #include "pipeline.hpp"
 
 #include <array>
@@ -90,7 +91,7 @@ namespace seir
 		void createColorBuffer(const VulkanContext&);
 		void createDepthBuffer(const VulkanContext&);
 		void createRenderPass(VkDevice, VkFormat, VkSampleCountFlagBits);
-		void createPipeline(VkDevice, VkSampleCountFlagBits, VkShaderModule vertexShader, VkShaderModule fragmentShader);
+		void createPipeline(const VulkanContext&, VkShaderModule vertexShader, VkShaderModule fragmentShader);
 		void createFramebuffers(VkDevice);
 		void createUniformBuffers(const VulkanContext&);
 		void createDescriptorPool(VkDevice);
@@ -116,8 +117,7 @@ namespace seir
 	class VulkanContext
 	{
 	public:
-		const bool _useAnisotropy;
-		const bool _useMsaa; // TODO: Support different MSAA levels.
+		const RendererOptions _options;
 		VkInstance _instance = VK_NULL_HANDLE;
 #ifndef NDEBUG
 		PFN_vkDestroyDebugUtilsMessengerEXT _vkDestroyDebugUtilsMessenger = nullptr;
@@ -143,8 +143,8 @@ namespace seir
 		VulkanBuffer _vertexBuffer;
 		VulkanBuffer _indexBuffer;
 
-		VulkanContext(bool useAnisotropy, bool useMsaa) noexcept
-			: _useAnisotropy{ useAnisotropy }, _useMsaa{ useMsaa } {}
+		explicit VulkanContext(const RendererOptions& options) noexcept
+			: _options{ options } {}
 		~VulkanContext() noexcept;
 
 		void create(const WindowDescriptor&);

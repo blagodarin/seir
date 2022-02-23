@@ -229,7 +229,7 @@ namespace seir
 		createColorBuffer(context);
 		createDepthBuffer(context);
 		createRenderPass(context._device, context._surfaceFormat.format, context._maxSampleCount);
-		createPipeline(context._device, context._maxSampleCount, context._vertexShader, context._fragmentShader);
+		createPipeline(context, context._vertexShader, context._fragmentShader);
 		createFramebuffers(context._device);
 		createUniformBuffers(context);
 		createDescriptorPool(context._device);
@@ -444,16 +444,16 @@ namespace seir
 		SEIR_VK(vkCreateRenderPass(device, &createInfo, nullptr, &_renderPass));
 	}
 
-	void VulkanSwapchain::createPipeline(VkDevice device, VkSampleCountFlagBits sampleCount, VkShaderModule vertexShader, VkShaderModule fragmentShader)
+	void VulkanSwapchain::createPipeline(const VulkanContext& context, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
-		VulkanPipelineBuilder builder{ _swapchainExtent, sampleCount };
+		VulkanPipelineBuilder builder{ _swapchainExtent, context._maxSampleCount, context._options.sampleShading };
 		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
 		builder.setVertexInput(0, { VertexAttribute::f32x3, VertexAttribute::f32x3, VertexAttribute::f32x2 });
 		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
-		_pipeline = builder.build(device, _renderPass);
+		_pipeline = builder.build(context._device, _renderPass);
 	}
 
 	void VulkanSwapchain::createFramebuffers(VkDevice device)
@@ -927,7 +927,8 @@ namespace seir
 
 			VkPhysicalDeviceFeatures features{};
 			vkGetPhysicalDeviceFeatures(device, &features);
-			if (_useAnisotropy && !features.samplerAnisotropy)
+			if ((_options.anisotropicFiltering && !features.samplerAnisotropy)
+				|| (_options.sampleShading && !features.sampleRateShading)) // TODO: Use the best device even if it doesn't have all supported features.
 				continue;
 
 			if (!::checkDeviceExtensions(device, extensions))
@@ -962,7 +963,7 @@ namespace seir
 					_presentMode = *presentMode;
 					_graphicsQueueFamily = graphicsQueue;
 					_presentQueueFamily = presentQueue;
-					if (_useMsaa)
+					if (_options.multisampleAntialiasing)
 					{
 						if (const auto sampleCountMask = _physicalDeviceProperties.limits.framebufferColorSampleCounts & _physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 							sampleCountMask & VK_SAMPLE_COUNT_64_BIT)
@@ -1014,7 +1015,8 @@ namespace seir
 			"", // Extra value for std::array type deduction.
 		};
 		const VkPhysicalDeviceFeatures features{
-			.samplerAnisotropy = _useAnisotropy ? VK_TRUE : VK_FALSE,
+			.sampleRateShading = static_cast<VkBool32>(_options.sampleShading),
+			.samplerAnisotropy = static_cast<VkBool32>(_options.anisotropicFiltering),
 		};
 		const VkDeviceCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -1062,8 +1064,8 @@ namespace seir
 			.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
 			.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
 			.mipLodBias = 0,
-			.anisotropyEnable = _useAnisotropy ? VK_TRUE : VK_FALSE,
-			.maxAnisotropy = _useAnisotropy ? _physicalDeviceProperties.limits.maxSamplerAnisotropy : 1,
+			.anisotropyEnable = static_cast<VkBool32>(_options.anisotropicFiltering),
+			.maxAnisotropy = _options.anisotropicFiltering ? _physicalDeviceProperties.limits.maxSamplerAnisotropy : 1,
 			.compareEnable = VK_FALSE,
 			.compareOp = VK_COMPARE_OP_ALWAYS,
 			.minLod = 0,
