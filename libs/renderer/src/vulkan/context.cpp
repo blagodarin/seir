@@ -210,12 +210,8 @@ namespace seir
 		}
 		vkDestroyRenderPass(device, _renderPass, nullptr);
 		_renderPass = VK_NULL_HANDLE;
-		vkDestroyImageView(device, _depthBufferView, nullptr);
-		_depthBufferView = VK_NULL_HANDLE;
-		_depthBuffer.destroy(device);
-		vkDestroyImageView(device, _colorBufferView, nullptr);
-		_colorBufferView = VK_NULL_HANDLE;
-		_colorBuffer.destroy(device);
+		_depthBuffer.destroy();
+		_colorBuffer.destroy();
 		for (auto& imageView : _swapchainImageViews)
 		{
 			vkDestroyImageView(device, imageView, nullptr);
@@ -290,19 +286,15 @@ namespace seir
 	void VulkanRenderTarget::createColorBuffer(const VulkanContext& context)
 	{
 		if (context._maxSampleCount != VK_SAMPLE_COUNT_1_BIT)
-		{
-			_colorBuffer.createTexture2D(context, _swapchainExtent, context._surfaceFormat.format, context._maxSampleCount, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT);
-			_colorBufferView = ::createImageView2D(context._device, _colorBuffer._image, context._surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT);
-		}
+			_colorBuffer = context.createImage2D(_swapchainExtent, context._surfaceFormat.format, context._maxSampleCount, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 
 	void VulkanRenderTarget::createDepthBuffer(const VulkanContext& context)
 	{
 		constexpr auto tiling = VK_IMAGE_TILING_OPTIMAL;
-		_depthBufferFormat = context.findFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, tiling, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-		_depthBuffer.createTexture2D(context, _swapchainExtent, _depthBufferFormat, context._maxSampleCount, tiling, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-		_depthBuffer.transitionLayout(context, _depthBufferFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		_depthBufferView = ::createImageView2D(context._device, _depthBuffer._image, _depthBufferFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+		const auto format = context.findFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, tiling, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		_depthBuffer = context.createImage2D(_swapchainExtent, format, context._maxSampleCount, tiling, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+		_depthBuffer.transitionLayout(context, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
 
 	void VulkanRenderTarget::createRenderPass(VkDevice device, VkFormat colorFormat, VkSampleCountFlagBits sampleCount)
@@ -321,7 +313,7 @@ namespace seir
 				: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		});
 		attachments.emplace_back(VkAttachmentDescription{
-			.format = _depthBufferFormat,
+			.format = _depthBuffer.format(),
 			.samples = sampleCount,
 			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 			.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -394,16 +386,16 @@ namespace seir
 		for (size_t i = 0; i < _swapchainImageViews.size(); ++i)
 		{
 			StaticVector<VkImageView, 3> attachments;
-			if (_colorBufferView)
+			if (_colorBuffer.handle())
 			{
-				attachments.emplace_back(_colorBufferView);
-				attachments.emplace_back(_depthBufferView);
+				attachments.emplace_back(_colorBuffer.viewHandle());
+				attachments.emplace_back(_depthBuffer.viewHandle());
 				attachments.emplace_back(_swapchainImageViews[i]);
 			}
 			else
 			{
 				attachments.emplace_back(_swapchainImageViews[i]);
-				attachments.emplace_back(_depthBufferView);
+				attachments.emplace_back(_depthBuffer.viewHandle());
 			}
 			const VkFramebufferCreateInfo createInfo{
 				.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
@@ -496,7 +488,7 @@ namespace seir
 			};
 			const VkDescriptorImageInfo imageInfo{
 				.sampler = context._textureSampler,
-				.imageView = context._textureView,
+				.imageView = context._texture.viewHandle(),
 				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			};
 			const std::array descriptorWrites{
@@ -617,12 +609,28 @@ namespace seir
 		vkUnmapMemory(_device, _memory);
 	}
 
-	void VulkanImage::copy2D(const VulkanContext& context, VkBuffer buffer, uint32_t width, uint32_t height)
+	VulkanImage& VulkanImage::operator=(VulkanImage&& other) noexcept
+	{
+		destroy();
+		_device = other._device;
+		_image = other._image;
+		_memory = other._memory;
+		_view = other._view;
+		_format = other._format;
+		other._device = VK_NULL_HANDLE;
+		other._image = VK_NULL_HANDLE;
+		other._memory = VK_NULL_HANDLE;
+		other._view = VK_NULL_HANDLE;
+		other._format = VK_FORMAT_UNDEFINED;
+		return *this;
+	}
+
+	void VulkanImage::copy2D(const VulkanContext& context, VkBuffer buffer, const VkExtent2D& extent, uint32_t pixelStride)
 	{
 		VulkanOneTimeSubmit commandBuffer{ context._device, context._commandPool };
 		const VkBufferImageCopy region{
 			.bufferOffset = 0,
-			.bufferRowLength = 0,
+			.bufferRowLength = pixelStride,
 			.bufferImageHeight = 0,
 			.imageSubresource{
 				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -636,8 +644,8 @@ namespace seir
 				.z = 0,
 			},
 			.imageExtent{
-				.width = width,
-				.height = height,
+				.width = extent.width,
+				.height = extent.height,
 				.depth = 1,
 			}
 		};
@@ -645,47 +653,28 @@ namespace seir
 		commandBuffer.submit(context._graphicsQueue);
 	}
 
-	void VulkanImage::createTexture2D(const VulkanContext& context, const VkExtent2D& extent, VkFormat format, VkSampleCountFlagBits sampleCount, VkImageTiling tiling, VkImageUsageFlags usage)
+	void VulkanImage::destroy() noexcept
 	{
-		assert(_image == VK_NULL_HANDLE);
-		const VkImageCreateInfo createInfo{
-			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-			.flags = 0,
-			.imageType = VK_IMAGE_TYPE_2D,
-			.format = format,
-			.extent{
-				.width = extent.width,
-				.height = extent.height,
-				.depth = 1,
-			},
-			.mipLevels = 1,
-			.arrayLayers = 1,
-			.samples = sampleCount,
-			.tiling = tiling,
-			.usage = usage,
-			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		};
-		SEIR_VK(vkCreateImage(context._device, &createInfo, nullptr, &_image));
-		VkMemoryRequirements memoryRequirements{};
-		vkGetImageMemoryRequirements(context._device, _image, &memoryRequirements);
-		const VkMemoryAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = memoryRequirements.size,
-			.memoryTypeIndex = context.findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-		};
-		SEIR_VK(vkAllocateMemory(context._device, &allocateInfo, nullptr, &_memory));
-		SEIR_VK(vkBindImageMemory(context._device, _image, _memory, 0));
+		_format = VK_FORMAT_UNDEFINED;
+		if (_view)
+		{
+			vkDestroyImageView(_device, _view, nullptr);
+			_view = VK_NULL_HANDLE;
+		}
+		if (_image)
+		{
+			vkDestroyImage(_device, _image, nullptr);
+			_image = VK_NULL_HANDLE;
+		}
+		if (_memory)
+		{
+			vkFreeMemory(_device, _memory, nullptr);
+			_memory = VK_NULL_HANDLE;
+		}
+		_device = VK_NULL_HANDLE;
 	}
 
-	void VulkanImage::destroy(VkDevice device) noexcept
-	{
-		vkDestroyImage(device, _image, nullptr);
-		_image = VK_NULL_HANDLE;
-		vkFreeMemory(device, _memory, nullptr);
-		_memory = VK_NULL_HANDLE;
-	}
-
-	void VulkanImage::transitionLayout(const VulkanContext& context, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+	void VulkanImage::transitionLayout(const VulkanContext& context, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		VulkanOneTimeSubmit commandBuffer{ context._device, context._commandPool };
 		VkImageMemoryBarrier barrier{
@@ -699,7 +688,7 @@ namespace seir
 			.image = _image,
 			.subresourceRange{
 				.aspectMask = newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-					? (hasStencilComponent(format)
+					? (hasStencilComponent(_format)
 							? static_cast<VkImageAspectFlags>(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
 							: VK_IMAGE_ASPECT_DEPTH_BIT)
 					: VK_IMAGE_ASPECT_COLOR_BIT,
@@ -795,8 +784,7 @@ namespace seir
 	VulkanContext::~VulkanContext() noexcept
 	{
 		vkDestroySampler(_device, _textureSampler, nullptr);
-		vkDestroyImageView(_device, _textureView, nullptr);
-		_texture.destroy(_device);
+		_texture.destroy();
 		vkDestroyCommandPool(_device, _commandPool, nullptr);
 		vkDestroyDevice(_device, nullptr);
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
@@ -820,7 +808,13 @@ namespace seir
 		selectPhysicalDevice();
 		createDevice();
 		createCommandPool();
-		createTextureImage();
+		static constexpr std::array<uint8_t, 16> kImageData{
+			0x99, 0xbb, 0xbb, 0xff,
+			0xff, 0xff, 0xff, 0xff,
+			0xff, 0xff, 0xff, 0xff,
+			0xff, 0xff, 0xff, 0xff
+		};
+		createTextureImage({ 1, 2 }, VK_FORMAT_B8G8R8A8_SRGB, kImageData.size(), kImageData.data(), 2);
 	}
 
 	VulkanBuffer VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) const
@@ -854,6 +848,40 @@ namespace seir
 		auto buffer = createBuffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		copyBuffer(buffer.handle(), stagingBuffer.handle(), size);
 		return buffer;
+	}
+
+	VulkanImage VulkanContext::createImage2D(const VkExtent2D& extent, VkFormat format, VkSampleCountFlagBits sampleCount, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags aspect) const
+	{
+		VulkanImage image{ _device, format };
+		const VkImageCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+			.flags = 0,
+			.imageType = VK_IMAGE_TYPE_2D,
+			.format = format,
+			.extent{
+				.width = extent.width,
+				.height = extent.height,
+				.depth = 1,
+			},
+			.mipLevels = 1,
+			.arrayLayers = 1,
+			.samples = sampleCount,
+			.tiling = tiling,
+			.usage = usage,
+			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		};
+		SEIR_VK(vkCreateImage(_device, &createInfo, nullptr, &image._image));
+		VkMemoryRequirements memoryRequirements{};
+		vkGetImageMemoryRequirements(_device, image._image, &memoryRequirements);
+		const VkMemoryAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+			.allocationSize = memoryRequirements.size,
+			.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		};
+		SEIR_VK(vkAllocateMemory(_device, &allocateInfo, nullptr, &image._memory));
+		SEIR_VK(vkBindImageMemory(_device, image._image, image._memory, 0));
+		image._view = ::createImageView2D(_device, image._image, format, aspect);
+		return image;
 	}
 
 	VulkanShader VulkanContext::createShader(const uint32_t* data, size_t bytes) const
@@ -1061,19 +1089,16 @@ namespace seir
 		SEIR_VK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
 	}
 
-	void VulkanContext::createTextureImage()
+	void VulkanContext::createTextureImage(const VkExtent2D& extent, VkFormat format, VkDeviceSize size, const void* data, uint32_t pixelStride)
 	{
-		static constexpr std::array<uint8_t, 4> kImageData{ 0x99, 0xbb, 0xbb, 0xff };
-		constexpr auto format = VK_FORMAT_B8G8R8A8_SRGB;
 		{
-			auto stagingBuffer = createBuffer(kImageData.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			stagingBuffer.write(kImageData.data(), kImageData.size());
-			_texture.createTexture2D(*this, { 1, 1 }, format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			_texture.transitionLayout(*this, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-			_texture.copy2D(*this, stagingBuffer.handle(), 1, 1);
+			auto stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			stagingBuffer.write(data, size);
+			_texture = createImage2D(extent, format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+			_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			_texture.copy2D(*this, stagingBuffer.handle(), extent, pixelStride);
 		}
-		_texture.transitionLayout(*this, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		_textureView = ::createImageView2D(_device, _texture._image, format, VK_IMAGE_ASPECT_COLOR_BIT);
+		_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		const VkSamplerCreateInfo samplerInfo{
 			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
 			.magFilter = VK_FILTER_NEAREST,
