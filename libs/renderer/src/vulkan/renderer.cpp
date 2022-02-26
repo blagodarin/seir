@@ -18,6 +18,21 @@ namespace
 		seir::Vec2 texCoord;
 	};
 
+	const uint32_t kVertexShader[]{
+#include "vertex_shader.glsl.spirv.inc"
+	};
+
+	const uint32_t kFragmentShader[]{
+#include "fragment_shader.glsl.spirv.inc"
+	};
+
+	static constexpr std::array<uint8_t, 16> kTextureData{
+		0x99, 0xbb, 0xbb, 0xff,
+		0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff
+	};
+
 	constexpr std::array kVertexData{
 		Vertex{ .position{ -1, -1, .5 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
 		Vertex{ .position{ 1, -1, .5 }, .color{ 1, 1, 1 }, .texCoord{ 1, 0 } },
@@ -34,14 +49,6 @@ namespace
 		0, 1, 2, 3,
 		0xffff,
 		4, 5, 6, 7
-	};
-
-	const uint32_t kVertexShader[]{
-#include "vertex_shader.glsl.spirv.inc"
-	};
-
-	const uint32_t kFragmentShader[]{
-#include "fragment_shader.glsl.spirv.inc"
 	};
 
 	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
@@ -87,6 +94,8 @@ namespace seir
 			_context.create(_window->descriptor());
 			_vertexShader = _context.createShader(kVertexShader, sizeof kVertexShader);
 			_fragmentShader = _context.createShader(kFragmentShader, sizeof kFragmentShader);
+			_textureImage = _context.createTextureImage2D({ 1, 2 }, VK_FORMAT_B8G8R8A8_SRGB, kTextureData.size(), kTextureData.data(), 2);
+			_textureSampler = _context.createSampler2D();
 			_vertexBuffer = _context.createDeviceBuffer(kVertexData.data(), kVertexData.size() * sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 			_indexBuffer = _context.createDeviceBuffer(kIndexData.data(), kIndexData.size() * sizeof(uint16_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 			_frameSync.create(_context._device);
@@ -113,7 +122,7 @@ namespace seir
 			}
 			_renderTarget.create(_context, windowSize);
 			_pipeline = ::createPipeline(_context, _renderTarget, _vertexShader.handle(), _fragmentShader.handle());
-			_swapchain.create(_context, _renderTarget, _pipeline, _vertexBuffer.handle(), _indexBuffer.handle(), static_cast<uint32_t>(kIndexData.size()));
+			_swapchain.create(_context, _renderTarget, _pipeline, _textureImage.viewHandle(), _textureSampler.handle(), _vertexBuffer.handle(), _indexBuffer.handle(), static_cast<uint32_t>(kIndexData.size()));
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;

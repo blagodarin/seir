@@ -410,12 +410,12 @@ namespace seir
 		}
 	}
 
-	void VulkanSwapchain::create(const VulkanContext& context, const VulkanRenderTarget& renderTarget, const VulkanPipeline& pipeline, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount)
+	void VulkanSwapchain::create(const VulkanContext& context, const VulkanRenderTarget& renderTarget, const VulkanPipeline& pipeline, VkImageView textureView, VkSampler textureSampler, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount)
 	{
 		const auto frameCount = static_cast<uint32_t>(renderTarget._swapchainImages.size());
 		createUniformBuffers(context, frameCount);
 		createDescriptorPool(context._device, frameCount);
-		createDescriptorSets(context, pipeline.descriptorSetLayout(), frameCount);
+		createDescriptorSets(context, pipeline.descriptorSetLayout(), frameCount, textureView, textureSampler);
 		createCommandBuffers(context._device, context._commandPool, renderTarget, pipeline, vertexBuffer, indexBuffer, indexCount);
 	}
 
@@ -468,7 +468,7 @@ namespace seir
 		SEIR_VK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool));
 	}
 
-	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context, VkDescriptorSetLayout layout, uint32_t count)
+	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context, VkDescriptorSetLayout layout, uint32_t count, VkImageView textureView, VkSampler textureSampler)
 	{
 		const std::vector<VkDescriptorSetLayout> layouts(count, layout);
 		VkDescriptorSetAllocateInfo allocateInfo{
@@ -487,8 +487,8 @@ namespace seir
 				.range = sizeof(UniformBufferObject),
 			};
 			const VkDescriptorImageInfo imageInfo{
-				.sampler = context._textureSampler,
-				.imageView = context._texture.viewHandle(),
+				.sampler = textureSampler,
+				.imageView = textureView,
 				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			};
 			const std::array descriptorWrites{
@@ -761,6 +761,26 @@ namespace seir
 		SEIR_VK(vkQueueWaitIdle(queue));
 	}
 
+	VulkanSampler& VulkanSampler::operator=(VulkanSampler&& other) noexcept
+	{
+		destroy();
+		_device = other._device;
+		_sampler = other._sampler;
+		other._device = VK_NULL_HANDLE;
+		other._sampler = VK_NULL_HANDLE;
+		return *this;
+	}
+
+	void VulkanSampler::destroy() noexcept
+	{
+		if (_sampler)
+		{
+			vkDestroySampler(_device, _sampler, nullptr);
+			_device = VK_NULL_HANDLE;
+			_sampler = VK_NULL_HANDLE;
+		}
+	}
+
 	VulkanShader& VulkanShader::operator=(VulkanShader&& other) noexcept
 	{
 		destroy();
@@ -783,8 +803,6 @@ namespace seir
 
 	VulkanContext::~VulkanContext() noexcept
 	{
-		vkDestroySampler(_device, _textureSampler, nullptr);
-		_texture.destroy();
 		vkDestroyCommandPool(_device, _commandPool, nullptr);
 		vkDestroyDevice(_device, nullptr);
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
@@ -808,13 +826,6 @@ namespace seir
 		selectPhysicalDevice();
 		createDevice();
 		createCommandPool();
-		static constexpr std::array<uint8_t, 16> kImageData{
-			0x99, 0xbb, 0xbb, 0xff,
-			0xff, 0xff, 0xff, 0xff,
-			0xff, 0xff, 0xff, 0xff,
-			0xff, 0xff, 0xff, 0xff
-		};
-		createTextureImage({ 1, 2 }, VK_FORMAT_B8G8R8A8_SRGB, kImageData.size(), kImageData.data(), 2);
 	}
 
 	VulkanBuffer VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) const
@@ -884,6 +895,31 @@ namespace seir
 		return image;
 	}
 
+	VulkanSampler VulkanContext::createSampler2D() const
+	{
+		VulkanSampler sampler{ _device };
+		const VkSamplerCreateInfo createInfo{
+			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+			.magFilter = VK_FILTER_NEAREST,
+			.minFilter = VK_FILTER_NEAREST,
+			.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+			.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			.mipLodBias = 0,
+			.anisotropyEnable = static_cast<VkBool32>(_options.anisotropicFiltering),
+			.maxAnisotropy = _options.anisotropicFiltering ? _physicalDeviceProperties.limits.maxSamplerAnisotropy : 1,
+			.compareEnable = VK_FALSE,
+			.compareOp = VK_COMPARE_OP_ALWAYS,
+			.minLod = 0,
+			.maxLod = 0,
+			.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+			.unnormalizedCoordinates = VK_FALSE,
+		};
+		SEIR_VK(vkCreateSampler(_device, &createInfo, nullptr, &sampler._sampler));
+		return sampler;
+	}
+
 	VulkanShader VulkanContext::createShader(const uint32_t* data, size_t bytes) const
 	{
 		assert(_device);
@@ -896,6 +932,19 @@ namespace seir
 		shader._device = _device;
 		SEIR_VK(vkCreateShaderModule(_device, &createInfo, nullptr, &shader._module));
 		return shader;
+	}
+
+	VulkanImage VulkanContext::createTextureImage2D(const VkExtent2D& extent, VkFormat format, VkDeviceSize size, const void* data, uint32_t pixelStride)
+	{
+		auto image = createImage2D(extent, format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+		image.transitionLayout(*this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		{
+			auto stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			stagingBuffer.write(data, size);
+			image.copy2D(*this, stagingBuffer.handle(), extent, pixelStride);
+		}
+		image.transitionLayout(*this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		return image;
 	}
 
 	void VulkanContext::createInstance()
@@ -1087,37 +1136,6 @@ namespace seir
 			.queueFamilyIndex = _graphicsQueueFamily,
 		};
 		SEIR_VK(vkCreateCommandPool(_device, &createInfo, nullptr, &_commandPool));
-	}
-
-	void VulkanContext::createTextureImage(const VkExtent2D& extent, VkFormat format, VkDeviceSize size, const void* data, uint32_t pixelStride)
-	{
-		{
-			auto stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			stagingBuffer.write(data, size);
-			_texture = createImage2D(extent, format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-			_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-			_texture.copy2D(*this, stagingBuffer.handle(), extent, pixelStride);
-		}
-		_texture.transitionLayout(*this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		const VkSamplerCreateInfo samplerInfo{
-			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-			.magFilter = VK_FILTER_NEAREST,
-			.minFilter = VK_FILTER_NEAREST,
-			.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-			.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-			.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-			.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-			.mipLodBias = 0,
-			.anisotropyEnable = static_cast<VkBool32>(_options.anisotropicFiltering),
-			.maxAnisotropy = _options.anisotropicFiltering ? _physicalDeviceProperties.limits.maxSamplerAnisotropy : 1,
-			.compareEnable = VK_FALSE,
-			.compareOp = VK_COMPARE_OP_ALWAYS,
-			.minLod = 0,
-			.maxLod = 0,
-			.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-			.unnormalizedCoordinates = VK_FALSE,
-		};
-		SEIR_VK(vkCreateSampler(_device, &samplerInfo, nullptr, &_textureSampler));
 	}
 
 	uint32_t VulkanContext::findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const

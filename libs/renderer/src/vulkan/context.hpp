@@ -83,6 +83,25 @@ namespace seir
 		friend VulkanContext;
 	};
 
+	class VulkanSampler
+	{
+	public:
+		constexpr VulkanSampler() noexcept = default;
+		constexpr VulkanSampler(VulkanSampler&&) noexcept;
+		VulkanSampler& operator=(VulkanSampler&&) noexcept;
+		~VulkanSampler() noexcept { destroy(); }
+
+		void destroy() noexcept;
+		[[nodiscard]] constexpr VkSampler handle() const noexcept { return _sampler; }
+
+	private:
+		VkDevice _device = VK_NULL_HANDLE;
+		VkSampler _sampler = VK_NULL_HANDLE;
+		constexpr explicit VulkanSampler(VkDevice device) noexcept
+			: _device{ device } {}
+		friend VulkanContext;
+	};
+
 	class VulkanShader
 	{
 	public:
@@ -161,8 +180,6 @@ namespace seir
 		VkQueue _graphicsQueue = VK_NULL_HANDLE;
 		VkQueue _presentQueue = VK_NULL_HANDLE;
 		VkCommandPool _commandPool = VK_NULL_HANDLE;
-		VulkanImage _texture;
-		VkSampler _textureSampler = VK_NULL_HANDLE;
 
 		explicit VulkanContext(const RendererOptions& options) noexcept
 			: _options{ options } {}
@@ -172,7 +189,9 @@ namespace seir
 		VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags) const;
 		VulkanBuffer createDeviceBuffer(const void* data, VkDeviceSize, VkBufferUsageFlags) const;
 		VulkanImage createImage2D(const VkExtent2D&, VkFormat, VkSampleCountFlagBits, VkImageTiling, VkImageUsageFlags, VkImageAspectFlags) const;
+		VulkanSampler createSampler2D() const;
 		VulkanShader createShader(const uint32_t* data, size_t bytes) const;
+		VulkanImage createTextureImage2D(const VkExtent2D&, VkFormat, VkDeviceSize, const void* data, uint32_t pixelStride);
 		uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const;
 		VkFormat findFormat(const std::vector<VkFormat>& candidates, VkImageTiling, VkFormatFeatureFlags) const;
 
@@ -185,7 +204,6 @@ namespace seir
 		void selectPhysicalDevice();
 		void createDevice();
 		void createCommandPool();
-		void createTextureImage(const VkExtent2D&, VkFormat, VkDeviceSize, const void* data, uint32_t pixelStride);
 		void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize) const;
 	};
 
@@ -197,14 +215,14 @@ namespace seir
 		VkDescriptorPool _descriptorPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> _descriptorSets;
 
-		void create(const VulkanContext&, const VulkanRenderTarget&, const VulkanPipeline&, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
+		void create(const VulkanContext&, const VulkanRenderTarget&, const VulkanPipeline&, VkImageView textureView, VkSampler textureSampler, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
 		void destroy(VkDevice, VkCommandPool) noexcept;
 		void updateUniformBuffer(uint32_t imageIndex, const VkExtent2D& screenSize);
 
 	private:
 		void createUniformBuffers(const VulkanContext&, uint32_t count);
 		void createDescriptorPool(VkDevice, uint32_t count);
-		void createDescriptorSets(const VulkanContext&, VkDescriptorSetLayout, uint32_t count);
+		void createDescriptorSets(const VulkanContext&, VkDescriptorSetLayout, uint32_t count, VkImageView textureView, VkSampler textureSampler);
 		void createCommandBuffers(VkDevice, VkCommandPool, const VulkanRenderTarget&, const VulkanPipeline&, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
 	};
 }
@@ -231,6 +249,14 @@ constexpr seir::VulkanImage::VulkanImage(VulkanImage&& other) noexcept
 	other._memory = VK_NULL_HANDLE;
 	other._view = VK_NULL_HANDLE;
 	other._format = VK_FORMAT_UNDEFINED;
+}
+
+constexpr seir::VulkanSampler::VulkanSampler(VulkanSampler&& other) noexcept
+	: _device{ other._device }
+	, _sampler{ other._sampler }
+{
+	other._device = VK_NULL_HANDLE;
+	other._sampler = VK_NULL_HANDLE;
 }
 
 constexpr seir::VulkanShader::VulkanShader(VulkanShader&& other) noexcept
