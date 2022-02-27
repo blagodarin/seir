@@ -25,21 +25,21 @@ namespace seir
 		~VulkanPipeline() noexcept { destroy(); }
 		VulkanPipeline& operator=(VulkanPipeline&&) noexcept;
 
+		[[nodiscard]] constexpr VkDescriptorPool descriptorPool() const noexcept { return _descriptorPool; }
 		[[nodiscard]] constexpr VkDescriptorSetLayout descriptorSetLayout() const noexcept { return _descriptorSetLayout; }
 		[[nodiscard]] constexpr VkPipelineLayout pipelineLayout() const noexcept { return _pipelineLayout; }
 		[[nodiscard]] constexpr VkPipeline pipeline() const noexcept { return _pipeline; }
 		void destroy() noexcept;
 
 	private:
-		friend VulkanPipelineBuilder;
-		constexpr explicit VulkanPipeline(VkDevice device) noexcept
-			: _device{ device } {}
-
-	private:
 		VkDevice _device = VK_NULL_HANDLE;
 		VkDescriptorSetLayout _descriptorSetLayout = VK_NULL_HANDLE;
 		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline _pipeline = VK_NULL_HANDLE;
+		VkDescriptorPool _descriptorPool = VK_NULL_HANDLE;
+		constexpr explicit VulkanPipeline(VkDevice device) noexcept
+			: _device{ device } {}
+		friend VulkanPipelineBuilder;
 	};
 
 	class VulkanPipelineBuilder
@@ -47,7 +47,7 @@ namespace seir
 	public:
 		explicit VulkanPipelineBuilder(const VkExtent2D&, VkSampleCountFlagBits, bool sampleShading) noexcept;
 
-		VulkanPipeline build(VkDevice, VkRenderPass);
+		VulkanPipeline build(VkDevice, VkRenderPass, uint32_t frameCount);
 		void setDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType, VkShaderStageFlags) noexcept;
 		void setInputAssembly(VkPrimitiveTopology, bool enablePrimitiveRestart) noexcept;
 		void setStage(VkShaderStageFlagBits, VkShaderModule) noexcept;
@@ -79,9 +79,11 @@ constexpr seir::VulkanPipeline::VulkanPipeline(VulkanPipeline&& other) noexcept
 	, _descriptorSetLayout{ other._descriptorSetLayout }
 	, _pipelineLayout{ other._pipelineLayout }
 	, _pipeline{ other._pipeline }
+	, _descriptorPool{ other._descriptorPool }
 {
 	other._device = VK_NULL_HANDLE;
 	other._descriptorSetLayout = VK_NULL_HANDLE;
 	other._pipelineLayout = VK_NULL_HANDLE;
 	other._pipeline = VK_NULL_HANDLE;
+	other._descriptorPool = VK_NULL_HANDLE;
 }

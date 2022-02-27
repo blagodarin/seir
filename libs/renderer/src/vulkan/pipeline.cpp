@@ -15,15 +15,22 @@ namespace seir
 		_descriptorSetLayout = other._descriptorSetLayout;
 		_pipelineLayout = other._pipelineLayout;
 		_pipeline = other._pipeline;
+		_descriptorPool = other._descriptorPool;
 		other._device = VK_NULL_HANDLE;
 		other._descriptorSetLayout = VK_NULL_HANDLE;
 		other._pipelineLayout = VK_NULL_HANDLE;
 		other._pipeline = VK_NULL_HANDLE;
+		other._descriptorPool = VK_NULL_HANDLE;
 		return *this;
 	}
 
 	void VulkanPipeline::destroy() noexcept
 	{
+		if (_descriptorPool)
+		{
+			vkDestroyDescriptorPool(_device, _descriptorPool, nullptr);
+			_descriptorPool = VK_NULL_HANDLE;
+		}
 		if (_pipeline)
 		{
 			vkDestroyPipeline(_device, _pipeline, nullptr);
@@ -39,6 +46,7 @@ namespace seir
 			vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
 			_descriptorSetLayout = VK_NULL_HANDLE;
 		}
+		_device = VK_NULL_HANDLE;
 	}
 
 	VulkanPipelineBuilder::VulkanPipelineBuilder(const VkExtent2D& extent, VkSampleCountFlagBits sampleCount, bool sampleShading) noexcept
@@ -153,7 +161,7 @@ namespace seir
 	{
 	}
 
-	VulkanPipeline VulkanPipelineBuilder::build(VkDevice device, VkRenderPass renderPass)
+	VulkanPipeline VulkanPipelineBuilder::build(VkDevice device, VkRenderPass renderPass, uint32_t frameCount)
 	{
 		VulkanPipeline pipeline{ device };
 		_descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(_descriptorSetLayoutBindings.size());
@@ -167,6 +175,31 @@ namespace seir
 		_pipelineInfo.layout = pipeline._pipelineLayout;
 		_pipelineInfo.renderPass = renderPass;
 		SEIR_VK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &_pipelineInfo, nullptr, &pipeline._pipeline));
+		StaticVector<VkDescriptorPoolSize, 2> descriptorPoolSizes;
+		for (const auto& binding : _descriptorSetLayoutBindings)
+			for (auto i = descriptorPoolSizes.begin();; ++i)
+			{
+				if (i == descriptorPoolSizes.end())
+				{
+					descriptorPoolSizes.emplace_back(VkDescriptorPoolSize{
+						.type = binding.descriptorType,
+						.descriptorCount = binding.descriptorCount * frameCount,
+					});
+					break;
+				}
+				if (i->type == binding.descriptorType)
+				{
+					i->descriptorCount += binding.descriptorCount * frameCount;
+					break;
+				}
+			}
+		const VkDescriptorPoolCreateInfo poolInfo{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+			.maxSets = frameCount,
+			.poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size()),
+			.pPoolSizes = descriptorPoolSizes.data(),
+		};
+		SEIR_VK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &pipeline._descriptorPool));
 		return pipeline;
 	}
 

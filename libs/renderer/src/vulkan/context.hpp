@@ -212,7 +212,6 @@ namespace seir
 	public:
 		std::vector<VkCommandBuffer> _commandBuffers;
 		std::vector<VulkanBuffer> _uniformBuffers;
-		VkDescriptorPool _descriptorPool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> _descriptorSets;
 
 		void create(const VulkanContext&, const VulkanRenderTarget&, const VulkanPipeline&, VkImageView textureView, VkSampler textureSampler, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
@@ -221,8 +220,7 @@ namespace seir
 
 	private:
 		void createUniformBuffers(const VulkanContext&, uint32_t count);
-		void createDescriptorPool(VkDevice, uint32_t count);
-		void createDescriptorSets(const VulkanContext&, VkDescriptorSetLayout, uint32_t count, VkImageView textureView, VkSampler textureSampler);
+		void createDescriptorSets(const VulkanContext&, VkDescriptorSetLayout, VkDescriptorPool, uint32_t count, VkImageView textureView, VkSampler textureSampler);
 		void createCommandBuffers(VkDevice, VkCommandPool, const VulkanRenderTarget&, const VulkanPipeline&, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
 	};
 }

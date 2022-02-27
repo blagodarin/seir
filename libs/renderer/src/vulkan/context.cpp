@@ -414,8 +414,7 @@ namespace seir
 	{
 		const auto frameCount = static_cast<uint32_t>(renderTarget._swapchainImages.size());
 		createUniformBuffers(context, frameCount);
-		createDescriptorPool(context._device, frameCount);
-		createDescriptorSets(context, pipeline.descriptorSetLayout(), frameCount, textureView, textureSampler);
+		createDescriptorSets(context, pipeline.descriptorSetLayout(), pipeline.descriptorPool(), frameCount, textureView, textureSampler);
 		createCommandBuffers(context._device, context._commandPool, renderTarget, pipeline, vertexBuffer, indexBuffer, indexCount);
 	}
 
@@ -424,7 +423,6 @@ namespace seir
 		vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 		std::fill(_commandBuffers.begin(), _commandBuffers.end(), VK_NULL_HANDLE);
 		std::fill(_descriptorSets.begin(), _descriptorSets.end(), VK_NULL_HANDLE);
-		vkDestroyDescriptorPool(device, _descriptorPool, nullptr);
 		for (auto& buffer : _uniformBuffers)
 			buffer.destroy();
 	}
@@ -447,33 +445,12 @@ namespace seir
 			buffer = context.createBuffer(sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	}
 
-	void VulkanSwapchain::createDescriptorPool(VkDevice device, uint32_t count)
-	{
-		const std::array poolSizes{
-			VkDescriptorPoolSize{
-				.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.descriptorCount = count,
-			},
-			VkDescriptorPoolSize{
-				.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				.descriptorCount = count,
-			},
-		};
-		const VkDescriptorPoolCreateInfo poolInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets = count,
-			.poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
-			.pPoolSizes = poolSizes.data(),
-		};
-		SEIR_VK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool));
-	}
-
-	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context, VkDescriptorSetLayout layout, uint32_t count, VkImageView textureView, VkSampler textureSampler)
+	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context, VkDescriptorSetLayout layout, VkDescriptorPool pool, uint32_t count, VkImageView textureView, VkSampler textureSampler)
 	{
 		const std::vector<VkDescriptorSetLayout> layouts(count, layout);
 		VkDescriptorSetAllocateInfo allocateInfo{
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = _descriptorPool,
+			.descriptorPool = pool,
 			.descriptorSetCount = count,
 			.pSetLayouts = layouts.data(),
 		};

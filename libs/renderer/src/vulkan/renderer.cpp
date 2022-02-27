@@ -60,7 +60,7 @@ namespace
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
 		builder.setVertexInput(0, { seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x2 });
 		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
-		return builder.build(context._device, renderTarget._renderPass);
+		return builder.build(context._device, renderTarget._renderPass, static_cast<uint32_t>(renderTarget._swapchainImages.size()));
 	}
 }
 
