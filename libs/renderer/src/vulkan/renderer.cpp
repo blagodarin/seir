@@ -5,12 +5,20 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
-#include <seir_math/vec.hpp>
+#include <seir_math/euler.hpp>
+#include <seir_math/mat.hpp>
 #include "error.hpp"
 #include "utils.hpp"
 
 namespace
 {
+	struct UniformBufferObject
+	{
+		seir::Mat4 _model;
+		seir::Mat4 _view;
+		seir::Mat4 _projection;
+	};
+
 	struct Vertex
 	{
 		seir::Vec3 position;
@@ -62,6 +70,15 @@ namespace
 		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
 		return builder.build(context._device, renderTarget._renderPass, static_cast<uint32_t>(renderTarget._swapchainImages.size()));
 	}
+
+	UniformBufferObject makeUniformBuffer(const VkExtent2D& screenSize)
+	{
+		return {
+			._model = seir::Mat4::rotation(10 * seir::clockTime(), { 0, 0, 1 }),
+			._view = seir::Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
+			._projection = seir::Mat4::projection3D(static_cast<float>(screenSize.width) / static_cast<float>(screenSize.height), 45, 1),
+		};
+	}
 }
 
 namespace seir
@@ -82,6 +99,7 @@ namespace seir
 	{
 		vkDeviceWaitIdle(_context._device);
 		_swapchain.destroy(_context._device, _context._commandPool);
+		_uniformBuffers.destroy();
 		_pipeline.destroy();
 		_renderTarget.destroy(_context._device);
 		_frameSync.destroy(_context._device);
@@ -122,7 +140,8 @@ namespace seir
 			}
 			_renderTarget.create(_context, windowSize);
 			_pipeline = ::createPipeline(_context, _renderTarget, _vertexShader.handle(), _fragmentShader.handle());
-			_swapchain.create(_context, _renderTarget, _pipeline, _textureImage.viewHandle(), _textureSampler.handle(), _vertexBuffer.handle(), _indexBuffer.handle(), static_cast<uint32_t>(kIndexData.size()));
+			_uniformBuffers = _context.createUniformBuffers(sizeof(UniformBufferObject), _renderTarget._swapchainImages.size());
+			_swapchain.create(_context, _renderTarget, _pipeline, _uniformBuffers, _textureImage.viewHandle(), _textureSampler.handle(), _vertexBuffer.handle(), _indexBuffer.handle(), static_cast<uint32_t>(kIndexData.size()));
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
@@ -139,7 +158,10 @@ namespace seir
 		if (_renderTarget._swapchainImageFences[index])
 			SEIR_VK(vkWaitForFences(_context._device, 1, &_renderTarget._swapchainImageFences[index], VK_TRUE, UINT64_MAX));
 		_renderTarget._swapchainImageFences[index] = fence;
-		_swapchain.updateUniformBuffer(index, _renderTarget._swapchainExtent);
+		{
+			const auto ubo = ::makeUniformBuffer(_renderTarget._swapchainExtent);
+			_uniformBuffers.update(index, &ubo);
+		}
 		const VkSemaphore waitSemaphores[]{ imageAvailableSemaphore };
 		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		const VkSemaphore signalSemaphores[]{ renderFinishedSemaphore };

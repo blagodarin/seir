@@ -32,6 +32,7 @@ namespace seir
 		VulkanFrameSync _frameSync;
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
+		VulkanUniformBuffers _uniformBuffers;
 		VulkanSwapchain _swapchain;
 	};
 }
