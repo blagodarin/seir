@@ -33,6 +33,6 @@ namespace seir
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
 		VulkanUniformBuffers _uniformBuffers;
-		VulkanSwapchain _swapchain;
+		std::vector<VulkanCommandBuffer> _commandBuffers;
 	};
 }

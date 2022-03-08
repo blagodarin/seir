@@ -5,6 +5,7 @@
 #pragma once
 
 #include <seir_base/shared_ptr.hpp>
+#include <seir_base/static_vector.hpp>
 #include "options.hpp"
 #include "vulkan.hpp"
 
@@ -133,9 +134,9 @@ namespace seir
 		~VulkanUniformBuffers() noexcept { destroy(); }
 
 		void destroy() noexcept;
-		void update(uint32_t index, const void* data);
+		void update(size_t index, const void* data);
 
-		[[nodiscard]] VkDescriptorBufferInfo operator[](uint32_t index) const noexcept { return { .buffer = _buffers[index].handle(), .offset = 0, .range = _bufferSize }; }
+		[[nodiscard]] VkDescriptorBufferInfo operator[](size_t index) const noexcept { return { .buffer = _buffers[index].handle(), .offset = 0, .range = _bufferSize }; }
 
 	private:
 		VkDeviceSize _bufferSize = 0;
@@ -160,6 +161,7 @@ namespace seir
 
 		void create(const VulkanContext&, const Size2D& windowSize);
 		void destroy(VkDevice) noexcept;
+		VkRenderPassBeginInfo renderPassInfo(size_t frameIndex) const noexcept;
 
 	private:
 		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
@@ -170,19 +172,39 @@ namespace seir
 		void createFramebuffers(VkDevice);
 	};
 
-	class VulkanOneTimeSubmit
+	class VulkanCommandBuffer
 	{
 	public:
-		VulkanOneTimeSubmit(VkDevice, VkCommandPool);
-		~VulkanOneTimeSubmit() noexcept;
+		constexpr VulkanCommandBuffer() noexcept = default;
+		constexpr VulkanCommandBuffer(VulkanCommandBuffer&& other) noexcept
+			: _device{ other._device }, _pool{ other._pool }, _buffer{ other._buffer } { other._buffer = VK_NULL_HANDLE; }
+		~VulkanCommandBuffer() noexcept { destroy(); }
 
-		[[nodiscard]] constexpr operator VkCommandBuffer() noexcept { return _commandBuffer; }
-		void submit(VkQueue);
+		[[nodiscard]] constexpr operator VkCommandBuffer() const noexcept { return _buffer; }
+		void destroy() noexcept;
+		void finish();
+		void finishAndSubmit(VkQueue);
 
 	private:
-		const VkDevice _device;
-		const VkCommandPool _commandPool;
-		VkCommandBuffer _commandBuffer = VK_NULL_HANDLE;
+		VkDevice _device = VK_NULL_HANDLE;
+		VkCommandPool _pool = VK_NULL_HANDLE;
+		VkCommandBuffer _buffer = VK_NULL_HANDLE;
+		constexpr VulkanCommandBuffer(VkDevice device, VkCommandPool pool) noexcept
+			: _device{ device }, _pool{ pool } {}
+		friend VulkanContext;
+	};
+
+	class VulkanDescriptorBuilder
+	{
+	public:
+		VulkanDescriptorBuilder& bindBuffer(uint32_t binding, VkDescriptorType, const VkDescriptorBufferInfo&) noexcept;
+		VulkanDescriptorBuilder& bindImage(uint32_t binding, VkDescriptorType, VkSampler, VkImageView, VkImageLayout) noexcept;
+		VkDescriptorSet build(VkDevice, VkDescriptorPool, VkDescriptorSetLayout);
+
+	private:
+		StaticVector<VkWriteDescriptorSet, 4> _writes;
+		StaticVector<VkDescriptorImageInfo, 2> _images;
+		StaticVector<VkDescriptorBufferInfo, 2> _buffers;
 	};
 
 	class VulkanContext
@@ -213,6 +235,7 @@ namespace seir
 
 		void create(const WindowDescriptor&);
 		VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags) const;
+		VulkanCommandBuffer createCommandBuffer(VkCommandBufferUsageFlags) const;
 		VulkanBuffer createDeviceBuffer(const void* data, VkDeviceSize, VkBufferUsageFlags) const;
 		VulkanImage createImage2D(const VkExtent2D&, VkFormat, VkSampleCountFlagBits, VkImageTiling, VkImageUsageFlags, VkImageAspectFlags) const;
 		VulkanSampler createSampler2D() const;
@@ -232,20 +255,6 @@ namespace seir
 		void createDevice();
 		void createCommandPool();
 		void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize) const;
-	};
-
-	class VulkanSwapchain // Actually "VulkanContextPart2".
-	{
-	public:
-		std::vector<VkCommandBuffer> _commandBuffers;
-		std::vector<VkDescriptorSet> _descriptorSets;
-
-		void create(const VulkanContext&, const VulkanRenderTarget&, const VulkanPipeline&, const VulkanUniformBuffers&, VkImageView textureView, VkSampler textureSampler, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
-		void destroy(VkDevice, VkCommandPool) noexcept;
-
-	private:
-		void createDescriptorSets(const VulkanContext&, const VulkanUniformBuffers&, VkDescriptorSetLayout, VkDescriptorPool, uint32_t count, VkImageView textureView, VkSampler textureSampler);
-		void createCommandBuffers(VkDevice, VkCommandPool, const VulkanRenderTarget&, const VulkanPipeline&, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount);
 	};
 }
 

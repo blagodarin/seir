@@ -212,6 +212,34 @@ namespace seir
 		_swapchain = VK_NULL_HANDLE;
 	}
 
+	VkRenderPassBeginInfo VulkanRenderTarget::renderPassInfo(size_t frameIndex) const noexcept
+	{
+		static const std::array clearValues{
+			VkClearValue{
+				.color{
+					.float32{ 0.f, 0.f, 0.f, 1.f },
+				},
+			},
+			VkClearValue{
+				.depthStencil{
+					.depth = 0,
+					.stencil = 0,
+				},
+			}
+		};
+		return VkRenderPassBeginInfo{
+			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+			.renderPass = _renderPass,
+			.framebuffer = _swapchainFramebuffers[frameIndex],
+			.renderArea{
+				.offset{ 0, 0 },
+				.extent = _swapchainExtent,
+			},
+			.clearValueCount = static_cast<uint32_t>(clearValues.size()),
+			.pClearValues = clearValues.data(),
+		};
+	}
+
 	void VulkanRenderTarget::createSwapchain(const VulkanContext& context, const Size2D& windowSize)
 	{
 		VkSurfaceCapabilitiesKHR surfaceCapabilities{};
@@ -414,125 +442,9 @@ namespace seir
 			buffer.destroy();
 	}
 
-	void VulkanUniformBuffers::update(uint32_t index, const void* data)
+	void VulkanUniformBuffers::update(size_t index, const void* data)
 	{
 		_buffers[index].write(data, _bufferSize);
-	}
-
-	void VulkanSwapchain::create(const VulkanContext& context, const VulkanRenderTarget& renderTarget, const VulkanPipeline& pipeline, const VulkanUniformBuffers& uniformBuffers, VkImageView textureView, VkSampler textureSampler, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount)
-	{
-		const auto frameCount = static_cast<uint32_t>(renderTarget._swapchainImages.size());
-		createDescriptorSets(context, uniformBuffers, pipeline.descriptorSetLayout(), pipeline.descriptorPool(), frameCount, textureView, textureSampler);
-		createCommandBuffers(context._device, context._commandPool, renderTarget, pipeline, vertexBuffer, indexBuffer, indexCount);
-	}
-
-	void VulkanSwapchain::destroy(VkDevice device, VkCommandPool commandPool) noexcept
-	{
-		vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
-		std::fill(_commandBuffers.begin(), _commandBuffers.end(), VK_NULL_HANDLE);
-		std::fill(_descriptorSets.begin(), _descriptorSets.end(), VK_NULL_HANDLE);
-	}
-
-	void VulkanSwapchain::createDescriptorSets(const VulkanContext& context, const VulkanUniformBuffers& uniformBuffers, VkDescriptorSetLayout layout, VkDescriptorPool pool, uint32_t count, VkImageView textureView, VkSampler textureSampler)
-	{
-		const std::vector<VkDescriptorSetLayout> layouts(count, layout);
-		VkDescriptorSetAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = pool,
-			.descriptorSetCount = count,
-			.pSetLayouts = layouts.data(),
-		};
-		_descriptorSets.assign(count, VK_NULL_HANDLE);
-		SEIR_VK(vkAllocateDescriptorSets(context._device, &allocateInfo, _descriptorSets.data()));
-		for (uint32_t i = 0; i < count; ++i)
-		{
-			const auto bufferInfo = uniformBuffers[i];
-			const VkDescriptorImageInfo imageInfo{
-				.sampler = textureSampler,
-				.imageView = textureView,
-				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			};
-			const std::array descriptorWrites{
-				VkWriteDescriptorSet{
-					.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-					.dstSet = _descriptorSets[i],
-					.dstBinding = 0,
-					.dstArrayElement = 0,
-					.descriptorCount = 1,
-					.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-					.pImageInfo = nullptr,
-					.pBufferInfo = &bufferInfo,
-					.pTexelBufferView = nullptr,
-				},
-				VkWriteDescriptorSet{
-					.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-					.dstSet = _descriptorSets[i],
-					.dstBinding = 1,
-					.dstArrayElement = 0,
-					.descriptorCount = 1,
-					.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-					.pImageInfo = &imageInfo,
-					.pBufferInfo = nullptr,
-					.pTexelBufferView = nullptr,
-				},
-			};
-			vkUpdateDescriptorSets(context._device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-		}
-	}
-
-	void VulkanSwapchain::createCommandBuffers(VkDevice device, VkCommandPool commandPool, const VulkanRenderTarget& renderTarget, const VulkanPipeline& pipeline, VkBuffer vertexBuffer, VkBuffer indexBuffer, uint32_t indexCount)
-	{
-		_commandBuffers.assign(renderTarget._swapchainFramebuffers.size(), VK_NULL_HANDLE);
-		const VkCommandBufferAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool = commandPool,
-			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-			.commandBufferCount = static_cast<uint32_t>(_commandBuffers.size()),
-		};
-		SEIR_VK(vkAllocateCommandBuffers(device, &allocateInfo, _commandBuffers.data()));
-		for (size_t i = 0; i < _commandBuffers.size(); ++i)
-		{
-			const VkCommandBufferBeginInfo info{
-				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-				.flags = 0,
-				.pInheritanceInfo = nullptr,
-			};
-			SEIR_VK(vkBeginCommandBuffer(_commandBuffers[i], &info));
-			const std::array clearValues{
-				VkClearValue{
-					.color{
-						.float32{ 0.f, 0.f, 0.f, 1.f },
-					},
-				},
-				VkClearValue{
-					.depthStencil{
-						.depth = 0,
-						.stencil = 0,
-					},
-				}
-			};
-			const VkRenderPassBeginInfo renderPassInfo{
-				.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-				.renderPass = renderTarget._renderPass,
-				.framebuffer = renderTarget._swapchainFramebuffers[i],
-				.renderArea{
-					.offset{ 0, 0 },
-					.extent = renderTarget._swapchainExtent,
-				},
-				.clearValueCount = static_cast<uint32_t>(clearValues.size()),
-				.pClearValues = clearValues.data(),
-			};
-			vkCmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			vkCmdBindPipeline(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline());
-			VkBuffer vertexBuffers[]{ vertexBuffer };
-			VkDeviceSize offsets[]{ 0 };
-			vkCmdBindVertexBuffers(_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(_commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-			vkCmdBindDescriptorSets(_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout(), 0, 1, &_descriptorSets[i], 0, nullptr);
-			vkCmdDrawIndexed(_commandBuffers[i], indexCount, 1, 0, 0, 0);
-			vkCmdEndRenderPass(_commandBuffers[i]);
-			SEIR_VK(vkEndCommandBuffer(_commandBuffers[i]));
-		}
 	}
 
 	VulkanBuffer& VulkanBuffer::operator=(VulkanBuffer&& other) noexcept
@@ -588,7 +500,7 @@ namespace seir
 
 	void VulkanImage::copy2D(const VulkanContext& context, VkBuffer buffer, const VkExtent2D& extent, uint32_t pixelStride)
 	{
-		VulkanOneTimeSubmit commandBuffer{ context._device, context._commandPool };
+		auto commandBuffer = context.createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		const VkBufferImageCopy region{
 			.bufferOffset = 0,
 			.bufferRowLength = pixelStride,
@@ -611,7 +523,7 @@ namespace seir
 			}
 		};
 		vkCmdCopyBufferToImage(commandBuffer, buffer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		commandBuffer.submit(context._graphicsQueue);
+		commandBuffer.finishAndSubmit(context._graphicsQueue);
 	}
 
 	void VulkanImage::destroy() noexcept
@@ -637,7 +549,6 @@ namespace seir
 
 	void VulkanImage::transitionLayout(const VulkanContext& context, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
-		VulkanOneTimeSubmit commandBuffer{ context._device, context._commandPool };
 		VkImageMemoryBarrier barrier{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
 			.srcAccessMask = 0,
@@ -684,39 +595,32 @@ namespace seir
 		}
 		else
 			SEIR_VK_THROW("", "Unsupported layout transition");
+		auto commandBuffer = context.createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-		commandBuffer.submit(context._graphicsQueue);
+		commandBuffer.finishAndSubmit(context._graphicsQueue);
 	}
 
-	VulkanOneTimeSubmit::VulkanOneTimeSubmit(VkDevice device, VkCommandPool commandPool)
-		: _device{ device }, _commandPool{ commandPool }
+	void VulkanCommandBuffer::destroy() noexcept
 	{
-		const VkCommandBufferAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool = _commandPool,
-			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-			.commandBufferCount = 1,
-		};
-		SEIR_VK(vkAllocateCommandBuffers(_device, &allocateInfo, &_commandBuffer));
-		const VkCommandBufferBeginInfo beginInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-		};
-		SEIR_VK(vkBeginCommandBuffer(_commandBuffer, &beginInfo)); // TODO: Fix _commandBuffer leak.
+		if (_buffer)
+		{
+			vkFreeCommandBuffers(_device, _pool, 1, &_buffer);
+			_buffer = VK_NULL_HANDLE;
+		}
 	}
 
-	VulkanOneTimeSubmit::~VulkanOneTimeSubmit() noexcept
+	void VulkanCommandBuffer::finish()
 	{
-		vkFreeCommandBuffers(_device, _commandPool, 1, &_commandBuffer);
+		SEIR_VK(vkEndCommandBuffer(_buffer));
 	}
 
-	void VulkanOneTimeSubmit::submit(VkQueue queue)
+	void VulkanCommandBuffer::finishAndSubmit(VkQueue queue)
 	{
-		SEIR_VK(vkEndCommandBuffer(_commandBuffer));
+		finish();
 		VkSubmitInfo submitInfo{
 			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 			.commandBufferCount = 1,
-			.pCommandBuffers = &_commandBuffer,
+			.pCommandBuffers = &_buffer,
 		};
 		SEIR_VK(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
 		SEIR_VK(vkQueueWaitIdle(queue));
@@ -760,6 +664,66 @@ namespace seir
 			_device = VK_NULL_HANDLE;
 			_module = VK_NULL_HANDLE;
 		}
+	}
+
+	VulkanDescriptorBuilder& VulkanDescriptorBuilder::bindBuffer(uint32_t binding, VkDescriptorType type, const VkDescriptorBufferInfo& info) noexcept
+	{
+		_buffers.emplace_back(info);
+		_writes.push_back({
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.dstSet = VK_NULL_HANDLE,
+			.dstBinding = binding,
+			.dstArrayElement = 0,
+			.descriptorCount = 1,
+			.descriptorType = type,
+			.pImageInfo = nullptr,
+			.pBufferInfo = reinterpret_cast<const VkDescriptorBufferInfo*>(_buffers.size()),
+			.pTexelBufferView = nullptr,
+		});
+		return *this;
+	}
+
+	VulkanDescriptorBuilder& VulkanDescriptorBuilder::bindImage(uint32_t binding, VkDescriptorType type, VkSampler sampler, VkImageView view, VkImageLayout layout) noexcept
+	{
+		_images.push_back({
+			.sampler = sampler,
+			.imageView = view,
+			.imageLayout = layout,
+		});
+		_writes.push_back({
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.dstSet = VK_NULL_HANDLE,
+			.dstBinding = binding,
+			.dstArrayElement = 0,
+			.descriptorCount = 1,
+			.descriptorType = type,
+			.pImageInfo = reinterpret_cast<const VkDescriptorImageInfo*>(_images.size()),
+			.pBufferInfo = nullptr,
+			.pTexelBufferView = nullptr,
+		});
+		return *this;
+	}
+
+	VkDescriptorSet VulkanDescriptorBuilder::build(VkDevice device, VkDescriptorPool pool, VkDescriptorSetLayout layout)
+	{
+		VkDescriptorSetAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool = pool,
+			.descriptorSetCount = 1,
+			.pSetLayouts = &layout,
+		};
+		VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+		SEIR_VK(vkAllocateDescriptorSets(device, &allocateInfo, &descriptorSet));
+		for (auto& write : _writes)
+		{
+			write.dstSet = descriptorSet;
+			if (write.pImageInfo)
+				write.pImageInfo = &_images[reinterpret_cast<uintptr_t>(write.pImageInfo) - 1];
+			if (write.pBufferInfo)
+				write.pBufferInfo = &_buffers[reinterpret_cast<uintptr_t>(write.pBufferInfo) - 1];
+		}
+		vkUpdateDescriptorSets(device, static_cast<uint32_t>(_writes.size()), _writes.data(), 0, nullptr);
+		return descriptorSet;
 	}
 
 	VulkanContext::~VulkanContext() noexcept
@@ -810,6 +774,24 @@ namespace seir
 		SEIR_VK(vkAllocateMemory(_device, &allocateInfo, nullptr, &buffer._memory));
 		SEIR_VK(vkBindBufferMemory(_device, buffer._buffer, buffer._memory, 0));
 		return buffer;
+	}
+
+	VulkanCommandBuffer VulkanContext::createCommandBuffer(VkCommandBufferUsageFlags usage) const
+	{
+		VulkanCommandBuffer commandBuffer{ _device, _commandPool };
+		const VkCommandBufferAllocateInfo allocateInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.commandPool = _commandPool,
+			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.commandBufferCount = 1,
+		};
+		SEIR_VK(vkAllocateCommandBuffers(_device, &allocateInfo, &commandBuffer._buffer));
+		const VkCommandBufferBeginInfo beginInfo{
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+			.flags = usage,
+		};
+		SEIR_VK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+		return commandBuffer;
 	}
 
 	VulkanBuffer VulkanContext::createDeviceBuffer(const void* data, VkDeviceSize size, VkBufferUsageFlags usage) const
@@ -1141,13 +1123,13 @@ namespace seir
 
 	void VulkanContext::copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize size) const
 	{
-		VulkanOneTimeSubmit commandBuffer{ _device, _commandPool };
+		auto commandBuffer = createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		const VkBufferCopy region{
 			.srcOffset = 0,
 			.dstOffset = 0,
 			.size = size,
 		};
 		vkCmdCopyBuffer(commandBuffer, src, dst, 1, &region);
-		commandBuffer.submit(_graphicsQueue);
+		commandBuffer.finishAndSubmit(_graphicsQueue);
 	}
 }
