@@ -194,12 +194,35 @@ namespace seir
 		friend VulkanContext;
 	};
 
+	class VulkanDescriptorAllocator
+	{
+	public:
+		constexpr VulkanDescriptorAllocator() noexcept = default;
+		constexpr VulkanDescriptorAllocator(VulkanDescriptorAllocator&& other) noexcept
+			: _device{ other._device }, _pool{ other._pool } { other._pool = VK_NULL_HANDLE; }
+		VulkanDescriptorAllocator& operator=(VulkanDescriptorAllocator&&) noexcept;
+		~VulkanDescriptorAllocator() noexcept { destroy(); }
+
+		static VulkanDescriptorAllocator create(VkDevice);
+
+		VkDescriptorSet allocate(VkDescriptorSetLayout);
+		void destroy() noexcept;
+		[[nodiscard]] constexpr VkDevice device() const noexcept { return _device; }
+		void reset();
+
+	private:
+		VkDevice _device = VK_NULL_HANDLE;
+		VkDescriptorPool _pool = VK_NULL_HANDLE;
+		constexpr VulkanDescriptorAllocator(VkDevice device) noexcept
+			: _device{ device } {}
+	};
+
 	class VulkanDescriptorBuilder
 	{
 	public:
 		VulkanDescriptorBuilder& bindBuffer(uint32_t binding, VkDescriptorType, const VkDescriptorBufferInfo&) noexcept;
 		VulkanDescriptorBuilder& bindImage(uint32_t binding, VkDescriptorType, VkSampler, VkImageView, VkImageLayout) noexcept;
-		VkDescriptorSet build(VkDevice, VkDescriptorPool, VkDescriptorSetLayout);
+		VkDescriptorSet build(VulkanDescriptorAllocator&, VkDescriptorSetLayout);
 
 	private:
 		StaticVector<VkWriteDescriptorSet, 4> _writes;

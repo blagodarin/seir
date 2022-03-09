@@ -666,6 +666,66 @@ namespace seir
 		}
 	}
 
+	VulkanDescriptorAllocator& VulkanDescriptorAllocator::operator=(VulkanDescriptorAllocator&& other) noexcept
+	{
+		destroy();
+		_device = other._device;
+		_pool = other._pool;
+		other._pool = VK_NULL_HANDLE;
+		return *this;
+	}
+
+	VulkanDescriptorAllocator VulkanDescriptorAllocator::create(VkDevice device)
+	{
+		VulkanDescriptorAllocator allocator{ device };
+		// TODO: Get rid of hardcoded sizes.
+		std::array sizes{
+			VkDescriptorPoolSize{
+				.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				.descriptorCount = 1,
+			},
+			VkDescriptorPoolSize{
+				.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.descriptorCount = 1,
+			},
+		};
+		const VkDescriptorPoolCreateInfo info{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+			.maxSets = 1,
+			.poolSizeCount = static_cast<uint32_t>(sizes.size()),
+			.pPoolSizes = sizes.data(),
+		};
+		SEIR_VK(vkCreateDescriptorPool(device, &info, nullptr, &allocator._pool));
+		return allocator;
+	}
+
+	VkDescriptorSet VulkanDescriptorAllocator::allocate(VkDescriptorSetLayout layout)
+	{
+		VkDescriptorSetAllocateInfo info{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool = _pool,
+			.descriptorSetCount = 1,
+			.pSetLayouts = &layout,
+		};
+		VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+		SEIR_VK(vkAllocateDescriptorSets(_device, &info, &descriptorSet));
+		return descriptorSet;
+	}
+
+	void VulkanDescriptorAllocator::destroy() noexcept
+	{
+		if (_pool)
+		{
+			vkDestroyDescriptorPool(_device, _pool, nullptr);
+			_pool = VK_NULL_HANDLE;
+		}
+	}
+
+	void VulkanDescriptorAllocator::reset()
+	{
+		SEIR_VK(vkResetDescriptorPool(_device, _pool, 0));
+	}
+
 	VulkanDescriptorBuilder& VulkanDescriptorBuilder::bindBuffer(uint32_t binding, VkDescriptorType type, const VkDescriptorBufferInfo& info) noexcept
 	{
 		_buffers.emplace_back(info);
@@ -704,16 +764,9 @@ namespace seir
 		return *this;
 	}
 
-	VkDescriptorSet VulkanDescriptorBuilder::build(VkDevice device, VkDescriptorPool pool, VkDescriptorSetLayout layout)
+	VkDescriptorSet VulkanDescriptorBuilder::build(VulkanDescriptorAllocator& allocator, VkDescriptorSetLayout layout)
 	{
-		VkDescriptorSetAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = pool,
-			.descriptorSetCount = 1,
-			.pSetLayouts = &layout,
-		};
-		VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-		SEIR_VK(vkAllocateDescriptorSets(device, &allocateInfo, &descriptorSet));
+		const auto descriptorSet = allocator.allocate(layout);
 		for (auto& write : _writes)
 		{
 			write.dstSet = descriptorSet;
@@ -722,7 +775,7 @@ namespace seir
 			if (write.pBufferInfo)
 				write.pBufferInfo = &_buffers[reinterpret_cast<uintptr_t>(write.pBufferInfo) - 1];
 		}
-		vkUpdateDescriptorSets(device, static_cast<uint32_t>(_writes.size()), _writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(allocator.device(), static_cast<uint32_t>(_writes.size()), _writes.data(), 0, nullptr);
 		return descriptorSet;
 	}
 

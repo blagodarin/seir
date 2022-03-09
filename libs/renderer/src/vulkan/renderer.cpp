@@ -68,7 +68,7 @@ namespace
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
 		builder.setVertexInput(0, { seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x2 });
 		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
-		return builder.build(context._device, renderTarget._renderPass, static_cast<uint32_t>(renderTarget._swapchainImages.size()));
+		return builder.build(context._device, renderTarget._renderPass);
 	}
 
 	UniformBufferObject makeUniformBuffer(const VkExtent2D& screenSize)
@@ -98,7 +98,6 @@ namespace seir
 	VulkanRenderer::~VulkanRenderer() noexcept
 	{
 		vkDeviceWaitIdle(_context._device);
-		_commandBuffers.clear();
 		_uniformBuffers.destroy();
 		_pipeline.destroy();
 		_renderTarget.destroy(_context._device);
@@ -141,34 +140,15 @@ namespace seir
 			_renderTarget.create(_context, windowSize);
 			_pipeline = ::createPipeline(_context, _renderTarget, _vertexShader.handle(), _fragmentShader.handle());
 			_uniformBuffers = _context.createUniformBuffers(sizeof(UniformBufferObject), _renderTarget._swapchainImages.size());
+			_descriptorAllocators.clear();
 			for (size_t i = 0; i < _renderTarget._swapchainImages.size(); ++i)
-			{
-				const auto descriptorSet =
-					VulkanDescriptorBuilder{}
-						.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBuffers[i])
-						.bindImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _textureImage.viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-						.build(_context._device, _pipeline.descriptorPool(), _pipeline.descriptorSetLayout());
-				auto commandBuffer = _context.createCommandBuffer(0);
-				const auto renderPassInfo = _renderTarget.renderPassInfo(i);
-				vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
-				VkBuffer vertexBuffers[]{ _vertexBuffer.handle() };
-				VkDeviceSize offsets[]{ 0 };
-				vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-				vkCmdBindIndexBuffer(commandBuffer, _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
-				vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(kIndexData.size()), 1, 0, 0, 0);
-				vkCmdEndRenderPass(commandBuffer);
-				commandBuffer.finish();
-				_commandBuffers.emplace_back(std::move(commandBuffer));
-			}
+				_descriptorAllocators.emplace_back(VulkanDescriptorAllocator::create(_context._device));
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
 		if (const auto status = vkAcquireNextImageKHR(_context._device, _renderTarget._swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index); status == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			vkDeviceWaitIdle(_context._device);
-			_commandBuffers.clear();
 			_pipeline.destroy();
 			_renderTarget.destroy(_context._device);
 			return;
@@ -182,21 +162,39 @@ namespace seir
 			const auto ubo = ::makeUniformBuffer(_renderTarget._swapchainExtent);
 			_uniformBuffers.update(index, &ubo);
 		}
+		_descriptorAllocators[index].reset();
+		const auto descriptorSet =
+			VulkanDescriptorBuilder{}
+				.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBuffers[index])
+				.bindImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _textureImage.viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+				.build(_descriptorAllocators[index], _pipeline.descriptorSetLayout());
+		auto commandBuffer = _context.createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		const auto renderPassInfo = _renderTarget.renderPassInfo(index);
+		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
+		VkBuffer vertexBuffers[]{ _vertexBuffer.handle() };
+		VkDeviceSize offsets[]{ 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(commandBuffer, _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
+		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(kIndexData.size()), 1, 0, 0, 0);
+		vkCmdEndRenderPass(commandBuffer);
+		commandBuffer.finish();
+		SEIR_VK(vkResetFences(_context._device, 1, &fence));
 		const VkSemaphore waitSemaphores[]{ imageAvailableSemaphore };
 		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		const VkSemaphore signalSemaphores[]{ renderFinishedSemaphore };
-		const auto commandBuffer = VkCommandBuffer{ _commandBuffers[index] };
+		const auto cb = VkCommandBuffer{ commandBuffer };
 		const VkSubmitInfo submitInfo{
 			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 			.waitSemaphoreCount = 1,
 			.pWaitSemaphores = waitSemaphores,
 			.pWaitDstStageMask = waitStages,
 			.commandBufferCount = 1,
-			.pCommandBuffers = &commandBuffer,
+			.pCommandBuffers = &cb,
 			.signalSemaphoreCount = 1,
 			.pSignalSemaphores = signalSemaphores,
 		};
-		SEIR_VK(vkResetFences(_context._device, 1, &fence));
 		SEIR_VK(vkQueueSubmit(_context._graphicsQueue, 1, &submitInfo, fence));
 		const VkSwapchainKHR swapchains[]{ _renderTarget._swapchain };
 		const VkPresentInfoKHR presentInfo{
@@ -211,7 +209,6 @@ namespace seir
 		if (const auto status = vkQueuePresentKHR(_context._presentQueue, &presentInfo); status == VK_ERROR_OUT_OF_DATE_KHR || status == VK_SUBOPTIMAL_KHR)
 		{
 			vkDeviceWaitIdle(_context._device);
-			_commandBuffers.clear();
 			_pipeline.destroy();
 			_renderTarget.destroy(_context._device);
 			return;

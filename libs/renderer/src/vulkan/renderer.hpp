@@ -33,6 +33,6 @@ namespace seir
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
 		VulkanUniformBuffers _uniformBuffers;
-		std::vector<VulkanCommandBuffer> _commandBuffers;
+		std::vector<VulkanDescriptorAllocator> _descriptorAllocators;
 	};
 }
