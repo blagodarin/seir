@@ -23,8 +23,8 @@ namespace seir::vulkan
 		VkDescriptorSet allocate(VkDescriptorSetLayout);
 		void deallocateAll();
 		[[nodiscard]] constexpr VkDevice device() const noexcept { return _device; }
-		void flip();
 		void reset(VkDevice, uint32_t frameCount, uint32_t setsPerPool, std::vector<VkDescriptorPoolSize>&&);
+		void setFrameIndex(uint32_t);
 
 	private:
 		void grow();
@@ -32,9 +32,8 @@ namespace seir::vulkan
 	private:
 		VkDevice _device = VK_NULL_HANDLE;
 		uint32_t _frameCount = 0;
-		uint32_t _frameIndex = 0;
-		std::vector<VkDescriptorPool> _pools;
 		uint32_t _poolIndex = 0;
+		std::vector<VkDescriptorPool> _pools;
 		uint32_t _setsPerPool = 0;
 		std::vector<VkDescriptorPoolSize> _poolSizes;
 	};

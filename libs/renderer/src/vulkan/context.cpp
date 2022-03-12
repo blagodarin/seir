@@ -5,6 +5,7 @@
 #include "context.hpp"
 
 #include <seir_app/window.hpp>
+#include "commands.hpp"
 #include "error.hpp"
 #include "pipeline.hpp"
 #include "utils.hpp"
@@ -634,32 +635,6 @@ namespace seir
 		commandBuffer.finishAndSubmit(context._graphicsQueue);
 	}
 
-	void VulkanCommandBuffer::destroy() noexcept
-	{
-		if (_buffer)
-		{
-			vkFreeCommandBuffers(_device, _pool, 1, &_buffer);
-			_buffer = VK_NULL_HANDLE;
-		}
-	}
-
-	void VulkanCommandBuffer::finish()
-	{
-		SEIR_VK(vkEndCommandBuffer(_buffer));
-	}
-
-	void VulkanCommandBuffer::finishAndSubmit(VkQueue queue)
-	{
-		finish();
-		VkSubmitInfo submitInfo{
-			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-			.commandBufferCount = 1,
-			.pCommandBuffers = &_buffer,
-		};
-		SEIR_VK(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
-		SEIR_VK(vkQueueWaitIdle(queue));
-	}
-
 	VulkanSampler& VulkanSampler::operator=(VulkanSampler&& other) noexcept
 	{
 		destroy();
@@ -750,9 +725,9 @@ namespace seir
 		return buffer;
 	}
 
-	VulkanCommandBuffer VulkanContext::createCommandBuffer(VkCommandBufferUsageFlags usage) const
+	vulkan::CommandBuffer VulkanContext::createCommandBuffer(VkCommandBufferUsageFlags usage) const
 	{
-		VulkanCommandBuffer commandBuffer{ _device, _commandPool };
+		vulkan::CommandBuffer commandBuffer{ _device, _commandPool };
 		const VkCommandBufferAllocateInfo allocateInfo{
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 			.commandPool = _commandPool,

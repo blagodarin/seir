@@ -12,6 +12,11 @@
 #include <cassert>
 #include <vector>
 
+namespace seir::vulkan
+{
+	class CommandBuffer;
+}
+
 namespace seir
 {
 	struct Size2D;
@@ -35,7 +40,7 @@ namespace seir
 
 	private:
 		size_t _index = 0;
-		std::array<Item, 2> _items;
+		std::array<Item, 2> _items; // TODO: Proper number of frames.
 	};
 
 	class VulkanBuffer
@@ -179,28 +184,6 @@ namespace seir
 		std::vector<VkFence> _swapchainImageFences;
 	};
 
-	class VulkanCommandBuffer
-	{
-	public:
-		constexpr VulkanCommandBuffer() noexcept = default;
-		constexpr VulkanCommandBuffer(VulkanCommandBuffer&& other) noexcept
-			: _device{ other._device }, _pool{ other._pool }, _buffer{ other._buffer } { other._buffer = VK_NULL_HANDLE; }
-		~VulkanCommandBuffer() noexcept { destroy(); }
-
-		[[nodiscard]] constexpr operator VkCommandBuffer() const noexcept { return _buffer; }
-		void destroy() noexcept;
-		void finish();
-		void finishAndSubmit(VkQueue);
-
-	private:
-		VkDevice _device = VK_NULL_HANDLE;
-		VkCommandPool _pool = VK_NULL_HANDLE;
-		VkCommandBuffer _buffer = VK_NULL_HANDLE;
-		constexpr VulkanCommandBuffer(VkDevice device, VkCommandPool pool) noexcept
-			: _device{ device }, _pool{ pool } {}
-		friend VulkanContext;
-	};
-
 	class VulkanContext
 	{
 	public:
@@ -229,7 +212,7 @@ namespace seir
 
 		void create(const WindowDescriptor&);
 		VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags) const;
-		VulkanCommandBuffer createCommandBuffer(VkCommandBufferUsageFlags) const;
+		vulkan::CommandBuffer createCommandBuffer(VkCommandBufferUsageFlags) const;
 		VulkanBuffer createDeviceBuffer(const void* data, VkDeviceSize, VkBufferUsageFlags) const;
 		VulkanImage createImage2D(const VkExtent2D&, VkFormat, VkSampleCountFlagBits, VkImageTiling, VkImageUsageFlags, VkImageAspectFlags) const;
 		VulkanSampler createSampler2D() const;

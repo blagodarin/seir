@@ -7,6 +7,7 @@
 #include <seir_app/window.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
+#include "commands.hpp"
 #include "error.hpp"
 #include "utils.hpp"
 
@@ -160,7 +161,7 @@ namespace seir
 			const auto ubo = ::makeUniformBuffer(_renderTarget.extent());
 			_uniformBuffers.update(index, &ubo);
 		}
-		_descriptorAllocator.flip();
+		_descriptorAllocator.setFrameIndex(index);
 		const auto descriptorSet =
 			vulkan::DescriptorBuilder{}
 				.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBuffers[index])
@@ -179,21 +180,7 @@ namespace seir
 		vkCmdEndRenderPass(commandBuffer);
 		commandBuffer.finish();
 		SEIR_VK(vkResetFences(_context._device, 1, &frameFence));
-		const VkSemaphore waitSemaphores[]{ frameAvailableSemaphore };
-		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		const VkSemaphore signalSemaphores[]{ frameRenderedSemaphore };
-		const auto cb = VkCommandBuffer{ commandBuffer };
-		const VkSubmitInfo submitInfo{
-			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-			.waitSemaphoreCount = 1,
-			.pWaitSemaphores = waitSemaphores,
-			.pWaitDstStageMask = waitStages,
-			.commandBufferCount = 1,
-			.pCommandBuffers = &cb,
-			.signalSemaphoreCount = 1,
-			.pSignalSemaphores = signalSemaphores,
-		};
-		SEIR_VK(vkQueueSubmit(_context._graphicsQueue, 1, &submitInfo, frameFence));
+		commandBuffer.submit(_context._graphicsQueue, frameAvailableSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, frameRenderedSemaphore, frameFence);
 		if (!_renderTarget.presentFrame(_context._presentQueue, index, frameRenderedSemaphore))
 			return resetRenderTarget();
 		SEIR_VK(vkQueueWaitIdle(_context._presentQueue));

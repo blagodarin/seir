@@ -11,6 +11,8 @@ if(SEIR_RENDERER STREQUAL "Dummy")
 		)
 elseif(SEIR_RENDERER STREQUAL "Vulkan")
 	set(SOURCES
+		src/vulkan/commands.cpp
+		src/vulkan/commands.hpp
 		src/vulkan/context.cpp
 		src/vulkan/context.hpp
 		src/vulkan/descriptors.cpp

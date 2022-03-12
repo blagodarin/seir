@@ -6,13 +6,14 @@
 
 #include "vulkan.hpp"
 
+#include <cassert>
+
 #ifndef NDEBUG
 #	include <string>
 #endif
 
 namespace seir
 {
-	struct Size2D;
 	class VulkanContext;
 	struct WindowDescriptor;
 

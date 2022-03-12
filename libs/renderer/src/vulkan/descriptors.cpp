@@ -6,8 +6,6 @@
 
 #include "error.hpp"
 
-#include <array>
-
 namespace seir::vulkan
 {
 	DescriptorAllocator::~DescriptorAllocator() noexcept
@@ -46,26 +44,24 @@ namespace seir::vulkan
 			SEIR_VK(vkResetDescriptorPool(_device, pool, 0));
 	}
 
-	void DescriptorAllocator::flip()
-	{
-		_frameIndex = (_frameIndex + 1) % _frameCount;
-		for (auto i = _frameIndex; i < _pools.size(); i += _frameCount)
-			SEIR_VK(vkResetDescriptorPool(_device, _pools[i], 0));
-		_poolIndex = _frameIndex;
-	}
-
 	void DescriptorAllocator::reset(VkDevice device, uint32_t frameCount, uint32_t setsPerPool, std::vector<VkDescriptorPoolSize>&& poolSizes)
 	{
 		for (const auto pool : _pools)
 			vkDestroyDescriptorPool(_device, pool, nullptr);
 		_device = device;
 		_frameCount = frameCount;
-		_frameIndex = 0;
-		_pools.clear();
 		_poolIndex = 0;
+		_pools.clear();
 		_setsPerPool = setsPerPool;
 		_poolSizes = std::move(poolSizes);
 		grow();
+	}
+
+	void DescriptorAllocator::setFrameIndex(uint32_t index)
+	{
+		_poolIndex = index;
+		for (auto i = index; i < _pools.size(); i += _frameCount)
+			SEIR_VK(vkResetDescriptorPool(_device, _pools[i], 0));
 	}
 
 	void DescriptorAllocator::grow()
