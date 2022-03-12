@@ -5,7 +5,6 @@
 #include "context.hpp"
 
 #include <seir_app/window.hpp>
-#include <seir_base/static_vector.hpp>
 #include "error.hpp"
 #include "pipeline.hpp"
 #include "utils.hpp"
@@ -664,119 +663,6 @@ namespace seir
 			_device = VK_NULL_HANDLE;
 			_module = VK_NULL_HANDLE;
 		}
-	}
-
-	VulkanDescriptorAllocator& VulkanDescriptorAllocator::operator=(VulkanDescriptorAllocator&& other) noexcept
-	{
-		destroy();
-		_device = other._device;
-		_pool = other._pool;
-		other._pool = VK_NULL_HANDLE;
-		return *this;
-	}
-
-	VulkanDescriptorAllocator VulkanDescriptorAllocator::create(VkDevice device)
-	{
-		VulkanDescriptorAllocator allocator{ device };
-		// TODO: Get rid of hardcoded sizes.
-		std::array sizes{
-			VkDescriptorPoolSize{
-				.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				.descriptorCount = 1,
-			},
-			VkDescriptorPoolSize{
-				.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.descriptorCount = 1,
-			},
-		};
-		const VkDescriptorPoolCreateInfo info{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets = 1,
-			.poolSizeCount = static_cast<uint32_t>(sizes.size()),
-			.pPoolSizes = sizes.data(),
-		};
-		SEIR_VK(vkCreateDescriptorPool(device, &info, nullptr, &allocator._pool));
-		return allocator;
-	}
-
-	VkDescriptorSet VulkanDescriptorAllocator::allocate(VkDescriptorSetLayout layout)
-	{
-		VkDescriptorSetAllocateInfo info{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool = _pool,
-			.descriptorSetCount = 1,
-			.pSetLayouts = &layout,
-		};
-		VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-		SEIR_VK(vkAllocateDescriptorSets(_device, &info, &descriptorSet));
-		return descriptorSet;
-	}
-
-	void VulkanDescriptorAllocator::destroy() noexcept
-	{
-		if (_pool)
-		{
-			vkDestroyDescriptorPool(_device, _pool, nullptr);
-			_pool = VK_NULL_HANDLE;
-		}
-	}
-
-	void VulkanDescriptorAllocator::reset()
-	{
-		SEIR_VK(vkResetDescriptorPool(_device, _pool, 0));
-	}
-
-	VulkanDescriptorBuilder& VulkanDescriptorBuilder::bindBuffer(uint32_t binding, VkDescriptorType type, const VkDescriptorBufferInfo& info) noexcept
-	{
-		_buffers.emplace_back(info);
-		_writes.push_back({
-			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-			.dstSet = VK_NULL_HANDLE,
-			.dstBinding = binding,
-			.dstArrayElement = 0,
-			.descriptorCount = 1,
-			.descriptorType = type,
-			.pImageInfo = nullptr,
-			.pBufferInfo = reinterpret_cast<const VkDescriptorBufferInfo*>(_buffers.size()),
-			.pTexelBufferView = nullptr,
-		});
-		return *this;
-	}
-
-	VulkanDescriptorBuilder& VulkanDescriptorBuilder::bindImage(uint32_t binding, VkDescriptorType type, VkSampler sampler, VkImageView view, VkImageLayout layout) noexcept
-	{
-		_images.push_back({
-			.sampler = sampler,
-			.imageView = view,
-			.imageLayout = layout,
-		});
-		_writes.push_back({
-			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-			.dstSet = VK_NULL_HANDLE,
-			.dstBinding = binding,
-			.dstArrayElement = 0,
-			.descriptorCount = 1,
-			.descriptorType = type,
-			.pImageInfo = reinterpret_cast<const VkDescriptorImageInfo*>(_images.size()),
-			.pBufferInfo = nullptr,
-			.pTexelBufferView = nullptr,
-		});
-		return *this;
-	}
-
-	VkDescriptorSet VulkanDescriptorBuilder::build(VulkanDescriptorAllocator& allocator, VkDescriptorSetLayout layout)
-	{
-		const auto descriptorSet = allocator.allocate(layout);
-		for (auto& write : _writes)
-		{
-			write.dstSet = descriptorSet;
-			if (write.pImageInfo)
-				write.pImageInfo = &_images[reinterpret_cast<uintptr_t>(write.pImageInfo) - 1];
-			if (write.pBufferInfo)
-				write.pBufferInfo = &_buffers[reinterpret_cast<uintptr_t>(write.pBufferInfo) - 1];
-		}
-		vkUpdateDescriptorSets(allocator.device(), static_cast<uint32_t>(_writes.size()), _writes.data(), 0, nullptr);
-		return descriptorSet;
 	}
 
 	VulkanContext::~VulkanContext() noexcept

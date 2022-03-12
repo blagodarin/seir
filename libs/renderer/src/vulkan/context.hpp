@@ -5,7 +5,6 @@
 #pragma once
 
 #include <seir_base/shared_ptr.hpp>
-#include <seir_base/static_vector.hpp>
 #include "options.hpp"
 #include "vulkan.hpp"
 
@@ -161,6 +160,7 @@ namespace seir
 
 		void create(const VulkanContext&, const Size2D& windowSize);
 		void destroy(VkDevice) noexcept;
+		[[nodiscard]] uint32_t frameCount() const noexcept { return static_cast<uint32_t>(_swapchainImages.size()); }
 		VkRenderPassBeginInfo renderPassInfo(size_t frameIndex) const noexcept;
 
 	private:
@@ -192,42 +192,6 @@ namespace seir
 		constexpr VulkanCommandBuffer(VkDevice device, VkCommandPool pool) noexcept
 			: _device{ device }, _pool{ pool } {}
 		friend VulkanContext;
-	};
-
-	class VulkanDescriptorAllocator
-	{
-	public:
-		constexpr VulkanDescriptorAllocator() noexcept = default;
-		constexpr VulkanDescriptorAllocator(VulkanDescriptorAllocator&& other) noexcept
-			: _device{ other._device }, _pool{ other._pool } { other._pool = VK_NULL_HANDLE; }
-		VulkanDescriptorAllocator& operator=(VulkanDescriptorAllocator&&) noexcept;
-		~VulkanDescriptorAllocator() noexcept { destroy(); }
-
-		static VulkanDescriptorAllocator create(VkDevice);
-
-		VkDescriptorSet allocate(VkDescriptorSetLayout);
-		void destroy() noexcept;
-		[[nodiscard]] constexpr VkDevice device() const noexcept { return _device; }
-		void reset();
-
-	private:
-		VkDevice _device = VK_NULL_HANDLE;
-		VkDescriptorPool _pool = VK_NULL_HANDLE;
-		constexpr VulkanDescriptorAllocator(VkDevice device) noexcept
-			: _device{ device } {}
-	};
-
-	class VulkanDescriptorBuilder
-	{
-	public:
-		VulkanDescriptorBuilder& bindBuffer(uint32_t binding, VkDescriptorType, const VkDescriptorBufferInfo&) noexcept;
-		VulkanDescriptorBuilder& bindImage(uint32_t binding, VkDescriptorType, VkSampler, VkImageView, VkImageLayout) noexcept;
-		VkDescriptorSet build(VulkanDescriptorAllocator&, VkDescriptorSetLayout);
-
-	private:
-		StaticVector<VkWriteDescriptorSet, 4> _writes;
-		StaticVector<VkDescriptorImageInfo, 2> _images;
-		StaticVector<VkDescriptorBufferInfo, 2> _buffers;
 	};
 
 	class VulkanContext

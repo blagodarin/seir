@@ -139,16 +139,25 @@ namespace seir
 			}
 			_renderTarget.create(_context, windowSize);
 			_pipeline = ::createPipeline(_context, _renderTarget, _vertexShader.handle(), _fragmentShader.handle());
-			_uniformBuffers = _context.createUniformBuffers(sizeof(UniformBufferObject), _renderTarget._swapchainImages.size());
-			_descriptorAllocators.clear();
-			for (size_t i = 0; i < _renderTarget._swapchainImages.size(); ++i)
-				_descriptorAllocators.emplace_back(VulkanDescriptorAllocator::create(_context._device));
+			_uniformBuffers = _context.createUniformBuffers(sizeof(UniformBufferObject), _renderTarget.frameCount());
+			_descriptorAllocator.reset(_context._device, _renderTarget.frameCount(), 1'000,
+				{
+					VkDescriptorPoolSize{
+						.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+						.descriptorCount = 1'000,
+					},
+					VkDescriptorPoolSize{
+						.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+						.descriptorCount = 1'000,
+					},
+				});
 		}
 		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
 		if (const auto status = vkAcquireNextImageKHR(_context._device, _renderTarget._swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index); status == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			vkDeviceWaitIdle(_context._device);
+			_descriptorAllocator.deallocateAll();
 			_pipeline.destroy();
 			_renderTarget.destroy(_context._device);
 			return;
@@ -162,12 +171,12 @@ namespace seir
 			const auto ubo = ::makeUniformBuffer(_renderTarget._swapchainExtent);
 			_uniformBuffers.update(index, &ubo);
 		}
-		_descriptorAllocators[index].reset();
+		_descriptorAllocator.flip();
 		const auto descriptorSet =
-			VulkanDescriptorBuilder{}
+			vulkan::DescriptorBuilder{}
 				.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBuffers[index])
 				.bindImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _textureImage.viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-				.build(_descriptorAllocators[index], _pipeline.descriptorSetLayout());
+				.build(_descriptorAllocator, _pipeline.descriptorSetLayout());
 		auto commandBuffer = _context.createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		const auto renderPassInfo = _renderTarget.renderPassInfo(index);
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -209,6 +218,7 @@ namespace seir
 		if (const auto status = vkQueuePresentKHR(_context._presentQueue, &presentInfo); status == VK_ERROR_OUT_OF_DATE_KHR || status == VK_SUBOPTIMAL_KHR)
 		{
 			vkDeviceWaitIdle(_context._device);
+			_descriptorAllocator.deallocateAll();
 			_pipeline.destroy();
 			_renderTarget.destroy(_context._device);
 			return;

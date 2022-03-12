@@ -6,6 +6,7 @@
 
 #include <seir_renderer/renderer.hpp>
 #include "context.hpp"
+#include "descriptors.hpp"
 #include "pipeline.hpp"
 
 namespace seir
@@ -33,6 +34,6 @@ namespace seir
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
 		VulkanUniformBuffers _uniformBuffers;
-		std::vector<VulkanDescriptorAllocator> _descriptorAllocators;
+		vulkan::DescriptorAllocator _descriptorAllocator;
 	};
 }
