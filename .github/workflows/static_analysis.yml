@@ -22,6 +22,7 @@ jobs:
         continue-on-error: true
         run: |
           cppcheck --enable=all --error-exitcode=1 --inline-suppr --quiet \
+            -I libs/3rdparty/include \
             -I libs/app/include \
             -I libs/audio/include \
             -I libs/base/include \

@@ -54,6 +54,13 @@ namespace seir
 		return { _app->instance(), reinterpret_cast<intptr_t>(_hwnd.get()) };
 	}
 
+	void WindowsWindow::setTitle(const std::string& title) noexcept
+	{
+		const auto wtitle = ::toWChar(title);
+		if (!::SetWindowTextW(_hwnd, wtitle ? wtitle.get() : L""))
+			windows::reportError("SetWindowTextW");
+	}
+
 	void WindowsWindow::show() noexcept
 	{
 		::ShowWindow(_hwnd, SW_SHOW);

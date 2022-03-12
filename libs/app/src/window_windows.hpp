@@ -30,6 +30,7 @@ namespace seir
 
 		void close() noexcept override;
 		WindowDescriptor descriptor() const noexcept override;
+		void setTitle(const std::string&) noexcept override;
 		void show() noexcept override;
 		Size2D size() const noexcept override;
 

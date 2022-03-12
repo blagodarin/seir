@@ -47,7 +47,7 @@ target_link_libraries(seir_renderer PRIVATE Seir::app Seir::math)
 seir_target(seir_renderer FOLDER libs/renderer STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 if(SEIR_RENDERER STREQUAL "Vulkan")
 	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
-	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan $<$<CONFIG:Debug>:fmt::fmt>)
+	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan $<$<CONFIG:Debug>:Seir::3rdparty> $<$<CONFIG:Debug>:fmt::fmt>)
 	seir_embed_spirv(seir_renderer
 		VERTEX src/vulkan/vertex_shader.glsl
 		FRAGMENT src/vulkan/fragment_shader.glsl

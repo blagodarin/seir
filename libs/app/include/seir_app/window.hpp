@@ -45,6 +45,9 @@ namespace seir
 		[[nodiscard]] virtual WindowDescriptor descriptor() const noexcept = 0;
 
 		//
+		virtual void setTitle(const std::string&) noexcept = 0;
+
+		//
 		virtual void show() noexcept = 0;
 
 		//
