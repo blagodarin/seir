@@ -179,6 +179,21 @@ namespace seir
 		return _items[index];
 	}
 
+	bool VulkanRenderTarget::acquireFrame(VkDevice device, VkSemaphore signalSemaphore, VkFence waitFence, uint32_t& index)
+	{
+		if (const auto status = vkAcquireNextImageKHR(device, _swapchain, UINT64_MAX, signalSemaphore, VK_NULL_HANDLE, &index);
+			status != VK_SUCCESS && status != VK_SUBOPTIMAL_KHR)
+		{
+			if (status != VK_ERROR_OUT_OF_DATE_KHR)
+				SEIR_VK_THROW("vkAcquireNextImageKHR", status);
+			return false;
+		}
+		if (_swapchainImageFences[index])
+			SEIR_VK(vkWaitForFences(device, 1, &_swapchainImageFences[index], VK_TRUE, UINT64_MAX));
+		_swapchainImageFences[index] = waitFence;
+		return true;
+	}
+
 	void VulkanRenderTarget::create(const VulkanContext& context, const Size2D& windowSize)
 	{
 		createSwapchain(context, windowSize);
@@ -209,6 +224,26 @@ namespace seir
 		}
 		vkDestroySwapchainKHR(device, _swapchain, nullptr);
 		_swapchain = VK_NULL_HANDLE;
+	}
+
+	bool VulkanRenderTarget::presentFrame(VkQueue queue, uint32_t frameIndex, VkSemaphore waitSemaphore)
+	{
+		const VkPresentInfoKHR presentInfo{
+			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = &waitSemaphore,
+			.swapchainCount = 1,
+			.pSwapchains = &_swapchain,
+			.pImageIndices = &frameIndex,
+			.pResults = nullptr,
+		};
+		if (const auto status = vkQueuePresentKHR(queue, &presentInfo); status != VK_SUCCESS)
+		{
+			if (status != VK_ERROR_OUT_OF_DATE_KHR && status != VK_SUBOPTIMAL_KHR)
+				SEIR_VK_THROW("vkQueuePresentKHR", status);
+			return false;
+		}
+		return true;
 	}
 
 	VkRenderPassBeginInfo VulkanRenderTarget::renderPassInfo(size_t frameIndex) const noexcept

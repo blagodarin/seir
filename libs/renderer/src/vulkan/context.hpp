@@ -148,19 +148,15 @@ namespace seir
 	class VulkanRenderTarget
 	{
 	public:
-		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
-		VkExtent2D _swapchainExtent{};
-		std::vector<VkImage> _swapchainImages;
-		std::vector<VkImageView> _swapchainImageViews;
-		VulkanImage _colorBuffer;
-		VulkanImage _depthBuffer;
-		VkRenderPass _renderPass = VK_NULL_HANDLE;
-		std::vector<VkFramebuffer> _swapchainFramebuffers;
-		std::vector<VkFence> _swapchainImageFences;
+		constexpr explicit operator bool() const noexcept { return _swapchain != VK_NULL_HANDLE; }
 
+		bool acquireFrame(VkDevice, VkSemaphore signalSemaphore, VkFence waitFence, uint32_t& index);
 		void create(const VulkanContext&, const Size2D& windowSize);
 		void destroy(VkDevice) noexcept;
-		[[nodiscard]] uint32_t frameCount() const noexcept { return static_cast<uint32_t>(_swapchainImages.size()); }
+		constexpr VkExtent2D extent() const noexcept { return _swapchainExtent; }
+		uint32_t frameCount() const noexcept { return static_cast<uint32_t>(_swapchainImages.size()); }
+		bool presentFrame(VkQueue, uint32_t frameIndex, VkSemaphore waitSemaphore);
+		constexpr VkRenderPass renderPass() const noexcept { return _renderPass; }
 		VkRenderPassBeginInfo renderPassInfo(size_t frameIndex) const noexcept;
 
 	private:
@@ -170,6 +166,17 @@ namespace seir
 		void createDepthBuffer(const VulkanContext&);
 		void createRenderPass(VkDevice, VkFormat, VkSampleCountFlagBits);
 		void createFramebuffers(VkDevice);
+
+	private:
+		VkSwapchainKHR _swapchain = VK_NULL_HANDLE;
+		VkExtent2D _swapchainExtent{};
+		std::vector<VkImage> _swapchainImages;
+		std::vector<VkImageView> _swapchainImageViews;
+		VulkanImage _colorBuffer;
+		VulkanImage _depthBuffer;
+		VkRenderPass _renderPass = VK_NULL_HANDLE;
+		std::vector<VkFramebuffer> _swapchainFramebuffers;
+		std::vector<VkFence> _swapchainImageFences;
 	};
 
 	class VulkanCommandBuffer

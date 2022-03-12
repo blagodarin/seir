@@ -61,14 +61,14 @@ namespace
 
 	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
-		seir::VulkanPipelineBuilder builder{ renderTarget._swapchainExtent, context._maxSampleCount, context._options.sampleShading };
+		seir::VulkanPipelineBuilder builder{ renderTarget.extent(), context._maxSampleCount, context._options.sampleShading };
 		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
 		builder.setVertexInput(0, { seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x2 });
 		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
-		return builder.build(context._device, renderTarget._renderPass);
+		return builder.build(context._device, renderTarget.renderPass());
 	}
 
 	UniformBufferObject makeUniformBuffer(const VkExtent2D& screenSize)
@@ -129,7 +129,7 @@ namespace seir
 
 	void VulkanRenderer::draw()
 	{
-		if (!_renderTarget._swapchain)
+		if (!_renderTarget)
 		{
 			const auto windowSize = _window->size();
 			if (windowSize._width == 0 || windowSize._height == 0)
@@ -152,23 +152,12 @@ namespace seir
 					},
 				});
 		}
-		const auto [imageAvailableSemaphore, renderFinishedSemaphore, fence] = _frameSync.switchFrame(_context._device);
+		const auto [frameAvailableSemaphore, frameRenderedSemaphore, frameFence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
-		if (const auto status = vkAcquireNextImageKHR(_context._device, _renderTarget._swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &index); status == VK_ERROR_OUT_OF_DATE_KHR)
+		if (!_renderTarget.acquireFrame(_context._device, frameAvailableSemaphore, frameFence, index))
+			return resetRenderTarget();
 		{
-			vkDeviceWaitIdle(_context._device);
-			_descriptorAllocator.deallocateAll();
-			_pipeline.destroy();
-			_renderTarget.destroy(_context._device);
-			return;
-		}
-		else if (status != VK_SUCCESS && status != VK_SUBOPTIMAL_KHR)
-			SEIR_VK_THROW("vkAcquireNextImageKHR", status);
-		if (_renderTarget._swapchainImageFences[index])
-			SEIR_VK(vkWaitForFences(_context._device, 1, &_renderTarget._swapchainImageFences[index], VK_TRUE, UINT64_MAX));
-		_renderTarget._swapchainImageFences[index] = fence;
-		{
-			const auto ubo = ::makeUniformBuffer(_renderTarget._swapchainExtent);
+			const auto ubo = ::makeUniformBuffer(_renderTarget.extent());
 			_uniformBuffers.update(index, &ubo);
 		}
 		_descriptorAllocator.flip();
@@ -189,10 +178,10 @@ namespace seir
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(kIndexData.size()), 1, 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffer);
 		commandBuffer.finish();
-		SEIR_VK(vkResetFences(_context._device, 1, &fence));
-		const VkSemaphore waitSemaphores[]{ imageAvailableSemaphore };
+		SEIR_VK(vkResetFences(_context._device, 1, &frameFence));
+		const VkSemaphore waitSemaphores[]{ frameAvailableSemaphore };
 		const VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		const VkSemaphore signalSemaphores[]{ renderFinishedSemaphore };
+		const VkSemaphore signalSemaphores[]{ frameRenderedSemaphore };
 		const auto cb = VkCommandBuffer{ commandBuffer };
 		const VkSubmitInfo submitInfo{
 			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -204,28 +193,18 @@ namespace seir
 			.signalSemaphoreCount = 1,
 			.pSignalSemaphores = signalSemaphores,
 		};
-		SEIR_VK(vkQueueSubmit(_context._graphicsQueue, 1, &submitInfo, fence));
-		const VkSwapchainKHR swapchains[]{ _renderTarget._swapchain };
-		const VkPresentInfoKHR presentInfo{
-			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-			.waitSemaphoreCount = 1,
-			.pWaitSemaphores = signalSemaphores,
-			.swapchainCount = 1,
-			.pSwapchains = swapchains,
-			.pImageIndices = &index,
-			.pResults = nullptr,
-		};
-		if (const auto status = vkQueuePresentKHR(_context._presentQueue, &presentInfo); status == VK_ERROR_OUT_OF_DATE_KHR || status == VK_SUBOPTIMAL_KHR)
-		{
-			vkDeviceWaitIdle(_context._device);
-			_descriptorAllocator.deallocateAll();
-			_pipeline.destroy();
-			_renderTarget.destroy(_context._device);
-			return;
-		}
-		else if (status != VK_SUCCESS)
-			SEIR_VK_THROW("vkQueuePresentKHR", status);
+		SEIR_VK(vkQueueSubmit(_context._graphicsQueue, 1, &submitInfo, frameFence));
+		if (!_renderTarget.presentFrame(_context._presentQueue, index, frameRenderedSemaphore))
+			return resetRenderTarget();
 		SEIR_VK(vkQueueWaitIdle(_context._presentQueue));
+	}
+
+	void VulkanRenderer::resetRenderTarget()
+	{
+		vkDeviceWaitIdle(_context._device);
+		_descriptorAllocator.deallocateAll();
+		_pipeline.destroy();
+		_renderTarget.destroy(_context._device);
 	}
 
 	UniquePtr<Renderer> Renderer::create(const SharedPtr<Window>& window)

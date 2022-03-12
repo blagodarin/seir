@@ -22,6 +22,9 @@ namespace seir
 		void draw() override;
 
 	private:
+		void resetRenderTarget();
+
+	private:
 		const SharedPtr<Window> _window;
 		VulkanContext _context;
 		VulkanShader _vertexShader;
