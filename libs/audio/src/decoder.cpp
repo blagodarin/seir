@@ -28,8 +28,8 @@ namespace seir
 					break;
 #endif
 				default:
-#if SEIR_AUDIO_AULOS
-					return createAulosDecoder(std::move(blob), preferences);
+#if SEIR_AUDIO_SYNTH
+					return createSynthDecoder(std::move(blob), preferences);
 #else
 					break;
 #endif
