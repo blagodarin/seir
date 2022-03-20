@@ -85,6 +85,10 @@ if(SEIR_RENDERER STREQUAL "Vulkan")
 	endif()
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "^Clang|GNU$" AND SEIR_ARCHITECTURE MATCHES "^amd64|x86$")
+	add_compile_options(-msse4.1)
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	add_compile_options(-Werror -Weverything
 		-Wno-c++98-compat
@@ -204,6 +208,9 @@ if(SEIR_BENCHMARKS)
 	find_package(benchmark REQUIRED)
 	if(SEIR_AUDIO)
 		add_subdirectory(libs/audio/benchmarks)
+	endif()
+	if(SEIR_SYNTH)
+		add_subdirectory(libs/synth/benchmarks)
 	endif()
 endif()
 
