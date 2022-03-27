@@ -32,43 +32,57 @@ namespace seir::synth
 	public:
 		WaveData(const VoiceData& data, unsigned samplingRate)
 			: _shapeParameter{ data._waveShapeParameter }
-			, _amplitudeSize{ 1 + static_cast<unsigned>(data._amplitudeEnvelope._changes.size()) }
+			, _amplitudeSize{ 1 + static_cast<unsigned>(data._amplitudeEnvelope._changes.size()) + 1 }
 			, _frequencyOffset{ _amplitudeSize + 1 }
-			, _frequencySize{ 1 + static_cast<unsigned>(data._frequencyEnvelope._changes.size()) }
+			, _frequencySize{ 1 + static_cast<unsigned>(data._frequencyEnvelope._changes.size()) + 1 }
 			, _asymmetryOffset{ _frequencyOffset + _frequencySize + 1 }
-			, _asymmetrySize{ 1 + static_cast<unsigned>(data._asymmetryEnvelope._changes.size()) }
+			, _asymmetrySize{ 1 + static_cast<unsigned>(data._asymmetryEnvelope._changes.size()) + 1 }
 			, _rectangularityOffset{ _asymmetryOffset + _asymmetrySize + 1 }
-			, _rectangularitySize{ 1 + static_cast<unsigned>(data._rectangularityEnvelope._changes.size()) }
+			, _rectangularitySize{ 1 + static_cast<unsigned>(data._rectangularityEnvelope._changes.size()) + 1 }
 			, _tremolo{ data._tremolo }
 			, _vibrato{ data._vibrato }
 			, _asymmetryOscillation{ data._asymmetryOscillation }
 			, _rectangularityOscillation{ data._rectangularityOscillation }
 		{
 			_pointBuffer.reserve(size_t{ _rectangularityOffset } + _rectangularitySize + 1);
-			addPoints<Transformation::None>(data._amplitudeEnvelope, samplingRate);
-			addPoints<Transformation::Exp2>(data._frequencyEnvelope, samplingRate);
-			addPoints<Transformation::None>(data._asymmetryEnvelope, samplingRate);
-			addPoints<Transformation::None>(data._rectangularityEnvelope, samplingRate);
+			addPoints<Transformation::None>(data._amplitudeEnvelope, _amplitudeSustainIndex, samplingRate);
+			addPoints<Transformation::Exp2>(data._frequencyEnvelope, _frequencySustainIndex, samplingRate);
+			addPoints<Transformation::None>(data._asymmetryEnvelope, _asymmetrySustainIndex, samplingRate);
+			addPoints<Transformation::None>(data._rectangularityEnvelope, _rectangularitySustainIndex, samplingRate);
 		}
 
 		[[nodiscard]] std::span<const SampledPoint> amplitudePoints() const noexcept { return { _pointBuffer.data(), _amplitudeSize }; }
+		[[nodiscard]] constexpr auto amplitudeSustainIndex() const noexcept { return _amplitudeSustainIndex; }
 		[[nodiscard]] constexpr auto& asymmetryOscillation() const noexcept { return _asymmetryOscillation; }
 		[[nodiscard]] std::span<const SampledPoint> asymmetryPoints() const noexcept { return { _pointBuffer.data() + _asymmetryOffset, _asymmetrySize }; }
+		[[nodiscard]] constexpr auto asymmetrySustainIndex() const noexcept { return _asymmetrySustainIndex; }
 		[[nodiscard]] std::span<const SampledPoint> frequencyPoints() const noexcept { return { _pointBuffer.data() + _frequencyOffset, _frequencySize }; }
+		[[nodiscard]] constexpr auto frequencySustainIndex() const noexcept { return _frequencySustainIndex; }
 		[[nodiscard]] constexpr auto& rectangularityOscillation() const noexcept { return _rectangularityOscillation; }
 		[[nodiscard]] std::span<const SampledPoint> rectangularityPoints() const noexcept { return { _pointBuffer.data() + _rectangularityOffset, _rectangularitySize }; }
+		[[nodiscard]] constexpr auto rectangularitySustainIndex() const noexcept { return _rectangularitySustainIndex; }
 		[[nodiscard]] constexpr auto shapeParameter() const noexcept { return _shapeParameter; }
 		[[nodiscard]] constexpr auto& tremolo() const noexcept { return _tremolo; }
 		[[nodiscard]] constexpr auto& vibrato() const noexcept { return _vibrato; }
 
 	private:
 		template <Transformation transformation>
-		void addPoints(const seir::synth::Envelope& envelope, unsigned samplingRate)
+		void addPoints(const seir::synth::Envelope& envelope, size_t& sustainIndex, unsigned samplingRate)
 		{
-			_pointBuffer.emplace_back(0u, transform<transformation>(0));
-			for (const auto& change : envelope._changes)
-				_pointBuffer.emplace_back(static_cast<unsigned>(change._duration.count() * samplingRate / 1000), transform<transformation>(change._value));
-			_pointBuffer.emplace_back(std::numeric_limits<unsigned>::max(), _pointBuffer.back()._value);
+			const auto insertSustainIndex = envelope._sustainIndex > 0 ? envelope._sustainIndex - 1 : envelope._changes.size();
+			auto value = transform<transformation>(0);
+			_pointBuffer.emplace_back(0u, value);
+			for (size_t i = 0; i < envelope._changes.size(); ++i)
+			{
+				value = transform<transformation>(envelope._changes[i]._value);
+				_pointBuffer.emplace_back(static_cast<unsigned>(envelope._changes[i]._duration.count() * samplingRate / 1000), value);
+				if (i == insertSustainIndex)
+					_pointBuffer.emplace_back(0u, value);
+			}
+			if (insertSustainIndex >= envelope._changes.size())
+				_pointBuffer.emplace_back(0u, value);
+			sustainIndex = insertSustainIndex + 1;
+			_pointBuffer.emplace_back(std::numeric_limits<unsigned>::max(), value);
 		}
 
 	private:
@@ -81,6 +95,10 @@ namespace seir::synth
 		const unsigned _rectangularityOffset;
 		const unsigned _rectangularitySize;
 		seir::RigidVector<SampledPoint> _pointBuffer;
+		size_t _amplitudeSustainIndex = 0;
+		size_t _frequencySustainIndex = 0;
+		size_t _asymmetrySustainIndex = 0;
+		size_t _rectangularitySustainIndex = 0;
 		Oscillation _tremolo;
 		Oscillation _vibrato;
 		Oscillation _asymmetryOscillation;
@@ -93,13 +111,13 @@ namespace seir::synth
 		WaveState(const WaveData& data, unsigned samplingRate) noexcept
 			: _samplingRate{ static_cast<float>(samplingRate) }
 			, _shapeParameter{ data.shapeParameter() }
-			, _amplitudeModulator{ data.amplitudePoints() }
+			, _amplitudeModulator{ data.amplitudePoints(), data.amplitudeSustainIndex() }
 			, _amplitudeOscillator{ data.tremolo()._frequency / _samplingRate, data.tremolo()._magnitude }
-			, _frequencyModulator{ data.frequencyPoints() }
+			, _frequencyModulator{ data.frequencyPoints(), data.frequencySustainIndex() }
 			, _frequencyOscillator{ data.vibrato()._frequency / _samplingRate, 1 - std::exp2(-data.vibrato()._magnitude) }
-			, _asymmetryModulator{ data.asymmetryPoints() }
+			, _asymmetryModulator{ data.asymmetryPoints(), data.asymmetrySustainIndex() }
 			, _asymmetryOscillator{ data.asymmetryOscillation()._frequency / _samplingRate, data.asymmetryOscillation()._magnitude }
-			, _rectangularityModulator{ data.rectangularityPoints() }
+			, _rectangularityModulator{ data.rectangularityPoints(), data.rectangularitySustainIndex() }
 			, _rectangularityOscillator{ data.rectangularityOscillation()._frequency / _samplingRate, data.rectangularityOscillation()._magnitude }
 		{
 		}
@@ -120,7 +138,7 @@ namespace seir::synth
 				if (_needRestart && _restartDelay <= 0)
 				{
 					_needRestart = false;
-					startWave(_restartFrequency, _restartAmplitude, static_cast<float>(-_restartDelay));
+					startWave(_restartFrequency, _restartAmplitude, _restartSustain, static_cast<float>(-_restartDelay));
 				}
 				else
 				{
@@ -141,7 +159,7 @@ namespace seir::synth
 			return _period.shaperData(_periodRectangularity, _shapeParameter);
 		}
 
-		void start(float frequency, float amplitude, int delay) noexcept
+		void start(float frequency, float amplitude, float sustain, int delay) noexcept
 		{
 			assert(frequency > 0);
 			assert(amplitude > 0);
@@ -149,14 +167,15 @@ namespace seir::synth
 			assert(!_needRestart); // TODO: Come up with a way to handle frequent wave restarts.
 			if (_period.stopped() && delay == 0)
 			{
-				startWave(frequency, amplitude, 0);
+				startWave(frequency, amplitude, sustain, 0);
 			}
 			else
 			{
 				_needRestart = true;
+				_restartDelay = delay;
 				_restartFrequency = frequency;
 				_restartAmplitude = amplitude;
-				_restartDelay = delay;
+				_restartSustain = sustain;
 			}
 		}
 
@@ -175,15 +194,15 @@ namespace seir::synth
 			return value + (1 - value) * adjustment;
 		}
 
-		void startWave(float frequency, float amplitude, float offsetSamples) noexcept
+		void startWave(float frequency, float amplitude, float sustainSamples, float offsetSamples) noexcept
 		{
 			assert(frequency > 0);
 			assert(amplitude > 0);
 			assert(offsetSamples >= 0);
-			_amplitudeModulator.start(offsetSamples);
-			_frequencyModulator.start(offsetSamples);
-			_asymmetryModulator.start(offsetSamples);
-			_rectangularityModulator.start(offsetSamples);
+			_amplitudeModulator.start(sustainSamples, offsetSamples);
+			_frequencyModulator.start(sustainSamples, offsetSamples);
+			_asymmetryModulator.start(sustainSamples, offsetSamples);
+			_rectangularityModulator.start(sustainSamples, offsetSamples);
 			_frequency = frequency;
 			_amplitude = amplitude;
 			_offset = offsetSamples;
@@ -223,5 +242,6 @@ namespace seir::synth
 		int _restartDelay = 0;
 		float _restartFrequency = 0;
 		float _restartAmplitude = 0;
+		float _restartSustain = 0;
 	};
 }

@@ -123,7 +123,7 @@ namespace seir::synth
 			return *result;
 		};
 
-		const auto tryReadUnsigned = [&](unsigned min, unsigned max) -> std::optional<unsigned> {
+		const auto tryReadUnsigned = [&](unsigned min, unsigned max, bool needSpace = true) -> std::optional<unsigned> {
 			if (*source < '0' || *source > '9')
 				return {};
 			const auto begin = source;
@@ -135,12 +135,13 @@ namespace seir::synth
 				throw CompositionError{ { line, begin - lineBase }, "Number expected" };
 			if (result < min || result > max)
 				throw CompositionError{ { line, begin - lineBase }, "Number is out of range" };
-			skipSpaces();
+			if (needSpace)
+				skipSpaces();
 			return result;
 		};
 
-		const auto readUnsigned = [&](unsigned min, unsigned max) {
-			const auto result = tryReadUnsigned(min, max);
+		const auto readUnsigned = [&](unsigned min, unsigned max, bool needSpace = true) {
+			const auto result = tryReadUnsigned(min, max, needSpace);
 			if (!result)
 				throw CompositionError{ location(), "Number expected" };
 			return *result;
@@ -217,8 +218,15 @@ namespace seir::synth
 			}
 			if (*source < '0' || *source > '8')
 				throw CompositionError{ location(), "Bad note" };
-			sequence.emplace_back(delay, static_cast<Note>(toUnsigned(*source - '0') * kNotesPerOctave + baseOffset));
+			const auto note = static_cast<Note>(toUnsigned(*source - '0') * kNotesPerOctave + baseOffset);
 			++source;
+			size_t sustain = 0;
+			if (*source == '+')
+			{
+				++source;
+				sustain = readUnsigned(0, kMaxSustain, false);
+			}
+			sequence.emplace_back(delay, note, sustain);
 		};
 
 		const auto parseSequence = [&](std::vector<Sound>& sequence) {
@@ -263,6 +271,14 @@ namespace seir::synth
 				envelope._changes.clear();
 				while (const auto duration = tryReadUnsigned(0, static_cast<unsigned>(EnvelopeChange::kMaxDuration.count())))
 					envelope._changes.emplace_back(std::chrono::milliseconds{ *duration }, readFloat(minValue, maxValue));
+				if (const auto option = tryReadIdentifier(); !option.empty())
+				{
+					if (option != "sustain")
+						throw CompositionError{ location(), "Bad envelope option" };
+					envelope._sustainIndex = readUnsigned(0, static_cast<unsigned>(envelope._changes.size()));
+				}
+				else
+					envelope._sustainIndex = 0;
 			};
 
 			const auto readOscillation = [&](Oscillation& oscillation) {

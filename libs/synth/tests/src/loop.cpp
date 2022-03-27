@@ -51,8 +51,8 @@ namespace
 		const auto& sequence = track->_sequences.emplace_back(std::make_shared<seir::synth::SequenceData>());
 		if (notes == Notes::Yes)
 		{
-			sequence->_sounds.emplace_back(0u, kTestNote);
-			sequence->_sounds.emplace_back(1u, kTestNote);
+			sequence->_sounds.emplace_back(0u, kTestNote, 0u);
+			sequence->_sounds.emplace_back(1u, kTestNote, 0u);
 		}
 		track->_fragments.emplace(0u, sequence);
 		if (loop == Loop::Yes)

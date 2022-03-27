@@ -51,9 +51,10 @@ namespace
 	{
 		size_t _offset;
 		seir::synth::Note _note;
+		size_t _sustain;
 
-		constexpr AbsoluteSound(size_t offset, seir::synth::Note note) noexcept
-			: _offset{ offset }, _note{ note } {}
+		constexpr AbsoluteSound(size_t offset, seir::synth::Note note, size_t sustain) noexcept
+			: _offset{ offset }, _note{ note }, _sustain{ sustain } {}
 	};
 
 	struct TrackRenderer
@@ -127,7 +128,7 @@ namespace
 							}
 							break;
 						}
-						i->_voice->start(seir::synth::kNoteFrequencies[i->_note], _gain, _acoustics.stereoDelay(i->_note));
+						i->_voice->start(seir::synth::kNoteFrequencies[i->_note], _gain, sound._sustain * _stepFrames, _acoustics.stereoDelay(i->_note));
 					});
 					_nextSound = chordEnd;
 					if (_nextSound != _sounds.cend())
@@ -244,7 +245,7 @@ namespace
 				const auto chordEnd = std::find_if(std::next(i), sounds.cend(), [i](const AbsoluteSound& sound) { return sound._offset != i->_offset; });
 				do
 				{
-					_sounds.emplace_back(delay, i->_note, static_cast<uint8_t>(chordEnd - i));
+					_sounds.emplace_back(delay, i->_note, static_cast<uint8_t>(chordEnd - i), static_cast<uint8_t>(i->_sustain));
 					delay = 0;
 				} while (++i != chordEnd);
 			}
@@ -283,9 +284,10 @@ namespace
 			uint16_t _delaySteps;
 			seir::synth::Note _note;
 			uint8_t _chordLength;
+			uint8_t _sustain;
 
-			constexpr TrackSound(uint16_t delaySteps, seir::synth::Note note, uint8_t chordLength) noexcept
-				: _delaySteps{ delaySteps }, _note{ note }, _chordLength{ chordLength } {}
+			constexpr TrackSound(uint16_t delaySteps, seir::synth::Note note, uint8_t chordLength, uint8_t sustain) noexcept
+				: _delaySteps{ delaySteps }, _note{ note }, _chordLength{ chordLength }, _sustain{ sustain } {}
 		};
 
 		const seir::synth::AudioFormat _format;
@@ -339,7 +341,7 @@ namespace
 							soundStep += sound._delay;
 							if (soundStep > maxSoundStep)
 								break;
-							sounds.emplace_back(soundStep, sound._note);
+							sounds.emplace_back(soundStep, sound._note, sound._sustain);
 						}
 					}
 					if (!sounds.empty())

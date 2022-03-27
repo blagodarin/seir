@@ -28,13 +28,16 @@ namespace seir::synth
 		// clang-format on
 	};
 
+	static constexpr size_t kMaxSustain = 255;
+
 	struct Sound
 	{
 		size_t _delay = 0; // Offset from the previous sound in a sequence.
 		Note _note = Note::C0;
+		size_t _sustain = 0;
 
-		constexpr Sound(size_t delay, Note note) noexcept
-			: _delay{ delay }, _note{ note } {}
+		constexpr Sound(size_t delay, Note note, size_t sustain) noexcept
+			: _delay{ delay }, _note{ note }, _sustain{ sustain } {}
 	};
 
 	// Shape types.
@@ -62,6 +65,7 @@ namespace seir::synth
 	struct Envelope
 	{
 		std::vector<EnvelopeChange> _changes; // List of consecutive value changes.
+		size_t _sustainIndex = 0;
 	};
 
 	struct Oscillation

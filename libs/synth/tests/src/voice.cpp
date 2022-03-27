@@ -24,7 +24,7 @@ namespace
 			: _waveData{ data, kTestSamplingRate }
 			, _voice{ _waveData, kTestSamplingRate }
 		{
-			_voice.start(kTestNoteFrequency, amplitude, 0);
+			_voice.start(kTestNoteFrequency, amplitude, 0, 0);
 		}
 
 		auto render()
@@ -45,7 +45,7 @@ namespace
 			: _waveData{ data, kTestSamplingRate }
 			, _voice{ _waveData, kTestSamplingRate }
 		{
-			_voice.start(kTestNoteFrequency, amplitude, 0);
+			_voice.start(kTestNoteFrequency, amplitude, 0, 0);
 		}
 
 		auto render()

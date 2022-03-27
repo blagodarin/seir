@@ -19,7 +19,7 @@ namespace seir::synth
 		virtual ~Voice() noexcept = default;
 
 		virtual unsigned render(float* buffer, unsigned maxFrames) noexcept = 0;
-		virtual void start(float frequency, float amplitude, int delay) noexcept = 0;
+		virtual void start(float frequency, float amplitude, size_t sustain, int delay) noexcept = 0;
 		virtual void stop() noexcept = 0;
 	};
 
@@ -53,9 +53,9 @@ namespace seir::synth
 			return maxFrames - remainingFrames;
 		}
 
-		void start(float frequency, float amplitude, int) noexcept override
+		void start(float frequency, float amplitude, size_t sustain, int) noexcept override
 		{
-			_wave.start(frequency, amplitude, 0);
+			_wave.start(frequency, amplitude, static_cast<float>(sustain), 0);
 		}
 
 		void stop() noexcept override
@@ -102,10 +102,11 @@ namespace seir::synth
 			return maxFrames - remainingFrames;
 		}
 
-		void start(float frequency, float amplitude, int delay) noexcept override
+		void start(float frequency, float amplitude, size_t sustain, int delay) noexcept override
 		{
-			_leftWave.start(frequency, amplitude, std::max(delay, 0));
-			_rightWave.start(frequency, amplitude, std::max(-delay, 0));
+			const auto sustainSamples = static_cast<float>(sustain);
+			_leftWave.start(frequency, amplitude, sustainSamples, std::max(delay, 0));
+			_rightWave.start(frequency, amplitude, sustainSamples, std::max(-delay, 0));
 		}
 
 		void stop() noexcept override

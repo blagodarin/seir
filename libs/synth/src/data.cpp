@@ -42,7 +42,7 @@ namespace seir::synth
 	CompositionData::CompositionData(const std::shared_ptr<VoiceData>& voice, Note note)
 	{
 		const auto sequence = std::make_shared<SequenceData>();
-		sequence->_sounds.emplace_back(0u, note);
+		sequence->_sounds.emplace_back(0u, note, 0u);
 		const auto track = std::make_shared<TrackData>(std::make_shared<TrackProperties>());
 		track->_sequences.emplace_back(sequence);
 		track->_fragments.emplace(0u, sequence);
@@ -125,6 +125,8 @@ namespace seir::synth
 				text += name;
 				for (const auto& change : envelope._changes)
 					text += ' ' + std::to_string(change._duration.count()) + ' ' + floatToString(change._value);
+				if (envelope._sustainIndex > 0)
+					text += " sustain " + std::to_string(envelope._sustainIndex);
 			};
 
 			const auto saveOscillation = [&text, &floatToString](std::string_view name, const Oscillation& oscillation) {
@@ -211,6 +213,8 @@ namespace seir::synth
 						case 11: text += "B"; break;
 						}
 						text += std::to_string(note / kNotesPerOctave);
+						if (sound._sustain > 0)
+							text += '+' + std::to_string(sound._sustain);
 					}
 				}
 			}

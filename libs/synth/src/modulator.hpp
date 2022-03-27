@@ -21,8 +21,9 @@ namespace seir::synth
 	class Modulator
 	{
 	public:
-		explicit constexpr Modulator(std::span<const SampledPoint> points) noexcept
+		explicit constexpr Modulator(std::span<const SampledPoint> points, size_t sustainIndex) noexcept
 			: _points{ points.data() }
+			, _sustainNextIndex{ sustainIndex + 1 }
 			, _size{ static_cast<unsigned>(points.size()) }
 		{
 			assert(_size >= 1);
@@ -35,11 +36,12 @@ namespace seir::synth
 			for (; _nextIndex < _size; ++_nextIndex)
 			{
 				const auto& nextPoint = _points[_nextIndex];
-				const auto remainingDelay = nextPoint._delaySamples - _offsetSamples;
+				const auto nextPointDelay = _nextIndex == _sustainNextIndex ? _sustainSamples : nextPoint._delaySamples;
+				const auto remainingDelay = nextPointDelay - _offsetSamples;
 				if (remainingDelay > samples)
 				{
 					_offsetSamples += samples;
-					_currentValue = _lastPointValue + (nextPoint._value - _lastPointValue) * _offsetSamples / nextPoint._delaySamples;
+					_currentValue = _lastPointValue + (nextPoint._value - _lastPointValue) * _offsetSamples / nextPointDelay;
 					break;
 				}
 				samples -= remainingDelay;
@@ -62,11 +64,13 @@ namespace seir::synth
 			return _points[_nextIndex]._delaySamples - _offsetSamples;
 		}
 
-		void start(float offsetSamples) noexcept
+		void start(float sustainSamples, float offsetSamples) noexcept
 		{
+			assert(sustainSamples >= 0);
 			assert(offsetSamples >= 0);
 			_nextIndex = 1;
 			_lastPointValue = _points->_value;
+			_sustainSamples = sustainSamples;
 			for (;;)
 			{
 				if (_nextIndex == _size)
@@ -76,13 +80,14 @@ namespace seir::synth
 					break;
 				}
 				const auto& nextPoint = _points[_nextIndex];
-				if (nextPoint._delaySamples > offsetSamples)
+				const auto nextPointDelay = _nextIndex == _sustainNextIndex ? _sustainSamples : nextPoint._delaySamples;
+				if (nextPointDelay > offsetSamples)
 				{
 					_offsetSamples = offsetSamples;
-					_currentValue = _lastPointValue + (nextPoint._value - _lastPointValue) * _offsetSamples / nextPoint._delaySamples;
+					_currentValue = _lastPointValue + (nextPoint._value - _lastPointValue) * _offsetSamples / nextPointDelay;
 					break;
 				}
-				offsetSamples -= nextPoint._delaySamples;
+				offsetSamples -= nextPointDelay;
 				_lastPointValue = nextPoint._value;
 				++_nextIndex;
 			}
@@ -103,9 +108,11 @@ namespace seir::synth
 
 	private:
 		const SampledPoint* const _points;
+		const size_t _sustainNextIndex;
 		const unsigned _size;
 		unsigned _nextIndex = _size;
 		float _lastPointValue = _points[_size]._value;
+		float _sustainSamples = 0;
 		float _offsetSamples = 0;
 		float _currentValue = _lastPointValue;
 	};
