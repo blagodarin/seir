@@ -20,12 +20,12 @@ namespace
 		const auto precision = std::ldexp(range, -precisionBits);
 		constexpr auto minFrequency = seir::synth::kNoteFrequencies[seir::synth::Note::C0] / 2; // Lowest note at lowest frequency modulation.
 		constexpr auto deltaX = seir::synth::Renderer::kMaxSamplingRate / minFrequency;         // Asymmetric wave of minimum frequency at highest supported sampling rate.
-		Shaper shaper{ { amplitude, -range, deltaX, shapeParameter } };
+		Shaper shaper{ { amplitude, -range, deltaX, 0, shapeParameter } };
 		for (float i = 0; i < deltaX; ++i)
 		{
 			INFO("X = " << i << " / " << deltaX);
-			const auto expected = Shaper::template value<double>(amplitude, -range, deltaX, shapeParameter, i);
-			const auto initialValue = Shaper{ { amplitude, -range, deltaX, shapeParameter, i } }.advance();
+			const auto expected = Shaper::template value<double>(amplitude, -range, deltaX, i, shapeParameter);
+			const auto initialValue = Shaper{ { amplitude, -range, deltaX, i, shapeParameter } }.advance();
 			CHECK(std::abs(initialValue) <= amplitude);
 			CHECK(initialValue == doctest::Approx{ expected }.epsilon(precision));
 			const auto advancedValue = shaper.advance();

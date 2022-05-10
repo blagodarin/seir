@@ -63,8 +63,8 @@ namespace seir::synth
 				_rightAmplitude - deltaY,
 				deltaY,
 				_currentLength,
-				shapeParameter,
 				_currentLength - _currentRemaining,
+				shapeParameter,
 			};
 		}
 

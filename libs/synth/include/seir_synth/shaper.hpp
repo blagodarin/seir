@@ -20,8 +20,8 @@ namespace seir::synth
 		float _firstY = 0;
 		float _deltaY = 0;
 		float _deltaX = 1;
-		float _shape = 0;
 		float _offsetX = 0;
+		float _shape = 0;
 	};
 
 	// C1 = deltaY / deltaX
@@ -44,7 +44,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float, Float offsetX) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * normalizedX;
@@ -84,7 +84,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float shape, Float offsetX) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -129,7 +129,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float shape, Float offsetX) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * (offsetX < deltaX / 2 ? (shape + 2 * (1 - shape) * normalizedX) * normalizedX : (shape - 1) * (1 + 2 * normalizedX * normalizedX) + (4 - 3 * shape) * normalizedX);
@@ -177,7 +177,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float shape, Float offsetX) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -231,7 +231,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float shape, Float offsetX) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -274,7 +274,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float, Float offsetX) noexcept
+		static std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * (1 - std::cos(std::numbers::pi_v<Float> * normalizedX)) / 2;
