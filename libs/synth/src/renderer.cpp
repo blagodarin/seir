@@ -28,6 +28,7 @@ namespace
 			{
 			case seir::synth::WaveShape::Linear: return std::make_unique<seir::synth::MonoVoice<seir::synth::LinearShaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Quadratic: return std::make_unique<seir::synth::MonoVoice<seir::synth::QuadraticShaper>>(waveData, format.samplingRate());
+			case seir::synth::WaveShape::Quadratic2: return std::make_unique<seir::synth::MonoVoice<seir::synth::Quadratic2Shaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Cubic: return std::make_unique<seir::synth::MonoVoice<seir::synth::CubicShaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Quintic: return std::make_unique<seir::synth::MonoVoice<seir::synth::QuinticShaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Cosine: return std::make_unique<seir::synth::MonoVoice<seir::synth::CosineShaper>>(waveData, format.samplingRate());
@@ -38,6 +39,7 @@ namespace
 			{
 			case seir::synth::WaveShape::Linear: return std::make_unique<seir::synth::StereoVoice<seir::synth::LinearShaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Quadratic: return std::make_unique<seir::synth::StereoVoice<seir::synth::QuadraticShaper>>(waveData, format.samplingRate());
+			case seir::synth::WaveShape::Quadratic2: return std::make_unique<seir::synth::StereoVoice<seir::synth::Quadratic2Shaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Cubic: return std::make_unique<seir::synth::StereoVoice<seir::synth::CubicShaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Quintic: return std::make_unique<seir::synth::StereoVoice<seir::synth::QuinticShaper>>(waveData, format.samplingRate());
 			case seir::synth::WaveShape::Cosine: return std::make_unique<seir::synth::StereoVoice<seir::synth::CosineShaper>>(waveData, format.samplingRate());

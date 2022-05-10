@@ -414,6 +414,12 @@ namespace seir::synth
 					minShape = QuadraticShaper::kMinShape;
 					maxShape = QuadraticShaper::kMaxShape;
 				}
+				else if (type == "quadratic2")
+				{
+					currentVoice->_waveShape = WaveShape::Quadratic2;
+					minShape = Quadratic2Shaper::kMinShape;
+					maxShape = Quadratic2Shaper::kMaxShape;
+				}
 				else if (type == "cubic")
 				{
 					currentVoice->_waveShape = WaveShape::Cubic;

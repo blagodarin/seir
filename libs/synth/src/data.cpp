@@ -157,6 +157,7 @@ namespace seir::synth
 			{
 			case WaveShape::Linear: text += "linear"; break;
 			case WaveShape::Quadratic: text += "quadratic " + floatToString(part._voice._waveShapeParameter); break;
+			case WaveShape::Quadratic2: text += "quadratic2 " + floatToString(part._voice._waveShapeParameter); break;
 			case WaveShape::Cubic: text += "cubic " + floatToString(part._voice._waveShapeParameter); break;
 			case WaveShape::Quintic: text += "quintic " + floatToString(part._voice._waveShapeParameter); break;
 			case WaveShape::Cosine: text += "cosine"; break;

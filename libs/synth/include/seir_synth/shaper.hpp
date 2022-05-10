@@ -58,9 +58,50 @@ namespace seir::synth
 	};
 
 	// Y'(0) = shape * deltaY / deltaX
+	class QuadraticShaper
+	{
+	public:
+		// The shape parameter defines the curve shape as follows:
+		//  * [0, 1] - the function is monotonic and gradually transforms from quadratic with zero derivative at the left end to linear;
+		//  * (1, 2] - the function is monotonic and gradually transforms from linear to quadratic with zero derivative at the right end.
+		static constexpr float kMinShape = 0.f;
+		static constexpr float kMaxShape = 2.f;
+
+		explicit constexpr QuadraticShaper(const ShaperData& data) noexcept
+			: _c0{ data._firstY }
+			, _c1{ data._shape * data._deltaY / data._deltaX }
+			, _c2{ (data._shape - 1) * data._deltaY / (data._deltaX * data._deltaX) }
+			, _nextX{ data._offsetX }
+		{
+			assert(data._shape >= kMinShape && data._shape <= kMaxShape);
+		}
+
+		constexpr auto advance() noexcept
+		{
+			const auto result = _c0 + (_c1 - _c2 * _nextX) * _nextX;
+			_nextX += 1;
+			return result;
+		}
+
+		template <typename Float>
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float shape, Float offsetX) noexcept
+		{
+			assert(shape >= kMinShape && shape <= kMaxShape);
+			const auto normalizedX = offsetX / deltaX;
+			return firstY + deltaY * (shape - (shape - 1) * normalizedX) * normalizedX;
+		}
+
+	private:
+		const float _c0;
+		const float _c1;
+		const float _c2;
+		float _nextX;
+	};
+
+	// Y'(0) = shape * deltaY / deltaX
 	// Y(deltaX / 2) = firstY + deltaY / 2
 	// Y'(deltaX) = shape * deltaY / deltaX
-	class QuadraticShaper
+	class Quadratic2Shaper
 	{
 	public:
 		// The shape parameter defines the curve shape as follows:
@@ -70,7 +111,7 @@ namespace seir::synth
 		static constexpr float kMinShape = 0.f;
 		static constexpr float kMaxShape = 6.82f;
 
-		explicit constexpr QuadraticShaper(const ShaperData& data) noexcept
+		explicit constexpr Quadratic2Shaper(const ShaperData& data) noexcept
 			: _quadratic{ (1 - data._shape) * data._deltaY / 2 }
 			, _linear0{ data._firstY - _quadratic }
 			, _linear1{ data._deltaY / 2 + _quadratic }
