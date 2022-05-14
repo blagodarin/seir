@@ -21,12 +21,14 @@ namespace seir::synth
 		float _deltaY = 0;
 		float _deltaX = 1;
 		float _offsetX = 0;
-		float _shape = 0;
+		float _shape1 = 0;
+		float _shape2 = 0;
 	};
 
-	// C1 = deltaY / deltaX
-	// Y(X) = firstY + C1 * X
-	// Y(X + 1) = Y(X) + C1
+	// Calculations:
+	//   C1 = deltaY / deltaX
+	//   Y(X) = firstY + C1 * X
+	//   Y(X + 1) = Y(X) + C1
 	class LinearShaper
 	{
 	public:
@@ -44,7 +46,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * normalizedX;
@@ -57,7 +59,8 @@ namespace seir::synth
 		double _nextY;
 	};
 
-	// Y'(0) = shape * deltaY / deltaX
+	// Definitions:
+	//   Y'(0) = shape * deltaY / deltaX
 	class QuadraticShaper
 	{
 	public:
@@ -69,11 +72,11 @@ namespace seir::synth
 
 		explicit constexpr QuadraticShaper(const ShaperData& data) noexcept
 			: _c0{ data._firstY }
-			, _c1{ data._shape * data._deltaY / data._deltaX }
-			, _c2{ (data._shape - 1) * data._deltaY / (data._deltaX * data._deltaX) }
+			, _c1{ data._shape1 * data._deltaY / data._deltaX }
+			, _c2{ (data._shape1 - 1) * data._deltaY / (data._deltaX * data._deltaX) }
 			, _nextX{ data._offsetX }
 		{
-			assert(data._shape >= kMinShape && data._shape <= kMaxShape);
+			assert(data._shape1 >= kMinShape && data._shape1 <= kMaxShape);
 		}
 
 		constexpr auto advance() noexcept
@@ -84,7 +87,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -98,9 +101,10 @@ namespace seir::synth
 		float _nextX;
 	};
 
-	// Y'(0) = shape * deltaY / deltaX
-	// Y(deltaX / 2) = firstY + deltaY / 2
-	// Y'(deltaX) = shape * deltaY / deltaX
+	// Definitions:
+	//   Y'(0) = shape * deltaY / deltaX
+	//   Y(deltaX / 2) = firstY + deltaY / 2
+	//   Y'(deltaX) = shape * deltaY / deltaX
 	class Quadratic2Shaper
 	{
 	public:
@@ -112,7 +116,7 @@ namespace seir::synth
 		static constexpr float kMaxShape = 6.82f;
 
 		explicit constexpr Quadratic2Shaper(const ShaperData& data) noexcept
-			: _quadratic{ (1 - data._shape) * data._deltaY / 2 }
+			: _quadratic{ (1 - data._shape1) * data._deltaY / 2 }
 			, _linear0{ data._firstY - _quadratic }
 			, _linear1{ data._deltaY / 2 + _quadratic }
 			, _halfDeltaX{ data._deltaX / 2 }
@@ -129,7 +133,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * (offsetX < deltaX / 2 ? (shape + 2 * (1 - shape) * normalizedX) * normalizedX : (shape - 1) * (1 + 2 * normalizedX * normalizedX) + (4 - 3 * shape) * normalizedX);
@@ -143,12 +147,14 @@ namespace seir::synth
 		float _nextX;
 	};
 
-	// C1 = S1 * deltaY / deltaX
-	// C2 = (2 * S1 + S2 - 3) * deltaY / deltaX^2
-	// C3 = (S1 + S2 - 1) * deltaY / deltaX^3
-	// Y(X) = firstY + (C1 - (C2 - C3 * X) * X) * X
-	// Y'(0) = S1 * deltaY / deltaX
-	// Y'(deltaX) = S2 * deltaY / deltaX
+	// Definitions:
+	//   Y'(0) = S * deltaY / deltaX
+	//   Y'(deltaX) = S * deltaY / deltaX
+	// Calculations:
+	//   C1 = S * deltaY / deltaX
+	//   C2 = 3 * (S - 1) * deltaY / deltaX^2
+	//   C3 = 2 * (S - 1) * deltaY / deltaX^3
+	//   Y(X) = firstY + (C1 - (C2 - C3 * X) * X) * X
 	class CubicShaper
 	{
 	public:
@@ -161,12 +167,12 @@ namespace seir::synth
 
 		explicit constexpr CubicShaper(const ShaperData& data) noexcept
 			: _c0{ data._firstY }
-			, _c1{ data._shape /*1*/ * data._deltaY / data._deltaX }
-			, _c2{ (2 * data._shape /*1*/ + data._shape /*2*/ - 3) * data._deltaY / (data._deltaX * data._deltaX) }
-			, _c3{ (data._shape /*1*/ + data._shape /*2*/ - 2) * data._deltaY / (data._deltaX * data._deltaX * data._deltaX) }
+			, _c1{ data._shape1 * data._deltaY / data._deltaX }
+			, _c2{ 3 * (data._shape1 - 1) * data._deltaY / (data._deltaX * data._deltaX) }
+			, _c3{ 2 * (data._shape1 - 1) * data._deltaY / (data._deltaX * data._deltaX * data._deltaX) }
 			, _nextX{ data._offsetX }
 		{
-			assert(data._shape >= kMinShape && data._shape <= kMaxShape);
+			assert(data._shape1 >= kMinShape && data._shape1 <= kMaxShape);
 		}
 
 		constexpr auto advance() noexcept
@@ -177,11 +183,11 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
-			return firstY + deltaY * (shape /*1*/ - ((2 * shape /*1*/ + shape /*2*/ - 3) - (shape /*1*/ + shape /*2*/ - 2) * normalizedX) * normalizedX) * normalizedX;
+			return firstY + deltaY * (shape - (shape - 1) * (3 - 2 * normalizedX) * normalizedX) * normalizedX;
 		}
 
 	private:
@@ -192,13 +198,66 @@ namespace seir::synth
 		float _nextX;
 	};
 
-	// C2 = (15 + 8 * shape) * deltaY / deltaX^2
-	// C3 = (50 + 32 * shape) * deltaY / deltaX^3
-	// C4 = (60 + 40 * shape) * deltaY / deltaX^4
-	// C5 = (24 + 16 * shape) * deltaY / deltaX^5
-	// Y(X) = firstY + (C2 - (C3 - (C4 - C5 * X) * X) * X) * X^2
-	// Y(deltaX / 2) = firstY + deltaY / 2
-	// Y'(deltaX / 2) = -shape * deltaY / deltaX
+	// Definitions:
+	//   Y'(0) = S1 * deltaY / deltaX
+	//   Y'(deltaX) = S2 * deltaY / deltaX
+	// Calculations:
+	//   C1 = S1 * deltaY / deltaX
+	//   C2 = (2 * S1 + S2 - 3) * deltaY / deltaX^2
+	//   C3 = (S1 + S2 - 2) * deltaY / deltaX^3
+	//   Y(X) = firstY + (C1 - (C2 - C3 * X) * X) * X
+	class Cubic2Shaper
+	{
+	public:
+		static constexpr float kMinShape = CubicShaper::kMinShape;
+		static constexpr float kMaxShape = CubicShaper::kMaxShape;
+
+		explicit constexpr Cubic2Shaper(const ShaperData& data) noexcept
+			: _c0{ data._firstY }
+			, _c1{ data._shape1 * data._deltaY / data._deltaX }
+			, _c2{ (2 * data._shape1 + data._shape2 - 3) * data._deltaY / (data._deltaX * data._deltaX) }
+			, _c3{ (data._shape1 + data._shape2 - 2) * data._deltaY / (data._deltaX * data._deltaX * data._deltaX) }
+			, _nextX{ data._offsetX }
+		{
+			assert(data._shape1 >= kMinShape && data._shape1 <= kMaxShape);
+			assert(data._shape2 >= kMinShape && data._shape2 <= kMaxShape);
+		}
+
+		constexpr auto advance() noexcept
+		{
+			const auto result = _c0 + (_c1 - (_c2 - _c3 * _nextX) * _nextX) * _nextX;
+			_nextX += 1;
+			return result;
+		}
+
+		template <typename Float>
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape1, Float shape2) noexcept
+		{
+			assert(shape1 >= kMinShape && shape1 <= kMaxShape);
+			assert(shape2 >= kMinShape && shape2 <= kMaxShape);
+			const auto normalizedX = offsetX / deltaX;
+			return firstY + deltaY * (shape1 - ((2 * shape1 + shape2 - 3) - (shape1 + shape2 - 2) * normalizedX) * normalizedX) * normalizedX;
+		}
+
+	private:
+		const float _c0;
+		const float _c1;
+		const float _c2;
+		const float _c3;
+		float _nextX;
+	};
+
+	// Definitions:
+	//   Y'(0) = 0
+	//   Y(deltaX / 2) = firstY + deltaY / 2
+	//   Y'(deltaX / 2) = -shape * deltaY / deltaX
+	//   Y'(deltaX) = 0
+	// Calculations:
+	//   C2 = (15 + 8 * shape) * deltaY / deltaX^2
+	//   C3 = (50 + 32 * shape) * deltaY / deltaX^3
+	//   C4 = (60 + 40 * shape) * deltaY / deltaX^4
+	//   C5 = (24 + 16 * shape) * deltaY / deltaX^5
+	//   Y(X) = firstY + (C2 - (C3 - (C4 - C5 * X) * X) * X) * X^2
 	class QuinticShaper
 	{
 	public:
@@ -210,14 +269,14 @@ namespace seir::synth
 
 		explicit constexpr QuinticShaper(const ShaperData& data) noexcept
 			: _c0{ data._firstY }
-			, _c2{ (15 + 8 * data._shape) * data._deltaY }
-			, _c3{ (50 + 32 * data._shape) * data._deltaY }
-			, _c4{ (60 + 40 * data._shape) * data._deltaY }
-			, _c5{ (24 + 16 * data._shape) * data._deltaY }
+			, _c2{ (15 + 8 * data._shape1) * data._deltaY }
+			, _c3{ (50 + 32 * data._shape1) * data._deltaY }
+			, _c4{ (60 + 40 * data._shape1) * data._deltaY }
+			, _c5{ (24 + 16 * data._shape1) * data._deltaY }
 			, _deltaX{ data._deltaX }
 			, _nextX{ data._offsetX }
 		{
-			assert(data._shape >= kMinShape && data._shape <= kMaxShape);
+			assert(data._shape1 >= kMinShape && data._shape1 <= kMaxShape);
 		}
 
 		constexpr float advance() noexcept
@@ -231,7 +290,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape) noexcept
+		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -248,9 +307,10 @@ namespace seir::synth
 		float _nextX;
 	};
 
-	// C(X) = deltaY * cos(pi * X / deltaX) / 2
-	// Y(X) = firstY + deltaY / 2 - C(X)
-	// C(X + 1) = 2 * cos(pi / deltaX) * C(X) - C(X - 1)
+	// Calculations:
+	//   C(X) = deltaY * cos(pi * X / deltaX) / 2
+	//   C(X + 1) = 2 * cos(pi / deltaX) * C(X) - C(X - 1)
+	//   Y(X) = firstY + deltaY / 2 - C(X)
 	class CosineShaper
 	{
 	public:
@@ -274,7 +334,7 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float) noexcept
+		static std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * (1 - std::cos(std::numbers::pi_v<Float> * normalizedX)) / 2;

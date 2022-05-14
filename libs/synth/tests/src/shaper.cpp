@@ -12,20 +12,20 @@
 namespace
 {
 	template <typename Shaper>
-	void checkShaper(int precisionBits, float shapeParameter)
+	void checkShaper(int precisionBits, float shape1 = 0, float shape2 = 0)
 	{
-		INFO("Shape = " << shapeParameter << ", Precision = " << precisionBits);
+		INFO("Shape = " << shape1 << " / " << shape2 << ", Precision = " << precisionBits);
 		constexpr auto amplitude = 1.f;
 		constexpr auto range = 2 * amplitude;
 		const auto precision = std::ldexp(range, -precisionBits);
 		constexpr auto minFrequency = seir::synth::kNoteFrequencies[seir::synth::Note::C0] / 2; // Lowest note at lowest frequency modulation.
 		constexpr auto deltaX = seir::synth::Renderer::kMaxSamplingRate / minFrequency;         // Asymmetric wave of minimum frequency at highest supported sampling rate.
-		Shaper shaper{ { amplitude, -range, deltaX, 0, shapeParameter } };
+		Shaper shaper{ { amplitude, -range, deltaX, 0, shape1, shape2 } };
 		for (float i = 0; i < deltaX; ++i)
 		{
 			INFO("X = " << i << " / " << deltaX);
-			const auto expected = Shaper::template value<double>(amplitude, -range, deltaX, i, shapeParameter);
-			const auto initialValue = Shaper{ { amplitude, -range, deltaX, i, shapeParameter } }.advance();
+			const auto expected = Shaper::template value<double>(amplitude, -range, deltaX, i, shape1, shape2);
+			const auto initialValue = Shaper{ { amplitude, -range, deltaX, i, shape1, shape2 } }.advance();
 			CHECK(std::abs(initialValue) <= amplitude);
 			CHECK(initialValue == doctest::Approx{ expected }.epsilon(precision));
 			const auto advancedValue = shaper.advance();
@@ -37,7 +37,7 @@ namespace
 
 TEST_CASE("shaper_cosine")
 {
-	::checkShaper<seir::synth::CosineShaper>(23, {});
+	::checkShaper<seir::synth::CosineShaper>(23);
 }
 
 TEST_CASE("shaper_cubic")
@@ -52,9 +52,14 @@ TEST_CASE("shaper_cubic")
 	::checkShaper<seir::synth::CubicShaper>(20, 8.98f);
 }
 
+TEST_CASE("shaper_cubic2")
+{
+	::checkShaper<seir::synth::Cubic2Shaper>(23, 0.f, 0.f);
+}
+
 TEST_CASE("shaper_linear")
 {
-	::checkShaper<seir::synth::LinearShaper>(23, {});
+	::checkShaper<seir::synth::LinearShaper>(23);
 }
 
 TEST_CASE("shaper_quadratic")

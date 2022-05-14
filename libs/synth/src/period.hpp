@@ -54,7 +54,7 @@ namespace seir::synth
 			return _currentRemaining;
 		}
 
-		[[nodiscard]] constexpr ShaperData shaperData(float oscillation, float shapeParameter) const noexcept
+		[[nodiscard]] constexpr ShaperData shaperData(float oscillation, float shape1, float shape2) const noexcept
 		{
 			assert(oscillation >= 0 && oscillation <= 1);
 			assert(_currentLength > 0); // Otherwise the shaper will produce garbage.
@@ -64,7 +64,8 @@ namespace seir::synth
 				deltaY,
 				_currentLength,
 				_currentLength - _currentRemaining,
-				shapeParameter,
+				shape1,
+				shape2,
 			};
 		}
 

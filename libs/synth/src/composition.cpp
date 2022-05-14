@@ -426,6 +426,12 @@ namespace seir::synth
 					minShape = CubicShaper::kMinShape;
 					maxShape = CubicShaper::kMaxShape;
 				}
+				else if (type == "cubic2")
+				{
+					currentVoice->_waveShape = WaveShape::Cubic2;
+					minShape = Cubic2Shaper::kMinShape;
+					maxShape = Cubic2Shaper::kMaxShape;
+				}
 				else if (type == "quintic")
 				{
 					currentVoice->_waveShape = WaveShape::Quintic;
@@ -436,10 +442,16 @@ namespace seir::synth
 					currentVoice->_waveShape = WaveShape::Cosine;
 				else
 					throw CompositionError{ location(), "Bad voice wave type" };
-				if (const auto parameter = tryReadFloat(minShape, maxShape); parameter)
-					currentVoice->_waveShapeParameter = *parameter;
+				if (const auto parameter1 = tryReadFloat(minShape, maxShape); parameter1)
+				{
+					currentVoice->_waveShapeParameters._shape1 = *parameter1;
+					if (const auto parameter2 = tryReadFloat(minShape, maxShape); parameter2)
+						currentVoice->_waveShapeParameters._shape2 = *parameter2;
+					else
+						currentVoice->_waveShapeParameters._shape2 = 0;
+				}
 				else
-					currentVoice->_waveShapeParameter = 0;
+					currentVoice->_waveShapeParameters = {};
 			}
 			else if (command == "weight")
 			{

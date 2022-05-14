@@ -156,10 +156,11 @@ namespace seir::synth
 			switch (part._voice._waveShape)
 			{
 			case WaveShape::Linear: text += "linear"; break;
-			case WaveShape::Quadratic: text += "quadratic " + floatToString(part._voice._waveShapeParameter); break;
-			case WaveShape::Quadratic2: text += "quadratic2 " + floatToString(part._voice._waveShapeParameter); break;
-			case WaveShape::Cubic: text += "cubic " + floatToString(part._voice._waveShapeParameter); break;
-			case WaveShape::Quintic: text += "quintic " + floatToString(part._voice._waveShapeParameter); break;
+			case WaveShape::Quadratic: text += "quadratic " + floatToString(part._voice._waveShapeParameters._shape1); break;
+			case WaveShape::Quadratic2: text += "quadratic2 " + floatToString(part._voice._waveShapeParameters._shape1); break;
+			case WaveShape::Cubic: text += "cubic " + floatToString(part._voice._waveShapeParameters._shape1); break;
+			case WaveShape::Cubic2: text += "cubic2 " + floatToString(part._voice._waveShapeParameters._shape1) + floatToString(part._voice._waveShapeParameters._shape2); break;
+			case WaveShape::Quintic: text += "quintic " + floatToString(part._voice._waveShapeParameters._shape1); break;
 			case WaveShape::Cosine: text += "cosine"; break;
 			}
 		}

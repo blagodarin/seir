@@ -47,8 +47,15 @@ namespace seir::synth
 		Quadratic,  // Quadratic curve with parameterized derivative at the left end.
 		Quadratic2, // Two quadratic curves with parameterized derivatives at the ends and a common point in the middle.
 		Cubic,      // Cubic curve with parameterized derivatives at the ends.
+		Cubic2,     // Cubic curve with parameterized derivatives at the ends.
 		Quintic,    // Quintic curve with zero value and parameterized derivative in the middle.
 		Cosine,     // Cosine curve.
+	};
+
+	struct WaveShapeParameters
+	{
+		float _shape1 = 0;
+		float _shape2 = 0;
 	};
 
 	struct EnvelopeChange
@@ -79,7 +86,7 @@ namespace seir::synth
 	struct VoiceData
 	{
 		WaveShape _waveShape = WaveShape::Linear;
-		float _waveShapeParameter = 0.f;
+		WaveShapeParameters _waveShapeParameters;
 		Envelope _amplitudeEnvelope;
 		Oscillation _tremolo;
 		Envelope _frequencyEnvelope;

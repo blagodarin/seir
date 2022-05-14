@@ -31,7 +31,7 @@ namespace seir::synth
 	{
 	public:
 		WaveData(const VoiceData& data, unsigned samplingRate)
-			: _shapeParameter{ data._waveShapeParameter }
+			: _shapeParameters{ data._waveShapeParameters }
 			, _amplitudeSize{ 1 + static_cast<unsigned>(data._amplitudeEnvelope._changes.size()) + 1 }
 			, _frequencyOffset{ _amplitudeSize + 1 }
 			, _frequencySize{ 1 + static_cast<unsigned>(data._frequencyEnvelope._changes.size()) + 1 }
@@ -61,7 +61,7 @@ namespace seir::synth
 		[[nodiscard]] constexpr auto& rectangularityOscillation() const noexcept { return _rectangularityOscillation; }
 		[[nodiscard]] std::span<const SampledPoint> rectangularityPoints() const noexcept { return { _pointBuffer.data() + _rectangularityOffset, _rectangularitySize }; }
 		[[nodiscard]] constexpr auto rectangularitySustainIndex() const noexcept { return _rectangularitySustainIndex; }
-		[[nodiscard]] constexpr auto shapeParameter() const noexcept { return _shapeParameter; }
+		[[nodiscard]] constexpr auto shapeParameters() const noexcept { return _shapeParameters; }
 		[[nodiscard]] constexpr auto& tremolo() const noexcept { return _tremolo; }
 		[[nodiscard]] constexpr auto& vibrato() const noexcept { return _vibrato; }
 
@@ -86,7 +86,7 @@ namespace seir::synth
 		}
 
 	private:
-		const float _shapeParameter;
+		const WaveShapeParameters _shapeParameters;
 		const unsigned _amplitudeSize;
 		const unsigned _frequencyOffset;
 		const unsigned _frequencySize;
@@ -110,7 +110,7 @@ namespace seir::synth
 	public:
 		WaveState(const WaveData& data, unsigned samplingRate) noexcept
 			: _samplingRate{ static_cast<float>(samplingRate) }
-			, _shapeParameter{ data.shapeParameter() }
+			, _shapeParameters{ data.shapeParameters() }
 			, _amplitudeModulator{ data.amplitudePoints(), data.amplitudeSustainIndex() }
 			, _amplitudeOscillator{ data.tremolo()._frequency / _samplingRate, data.tremolo()._magnitude }
 			, _frequencyModulator{ data.frequencyPoints(), data.frequencySustainIndex() }
@@ -156,7 +156,7 @@ namespace seir::synth
 
 		[[nodiscard]] constexpr ShaperData shaperData() const noexcept
 		{
-			return _period.shaperData(_periodRectangularity, _shapeParameter);
+			return _period.shaperData(_periodRectangularity, _shapeParameters._shape1, _shapeParameters._shape2);
 		}
 
 		void start(float frequency, float amplitude, float sustain, int delay) noexcept
@@ -223,7 +223,7 @@ namespace seir::synth
 
 	private:
 		const float _samplingRate;
-		const float _shapeParameter;
+		const WaveShapeParameters _shapeParameters;
 		Modulator _amplitudeModulator;
 		TriangleOscillator _amplitudeOscillator;
 		Modulator _frequencyModulator;
