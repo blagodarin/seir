@@ -61,6 +61,10 @@ namespace seir::synth
 
 	// Definitions:
 	//   Y'(0) = shape * deltaY / deltaX
+	// Calculations:
+	//   C1 = S * deltaY / deltaX
+	//   C2 = (S - 1) * deltaY / deltaX^2
+	//   Y(X) = firstY + (C1 - C2 * X) * X
 	class QuadraticShaper
 	{
 	public:
@@ -102,9 +106,9 @@ namespace seir::synth
 	};
 
 	// Definitions:
-	//   Y'(0) = shape * deltaY / deltaX
-	//   Y(deltaX / 2) = firstY + deltaY / 2
-	//   Y'(deltaX) = shape * deltaY / deltaX
+	//   Y1'(0) = shape * deltaY / deltaX
+	//   Y1(deltaX / 2) = Y2(deltaX / 2) = firstY + deltaY / 2
+	//   Y2'(deltaX) = shape * deltaY / deltaX
 	class Quadratic2Shaper
 	{
 	public:
@@ -307,6 +311,8 @@ namespace seir::synth
 		float _nextX;
 	};
 
+	// Definitions:
+	//   Y(X) = firstY + (1 - cos(pi * X / deltaX)) * deltaY / 2
 	// Calculations:
 	//   C(X) = deltaY * cos(pi * X / deltaX) / 2
 	//   C(X + 1) = 2 * cos(pi / deltaX) * C(X) - C(X - 1)
@@ -342,6 +348,49 @@ namespace seir::synth
 
 	private:
 		double _base;
+		double _multiplier;
+		double _lastCos;
+		double _nextCos;
+	};
+
+	// Definitions:
+	//   Y(X) = firstY + (1 - cos(pi * X / deltaX)^3) * deltaY / 2
+	// Calculations:
+	//   C(X) = cos(pi * X / deltaX)
+	//   C(X + 1) = 2 * cos(pi / deltaX) * C(X) - C(X - 1)
+	//   Y(X) = firstY + (1 - C(X)^3) * deltaY / 2
+	class CosineCubedShaper
+	{
+	public:
+		explicit CosineCubedShaper(const ShaperData& data) noexcept
+			: _amplitude{ data._deltaY / 2 }
+			, _base{ data._firstY + _amplitude }
+		{
+			const auto theta = std::numbers::pi / data._deltaX;
+			_multiplier = 2 * std::cos(theta);
+			_lastCos = std::cos(theta * data._offsetX - theta);
+			_nextCos = std::cos(theta * data._offsetX);
+		}
+
+		constexpr auto advance() noexcept
+		{
+			const auto result = _base - _amplitude * _nextCos * _nextCos * _nextCos;
+			const auto nextCos = _multiplier * _nextCos - _lastCos;
+			_lastCos = _nextCos;
+			_nextCos = nextCos;
+			return static_cast<float>(result);
+		}
+
+		template <typename Float>
+		static std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
+		{
+			const auto cos = std::cos(std::numbers::pi_v<Float> * offsetX / deltaX);
+			return firstY + deltaY * (1 - cos * cos * cos) / 2;
+		}
+
+	private:
+		const double _amplitude;
+		const double _base;
 		double _multiplier;
 		double _lastCos;
 		double _nextCos;

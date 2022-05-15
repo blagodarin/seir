@@ -43,13 +43,14 @@ namespace seir::synth
 	// Shape types.
 	enum class WaveShape
 	{
-		Linear,     // Straight line (used for synthesizing square, rectangular, sawtooth and triangle waves).
-		Quadratic,  // Quadratic curve with parameterized derivative at the left end.
-		Quadratic2, // Two quadratic curves with parameterized derivatives at the ends and a common point in the middle.
-		Cubic,      // Cubic curve with parameterized derivatives at the ends.
-		Cubic2,     // Cubic curve with parameterized derivatives at the ends.
-		Quintic,    // Quintic curve with zero value and parameterized derivative in the middle.
-		Cosine,     // Cosine curve.
+		Linear,      // Straight line (used for synthesizing square, rectangular, sawtooth and triangle waves).
+		Quadratic,   // Quadratic curve with parameterized derivative at the left end.
+		Quadratic2,  // Two quadratic curves with parameterized derivatives at the ends and a common point in the middle.
+		Cubic,       // Cubic curve with parameterized derivatives at the ends.
+		Cubic2,      // Cubic curve with parameterized derivatives at the ends.
+		Quintic,     // Quintic curve with zero value and parameterized derivative in the middle.
+		Cosine,      // Cosine curve.
+		CosineCubed, // Cosine cubed curve.
 	};
 
 	struct WaveShapeParameters

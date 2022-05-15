@@ -162,6 +162,7 @@ namespace seir::synth
 			case WaveShape::Cubic2: text += "cubic2 " + floatToString(part._voice._waveShapeParameters._shape1) + floatToString(part._voice._waveShapeParameters._shape2); break;
 			case WaveShape::Quintic: text += "quintic " + floatToString(part._voice._waveShapeParameters._shape1); break;
 			case WaveShape::Cosine: text += "cosine"; break;
+			case WaveShape::CosineCubed: text += "cosine3"; break;
 			}
 		}
 		std::for_each(impl._parts.cbegin(), impl._parts.cend(), [&floatToString, &text, partIndex = 1](const Part& part) mutable {

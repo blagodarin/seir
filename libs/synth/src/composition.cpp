@@ -440,6 +440,8 @@ namespace seir::synth
 				}
 				else if (type == "cosine")
 					currentVoice->_waveShape = WaveShape::Cosine;
+				else if (type == "cosine3")
+					currentVoice->_waveShape = WaveShape::CosineCubed;
 				else
 					throw CompositionError{ location(), "Bad voice wave type" };
 				if (const auto parameter1 = tryReadFloat(minShape, maxShape); parameter1)

@@ -40,6 +40,11 @@ TEST_CASE("shaper_cosine")
 	::checkShaper<seir::synth::CosineShaper>(23);
 }
 
+TEST_CASE("shaper_cosine_cubed")
+{
+	::checkShaper<seir::synth::CosineCubedShaper>(23);
+}
+
 TEST_CASE("shaper_cubic")
 {
 	::checkShaper<seir::synth::CubicShaper>(23, 0.f);
