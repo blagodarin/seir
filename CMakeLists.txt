@@ -40,14 +40,16 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_TESTS "Build Seir tests")
 endif()
 
-if(NOT DEFINED CMAKE_FOLDER)
-	seir_select(CMAKE_FOLDER ${PROJECT_IS_TOP_LEVEL} ".external" "Seir")
+if(NOT PROJECT_IS_TOP_LEVEL AND NOT DEFINED CMAKE_FOLDER)
+	set(CMAKE_FOLDER "Seir")
 endif()
 
 seir_defaults()
 
 seir_provide_fmt(fmt_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+seir_provide_plf_colony(plf_colony_ROOT)
 find_package(fmt REQUIRED)
+find_package(plf_colony REQUIRED)
 find_package(Threads REQUIRED)
 if(NOT WIN32)
 	find_package(PkgConfig REQUIRED)
@@ -72,6 +74,10 @@ endif()
 if(SEIR_COMPRESSION_ZSTD)
 	seir_provide_zstd(zstd_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 	find_package(zstd REQUIRED)
+endif()
+if(TRUE) # TODO: GUI.
+	seir_provide_freetype(Freetype_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+	find_package(Freetype REQUIRED)
 endif()
 if(SEIR_IMAGE_JPEG)
 	seir_provide_jpeg(JPEG_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
@@ -139,6 +145,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		/wd5026 # move constructor was implicitly defined as deleted
 		/wd5027 # move assignment operator was implicitly defined as deleted
 		/wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+		/wd5246 # the initialization of a subobject should be wrapped in braces
 		)
 endif()
 

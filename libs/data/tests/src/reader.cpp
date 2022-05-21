@@ -27,7 +27,7 @@ TEST_CASE("Reader")
 	}
 	SUBCASE("size() > 0")
 	{
-		const std::array<char, 24> buffer{
+		static const std::array buffer{
 			'0', '1', '2', '3', '4', '5', '6', '7',
 			'8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
 			'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'

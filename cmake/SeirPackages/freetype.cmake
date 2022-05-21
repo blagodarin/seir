@@ -5,11 +5,11 @@
 function(seir_provide_freetype result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("freetype")
-	set(version "2.10.4") # 2.11.0 has an issue: https://gitlab.freedesktop.org/freetype/freetype/-/issues/1075
+	set(version "2.12.1")
 	set(package "freetype-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/freetype.patch)
-	seir_download("https://downloads.sourceforge.net/project/freetype/freetype2/${version}/${package}.tar.gz"
-		SHA1 "040d6a4be23708132c85ef9df837eb3f8a04c4ab"
+	seir_download("https://downloads.sourceforge.net/project/freetype/freetype2/${version}/${package}.tar.xz"
+		SHA1 "5133eed28a7624ffabbf6d00aa3f68b841d62d80"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded)
@@ -19,13 +19,13 @@ function(seir_provide_freetype result)
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building Freetype from ${source_dir}")
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} OPTIONS
-			-DCMAKE_DISABLE_FIND_PACKAGE_BrotliDec=ON
-			-DCMAKE_DISABLE_FIND_PACKAGE_BZip2=ON
-			-DCMAKE_DISABLE_FIND_PACKAGE_HarfBuzz=ON
-			-DCMAKE_DISABLE_FIND_PACKAGE_PNG=ON
-			-DCMAKE_DISABLE_FIND_PACKAGE_ZLIB=ON
 			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
-			MSVC_WARNINGS 4244 4267 4312
+			-DFT_DISABLE_BROTLI=ON
+			-DFT_DISABLE_BZIP2=ON
+			-DFT_DISABLE_HARFBUZZ=ON
+			-DFT_DISABLE_PNG=ON
+			-DFT_DISABLE_ZLIB=ON
+			MSVC_WARNINGS 4244 4267
 			)
 		message(STATUS "[SEIR] Provided Freetype at ${install_dir}")
 		if(arg_SET_UPDATED)

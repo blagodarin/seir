@@ -99,45 +99,49 @@ TEST_CASE("Buffer::reserve()")
 	::checkNotAllocated(buffer);
 	buffer.reserve(N, N + 1);
 	const auto [data, capacity] = ::checkAllocated(buffer, N);
-	::setValues({ data, N }, 1);
 	SUBCASE("newCapacity > capacity")
 	{
 		const auto newCapacity = capacity + 1;
 		SUBCASE("preservedCapacity == N")
 		{
+			::setValues({ data, N }, 12);
 			buffer.reserve(newCapacity, N);
 			::checkAllocated(buffer, newCapacity);
 			CHECK(buffer.data() != data);
-			::checkValues({ buffer.data(), N }, 1);
+			::checkValues({ buffer.data(), N }, 12);
 		}
 		SUBCASE("preservedCapacity > newCapacity")
 		{
+			::setValues({ data, N }, 34);
 			buffer.reserve(newCapacity, newCapacity + 1);
 			::checkAllocated(buffer, newCapacity);
 			CHECK(buffer.data() != data);
-			::checkValues({ buffer.data(), N }, 1);
+			::checkValues({ buffer.data(), N }, 34);
 		}
 		SUBCASE("preservedCapacity == 0")
 		{
+			::setValues({ data, N }, 56);
 			buffer.reserve(newCapacity, 0);
 			::checkAllocated(buffer, newCapacity);
 			REQUIRE(buffer.data() != data);
-			::checkNotValues({ buffer.data(), N }, 1);
+			::checkNotValues({ buffer.data(), N }, 56);
 		}
 	}
 	SUBCASE("newCapacity == capacity")
 	{
+		::setValues({ data, N }, 78);
 		buffer.reserve(capacity, 0);
 		REQUIRE(buffer.data() == data);
 		REQUIRE(buffer.capacity() == capacity);
-		::checkValues({ buffer.data(), N }, 1);
+		::checkValues({ buffer.data(), N }, 78);
 	}
 	SUBCASE("newCapacity < capacity")
 	{
+		::setValues({ data, N }, 90);
 		buffer.reserve(capacity - 1, 0);
 		REQUIRE(buffer.data() == data);
 		REQUIRE(buffer.capacity() == capacity);
-		::checkValues({ buffer.data(), N }, 1);
+		::checkValues({ buffer.data(), N }, 90);
 	}
 #ifndef __clang__ // Memory allocation functions don't return nullptr in ASAN-less Clang builds.
 	SUBCASE("newCapacity == SIZE_MAX")

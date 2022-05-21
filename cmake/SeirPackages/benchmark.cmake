@@ -5,12 +5,12 @@
 function(seir_provide_benchmark result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("benchmark")
-	set(version "1.6.0")
+	set(version "1.6.1")
 	set(package "benchmark-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/benchmark.patch)
 	seir_download("https://github.com/google/benchmark/archive/refs/tags/v${version}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA1 "c4d1a9135e779c5507015ccc8c428cb4aca69cef"
+		SHA1 "1faaa54195824bbe151c1ebee31623232477d075"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded)
@@ -24,6 +24,7 @@ function(seir_provide_benchmark result)
 			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
 			-DBENCHMARK_ENABLE_GTEST_TESTS=OFF
 			-DBENCHMARK_ENABLE_TESTING=OFF
+			-DBENCHMARK_INSTALL_DOCS=OFF
 			)
 		message(STATUS "[SEIR] Provided benchmark at ${install_dir}")
 		if(arg_SET_UPDATED)
