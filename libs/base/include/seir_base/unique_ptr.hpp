@@ -15,8 +15,7 @@ namespace seir
 	{
 	public:
 		constexpr UniquePtr() noexcept = default;
-		// cppcheck-suppress noExplicitConstructor
-		constexpr UniquePtr(std::nullptr_t) noexcept {}
+		constexpr UniquePtr(std::nullptr_t) noexcept {} // cppcheck-suppress[noExplicitConstructor]
 		constexpr UniquePtr(UniquePtr&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
 		template <class U>

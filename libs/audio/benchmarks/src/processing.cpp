@@ -22,7 +22,7 @@ namespace
 		constexpr StdAllocator() noexcept = default;
 
 		template <class U>
-		constexpr StdAllocator(const StdAllocator<U>&) noexcept {}
+		constexpr explicit StdAllocator(const StdAllocator<U>&) noexcept {}
 
 		[[nodiscard]] T* allocate(size_t n)
 		{
@@ -52,11 +52,11 @@ namespace
 
 		explicit Buffers(const benchmark::State& state, size_t dstSizeFactor = 1)
 		{
-			const auto srcSize = static_cast<size_t>(state.range(0) - 1) / sizeof(Src);
-			_src.reserve(srcSize);
-			std::generate_n(std::back_inserter(_src), srcSize, [i = Src{}]() mutable { return ++i; });
-			_dst.reserve(srcSize * dstSizeFactor);
-			std::generate_n(std::back_inserter(_dst), srcSize * dstSizeFactor, [i = Dst{}]() mutable { return ++i; });
+			const auto size = static_cast<size_t>(state.range(0) - 1) / sizeof(Src);
+			_src.reserve(size);
+			std::generate_n(std::back_inserter(_src), size, [i = Src{}]() mutable { return ++i; });
+			_dst.reserve(size * dstSizeFactor);
+			std::generate_n(std::back_inserter(_dst), size * dstSizeFactor, [i = Dst{}]() mutable { return ++i; });
 		}
 
 		[[nodiscard]] auto dst() noexcept { return _dst.data(); }
@@ -76,7 +76,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_addSamples1D(benchmark::State& state)
+	void benchmark_addSamples1D(benchmark::State& state) // cppcheck-suppress[constParameter]
 	{
 		Buffers<float, T> buffers{ state };
 		for (auto _ : state)
@@ -114,8 +114,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	// cppcheck-suppress constParameter
-	void benchmark_addSamples2x1D(benchmark::State& state)
+	void benchmark_addSamples2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
 	{
 		Buffers<float, T> buffers{ state, 2 };
 		for (auto _ : state)
@@ -143,7 +142,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_convertSamples1D(benchmark::State& state)
+	void benchmark_convertSamples1D(benchmark::State& state) // cppcheck-suppress[constParameter]
 	{
 		Buffers<float, T> buffers{ state };
 		for (auto _ : state)
@@ -171,7 +170,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_convertSamples2x1D(benchmark::State& state)
+	void benchmark_convertSamples2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
 	{
 		Buffers<float, T> buffers{ state, 2 };
 		for (auto _ : state)
@@ -208,7 +207,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_duplicate1D(benchmark::State& state)
+	void benchmark_duplicate1D(benchmark::State& state) // cppcheck-suppress[constParameter]
 	{
 		Buffers<T, T> buffers{ state, 2 };
 		for (auto _ : state)
@@ -238,8 +237,7 @@ namespace
 	}
 
 	template <auto function>
-	// cppcheck-suppress constParameter
-	void benchmark_resampleAdd2x1D(benchmark::State& state)
+	void benchmark_resampleAdd2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
 	{
 		Buffers<float, float> buffers{ state };
 		for (auto _ : state)
@@ -265,8 +263,7 @@ namespace
 	}
 
 	template <auto function>
-	// cppcheck-suppress constParameter
-	void benchmark_resampleCopy2x1D(benchmark::State& state)
+	void benchmark_resampleCopy2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
 	{
 		Buffers<float, float> buffers{ state };
 		for (auto _ : state)

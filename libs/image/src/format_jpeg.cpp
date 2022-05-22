@@ -36,7 +36,6 @@ namespace
 	class JpegCompressor : private JpegErrorManager
 	{
 	public:
-		// cppcheck-suppress constParameter
 		explicit JpegCompressor(seir::Writer& writer) noexcept
 			: _writer{ writer }
 		{

@@ -18,21 +18,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install clang-tidy-12 cppcheck libasound2-dev libvorbis-dev ninja-build
-      - name: Run cppcheck
-        continue-on-error: true
-        run: |
-          cppcheck --enable=all --error-exitcode=1 --inline-suppr --quiet \
-            -I libs/3rdparty/include \
-            -I libs/app/include \
-            -I libs/audio/include \
-            -I libs/base/include \
-            -I libs/data/include \
-            -I libs/image/include \
-            -I libs/math/include \
-            -I libs/renderer/include \
-            -I libs/synth/include \
-            -I libs/u8main/include \
-            --template="({file}:{line}) ({severity}/{id}) {message}" .
       - name: Run clang-format
         run: |
           clang-format-12 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
@@ -60,6 +45,15 @@ jobs:
             -DSEIR_SYNTH=ON \
             -DSEIR_TESTS=ON \
             -DSEIR_U8MAIN=ON
+      - name: Run cppcheck
+        continue-on-error: true
+        run: |
+          cppcheck --enable=all --error-exitcode=1 --inline-suppr --quiet \
+            --cppcheck-build-dir='${{ github.workspace }}/build-cppcheck' \
+            --project='${{ github.workspace }}/build/compile_commands.json' \
+            --relative-paths='${{ github.workspace }}' \
+            --suppressions-list='${{ github.workspace }}/.cppcheck' \
+            --template='({file}:{line}) ({severity}/{id}) {message}'
       - name: Run clang-tidy
         run: |
           find '${{ github.workspace }}/libs' -name '*.cpp' \! \( -path '*/benchmarks/*' -o -path '*/tests/*' -o -path '*_wasapi.cpp' -o -path '*_windows.cpp' \) \

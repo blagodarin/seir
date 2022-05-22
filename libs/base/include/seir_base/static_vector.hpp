@@ -60,7 +60,7 @@ namespace seir
 		T& emplace_back(Args&&... args)
 		{
 			assert(_size < kCapacity);
-			T* item = new (_data + _size) T{ std::forward<Args>(args)... };
+			T* item = new (_data + _size) T{ std::forward<Args>(args)... }; // cppcheck-suppress[unreadVariable]
 			++_size;
 			return *item;
 		}

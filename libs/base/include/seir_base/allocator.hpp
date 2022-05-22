@@ -21,8 +21,7 @@ namespace seir
 		static void deallocate(void* memory) noexcept { std::free(memory); }
 
 		//
-		// cppcheck-suppress constParameter
-		[[nodiscard]] static void* tryAllocate(size_t& size) noexcept { return std::malloc(size); }
+		[[nodiscard]] static void* tryAllocate(size_t& size) noexcept { return std::malloc(size); } // cppcheck-suppress[constParameter]
 	};
 
 	class AlignedAllocatorImpl

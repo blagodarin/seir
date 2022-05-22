@@ -17,7 +17,7 @@ namespace seir
 		Finally(const Finally&) = delete;
 		Finally& operator=(const Finally&) = delete;
 
-		constexpr Finally(Callback&& callback) noexcept
+		constexpr explicit Finally(Callback&& callback) noexcept
 			: _callback{ std::move(callback) } {}
 
 		~Finally() noexcept { _callback(); }

@@ -31,7 +31,7 @@ namespace
 
 	seir::Hicon loadDefaultIcon(HINSTANCE instance)
 	{
-		HRSRC resource = nullptr;
+		HRSRC iconResource = nullptr;
 		::EnumResourceNamesW(
 			instance, RT_ICON, [](HMODULE module, LPCWSTR type, LPWSTR name, LONG_PTR param) noexcept -> BOOL {
 				const auto resource = ::FindResourceW(module, name, type);
@@ -40,10 +40,10 @@ namespace
 				*reinterpret_cast<HRSRC*>(param) = resource;
 				return FALSE;
 			},
-			reinterpret_cast<LONG_PTR>(&resource));
-		return resource
-			? seir::Hicon{ ::CreateIconFromResourceEx(static_cast<BYTE*>(::LockResource(::LoadResource(instance, resource))),
-				::SizeofResource(instance, resource), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR) }
+			reinterpret_cast<LONG_PTR>(&iconResource));
+		return iconResource
+			? seir::Hicon{ ::CreateIconFromResourceEx(static_cast<BYTE*>(::LockResource(::LoadResource(instance, iconResource))),
+				::SizeofResource(instance, iconResource), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR) }
 			: seir::Hicon{};
 	}
 

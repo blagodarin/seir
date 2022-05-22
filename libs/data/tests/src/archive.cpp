@@ -36,13 +36,13 @@ TEST_CASE("Archiver")
 #if SEIR_COMPRESSION_ZLIB
 		SUBCASE("Compression::Zlib")
 		{
-			archiver = seir::Archiver::create(std::move(writer), seir::Compression::Zlib);
+			archiver = seir::Archiver::create(std::move(writer), seir::Compression::Zlib); // cppcheck-suppress[accessMoved]
 		}
 #endif
 #if SEIR_COMPRESSION_ZSTD
 		SUBCASE("Compression::Zstd")
 		{
-			archiver = seir::Archiver::create(std::move(writer), seir::Compression::Zstd);
+			archiver = seir::Archiver::create(std::move(writer), seir::Compression::Zstd); // cppcheck-suppress[accessMoved]
 		}
 #endif
 		REQUIRE(archiver);

@@ -51,7 +51,7 @@ namespace seir::synth
 		std::string _author;
 
 		CompositionData() = default;
-		CompositionData(const Composition&);
+		explicit CompositionData(const Composition&);
 		CompositionData(const std::shared_ptr<VoiceData>&, Note);
 
 		[[nodiscard]] std::unique_ptr<Composition> pack() const;

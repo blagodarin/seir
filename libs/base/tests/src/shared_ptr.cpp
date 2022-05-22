@@ -43,7 +43,6 @@ TEST_CASE("SharedPtr")
 		CHECK_FALSE(ptr.operator->());
 		SUBCASE("self-copy")
 		{
-			// cppcheck-suppress selfAssignment
 			ptr = ptr;
 		}
 		SUBCASE("self-move")
@@ -214,7 +213,6 @@ TEST_CASE("SharedPtr")
 			{
 				SUBCASE("copy")
 				{
-					// cppcheck-suppress selfAssignment
 					ptr = ptr;
 				}
 				SUBCASE("move")

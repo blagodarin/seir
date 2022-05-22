@@ -35,7 +35,7 @@ TEST_CASE("BufferWriter")
 	check({ 0x01, 0x01, 0x03, 0x03, 0x02, 0x02 }, 4);
 	const auto capacity = buffer.capacity();
 	CHECK(writer.reserve(buffer.capacity() - writer.offset()));
-	CHECK(buffer.capacity() == capacity);
+	CHECK(buffer.capacity() == capacity); // cppcheck-suppress[knownConditionTrueFalse]
 	check({ 0x01, 0x01, 0x03, 0x03, 0x02, 0x02 }, 4);
 	CHECK(writer.reserve(buffer.capacity() - writer.offset() + 1));
 	CHECK(buffer.capacity() > capacity);
