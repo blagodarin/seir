@@ -5,7 +5,7 @@
 function(seir_provide_plf_colony result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED" "" ${ARGN})
 	_seir_provide_begin("plf_colony")
-	set(version "760b64bb4e969296c7a2e77ee3b5da235da3004c") # 6.32 (6.33 breaks macOS builds due to lack of C++23 library support).
+	set(version "760b64bb4e969296c7a2e77ee3b5da235da3004c") # 6.32 (6.33 breaks macOS builds due to lack of C++20 library support).
 	seir_download("https://raw.githubusercontent.com/mattreecebentley/plf_colony/${version}/plf_colony.h"
 		SHA1 "578d689d86da218f35598c7b8f31a9b32703198c"
 		RESULT downloaded)

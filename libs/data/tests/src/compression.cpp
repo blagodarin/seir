@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <limits>
 #include <vector>
 
 #include <doctest/doctest.h>

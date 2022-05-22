@@ -7,7 +7,7 @@ on:
 jobs:
   static-analysis:
     name: Static analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -39,12 +39,13 @@ jobs:
           git diff --color=always --exit-code --histogram
       - name: Run CMake
         env:
+          CC: clang-12
           CXX: clang++-12
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DSEIR_3RDPARTY_SKIP="jpeg;vorbis;zlib;zstd" \
+            -DSEIR_3RDPARTY_SKIP="freetype;jpeg;vorbis;zlib;zstd" \
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_BENCHMARKS=ON \

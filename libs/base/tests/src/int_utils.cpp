@@ -5,6 +5,7 @@
 #include <seir_base/int_utils.hpp>
 
 #include <array>
+#include <cstddef>
 #include <limits>
 
 #include <doctest/doctest.h>

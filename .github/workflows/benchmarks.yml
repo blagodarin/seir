@@ -3,7 +3,7 @@ on: workflow_dispatch
 jobs:
   windows:
     name: Windows
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       matrix:
         include:
@@ -36,14 +36,17 @@ jobs:
           build\libs\audio\benchmarks\seir_audio_benchmarks.exe
   linux:
     name: Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         include:
-          - cxx: g++-10
-          - cxx: clang++-12
+          - cc: gcc-11
+            cxx: g++-11
+          - cc: clang-12
+            cxx: clang++-12
       fail-fast: false
     env:
+      CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
     steps:
       - uses: actions/checkout@v2

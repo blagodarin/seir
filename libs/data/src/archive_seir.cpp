@@ -12,6 +12,7 @@
 #include <seir_data/writer.hpp>
 
 #include <array>
+#include <limits>
 #include <string>
 #include <vector>
 

@@ -6,6 +6,8 @@
 
 #include <seir_data/writer.hpp>
 
+#include <limits>
+
 namespace
 {
 	enum class TgaColorMapType : uint8_t
