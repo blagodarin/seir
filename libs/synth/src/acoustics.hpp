@@ -23,7 +23,7 @@ namespace seir::synth
 			, _angularSize{ static_cast<float>(trackProperties._sourceWidth) }
 		{}
 
-		int stereoDelay(Note note) const noexcept
+		[[nodiscard]] int stereoDelay(Note note) const noexcept
 		{
 			constexpr int kLastNoteIndex = kNoteCount - 1;
 			const auto noteAngle = static_cast<float>(2 * static_cast<int>(note) - kLastNoteIndex) / (2 * kLastNoteIndex);      // [-0.5, 0.5]

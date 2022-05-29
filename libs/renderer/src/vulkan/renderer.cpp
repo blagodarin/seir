@@ -35,7 +35,7 @@ namespace
 #include "fragment_shader.glsl.spirv.inc"
 	};
 
-	static constexpr std::array<uint8_t, 16> kTextureData{
+	constexpr std::array<uint8_t, 16> kTextureData{
 		0x99, 0xbb, 0xbb, 0xff,
 		0xff, 0xff, 0xff, 0xff,
 		0xff, 0xff, 0xff, 0xff,

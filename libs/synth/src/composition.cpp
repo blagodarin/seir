@@ -107,7 +107,7 @@ namespace seir::synth
 			do
 				++source;
 			while (*source >= '0' && *source <= '9');
-			int result;
+			int result; // NOLINT(cppcoreguidelines-init-variables)
 			if (std::from_chars(begin, source, result).ec != std::errc{})
 				throw CompositionError{ { line, begin - lineBase }, "Number expected" };
 			if (result < min || result > max)
@@ -130,7 +130,7 @@ namespace seir::synth
 			do
 				++source;
 			while (*source >= '0' && *source <= '9');
-			unsigned result;
+			unsigned result; // NOLINT(cppcoreguidelines-init-variables)
 			if (std::from_chars(begin, source, result).ec != std::errc{})
 				throw CompositionError{ { line, begin - lineBase }, "Number expected" };
 			if (result < min || result > max)

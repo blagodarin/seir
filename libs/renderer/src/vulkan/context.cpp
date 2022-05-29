@@ -826,7 +826,7 @@ namespace seir
 		return shader;
 	}
 
-	VulkanImage VulkanContext::createTextureImage2D(const VkExtent2D& extent, VkFormat format, VkDeviceSize size, const void* data, uint32_t pixelStride)
+	VulkanImage VulkanContext::createTextureImage2D(const VkExtent2D& extent, VkFormat format, VkDeviceSize size, const void* data, uint32_t pixelStride) const
 	{
 		auto image = createImage2D(extent, format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 		image.transitionLayout(*this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

@@ -24,8 +24,9 @@ namespace seir
 		const std::string _message;
 		VulkanError(std::string_view function, std::string&& message) noexcept
 			: _function{ function.substr(0, function.find('(')) }, _message{ std::move(message) } {}
-		VulkanError(std::string_view function, VkResult status)
-			: VulkanError(function, std::to_string(status)) {}
+		VulkanError(std::string_view function, VkResult status) // NOLINT(cppcoreguidelines-pro-type-member-init)
+			: VulkanError(function, std::to_string(status))
+		{}
 #endif
 	};
 }

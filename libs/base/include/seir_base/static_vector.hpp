@@ -60,7 +60,7 @@ namespace seir
 		T& emplace_back(Args&&... args)
 		{
 			assert(_size < kCapacity);
-			T* item = new (_data + _size) T{ std::forward<Args>(args)... }; // cppcheck-suppress[unreadVariable]
+			T* item = new (_data + _size) T{ std::forward<Args>(args)... }; // cppcheck-suppress[unreadVariable] // NOLINT(cppcoreguidelines-init-variables)
 			++_size;
 			return *item;
 		}
@@ -75,7 +75,7 @@ namespace seir
 		T& push_back(const T& value)
 		{
 			assert(_size < kCapacity);
-			T* item = new (_data + _size) T{ value };
+			T* item = new (_data + _size) T{ value }; // NOLINT(cppcoreguidelines-init-variables)
 			++_size;
 			return *item;
 		}

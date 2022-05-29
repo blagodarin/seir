@@ -54,12 +54,12 @@ namespace seir::synth
 			return maxValue;
 		}
 
-		constexpr auto currentValue() const noexcept
+		[[nodiscard]] constexpr auto currentValue() const noexcept
 		{
 			return _currentValue;
 		}
 
-		constexpr auto maxContinuousAdvance() const noexcept
+		[[nodiscard]] constexpr auto maxContinuousAdvance() const noexcept
 		{
 			return _points[_nextIndex]._delaySamples - _offsetSamples;
 		}
@@ -101,7 +101,7 @@ namespace seir::synth
 			_currentValue = _lastPointValue;
 		}
 
-		constexpr bool stopped() const noexcept
+		[[nodiscard]] constexpr bool stopped() const noexcept
 		{
 			return _nextIndex == _size;
 		}

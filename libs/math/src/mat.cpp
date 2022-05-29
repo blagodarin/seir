@@ -11,7 +11,7 @@
 
 namespace seir
 {
-	Mat4::Mat4(const Euler& e) noexcept
+	Mat4::Mat4(const Euler& e) noexcept // NOLINT(cppcoreguidelines-pro-type-member-init)
 	{
 		constexpr auto toRadians = std::numbers::pi_v<float> / 180;
 		const auto yaw = e._yaw * toRadians;

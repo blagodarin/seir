@@ -26,7 +26,7 @@ namespace seir::synth
 
 		[[nodiscard]] float value(float offset) const noexcept
 		{
-			float dummy;
+			float dummy; // NOLINT(cppcoreguidelines-init-variables)
 			return _doubleMagnitude * std::abs(std::modf(offset * _frequency, &dummy) - .5f);
 		}
 

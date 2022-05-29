@@ -204,7 +204,7 @@ namespace
 		}
 
 	private:
-		size_t maxPolyphony() const noexcept
+		[[nodiscard]] size_t maxPolyphony() const noexcept
 		{
 			assert(!_sounds.empty());
 			size_t result = 0;
@@ -359,17 +359,17 @@ namespace
 			restart();
 		}
 
-		seir::synth::AudioFormat format() const noexcept override
+		[[nodiscard]] seir::synth::AudioFormat format() const noexcept override
 		{
 			return _format;
 		}
 
-		size_t currentOffset() const noexcept override
+		[[nodiscard]] size_t currentOffset() const noexcept override
 		{
 			return _currentOffset;
 		}
 
-		size_t loopOffset() const noexcept override
+		[[nodiscard]] size_t loopOffset() const noexcept override
 		{
 			return _loopOffset;
 		}

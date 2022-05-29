@@ -158,11 +158,11 @@ namespace seir
 		bool acquireFrame(VkDevice, VkSemaphore signalSemaphore, VkFence waitFence, uint32_t& index);
 		void create(const VulkanContext&, const Size2D& windowSize);
 		void destroy(VkDevice) noexcept;
-		constexpr VkExtent2D extent() const noexcept { return _swapchainExtent; }
-		uint32_t frameCount() const noexcept { return static_cast<uint32_t>(_swapchainImages.size()); }
+		[[nodiscard]] constexpr VkExtent2D extent() const noexcept { return _swapchainExtent; }
+		[[nodiscard]] uint32_t frameCount() const noexcept { return static_cast<uint32_t>(_swapchainImages.size()); }
 		bool presentFrame(VkQueue, uint32_t frameIndex, VkSemaphore waitSemaphore);
-		constexpr VkRenderPass renderPass() const noexcept { return _renderPass; }
-		VkRenderPassBeginInfo renderPassInfo(size_t frameIndex) const noexcept;
+		[[nodiscard]] constexpr VkRenderPass renderPass() const noexcept { return _renderPass; }
+		[[nodiscard]] VkRenderPassBeginInfo renderPassInfo(size_t frameIndex) const noexcept;
 
 	private:
 		void createSwapchain(const VulkanContext&, const Size2D& windowSize);
@@ -211,16 +211,16 @@ namespace seir
 		~VulkanContext() noexcept;
 
 		void create(const WindowDescriptor&);
-		VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags) const;
-		vulkan::CommandBuffer createCommandBuffer(VkCommandBufferUsageFlags) const;
-		VulkanBuffer createDeviceBuffer(const void* data, VkDeviceSize, VkBufferUsageFlags) const;
-		VulkanImage createImage2D(const VkExtent2D&, VkFormat, VkSampleCountFlagBits, VkImageTiling, VkImageUsageFlags, VkImageAspectFlags) const;
-		VulkanSampler createSampler2D() const;
-		VulkanShader createShader(const uint32_t* data, size_t bytes) const;
-		VulkanImage createTextureImage2D(const VkExtent2D&, VkFormat, VkDeviceSize, const void* data, uint32_t pixelStride);
-		VulkanUniformBuffers createUniformBuffers(VkDeviceSize size, size_t count) const;
-		uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const;
-		VkFormat findFormat(const std::vector<VkFormat>& candidates, VkImageTiling, VkFormatFeatureFlags) const;
+		[[nodiscard]] VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags) const;
+		[[nodiscard]] vulkan::CommandBuffer createCommandBuffer(VkCommandBufferUsageFlags) const;
+		[[nodiscard]] VulkanBuffer createDeviceBuffer(const void* data, VkDeviceSize, VkBufferUsageFlags) const;
+		[[nodiscard]] VulkanImage createImage2D(const VkExtent2D&, VkFormat, VkSampleCountFlagBits, VkImageTiling, VkImageUsageFlags, VkImageAspectFlags) const;
+		[[nodiscard]] VulkanSampler createSampler2D() const;
+		[[nodiscard]] VulkanShader createShader(const uint32_t* data, size_t bytes) const;
+		[[nodiscard]] VulkanImage createTextureImage2D(const VkExtent2D&, VkFormat, VkDeviceSize, const void* data, uint32_t pixelStride) const;
+		[[nodiscard]] VulkanUniformBuffers createUniformBuffers(VkDeviceSize size, size_t count) const;
+		[[nodiscard]] uint32_t findMemoryType(uint32_t filter, VkMemoryPropertyFlags properties) const;
+		[[nodiscard]] VkFormat findFormat(const std::vector<VkFormat>& candidates, VkImageTiling, VkFormatFeatureFlags) const;
 
 	private:
 		void createInstance();
