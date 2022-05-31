@@ -56,6 +56,6 @@ jobs:
             --template='({file}:{line}) ({severity}/{id}) {message}'
       - name: Run clang-tidy
         run: |
-          find '${{ github.workspace }}/libs' -name '*.cpp' \! \( -path '*/benchmarks/*' -o -path '*/tests/*' -o -path '*_wasapi.cpp' -o -path '*_windows.cpp' \) \
+          find '${{ github.workspace }}/libs' -name '*.cpp' \! \( -path '*/benchmarks/*' -o -path '*/tests/*' -o -path '*/vulkan/*' -o -path '*_wasapi.cpp' -o -path '*_windows.cpp' \) \
             -printf '[%P]\n' \
             -exec clang-tidy-12 -p='${{ github.workspace }}/build' --quiet '{}' \;
