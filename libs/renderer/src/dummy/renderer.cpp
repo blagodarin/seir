@@ -14,6 +14,7 @@ namespace
 		explicit DummyRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
 			: _window{ window } {}
 
+		seir::UniquePtr<seir::Texture2D> createTexture2D(const seir::ImageInfo&, const void*) override { return {}; }
 		void draw() override {}
 
 	private:

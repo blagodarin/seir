@@ -19,6 +19,7 @@ namespace seir
 
 		bool initialize();
 
+		UniquePtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
 		void draw() override;
 
 	private:
@@ -29,11 +30,11 @@ namespace seir
 		VulkanContext _context;
 		VulkanShader _vertexShader;
 		VulkanShader _fragmentShader;
-		VulkanImage _textureImage;
 		VulkanSampler _textureSampler;
 		VulkanBuffer _vertexBuffer;
 		VulkanBuffer _indexBuffer;
 		VulkanFrameSync _frameSync;
+		UniquePtr<Texture2D> _whiteTexture2D;
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
 		VulkanUniformBuffers _uniformBuffers;

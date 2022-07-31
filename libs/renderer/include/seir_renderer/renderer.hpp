@@ -4,13 +4,18 @@
 
 #pragma once
 
+#include <seir_base/shared_ptr.hpp>
+
 namespace seir
 {
-	template <class>
-	class SharedPtr;
-	template <class>
-	class UniquePtr;
+	class Image;
+	class ImageInfo;
 	class Window;
+
+	//
+	class Texture2D : public ReferenceCounter
+	{
+	};
 
 	//
 	class Renderer
@@ -20,6 +25,10 @@ namespace seir
 		[[nodiscard]] static UniquePtr<Renderer> create(const SharedPtr<Window>&);
 
 		virtual ~Renderer() noexcept = default;
+
+		//
+		[[nodiscard]] virtual UniquePtr<Texture2D> createTexture2D(const ImageInfo&, const void*) = 0;
+		[[nodiscard]] UniquePtr<Texture2D> createTexture2D(const Image&);
 
 		//
 		virtual void draw() = 0;

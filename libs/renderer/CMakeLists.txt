@@ -5,12 +5,15 @@
 set(HEADERS
 	include/seir_renderer/renderer.hpp
 	)
+set(SOURCES
+	src/renderer.cpp
+	)
 if(SEIR_RENDERER STREQUAL "Dummy")
-	set(SOURCES
+	list(APPEND SOURCES
 		src/dummy/renderer.cpp
 		)
 elseif(SEIR_RENDERER STREQUAL "Vulkan")
-	set(SOURCES
+	list(APPEND SOURCES
 		src/vulkan/commands.cpp
 		src/vulkan/commands.hpp
 		src/vulkan/context.cpp
@@ -45,7 +48,7 @@ target_compile_definitions(seir_renderer PUBLIC
 	SEIR_RENDERER_VULKAN=$<STREQUAL:${SEIR_RENDERER},Vulkan>
 	)
 target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_renderer PRIVATE Seir::app Seir::math)
+target_link_libraries(seir_renderer PRIVATE Seir::app Seir::image Seir::math)
 if(SEIR_RENDERER STREQUAL "Vulkan")
 	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
 	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan $<$<CONFIG:Debug>:Seir::3rdparty> $<$<CONFIG:Debug>:fmt::fmt>)

@@ -45,12 +45,13 @@ namespace seir
 		constexpr ImageInfo(uint32_t width, uint32_t height, uint32_t stride, PixelFormat pixelFormat, ImageAxes axes = ImageAxes::XRightYDown) noexcept
 			: _width{ width }, _height{ height }, _stride{ stride }, _pixelFormat{ pixelFormat }, _axes{ axes } {}
 		constexpr ImageInfo(uint32_t width, uint32_t height, PixelFormat pixelFormat, ImageAxes axes = ImageAxes::XRightYDown) noexcept
-			: ImageInfo{ width, height, width * pixelSize(pixelFormat), pixelFormat, axes } {}
+			: ImageInfo{ width, height, width * seir::pixelSize(pixelFormat), pixelFormat, axes } {}
 
 		[[nodiscard]] constexpr ImageAxes axes() const noexcept { return _axes; }
 		[[nodiscard]] constexpr uint32_t frameSize() const noexcept { return _stride * _height; }
 		[[nodiscard]] constexpr uint32_t height() const noexcept { return _height; }
 		[[nodiscard]] constexpr PixelFormat pixelFormat() const noexcept { return _pixelFormat; }
+		[[nodiscard]] constexpr uint32_t pixelSize() const noexcept { return seir::pixelSize(_pixelFormat); }
 		[[nodiscard]] constexpr uint32_t stride() const noexcept { return _stride; }
 		[[nodiscard]] constexpr uint32_t width() const noexcept { return _width; }
 

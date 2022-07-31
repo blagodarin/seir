@@ -28,7 +28,8 @@ namespace seir
 		[[nodiscard]] constexpr T& operator*() const noexcept { return *_pointer; }
 		[[nodiscard]] constexpr T* operator->() const noexcept { return _pointer; }
 		[[nodiscard]] constexpr explicit operator bool() const noexcept { return static_cast<bool>(_pointer); }
-		[[nodiscard]] constexpr T* get() const noexcept { return _pointer; }
+		template <typename U = T>
+		[[nodiscard]] constexpr U* get() const noexcept { return static_cast<U*>(_pointer); }
 		void reset() noexcept;
 		constexpr void swap(UniquePtr& other) noexcept { std::swap(_pointer, other._pointer); }
 

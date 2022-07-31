@@ -5,6 +5,7 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
+#include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
 #include "commands.hpp"
@@ -80,6 +81,17 @@ namespace
 			._projection = seir::Mat4::projection3D(static_cast<float>(screenSize.width) / static_cast<float>(screenSize.height), 45, 1),
 		};
 	}
+
+	class VulkanTexture2D : public seir::Texture2D
+	{
+	public:
+		VulkanTexture2D(seir::VulkanImage&& image) noexcept
+			: _image{ std::move(image) } {}
+		constexpr auto viewHandle() const noexcept { return _image.viewHandle(); }
+
+	private:
+		seir::VulkanImage _image;
+	};
 }
 
 namespace seir
@@ -112,12 +124,10 @@ namespace seir
 			_context.create(_window->descriptor());
 			_vertexShader = _context.createShader(kVertexShader, sizeof kVertexShader);
 			_fragmentShader = _context.createShader(kFragmentShader, sizeof kFragmentShader);
-			_textureImage = _context.createTextureImage2D({ 1, 2 }, VK_FORMAT_B8G8R8A8_SRGB, kTextureData.size(), kTextureData.data(), 2);
 			_textureSampler = _context.createSampler2D();
 			_vertexBuffer = _context.createDeviceBuffer(kVertexData.data(), kVertexData.size() * sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 			_indexBuffer = _context.createDeviceBuffer(kIndexData.data(), kIndexData.size() * sizeof(uint16_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 			_frameSync.create(_context._device);
-			return true;
 		}
 		catch ([[maybe_unused]] const seir::VulkanError& e)
 		{
@@ -125,6 +135,29 @@ namespace seir
 			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
 #endif
 			return false;
+		}
+		_whiteTexture2D = createTexture2D({ 1, 2, 8, PixelFormat::Bgra32 }, kTextureData.data());
+		return static_cast<bool>(_whiteTexture2D);
+	}
+
+	UniquePtr<Texture2D> VulkanRenderer::createTexture2D(const ImageInfo& info, const void* data)
+	{
+		if (info.pixelFormat() != PixelFormat::Bgra32)
+			return {};
+		const auto pixelSize = info.pixelSize();
+		const auto stride = info.stride();
+		if (stride % pixelSize)
+			return {};
+		try
+		{
+			return makeUnique<Texture2D, VulkanTexture2D>(_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
+		}
+		catch ([[maybe_unused]] const seir::VulkanError& e)
+		{
+#ifndef NDEBUG
+			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
+#endif
+			return {};
 		}
 	}
 
@@ -165,17 +198,17 @@ namespace seir
 		const auto descriptorSet =
 			vulkan::DescriptorBuilder{}
 				.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBuffers[index])
-				.bindImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _textureImage.viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+				.bindImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _whiteTexture2D.get<VulkanTexture2D>()->viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 				.build(_descriptorAllocator, _pipeline.descriptorSetLayout());
 		auto commandBuffer = _context.createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		const auto renderPassInfo = _renderTarget.renderPassInfo(index);
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
 		VkBuffer vertexBuffers[]{ _vertexBuffer.handle() };
 		VkDeviceSize offsets[]{ 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(commandBuffer, _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(kIndexData.size()), 1, 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffer);
 		commandBuffer.finish();
