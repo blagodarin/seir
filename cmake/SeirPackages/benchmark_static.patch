@@ -8,7 +8,15 @@
    OUTPUT_NAME "benchmark"
    VERSION ${GENERIC_LIB_VERSION}
    SOVERSION ${GENERIC_LIB_SOVERSION}
-@@ -57,6 +57,7 @@
+@@ -56,13 +56,14 @@
+ endif()
+ 
+ if (NOT BUILD_SHARED_LIBS)
+-  target_compile_definitions(benchmark PRIVATE -DBENCHMARK_STATIC_DEFINE)
++  target_compile_definitions(benchmark PUBLIC BENCHMARK_STATIC_DEFINE)
+ endif()
+ 
+ # Benchmark main library
  add_library(benchmark_main "benchmark_main.cc")
  add_library(benchmark::benchmark_main ALIAS benchmark_main)
  set_target_properties(benchmark_main PROPERTIES

@@ -12,7 +12,8 @@ function(seir_provide_nasm result)
 			SHA1 "f3d25401783109ec999508af4dc967facf64971a"
 			NAME "${package}.zip"
 			EXTRACT_DIR "${package}"
-			RESULT downloaded)
+			RESULT downloaded
+			)
 		set(path ${CMAKE_BINARY_DIR}/${package}/nasm.exe)
 		if(downloaded)
 			message(STATUS "[SEIR] Provided nasm at ${path}")

@@ -17,15 +17,15 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install clang-tidy-12 cppcheck libasound2-dev libvorbis-dev ninja-build
+          sudo apt-get install clang-tidy-14 cppcheck libasound2-dev libvorbis-dev ninja-build
       - name: Run clang-format
         run: |
-          clang-format-12 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
+          clang-format-14 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
           git diff --color=always --exit-code --histogram
       - name: Run CMake
         env:
-          CC: clang-12
-          CXX: clang++-12
+          CC: clang-14
+          CXX: clang++-14
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
@@ -35,7 +35,7 @@ jobs:
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_BENCHMARKS=ON \
             -DSEIR_COMPRESSION_ZLIB=ON \
-            -DSEIR_COMPRESSION_ZSTD=ON \
+            -DSEIR_COMPRESSION_ZSTD=OFF \
             -DSEIR_EXAMPLES=ON \
             -DSEIR_IMAGE_BMP=ON \
             -DSEIR_IMAGE_ICO=ON \
@@ -58,4 +58,4 @@ jobs:
         run: |
           find '${{ github.workspace }}/libs' -name '*.cpp' \! \( -path '*/benchmarks/*' -o -path '*/tests/*' -o -path '*/vulkan/*' -o -path '*_wasapi.cpp' -o -path '*_windows.cpp' \) \
             -printf '[%P]\n' \
-            -exec clang-tidy-12 -p='${{ github.workspace }}/build' --quiet '{}' \;
+            -exec clang-tidy-14 -p='${{ github.workspace }}/build' --quiet '{}' \;

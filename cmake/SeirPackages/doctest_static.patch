@@ -1,11 +1,12 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -68,10 +68,10 @@
+@@ -68,11 +68,11 @@
  ################################################################################
  
  if(${DOCTEST_WITH_MAIN_IN_STATIC_LIB})
 -    add_library(${PROJECT_NAME}_with_main STATIC EXCLUDE_FROM_ALL ${doctest_parts_folder}/doctest.cpp)
 +    add_library(${PROJECT_NAME}_with_main STATIC ${doctest_parts_folder}/doctest.cpp)
+     add_library(${PROJECT_NAME}::${PROJECT_NAME}_with_main ALIAS ${PROJECT_NAME}_with_main)
      target_compile_definitions(${PROJECT_NAME}_with_main PRIVATE
          DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN)
 -    set_target_properties(${PROJECT_NAME}_with_main PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
@@ -13,7 +14,7 @@
      target_link_libraries(${PROJECT_NAME}_with_main PUBLIC ${PROJECT_NAME})
  endif()
  
-@@ -130,7 +130,7 @@
+@@ -127,7 +127,7 @@
  
  if(NOT ${DOCTEST_NO_INSTALL})
      install(

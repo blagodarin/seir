@@ -12,7 +12,8 @@ function(seir_provide_freetype result)
 		SHA1 "5133eed28a7624ffabbf6d00aa3f68b841d62d80"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/freetype)
 	if(downloaded OR NOT EXISTS ${install_dir})
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})

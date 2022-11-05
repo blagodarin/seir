@@ -6,7 +6,6 @@
 
 #include <cassert>
 #include <memory>
-#include <type_traits>
 #include <utility>
 
 namespace seir
@@ -30,12 +29,12 @@ namespace seir
 		[[nodiscard]] constexpr T* begin() noexcept { return reinterpret_cast<T*>(_data); }
 		[[nodiscard]] constexpr const T* begin() const noexcept { return reinterpret_cast<const T*>(_data); }
 		[[nodiscard]] constexpr const T* cbegin() const noexcept { return reinterpret_cast<const T*>(_data); }
-		[[nodiscard]] constexpr const T* cend() const noexcept { return reinterpret_cast<const T*>(_data + _size); }
+		[[nodiscard]] constexpr const T* cend() const noexcept { return reinterpret_cast<const T*>(_data) + _size; }
 		[[nodiscard]] constexpr T* data() noexcept { return reinterpret_cast<T*>(_data); }
 		[[nodiscard]] constexpr const T* data() const noexcept { return reinterpret_cast<const T*>(_data); }
 		[[nodiscard]] constexpr bool empty() const noexcept { return !_size; }
-		[[nodiscard]] constexpr T* end() noexcept { return reinterpret_cast<T*>(_data + _size); }
-		[[nodiscard]] constexpr const T* end() const noexcept { return reinterpret_cast<const T*>(_data + _size); }
+		[[nodiscard]] constexpr T* end() noexcept { return reinterpret_cast<T*>(_data) + _size; }
+		[[nodiscard]] constexpr const T* end() const noexcept { return reinterpret_cast<const T*>(_data) + _size; }
 		[[nodiscard]] constexpr size_t size() const noexcept { return _size; }
 
 		[[nodiscard]] constexpr T& back() noexcept
@@ -60,7 +59,7 @@ namespace seir
 		T& emplace_back(Args&&... args)
 		{
 			assert(_size < kCapacity);
-			T* item = new (_data + _size) T{ std::forward<Args>(args)... }; // cppcheck-suppress[unreadVariable] // NOLINT(cppcoreguidelines-init-variables)
+			T* item = new (_data + _size * sizeof(T)) T{ std::forward<Args>(args)... }; // cppcheck-suppress[unreadVariable] // NOLINT(cppcoreguidelines-init-variables)
 			++_size;
 			return *item;
 		}
@@ -75,7 +74,7 @@ namespace seir
 		T& push_back(const T& value)
 		{
 			assert(_size < kCapacity);
-			T* item = new (_data + _size) T{ value }; // NOLINT(cppcoreguidelines-init-variables)
+			T* item = new (_data + _size * sizeof(T)) T{ value }; // NOLINT(cppcoreguidelines-init-variables)
 			++_size;
 			return *item;
 		}
@@ -94,6 +93,6 @@ namespace seir
 
 	private:
 		size_t _size = 0;
-		alignas(kAlignment) std::aligned_storage_t<sizeof(T), alignof(T)> _data[kCapacity];
+		alignas(kAlignment) std::byte _data[kCapacity * sizeof(T)];
 	};
 }

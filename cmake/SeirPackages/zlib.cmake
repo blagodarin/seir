@@ -5,14 +5,15 @@
 function(seir_provide_zlib result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("zlib")
-	set(version "1.2.12")
+	set(version "1.2.13")
 	set(package "zlib-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/zlib.patch)
 	seir_download("https://zlib.net/${package}.tar.xz"
-		SHA1 "37d26cd1138597c866b8e3e137156c82a0f0f960"
+		SHA1 "b459b42aa533968ae403c0002a255d62d3136954"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/zlib)
 	if(downloaded OR NOT EXISTS ${install_dir})
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
@@ -25,7 +26,8 @@ function(seir_provide_zlib result)
 		file(INSTALL
 			${build_dir}/zconf.h
 			${source_dir}/zlib.h
-			DESTINATION ${install_dir}/include)
+			DESTINATION ${install_dir}/include
+			)
 		message(STATUS "[SEIR] Provided ZLIB at ${install_dir}")
 		if(arg_SET_UPDATED)
 			set(${arg_SET_UPDATED} ON PARENT_SCOPE)

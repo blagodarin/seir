@@ -15,7 +15,8 @@ function(seir_provide_vorbis result)
 		SHA1 "0a2dd71a999656b8091506839e8007a61a8fda1f"
 		EXTRACT_DIR ${package}
 		PATCH ${patch}
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/vorbis)
 	if(downloaded OR NOT EXISTS ${install_dir} OR ogg_updated)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})

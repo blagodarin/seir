@@ -7,7 +7,9 @@
 
 #include <iostream>
 
-#include <plf_colony.h>
+#if __has_include(<plf_colony.h>)
+#	include <plf_colony.h>
+#endif
 
 int u8main(int, char**)
 {

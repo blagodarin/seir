@@ -5,15 +5,19 @@
 function(seir_provide_benchmark result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("benchmark")
-	set(version "1.6.1")
+	set(version "1.7.0")
 	set(package "benchmark-${version}")
-	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/benchmark.patch)
+	seir_select(patch ${arg_STATIC_RUNTIME}
+		${CMAKE_CURRENT_FUNCTION_LIST_DIR}/benchmark_static.patch
+		${CMAKE_CURRENT_FUNCTION_LIST_DIR}/benchmark_shared.patch
+		)
 	seir_download("https://github.com/google/benchmark/archive/refs/tags/v${version}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA1 "1faaa54195824bbe151c1ebee31623232477d075"
+		SHA1 "37193f555cfd81363d03d7c03e1fb4fa734c9e6a"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/benchmark)
 	if(downloaded OR NOT EXISTS ${install_dir})
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})

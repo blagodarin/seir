@@ -8,14 +8,15 @@ function(seir_provide_jpeg result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("jpeg")
 	seir_provide_nasm(nasm_flag FLAG SET_UPDATED nasm_updated)
-	set(version "2.1.3")
+	set(version "2.1.4")
 	set(package "libjpeg-turbo-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/jpeg.patch)
 	seir_download("https://downloads.sourceforge.net/project/libjpeg-turbo/${version}/${package}.tar.gz"
-		SHA1 "6dec48193bb27e1c07abae8230031ce9ecb1cfec"
+		SHA1 "5a355c08caa326cef7c2a61e062edfe8dd02ac07"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/jpeg)
 	if(_downloaded OR NOT EXISTS ${install_dir} OR nasm_updated)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
@@ -37,7 +38,8 @@ function(seir_provide_jpeg result)
 			${source_dir}/jerror.h
 			${source_dir}/jmorecfg.h
 			${source_dir}/jpeglib.h
-			DESTINATION ${install_dir}/include)
+			DESTINATION ${install_dir}/include
+			)
 		message(STATUS "[SEIR] Provided JPEG at ${install_dir}")
 		if(arg_SET_UPDATED)
 			set(${arg_SET_UPDATED} ON PARENT_SCOPE)

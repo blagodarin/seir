@@ -42,8 +42,8 @@ jobs:
         include:
           - cc: gcc-11
             cxx: g++-11
-          - cc: clang-12
-            cxx: clang++-12
+          - cc: clang-14
+            cxx: clang++-14
       fail-fast: false
     env:
       CC: ${{ matrix.cc }}

@@ -105,9 +105,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		-Wno-tautological-type-limit-compare # https://reviews.llvm.org/D41512
 		-Wno-weak-vtables
 		)
-	if(NOT APPLE)
-		add_compile_options(-Wno-return-std-move-in-c++11)
-	endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

@@ -10,7 +10,8 @@ function(seir_provide_zstd result)
 	seir_download("https://github.com/facebook/zstd/releases/download/v${version}/${package}.tar.zst"
 		SHA1 "48f24a434f1f06ac682638a81f59688f0bc072b0"
 		EXTRACT_DIR "${package}"
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/zstd)
 	if(downloaded OR NOT EXISTS ${install_dir})
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})

@@ -1,0 +1,11 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -56,7 +56,7 @@
+ endif()
+ 
+ if (NOT BUILD_SHARED_LIBS)
+-  target_compile_definitions(benchmark PRIVATE -DBENCHMARK_STATIC_DEFINE)
++  target_compile_definitions(benchmark PUBLIC BENCHMARK_STATIC_DEFINE)
+ endif()
+ 
+ # Benchmark main library

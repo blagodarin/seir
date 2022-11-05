@@ -5,6 +5,7 @@
 #include "context.hpp"
 
 #include <seir_app/window.hpp>
+#include <seir_base/int_utils.hpp>
 #include "commands.hpp"
 #include "error.hpp"
 #include "pipeline.hpp"
@@ -982,7 +983,7 @@ namespace seir
 					fmt::print(stderr, "Vulkan device extensions:\n");
 					for (const auto& extension : extensions)
 						fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);
-					fmt::print(stderr, "Vulkan MSAA sample count: {}\n", _maxSampleCount);
+					fmt::print(stderr, "Vulkan MSAA sample count: {}\n", toUnderlying(_maxSampleCount));
 					fmt::print(stderr, "\n");
 #endif
 					return;

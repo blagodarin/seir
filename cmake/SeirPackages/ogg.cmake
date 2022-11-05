@@ -12,7 +12,8 @@ function(seir_provide_ogg result)
 		SHA1 "5a368421a636f7faa4c2f662857cb507dffd7c99"
 		EXTRACT_DIR ${package}
 		PATCH ${patch}
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/ogg)
 	if(downloaded OR NOT EXISTS ${install_dir})
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})

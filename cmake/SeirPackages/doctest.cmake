@@ -5,15 +5,19 @@
 function(seir_provide_doctest result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("doctest")
-	set(version "2.4.7") # 2.4.8 breaks Clang builds.
+	set(version "2.4.9")
 	set(package "doctest-${version}")
-	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest_static.patch ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest_shared.patch)
-	seir_download("https://github.com/onqtam/doctest/archive/refs/tags/${version}.tar.gz"
+	seir_select(patch ${arg_STATIC_RUNTIME}
+		${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest_static.patch
+		${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest_shared.patch
+		)
+	seir_download("https://github.com/doctest/doctest/archive/refs/tags/v${version}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA1 "3e687657bf1be682b9a551b7770e2dfa9a8d9e11"
+		SHA1 "9c2a6b805fb3d52a4eb0ea88da0f8b38cff4ebc0"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
-		RESULT downloaded)
+		RESULT downloaded
+		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/doctest)
 	if(downloaded OR NOT EXISTS ${install_dir})
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
