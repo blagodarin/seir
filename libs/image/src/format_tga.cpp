@@ -90,7 +90,7 @@ namespace seir
 			|| header->image.descriptor & kTgaReservedMask)
 			return nullptr;
 
-		PixelFormat pixelFormat;
+		PixelFormat pixelFormat; // NOLINT(cppcoreguidelines-init-variables)
 		if (header->imageType == TgaImageType::BlackAndWhite)
 		{
 			if (header->image.pixelDepth == 8)
@@ -110,7 +110,7 @@ namespace seir
 		else
 			return nullptr;
 
-		ImageAxes axes;
+		ImageAxes axes; // NOLINT(cppcoreguidelines-init-variables)
 		if (const auto origin = header->image.descriptor & kTgaOriginMask; origin == kTgaBottomLeft)
 			axes = ImageAxes::XRightYUp;
 		else if (origin == kTgaTopLeft)

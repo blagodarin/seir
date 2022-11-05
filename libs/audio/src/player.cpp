@@ -9,10 +9,11 @@
 #include "mixer.hpp"
 
 #include <cassert>
-#include <cstdio>
 #include <mutex>
 #include <thread>
 #include <vector>
+
+#include <fmt/core.h>
 
 namespace
 {
@@ -73,20 +74,9 @@ namespace
 
 		void onBackendError(const char* function, int code, const std::string& description) override
 		{
-			std::string message;
-			if (description.empty())
-			{
-				constexpr auto pattern = "[%s] Error 0x%08X";
-				message.resize(static_cast<size_t>(std::snprintf(nullptr, 0, pattern, function, code)), '\0');
-				std::snprintf(message.data(), message.size() + 1, pattern, function, code);
-			}
-			else
-			{
-				constexpr auto pattern = "[%s] Error 0x%08X: %s";
-				message.resize(static_cast<size_t>(std::snprintf(nullptr, 0, pattern, function, code, description.c_str())), '\0');
-				std::snprintf(message.data(), message.size() + 1, pattern, function, code, description.c_str());
-			}
-			_callbacks.onPlaybackError(std::move(message));
+			_callbacks.onPlaybackError(description.empty()
+					? fmt::format("[{}] Error 0x{:08X}", function, code)
+					: fmt::format("[{}] Error 0x{:08X}: {}", function, code, description));
 		}
 
 		bool onBackendIdle() override

@@ -13,7 +13,7 @@ namespace
 	public:
 		constexpr explicit Base(int& counter) noexcept
 			: _counter{ counter } { ++_counter; }
-		~Base() noexcept override { --_counter; }
+		virtual ~Base() noexcept { --_counter; }
 
 	protected:
 		int& _counter;

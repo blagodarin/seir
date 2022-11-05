@@ -2,6 +2,7 @@
 Checks: >
   *,
   -altera-*,
+  -bugprone-easily-swappable-parameters,
   -cppcoreguidelines-avoid-c-arrays,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-c-copy-assignment-signature,
@@ -29,6 +30,7 @@ Checks: >
   -misc-unconventional-assign-operator,
   -misc-unused-parameters,
   -modernize-avoid-c-arrays,
+  -modernize-pass-by-value,
   -modernize-use-trailing-return-type,
   -portability-simd-intrinsics,
   -readability-braces-around-statements,

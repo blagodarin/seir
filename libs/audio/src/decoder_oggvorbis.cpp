@@ -33,7 +33,7 @@ namespace
 			if (::ov_open_callbacks(&_reader, &_oggVorbis, nullptr, 0, { readCallback, seekCallback, closeCallback, tellCallback }) < 0)
 				return false;
 			vorbis_info* info = ::ov_info(&_oggVorbis, -1);
-			seir::AudioChannelLayout channelLayout;
+			seir::AudioChannelLayout channelLayout; // NOLINT(cppcoreguidelines-init-variables)
 			switch (info->channels)
 			{
 			case 1: channelLayout = seir::AudioChannelLayout::Mono; break;

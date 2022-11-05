@@ -12,6 +12,10 @@
 #include "error.hpp"
 #include "utils.hpp"
 
+#ifndef NDEBUG
+#	include <fmt/core.h>
+#endif
+
 namespace
 {
 	struct UniformBufferObject

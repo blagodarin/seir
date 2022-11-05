@@ -17,6 +17,8 @@ namespace seir
 		//
 		[[nodiscard]] static UniquePtr<App> create();
 
+		virtual ~App() noexcept = default;
+
 		// Processes application events.
 		// Returns false if the application was requested to quit.
 		[[nodiscard]] virtual bool processEvents(EventCallbacks&) = 0;

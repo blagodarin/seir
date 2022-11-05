@@ -15,7 +15,7 @@ namespace seir::synth
 	public:
 		constexpr auto operator[](Note note) const noexcept
 		{
-			return _values[static_cast<size_t>(note) % _values.size()] * static_cast<float>(1 << (static_cast<size_t>(note) / _values.size()));
+			return _values[static_cast<size_t>(note) % _values.size()] * static_cast<float>(1 << (static_cast<size_t>(note) / _values.size())); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 		}
 
 	private:

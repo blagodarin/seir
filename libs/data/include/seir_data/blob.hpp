@@ -30,6 +30,8 @@ namespace seir
 		// NOTE: The TemporaryFile must stay valid for the lifetime of the Blob.
 		[[nodiscard]] static SharedPtr<Blob> from(TemporaryFile&);
 
+		virtual ~Blob() noexcept = default;
+
 		// Returns the data pointer.
 		[[nodiscard]] constexpr const void* data() const noexcept { return _data; }
 

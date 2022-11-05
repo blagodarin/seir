@@ -2,7 +2,6 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_3rdparty/fmt.hpp>
 #include <seir_app/app.hpp>
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
@@ -11,6 +10,8 @@
 
 #include <chrono>
 #include <optional>
+
+#include <fmt/core.h>
 
 namespace
 {

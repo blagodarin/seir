@@ -21,10 +21,14 @@ namespace seir
 		bool loop = false;
 	};
 
+	//
 	class AudioDecoder : public ReferenceCounter
 	{
 	public:
+		//
 		[[nodiscard]] static UniquePtr<AudioDecoder> create(SharedPtr<Blob>&&, const AudioDecoderPreferences& = {});
+
+		virtual ~AudioDecoder() noexcept = default;
 
 		// Returns the decoded audio format.
 		[[nodiscard]] virtual AudioFormat format() const = 0;

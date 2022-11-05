@@ -128,7 +128,7 @@ namespace
 			::jpeg_create_decompress(&decompressor);
 			decompressor.src = &_sourceMgr;
 			::jpeg_read_header(&decompressor, TRUE);
-			seir::PixelFormat pixelFormat;
+			seir::PixelFormat pixelFormat; // NOLINT(cppcoreguidelines-init-variables)
 			if (decompressor.out_color_space == JCS_GRAYSCALE)
 				pixelFormat = seir::PixelFormat::Gray8;
 			else

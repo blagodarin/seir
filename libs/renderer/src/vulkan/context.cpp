@@ -13,6 +13,10 @@
 
 #include <unordered_set>
 
+#ifndef NDEBUG
+#	include <fmt/core.h>
+#endif
+
 namespace
 {
 #ifndef NDEBUG

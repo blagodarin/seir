@@ -110,14 +110,14 @@ namespace seir
 		const auto fmt = reader.read<WavFormatChunk>();
 		if (!fmt || !reader.skip(fmtHeader->size - sizeof(WavFormatChunk)))
 			return {};
-		AudioSampleType sampleType;
+		AudioSampleType sampleType; // NOLINT(cppcoreguidelines-init-variables)
 		if (fmt->format == WAVE_FORMAT_PCM && fmt->bitsPerSample == 16)
 			sampleType = AudioSampleType::i16;
 		else if (fmt->format == WAVE_FORMAT_IEEE_FLOAT && fmt->bitsPerSample == 32)
 			sampleType = AudioSampleType::f32;
 		else
 			return {};
-		AudioChannelLayout channelLayout;
+		AudioChannelLayout channelLayout; // NOLINT(cppcoreguidelines-init-variables)
 		switch (fmt->channels)
 		{
 		case 1: channelLayout = AudioChannelLayout::Mono; break;

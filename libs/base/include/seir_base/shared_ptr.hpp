@@ -22,7 +22,7 @@ namespace seir
 
 	protected:
 		ReferenceCounter() noexcept = default;
-		virtual ~ReferenceCounter() noexcept = default;
+		~ReferenceCounter() noexcept = default;
 
 	private:
 		mutable std::atomic<int> _references{ 1 };

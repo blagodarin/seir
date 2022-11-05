@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifndef NDEBUG
-#	include <seir_3rdparty/fmt.hpp>
-#endif
-
 namespace seir
 {
 	float clockTime() noexcept;

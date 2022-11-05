@@ -43,7 +43,7 @@ namespace seir
 			|| bitmapHeader->compression != BmpCompression::Rgb)
 			return nullptr;
 
-		PixelFormat pixelFormat;
+		PixelFormat pixelFormat; // NOLINT(cppcoreguidelines-init-variables)
 		switch (bitmapHeader->bitsPerPixel)
 		{
 		case 24: pixelFormat = PixelFormat::Bgr24; break;

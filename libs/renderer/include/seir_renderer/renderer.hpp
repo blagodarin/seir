@@ -15,6 +15,8 @@ namespace seir
 	//
 	class Texture2D : public ReferenceCounter
 	{
+	public:
+		virtual ~Texture2D() noexcept = default;
 	};
 
 	//
