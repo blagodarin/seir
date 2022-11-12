@@ -18,6 +18,7 @@ set(SOURCES
 	src/string_utils.cpp
 	src/unique_ptr.cpp
 	src/utf8.cpp
+	src/z85.cpp
 	)
 if(WIN32)
 	list(APPEND SOURCES

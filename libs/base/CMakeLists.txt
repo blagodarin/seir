@@ -18,6 +18,7 @@ set(HEADERS
 	include/seir_base/string_utils.hpp
 	include/seir_base/unique_ptr.hpp
 	include/seir_base/utf8.hpp
+	include/seir_base/z85.hpp
 	)
 set(SOURCES
 	src/allocator.cpp
