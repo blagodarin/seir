@@ -49,8 +49,9 @@ namespace seir
 			kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad
 		};
 		uint32_t value = 0;
+		static_assert(0xFFFFFFFFu == 85 * 0x03030303u);
 		for (const auto i : input)
-			if (const auto mapped = table[static_cast<uint8_t>(i)]; mapped != kBad)
+			if (const auto mapped = table[static_cast<uint8_t>(i)]; mapped != kBad && (value < 0x03030303u || (value == 0x03030303u && !mapped)))
 				value = value * 85 + mapped;
 			else
 				return false;
