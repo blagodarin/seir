@@ -5,6 +5,7 @@
 set(HEADERS
 	include/seir_base/allocator.hpp
 	include/seir_base/base64.hpp
+	include/seir_base/base85.hpp
 	include/seir_base/buffer.hpp
 	include/seir_base/endian.hpp
 	include/seir_base/fixed.hpp
@@ -19,7 +20,6 @@ set(HEADERS
 	include/seir_base/string_utils.hpp
 	include/seir_base/unique_ptr.hpp
 	include/seir_base/utf8.hpp
-	include/seir_base/z85.hpp
 	)
 set(SOURCES
 	src/allocator.cpp

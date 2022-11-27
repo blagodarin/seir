@@ -5,6 +5,7 @@
 set(SOURCES
 	src/allocator.cpp
 	src/base64.cpp
+	src/base85.cpp
 	src/buffer.cpp
 	src/endian.cpp
 	src/fixed.cpp
@@ -19,7 +20,6 @@ set(SOURCES
 	src/string_utils.cpp
 	src/unique_ptr.cpp
 	src/utf8.cpp
-	src/z85.cpp
 	)
 if(WIN32)
 	list(APPEND SOURCES
@@ -32,7 +32,7 @@ target_link_libraries(seir_base_tests PRIVATE Seir::base doctest::doctest_with_m
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	target_compile_options(seir_base_tests PRIVATE -Wno-self-assign-overloaded -Wno-self-move)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	set_property(SOURCE src/base64.cpp src/z85.cpp APPEND PROPERTY COMPILE_OPTIONS
+	set_property(SOURCE src/base64.cpp src/base85.cpp APPEND PROPERTY COMPILE_OPTIONS
 		/wd4866 # compiler may not enforce left-to-right evaluation order for call to 'operator<<'
 		)
 endif()
