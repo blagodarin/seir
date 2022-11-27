@@ -4,6 +4,7 @@
 
 set(HEADERS
 	include/seir_base/allocator.hpp
+	include/seir_base/base64.hpp
 	include/seir_base/buffer.hpp
 	include/seir_base/endian.hpp
 	include/seir_base/fixed.hpp
