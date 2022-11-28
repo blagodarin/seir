@@ -6,6 +6,7 @@
 
 #include <limits>
 #include <span>
+#include <utility>
 #include <vector>
 
 #include <doctest/doctest.h>

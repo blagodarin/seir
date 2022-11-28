@@ -9,6 +9,7 @@
 #include <array>
 #include <cmath>
 #include <numeric>
+#include <utility>
 
 #include <doctest/doctest.h>
 

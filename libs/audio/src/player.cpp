@@ -8,6 +8,7 @@
 #include "backend.hpp"
 #include "mixer.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <mutex>
 #include <thread>
