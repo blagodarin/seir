@@ -15,8 +15,11 @@ namespace seir
 	// Encodes data using Z85 encoding (see https://rfc.zeromq.org/spec/32/).
 	[[nodiscard]] constexpr bool encodeZ85(std::span<char> output, std::span<const std::byte> input) noexcept;
 
+	//
+	[[nodiscard]] constexpr size_t base85DecodedSize(size_t size) noexcept;
+
 	// Decodes Z85-encoded data (see https://rfc.zeromq.org/spec/32/).
-	[[nodiscard]] constexpr bool decodeZ85(std::span<std::byte, 4> output, std::span<const char, 5> input) noexcept;
+	[[nodiscard]] constexpr bool decodeZ85(std::span<std::byte> output, std::span<const char> input) noexcept;
 }
 
 constexpr size_t seir::base85EncodedSize(size_t size) noexcept
@@ -51,19 +54,31 @@ constexpr bool seir::encodeZ85(std::span<char> output, std::span<const std::byte
 	case 2: value += std::to_integer<uint32_t>(in[1]) << 16; [[fallthrough]];
 	case 1:
 		value += std::to_integer<uint32_t>(in[0]) << 24;
+		out[0] = table[value / (85 * 85 * 85 * 85)];
 		switch (tail)
 		{
-		case 3: out[3] = table[value / 85 % 85]; [[fallthrough]];
-		case 2: out[2] = table[value / (85 * 85) % 85]; [[fallthrough]];
-		case 1:
+		case 3:
 			out[1] = table[value / (85 * 85 * 85) % 85];
-			out[0] = table[value / (85 * 85 * 85 * 85)];
+			out[2] = table[value / (85 * 85) % 85];
+			out[3] = table[(value + 84) / 85 % 85];
+			break;
+		case 2:
+			out[1] = table[value / (85 * 85 * 85) % 85];
+			out[2] = table[(value + 84 * 85) / (85 * 85) % 85];
+			break;
+		case 1:
+			out[1] = table[(value + 84 * 85 * 85) / (85 * 85 * 85) % 85];
 		}
 	}
 	return true;
 }
 
-constexpr bool seir::decodeZ85(std::span<std::byte, 4> output, std::span<const char, 5> input) noexcept
+constexpr size_t seir::base85DecodedSize(size_t size) noexcept
+{
+	return size - size / 5 - static_cast<size_t>(size % 5 > 0);
+}
+
+constexpr bool seir::decodeZ85(std::span<std::byte> output, std::span<const char> input) noexcept
 {
 	constexpr auto kBad = 0xFF;
 	constexpr uint8_t table[256]{
@@ -84,16 +99,47 @@ constexpr bool seir::decodeZ85(std::span<std::byte, 4> output, std::span<const c
 		kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad,
 		kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad
 	};
-	uint32_t value = 0;
-	static_assert(0xFFFFFFFFu == 85 * 0x03030303u);
-	for (const auto i : input)
-		if (const auto mapped = table[static_cast<uint8_t>(i)]; mapped != kBad && (value < 0x03030303u || (value == 0x03030303u && !mapped)))
-			value = value * 85 + mapped;
-		else
+
+	const auto tail = input.size() % 5;
+	if (tail == 1 || output.size() < input.size() - input.size() / 5 - static_cast<size_t>(tail > 0))
+		return false;
+	auto out = output.data();
+	auto in = input.data();
+	for (const auto end = in + input.size() - tail; in != end;)
+	{
+		uint64_t value = 0;
+		for (size_t i = 0; i < 5; ++i)
+		{
+			if (const auto next = table[static_cast<uint8_t>(*in++)]; next == kBad)
+				return false;
+			else
+				value = value * 85 + next;
+		}
+		if (value > 0xFFFFFFFFu)
 			return false;
-	output[0] = static_cast<std::byte>((value >> 24) & 0xFF);
-	output[1] = static_cast<std::byte>((value >> 16) & 0xFF);
-	output[2] = static_cast<std::byte>((value >> 8) & 0xFF);
-	output[3] = static_cast<std::byte>(value & 0xFF);
+		*out++ = static_cast<std::byte>(value >> 24);
+		*out++ = static_cast<std::byte>((value >> 16) & 0xFF);
+		*out++ = static_cast<std::byte>((value >> 8) & 0xFF);
+		*out++ = static_cast<std::byte>(value & 0xFF);
+	}
+	if (tail > 0)
+	{
+		uint64_t value = 0;
+		for (size_t i = 0; i < tail; ++i)
+		{
+			if (const auto next = table[static_cast<uint8_t>(*in++)]; next == kBad)
+				return false;
+			else
+				value = value * 85 + next;
+		}
+		for (auto i = tail; i < 5; ++i)
+			value *= 85;
+		switch (tail)
+		{
+		case 4: out[2] = static_cast<std::byte>((value >> 8) & 0xFF); [[fallthrough]];
+		case 3: out[1] = static_cast<std::byte>((value >> 16) & 0xFF); [[fallthrough]];
+		case 2: out[0] = static_cast<std::byte>(value >> 24);
+		}
+	}
 	return true;
 }
