@@ -48,27 +48,25 @@ constexpr bool seir::encodeZ85(std::span<char> output, std::span<const std::byte
 		*out++ = table[value / 85 % 85];
 		*out++ = table[value % 85];
 	}
-	switch (uint32_t value = 0; tail)
+	if (tail > 0)
 	{
-	case 3: value += std::to_integer<uint32_t>(in[2]) << 8; [[fallthrough]];
-	case 2: value += std::to_integer<uint32_t>(in[1]) << 16; [[fallthrough]];
-	case 1:
-		value += std::to_integer<uint32_t>(in[0]) << 24;
-		out[0] = table[value / (85 * 85 * 85 * 85)];
-		switch (tail)
+		auto value = std::to_integer<uint32_t>(in[0]) << 24;
+		if (tail > 1)
 		{
-		case 3:
+			value += std::to_integer<uint32_t>(in[1]) << 16;
+			if (tail > 2)
+			{
+				value += std::to_integer<uint32_t>(in[2]) << 8;
+				out[3] = table[(value + 84) / 85 % 85];
+				out[2] = table[value / (85 * 85) % 85];
+			}
+			else
+				out[2] = table[(value + 84 * 85) / (85 * 85) % 85];
 			out[1] = table[value / (85 * 85 * 85) % 85];
-			out[2] = table[value / (85 * 85) % 85];
-			out[3] = table[(value + 84) / 85 % 85];
-			break;
-		case 2:
-			out[1] = table[value / (85 * 85 * 85) % 85];
-			out[2] = table[(value + 84 * 85) / (85 * 85) % 85];
-			break;
-		case 1:
-			out[1] = table[(value + 84 * 85 * 85) / (85 * 85 * 85) % 85];
 		}
+		else
+			out[1] = table[(value + 84 * 85 * 85) / (85 * 85 * 85) % 85];
+		out[0] = table[value / (85 * 85 * 85 * 85)];
 	}
 	return true;
 }

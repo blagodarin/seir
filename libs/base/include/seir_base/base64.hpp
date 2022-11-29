@@ -51,17 +51,18 @@ constexpr bool seir::encodeBase64Url(std::span<char> output, std::span<const std
 		auto value = std::to_integer<uint32_t>(in[0]) << 16;
 		out[0] = table[value >> 18];
 		if (tail > 1)
+		{
 			value += std::to_integer<uint32_t>(in[1]) << 8;
-		out[1] = table[(value >> 12) & 0b111111];
-		if (tail > 1)
 			out[2] = table[(value >> 6) & 0b111111];
+		}
+		out[1] = table[(value >> 12) & 0b111111];
 	}
 	return true;
 }
 
 constexpr size_t seir::base64DecodedSize(size_t size) noexcept
 {
-	return size - size / 4 - static_cast<size_t>(size % 4 > 0);
+	return size - (size >> 2) - static_cast<size_t>((size & 0b11) > 0);
 }
 
 constexpr bool seir::decodeBase64Url(std::span<std::byte> output, std::span<const char> input) noexcept
@@ -86,8 +87,8 @@ constexpr bool seir::decodeBase64Url(std::span<std::byte> output, std::span<cons
 		kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad, kBad
 	};
 
-	const auto tail = input.size() % 4;
-	if (tail == 1 || output.size() < input.size() - input.size() / 4 - static_cast<size_t>(tail > 0))
+	const auto tail = input.size() & 0b11;
+	if (tail == 1 || output.size() < input.size() - (input.size() >> 2) - static_cast<size_t>(tail > 0))
 		return false;
 	auto out = output.data();
 	auto in = input.data();
