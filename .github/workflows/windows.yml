@@ -18,8 +18,8 @@ jobs:
     env:
       CMAKE_GENERATOR: Ninja
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}\build\_SeirDownloads
           key: windows-${{ hashFiles('cmake/SeirPackages/*.cmake') }}
@@ -72,8 +72,8 @@ jobs:
       CMAKE_GENERATOR: Visual Studio 17 2022
       CMAKE_GENERATOR_PLATFORM: Win32
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}\build\_SeirDownloads
           key: windows-${{ hashFiles('cmake/SeirPackages') }}

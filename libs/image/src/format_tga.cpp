@@ -122,7 +122,7 @@ namespace seir
 			return nullptr;
 
 		const auto stride = header->image.width * pixelSize(pixelFormat);
-		const auto data = reader.peek(size_t{ stride } * header->image.height);
+		const auto data = reader.peek(size_t{ stride } * header->image.height); // cppcheck-suppress[redundantAssignment]
 		if (!data)
 			return nullptr;
 

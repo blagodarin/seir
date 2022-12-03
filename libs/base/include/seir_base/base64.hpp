@@ -55,7 +55,7 @@ constexpr bool seir::encodeBase64Url(std::span<char> output, std::span<const std
 			value += std::to_integer<uint32_t>(in[1]) << 8;
 			out[2] = table[(value >> 6) & 0b111111];
 		}
-		out[1] = table[(value >> 12) & 0b111111];
+		out[1] = table[(value >> 12) & 0b111111]; // cppcheck-suppress[unreadVariable]
 	}
 	return true;
 }
@@ -119,7 +119,7 @@ constexpr bool seir::decodeBase64Url(std::span<std::byte> output, std::span<cons
 		value <<= (4 - tail) * 6;
 		out[0] = static_cast<std::byte>(value >> 16);
 		if (tail == 3)
-			out[1] = static_cast<std::byte>((value >> 8) & 0xFF);
+			out[1] = static_cast<std::byte>((value >> 8) & 0xFF); // cppcheck-suppress[unreadVariable]
 	}
 	return true;
 }

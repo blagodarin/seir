@@ -56,7 +56,7 @@ namespace seir
 		const auto width = static_cast<uint32_t>(bitmapHeader->width);
 		const auto stride = ((width + 3) & ~uint32_t{ 3 }) * pixelSize(pixelFormat);
 		const auto height = static_cast<uint32_t>(bitmapHeader->height >= 0 ? bitmapHeader->height : -bitmapHeader->height);
-		const auto data = reader.peek(size_t{ stride } * height);
+		const auto data = reader.peek(size_t{ stride } * height); // cppcheck-suppress[redundantAssignment]
 		if (!data)
 			return nullptr;
 

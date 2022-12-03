@@ -143,6 +143,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		/wd5027 # move assignment operator was implicitly defined as deleted
 		/wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 		/wd5246 # the initialization of a subobject should be wrapped in braces
+		# Warnings from the standard library headers:
+		/wd5262 # implicit fall-through occurs here
+		/wd5264 # 'const' variable is not used
 		)
 endif()
 

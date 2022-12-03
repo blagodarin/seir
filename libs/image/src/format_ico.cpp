@@ -81,7 +81,7 @@ namespace seir
 
 		constexpr auto pixelFormat = PixelFormat::Bgra32;
 		const auto stride = ((width + 3) & ~uint32_t{ 3 }) * pixelSize(pixelFormat);
-		const auto data = reader.peek(size_t{ stride } * height);
+		const auto data = reader.peek(size_t{ stride } * height); // cppcheck-suppress[redundantAssignment]
 		if (!data)
 			return nullptr;
 

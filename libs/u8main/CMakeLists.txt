@@ -9,6 +9,11 @@ if(WIN32)
 	set(SOURCES
 		src/u8main_windows.cpp
 		)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		set_property(SOURCE src/u8main_windows.cpp APPEND PROPERTY COMPILE_OPTIONS
+			/wd4668 # '___' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+			)
+	endif()
 else()
 	set(SOURCES
 		src/u8main_posix.cpp

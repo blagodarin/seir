@@ -66,7 +66,7 @@ constexpr bool seir::encodeZ85(std::span<char> output, std::span<const std::byte
 		}
 		else
 			out[1] = table[(value + 84 * 85 * 85) / (85 * 85 * 85) % 85];
-		out[0] = table[value / (85 * 85 * 85 * 85)];
+		out[0] = table[value / (85 * 85 * 85 * 85)]; // cppcheck-suppress[unreadVariable]
 	}
 	return true;
 }
@@ -136,7 +136,7 @@ constexpr bool seir::decodeZ85(std::span<std::byte> output, std::span<const char
 		{
 		case 4: out[2] = static_cast<std::byte>((value >> 8) & 0xFF); [[fallthrough]];
 		case 3: out[1] = static_cast<std::byte>((value >> 16) & 0xFF); [[fallthrough]];
-		case 2: out[0] = static_cast<std::byte>(value >> 24);
+		case 2: out[0] = static_cast<std::byte>(value >> 24); // cppcheck-suppress[unreadVariable]
 		}
 	}
 	return true;
