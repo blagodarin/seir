@@ -13,6 +13,20 @@ namespace seir
 	class Window;
 
 	//
+	class Mesh : public ReferenceCounter
+	{
+	public:
+		//
+		enum class IndexType
+		{
+			U16, //
+			U32, //
+		};
+
+		virtual ~Mesh() noexcept = default;
+	};
+
+	//
 	class Texture2D : public ReferenceCounter
 	{
 	public:
@@ -29,10 +43,13 @@ namespace seir
 		virtual ~Renderer() noexcept = default;
 
 		//
+		[[nodiscard]] virtual UniquePtr<Mesh> createMesh(const void* vertexData, size_t vertexSize, size_t vertexCount, const void* indexData, Mesh::IndexType, size_t indexCount) = 0;
+
+		//
 		[[nodiscard]] virtual UniquePtr<Texture2D> createTexture2D(const ImageInfo&, const void*) = 0;
 		[[nodiscard]] UniquePtr<Texture2D> createTexture2D(const Image&);
 
 		//
-		virtual void draw() = 0;
+		virtual void draw(const Mesh&) = 0;
 	};
 }

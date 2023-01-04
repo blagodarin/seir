@@ -25,13 +25,6 @@ namespace
 		seir::Mat4 _projection;
 	};
 
-	struct Vertex
-	{
-		seir::Vec3 position;
-		seir::Vec3 color;
-		seir::Vec2 texCoord;
-	};
-
 	const uint32_t kVertexShader[]{
 #include "vertex_shader.glsl.spirv.inc"
 	};
@@ -45,24 +38,6 @@ namespace
 		0xff, 0xff, 0xff, 0xff,
 		0xff, 0xff, 0xff, 0xff,
 		0xff, 0xff, 0xff, 0xff
-	};
-
-	constexpr std::array kVertexData{
-		Vertex{ .position{ -1, -1, .5 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, -1, .5 }, .color{ 1, 1, 1 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, 1, .5 }, .color{ 0, 1, 0 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, 1, .5 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
-
-		Vertex{ .position{ -1, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, -1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, 1, 0 }, .color{ 1, 0, 1 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, 1, 0 }, .color{ 0, 0, 0 }, .texCoord{ 1, 1 } },
-	};
-
-	constexpr std::array<uint16_t, 10> kIndexData{
-		0, 1, 2, 3,
-		0xffff,
-		4, 5, 6, 7
 	};
 
 	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
@@ -85,6 +60,23 @@ namespace
 			._projection = seir::Mat4::projection3D(static_cast<float>(screenSize.width) / static_cast<float>(screenSize.height), 45, 1),
 		};
 	}
+
+	class VulkanMesh : public seir::Mesh
+	{
+	public:
+		VulkanMesh(seir::VulkanBuffer&& vertexBuffer, seir::VulkanBuffer&& indexBuffer, VkIndexType indexType, uint32_t indexCount) noexcept
+			: _vertexBuffer{ std::move(vertexBuffer) }, _indexBuffer{ std::move(indexBuffer) }, _indexType{ indexType }, _indexCount{ indexCount } {}
+		constexpr auto indexCount() const noexcept { return _indexCount; }
+		constexpr auto indexBufferHandle() const noexcept { return _indexBuffer.handle(); }
+		constexpr auto indexType() const noexcept { return _indexType; }
+		constexpr auto vertexBufferHandle() const noexcept { return _vertexBuffer.handle(); }
+
+	private:
+		const seir::VulkanBuffer _vertexBuffer;
+		const seir::VulkanBuffer _indexBuffer;
+		const VkIndexType _indexType;
+		const uint32_t _indexCount;
+	};
 
 	class VulkanTexture2D : public seir::Texture2D
 	{
@@ -129,8 +121,6 @@ namespace seir
 			_vertexShader = _context.createShader(kVertexShader, sizeof kVertexShader);
 			_fragmentShader = _context.createShader(kFragmentShader, sizeof kFragmentShader);
 			_textureSampler = _context.createSampler2D();
-			_vertexBuffer = _context.createDeviceBuffer(kVertexData.data(), kVertexData.size() * sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-			_indexBuffer = _context.createDeviceBuffer(kIndexData.data(), kIndexData.size() * sizeof(uint16_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 			_frameSync.create(_context._device);
 		}
 		catch ([[maybe_unused]] const seir::VulkanError& e)
@@ -142,6 +132,36 @@ namespace seir
 		}
 		_whiteTexture2D = createTexture2D({ 1, 2, 8, PixelFormat::Bgra32 }, kTextureData.data());
 		return static_cast<bool>(_whiteTexture2D);
+	}
+
+	UniquePtr<Mesh> VulkanRenderer::createMesh(const void* vertexData, size_t vertexSize, size_t vertexCount, const void* indexData, Mesh::IndexType indexType, size_t indexCount)
+	{
+		if (indexCount > std::numeric_limits<uint32_t>::max())
+			return {};
+		auto vulkanIndexType = VK_INDEX_TYPE_UINT16;
+		size_t indexSize = 0;
+		switch (indexType)
+		{
+		case Mesh::IndexType::U16:
+			indexSize = sizeof(uint16_t);
+			break;
+		case Mesh::IndexType::U32:
+			vulkanIndexType = VK_INDEX_TYPE_UINT32;
+			indexSize = sizeof(uint32_t);
+			break;
+		}
+		try
+		{
+			return makeUnique<Mesh, VulkanMesh>(_context.createDeviceBuffer(vertexData, vertexSize * vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+				_context.createDeviceBuffer(indexData, indexSize * indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT), vulkanIndexType, static_cast<uint32_t>(indexCount));
+		}
+		catch ([[maybe_unused]] const seir::VulkanError& e)
+		{
+#ifndef NDEBUG
+			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
+#endif
+			return {};
+		}
 	}
 
 	UniquePtr<Texture2D> VulkanRenderer::createTexture2D(const ImageInfo& info, const void* data)
@@ -165,7 +185,7 @@ namespace seir
 		}
 	}
 
-	void VulkanRenderer::draw()
+	void VulkanRenderer::draw(const Mesh& mesh)
 	{
 		if (!_renderTarget)
 		{
@@ -209,11 +229,12 @@ namespace seir
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
-		VkBuffer vertexBuffers[]{ _vertexBuffer.handle() };
+		const auto vulkanMesh = static_cast<const VulkanMesh*>(&mesh);
+		VkBuffer vertexBuffers[]{ vulkanMesh->vertexBufferHandle() };
 		VkDeviceSize offsets[]{ 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(kIndexData.size()), 1, 0, 0, 0);
+		vkCmdBindIndexBuffer(commandBuffer, vulkanMesh->indexBufferHandle(), 0, vulkanMesh->indexType());
+		vkCmdDrawIndexed(commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffer);
 		commandBuffer.finish();
 		SEIR_VK(vkResetFences(_context._device, 1, &frameFence));
