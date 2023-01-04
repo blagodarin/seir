@@ -88,7 +88,9 @@ int u8main(int, char**)
 	FpsCounter fpsCounter;
 	for (EventCallbacks callbacks; app->processEvents(callbacks);)
 	{
-		renderer->draw(*mesh);
+		renderer->render([&mesh](seir::RenderPass& renderPass) {
+			renderPass.drawMesh(*mesh);
+		});
 		if (const auto fps = fpsCounter.updateFps())
 			window->setTitle(fmt::format("Window [{:.1f} fps]", *fps));
 	}

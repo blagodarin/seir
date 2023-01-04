@@ -88,6 +88,26 @@ namespace
 	private:
 		seir::VulkanImage _image;
 	};
+
+	class VulkanRenderPass : public seir::RenderPass
+	{
+	public:
+		VulkanRenderPass(VkCommandBuffer commandBuffer)
+			: _commandBuffer{ commandBuffer } {}
+
+		void drawMesh(const seir::Mesh& mesh) override
+		{
+			const auto vulkanMesh = static_cast<const VulkanMesh*>(&mesh);
+			VkBuffer vertexBuffers[]{ vulkanMesh->vertexBufferHandle() };
+			VkDeviceSize offsets[]{ 0 };
+			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(_commandBuffer, vulkanMesh->indexBufferHandle(), 0, vulkanMesh->indexType());
+			vkCmdDrawIndexed(_commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
+		}
+
+	private:
+		const VkCommandBuffer _commandBuffer;
+	};
 }
 
 namespace seir
@@ -185,7 +205,7 @@ namespace seir
 		}
 	}
 
-	void VulkanRenderer::draw(const Mesh& mesh)
+	void VulkanRenderer::render(const std::function<void(RenderPass&)>& callback)
 	{
 		if (!_renderTarget)
 		{
@@ -229,12 +249,10 @@ namespace seir
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
-		const auto vulkanMesh = static_cast<const VulkanMesh*>(&mesh);
-		VkBuffer vertexBuffers[]{ vulkanMesh->vertexBufferHandle() };
-		VkDeviceSize offsets[]{ 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, vulkanMesh->indexBufferHandle(), 0, vulkanMesh->indexType());
-		vkCmdDrawIndexed(commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
+		{
+			VulkanRenderPass renderPass{ commandBuffer };
+			callback(renderPass);
+		}
 		vkCmdEndRenderPass(commandBuffer);
 		commandBuffer.finish();
 		SEIR_VK(vkResetFences(_context._device, 1, &frameFence));

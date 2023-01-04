@@ -6,6 +6,8 @@
 
 #include <seir_base/shared_ptr.hpp>
 
+#include <functional>
+
 namespace seir
 {
 	class Image;
@@ -34,6 +36,16 @@ namespace seir
 	};
 
 	//
+	class RenderPass
+	{
+	public:
+		virtual ~RenderPass() noexcept = default;
+
+		///
+		virtual void drawMesh(const Mesh&) = 0;
+	};
+
+	//
 	class Renderer
 	{
 	public:
@@ -50,6 +62,6 @@ namespace seir
 		[[nodiscard]] UniquePtr<Texture2D> createTexture2D(const Image&);
 
 		//
-		virtual void draw(const Mesh&) = 0;
+		virtual void render(const std::function<void(RenderPass&)>&) = 0;
 	};
 }
