@@ -6,6 +6,5 @@
 
 namespace seir
 {
-	float clockTime() noexcept;
 	void sleepFor(unsigned milliseconds) noexcept;
 }

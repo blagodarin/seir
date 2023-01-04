@@ -5,6 +5,7 @@
 #pragma once
 
 #include <seir_base/shared_ptr.hpp>
+#include <seir_math/mat.hpp>
 
 #include <functional>
 
@@ -41,8 +42,11 @@ namespace seir
 	public:
 		virtual ~RenderPass() noexcept = default;
 
-		///
+		//
 		virtual void drawMesh(const Mesh&) = 0;
+
+		//
+		virtual void pushMatrix(const Mat4&) = 0;
 	};
 
 	//

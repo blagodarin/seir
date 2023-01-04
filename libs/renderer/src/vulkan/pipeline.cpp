@@ -53,7 +53,7 @@ namespace seir
 			.setLayoutCount = 0,
 			.pSetLayouts = VK_NULL_HANDLE,
 			.pushConstantRangeCount = 0,
-			.pPushConstantRanges = nullptr,
+			.pPushConstantRanges = _pushConstantRanges.data(),
 		}
 		, _vertexInput{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -161,6 +161,7 @@ namespace seir
 		SEIR_VK(vkCreateDescriptorSetLayout(device, &_descriptorSetLayoutInfo, nullptr, &pipeline._descriptorSetLayout));
 		_pipelineLayoutInfo.setLayoutCount = 1;
 		_pipelineLayoutInfo.pSetLayouts = &pipeline._descriptorSetLayout;
+		_pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(_pushConstantRanges.size());
 		SEIR_VK(vkCreatePipelineLayout(device, &_pipelineLayoutInfo, nullptr, &pipeline._pipelineLayout));
 		_vertexInput.vertexBindingDescriptionCount = static_cast<uint32_t>(_vertexInputBindings.size());
 		_vertexInput.vertexAttributeDescriptionCount = static_cast<uint32_t>(_vertexAttributes.size());
@@ -186,6 +187,15 @@ namespace seir
 	{
 		_inputAssembly.topology = topology;
 		_inputAssembly.primitiveRestartEnable = enablePrimitiveRestart;
+	}
+
+	void VulkanPipelineBuilder::setPushConstantRange(uint32_t offset, uint32_t size, VkShaderStageFlags flags) noexcept
+	{
+		_pushConstantRanges.emplace_back(VkPushConstantRange{
+			.stageFlags = flags,
+			.offset = offset,
+			.size = size,
+		});
 	}
 
 	void VulkanPipelineBuilder::setStage(VkShaderStageFlagBits stage, VkShaderModule shader) noexcept

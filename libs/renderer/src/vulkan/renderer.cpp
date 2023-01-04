@@ -20,9 +20,13 @@ namespace
 {
 	struct UniformBufferObject
 	{
-		seir::Mat4 _model;
 		seir::Mat4 _view;
 		seir::Mat4 _projection;
+	};
+
+	struct PushConstants
+	{
+		seir::Mat4 _matrix;
 	};
 
 	const uint32_t kVertexShader[]{
@@ -45,6 +49,7 @@ namespace
 		seir::VulkanPipelineBuilder builder{ renderTarget.extent(), context._maxSampleCount, context._options.sampleShading };
 		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.setPushConstantRange(0, sizeof(PushConstants), VK_SHADER_STAGE_VERTEX_BIT);
 		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
 		builder.setVertexInput(0, { seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x2 });
@@ -55,7 +60,6 @@ namespace
 	UniformBufferObject makeUniformBuffer(const VkExtent2D& screenSize)
 	{
 		return {
-			._model = seir::Mat4::rotation(10 * seir::clockTime(), { 0, 0, 1 }),
 			._view = seir::Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
 			._projection = seir::Mat4::projection3D(static_cast<float>(screenSize.width) / static_cast<float>(screenSize.height), 45, 1),
 		};
@@ -92,8 +96,8 @@ namespace
 	class VulkanRenderPass : public seir::RenderPass
 	{
 	public:
-		VulkanRenderPass(VkCommandBuffer commandBuffer)
-			: _commandBuffer{ commandBuffer } {}
+		VulkanRenderPass(VkCommandBuffer commandBuffer, const seir::VulkanPipeline& pipeline)
+			: _commandBuffer{ commandBuffer }, _pipeline{ pipeline } {}
 
 		void drawMesh(const seir::Mesh& mesh) override
 		{
@@ -105,8 +109,17 @@ namespace
 			vkCmdDrawIndexed(_commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
 		}
 
+		void pushMatrix(const seir::Mat4& matrix)
+		{
+			PushConstants pushConstants{
+				._matrix = matrix,
+			};
+			vkCmdPushConstants(_commandBuffer, _pipeline.pipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof pushConstants, &pushConstants);
+		}
+
 	private:
 		const VkCommandBuffer _commandBuffer;
+		const seir::VulkanPipeline& _pipeline;
 	};
 }
 
@@ -250,7 +263,7 @@ namespace seir
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
 		{
-			VulkanRenderPass renderPass{ commandBuffer };
+			VulkanRenderPass renderPass{ commandBuffer, _pipeline };
 			callback(renderPass);
 		}
 		vkCmdEndRenderPass(commandBuffer);

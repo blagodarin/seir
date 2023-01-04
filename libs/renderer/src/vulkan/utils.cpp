@@ -8,12 +8,6 @@
 
 namespace seir
 {
-	float clockTime() noexcept
-	{
-		static auto startTime = std::chrono::steady_clock::now();
-		return std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(std::chrono::steady_clock::now() - startTime).count();
-	}
-
 	void sleepFor(unsigned milliseconds) noexcept
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds{ milliseconds });

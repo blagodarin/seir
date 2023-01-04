@@ -48,12 +48,14 @@ namespace seir
 		VulkanPipeline build(VkDevice, VkRenderPass);
 		void setDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType, VkShaderStageFlags) noexcept;
 		void setInputAssembly(VkPrimitiveTopology, bool enablePrimitiveRestart) noexcept;
+		void setPushConstantRange(uint32_t offset, uint32_t size, VkShaderStageFlags) noexcept;
 		void setStage(VkShaderStageFlagBits, VkShaderModule) noexcept;
 		void setVertexInput(uint32_t binding, std::initializer_list<VertexAttribute>, VkVertexInputRate = VK_VERTEX_INPUT_RATE_VERTEX) noexcept;
 
 	private:
 		StaticVector<VkDescriptorSetLayoutBinding, 2> _descriptorSetLayoutBindings;
 		VkDescriptorSetLayoutCreateInfo _descriptorSetLayoutInfo;
+		StaticVector<VkPushConstantRange, 1> _pushConstantRanges;
 		VkPipelineLayoutCreateInfo _pipelineLayoutInfo;
 		StaticVector<VkPipelineShaderStageCreateInfo, 4> _stages;
 		StaticVector<VkVertexInputBindingDescription, 1> _vertexInputBindings;

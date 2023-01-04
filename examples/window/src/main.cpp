@@ -51,13 +51,19 @@ namespace
 		}
 	};
 
-	class FpsCounter
+	class FrameClock
 	{
 	public:
-		std::optional<float> updateFps() noexcept
+		float seconds() const noexcept
+		{
+			return std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(_totalOffset).count();
+		}
+
+		std::optional<float> advance() noexcept
 		{
 			++_frames;
 			const auto currentTime = Clock::now();
+			_totalOffset = currentTime - _startTime;
 			const auto duration = currentTime - _baseTime;
 			if (duration < std::chrono::seconds{ 1 })
 				return {};
@@ -69,7 +75,9 @@ namespace
 
 	private:
 		using Clock = std::chrono::steady_clock;
-		Clock::time_point _baseTime = Clock::now();
+		const Clock::time_point _startTime = Clock::now();
+		Clock::duration _totalOffset = Clock::duration::zero();
+		Clock::time_point _baseTime = _startTime;
 		float _frames = 0;
 	};
 }
@@ -85,13 +93,14 @@ int u8main(int, char**)
 	const auto renderer = seir::Renderer::create(window);
 	const auto mesh = renderer->createMesh(kVertexData.data(), sizeof(Vertex), kVertexData.size(), kIndexData.data(), seir::Mesh::IndexType::U16, kIndexData.size());
 	window->show();
-	FpsCounter fpsCounter;
+	FrameClock clock;
 	for (EventCallbacks callbacks; app->processEvents(callbacks);)
 	{
-		renderer->render([&mesh](seir::RenderPass& renderPass) {
+		renderer->render([&mesh, &clock](seir::RenderPass& renderPass) {
+			renderPass.pushMatrix(seir::Mat4::rotation(40 * clock.seconds(), { 0, 0, 1 }));
 			renderPass.drawMesh(*mesh);
 		});
-		if (const auto fps = fpsCounter.updateFps())
+		if (const auto fps = clock.advance())
 			window->setTitle(fmt::format("Window [{:.1f} fps]", *fps));
 	}
 	return 0;
