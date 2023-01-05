@@ -5,7 +5,8 @@
 #include <seir_app/app.hpp>
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
-#include <seir_math/vec.hpp>
+#include <seir_math/euler.hpp>
+#include <seir_math/mat.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
@@ -42,13 +43,29 @@ namespace
 		4, 5, 6, 7
 	};
 
-	struct EventCallbacks : seir::EventCallbacks
+	class State : public seir::EventCallbacks
 	{
+	public:
+		seir::Mat4 cameraMatrix() const noexcept
+		{
+			return seir::Mat4::camera(_cameraPosition, { 0, -45, 0 });
+		}
+
+	public:
 		void onKeyEvent(seir::Window& window, const seir::KeyEvent& event) override
 		{
-			if (event._key == seir::Key::Escape && event._pressed)
+			if (!event._pressed || event._repeated)
+				return;
+			if (event._key == seir::Key::Escape)
 				window.close();
+			else if (event._key == seir::Key::Down)
+				_cameraPosition.z -= .25f;
+			else if (event._key == seir::Key::Up)
+				_cameraPosition.z += .25f;
 		}
+
+	private:
+		seir::Vec3 _cameraPosition{ 0, -3, 3 };
 	};
 
 	class FrameClock
@@ -94,10 +111,11 @@ int u8main(int, char**)
 	const auto mesh = renderer->createMesh(kVertexData.data(), sizeof(Vertex), kVertexData.size(), kIndexData.data(), seir::Mesh::IndexType::U16, kIndexData.size());
 	window->show();
 	FrameClock clock;
-	for (EventCallbacks callbacks; app->processEvents(callbacks);)
+	for (State state; app->processEvents(state);)
 	{
-		renderer->render([&mesh, &clock](seir::RenderPass& renderPass) {
-			renderPass.pushMatrix(seir::Mat4::rotation(40 * clock.seconds(), { 0, 0, 1 }));
+		renderer->render([&mesh, &clock, &state](const seir::Vec2& viewportSize, seir::RenderPass& renderPass) {
+			renderPass.setProjection(seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1), state.cameraMatrix());
+			renderPass.setTransformation(seir::Mat4::rotation(40 * clock.seconds(), { 0, 0, 1 }));
 			renderPass.drawMesh(*mesh);
 		});
 		if (const auto fps = clock.advance())

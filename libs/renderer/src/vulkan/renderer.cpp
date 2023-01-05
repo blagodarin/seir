@@ -6,7 +6,6 @@
 
 #include <seir_app/window.hpp>
 #include <seir_image/image.hpp>
-#include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
 #include "commands.hpp"
 #include "error.hpp"
@@ -20,8 +19,7 @@ namespace
 {
 	struct UniformBufferObject
 	{
-		seir::Mat4 _view;
-		seir::Mat4 _projection;
+		seir::Mat4 _matrix = seir::Mat4::identity(); // TODO: Replace with something useful.
 	};
 
 	struct PushConstants
@@ -55,14 +53,6 @@ namespace
 		builder.setVertexInput(0, { seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x3, seir::VertexAttribute::f32x2 });
 		builder.setInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, true);
 		return builder.build(context._device, renderTarget.renderPass());
-	}
-
-	UniformBufferObject makeUniformBuffer(const VkExtent2D& screenSize)
-	{
-		return {
-			._view = seir::Mat4::camera({ 0, -3, 3 }, { 0, -45, 0 }),
-			._projection = seir::Mat4::projection3D(static_cast<float>(screenSize.width) / static_cast<float>(screenSize.height), 45, 1),
-		};
 	}
 
 	class VulkanMesh : public seir::Mesh
@@ -101,6 +91,7 @@ namespace
 
 		void drawMesh(const seir::Mesh& mesh) override
 		{
+			updatePushConstants();
 			const auto vulkanMesh = static_cast<const VulkanMesh*>(&mesh);
 			VkBuffer vertexBuffers[]{ vulkanMesh->vertexBufferHandle() };
 			VkDeviceSize offsets[]{ 0 };
@@ -109,17 +100,34 @@ namespace
 			vkCmdDrawIndexed(_commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
 		}
 
-		void pushMatrix(const seir::Mat4& matrix)
+		void setProjection(const seir::Mat4& projection, const seir::Mat4& view) override
 		{
-			PushConstants pushConstants{
-				._matrix = matrix,
-			};
-			vkCmdPushConstants(_commandBuffer, _pipeline.pipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof pushConstants, &pushConstants);
+			_projectionView = projection * view;
+			_pushConstants._matrix = _projectionView;
+			_updatePushConstants = true;
+		}
+
+		void setTransformation(const seir::Mat4& transformation) override
+		{
+			_pushConstants._matrix = _projectionView * transformation;
+			_updatePushConstants = true;
+		}
+
+	private:
+		void updatePushConstants()
+		{
+			if (!_updatePushConstants)
+				return;
+			vkCmdPushConstants(_commandBuffer, _pipeline.pipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof _pushConstants, &_pushConstants);
+			_updatePushConstants = false;
 		}
 
 	private:
 		const VkCommandBuffer _commandBuffer;
 		const seir::VulkanPipeline& _pipeline;
+		seir::Mat4 _projectionView = seir::Mat4::identity();
+		PushConstants _pushConstants{ ._matrix = seir::Mat4::identity() };
+		bool _updatePushConstants = true;
 	};
 }
 
@@ -218,7 +226,7 @@ namespace seir
 		}
 	}
 
-	void VulkanRenderer::render(const std::function<void(RenderPass&)>& callback)
+	void VulkanRenderer::render(const std::function<void(const Vec2&, RenderPass&)>& callback)
 	{
 		if (!_renderTarget)
 		{
@@ -248,7 +256,7 @@ namespace seir
 		if (!_renderTarget.acquireFrame(_context._device, frameAvailableSemaphore, frameFence, index))
 			return resetRenderTarget();
 		{
-			const auto ubo = ::makeUniformBuffer(_renderTarget.extent());
+			const UniformBufferObject ubo;
 			_uniformBuffers.update(index, &ubo);
 		}
 		_descriptorAllocator.setFrameIndex(index);
@@ -263,8 +271,9 @@ namespace seir
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
 		{
+			const auto viewportSize = _renderTarget.extent();
 			VulkanRenderPass renderPass{ commandBuffer, _pipeline };
-			callback(renderPass);
+			callback({ static_cast<float>(viewportSize.width), static_cast<float>(viewportSize.height) }, renderPass);
 		}
 		vkCmdEndRenderPass(commandBuffer);
 		commandBuffer.finish();

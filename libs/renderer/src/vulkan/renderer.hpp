@@ -21,7 +21,7 @@ namespace seir
 
 		UniquePtr<Mesh> createMesh(const void*, size_t, size_t, const void*, Mesh::IndexType, size_t) override;
 		UniquePtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
-		void render(const std::function<void(RenderPass&)>&) override;
+		void render(const std::function<void(const Vec2&, RenderPass&)>&) override;
 
 	private:
 		void resetRenderTarget();

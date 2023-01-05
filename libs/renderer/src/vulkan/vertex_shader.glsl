@@ -1,8 +1,7 @@
 #version 450
 
 layout(binding = 0) uniform UniformBufferObject {
-	mat4 view;
-	mat4 projection;
+	mat4 matrix;
 } ubo;
 
 layout(push_constant) uniform PushConstants {
@@ -18,7 +17,7 @@ layout(location = 1) out vec2 outTexCoord;
 
 void main()
 {
-	gl_Position = ubo.projection * ubo.view * push.matrix * vec4(inPosition, 1.0);
+	gl_Position = push.matrix * vec4(inPosition, 1.0);
 	outColor = inColor;
 	outTexCoord = inTexCoord;
 }

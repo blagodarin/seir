@@ -5,7 +5,6 @@
 #pragma once
 
 #include <seir_base/shared_ptr.hpp>
-#include <seir_math/mat.hpp>
 
 #include <functional>
 
@@ -13,6 +12,8 @@ namespace seir
 {
 	class Image;
 	class ImageInfo;
+	class Mat4;
+	class Vec2;
 	class Window;
 
 	//
@@ -46,7 +47,10 @@ namespace seir
 		virtual void drawMesh(const Mesh&) = 0;
 
 		//
-		virtual void pushMatrix(const Mat4&) = 0;
+		virtual void setProjection(const Mat4& projection, const Mat4& view) = 0;
+
+		//
+		virtual void setTransformation(const Mat4&) = 0;
 	};
 
 	//
@@ -66,6 +70,6 @@ namespace seir
 		[[nodiscard]] UniquePtr<Texture2D> createTexture2D(const Image&);
 
 		//
-		virtual void render(const std::function<void(RenderPass&)>&) = 0;
+		virtual void render(const std::function<void(const Vec2&, RenderPass&)>&) = 0;
 	};
 }
