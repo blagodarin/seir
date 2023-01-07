@@ -44,6 +44,9 @@ namespace seir
 		virtual ~RenderPass() noexcept = default;
 
 		//
+		virtual void bindTexture(const SharedPtr<Texture2D>&) = 0;
+
+		//
 		virtual void drawMesh(const Mesh&) = 0;
 
 		//
@@ -66,8 +69,8 @@ namespace seir
 		[[nodiscard]] virtual UniquePtr<Mesh> createMesh(const void* vertexData, size_t vertexSize, size_t vertexCount, const void* indexData, Mesh::IndexType, size_t indexCount) = 0;
 
 		//
-		[[nodiscard]] virtual UniquePtr<Texture2D> createTexture2D(const ImageInfo&, const void*) = 0;
-		[[nodiscard]] UniquePtr<Texture2D> createTexture2D(const Image&);
+		[[nodiscard]] virtual SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) = 0;
+		[[nodiscard]] SharedPtr<Texture2D> createTexture2D(const Image&);
 
 		//
 		virtual void render(const std::function<void(const Vec2&, RenderPass&)>&) = 0;

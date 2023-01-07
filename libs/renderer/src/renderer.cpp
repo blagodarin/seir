@@ -8,7 +8,7 @@
 
 namespace seir
 {
-	UniquePtr<Texture2D> Renderer::createTexture2D(const Image& image)
+	SharedPtr<Texture2D> Renderer::createTexture2D(const Image& image)
 	{
 		return createTexture2D(image.info(), image.data());
 	}

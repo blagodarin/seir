@@ -35,13 +35,6 @@ namespace
 #include "fragment_shader.glsl.spirv.inc"
 	};
 
-	constexpr std::array<uint8_t, 16> kTextureData{
-		0x99, 0xbb, 0xbb, 0xff,
-		0xff, 0xff, 0xff, 0xff,
-		0xff, 0xff, 0xff, 0xff,
-		0xff, 0xff, 0xff, 0xff
-	};
-
 	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
 		seir::VulkanPipelineBuilder builder{ renderTarget.extent(), context._maxSampleCount, context._options.sampleShading };
@@ -73,27 +66,36 @@ namespace
 		const VkIndexType _indexType;
 		const uint32_t _indexCount;
 	};
+}
 
-	class VulkanTexture2D : public seir::Texture2D
+namespace seir
+{
+	class VulkanTexture2D : public Texture2D
 	{
 	public:
-		VulkanTexture2D(seir::VulkanImage&& image) noexcept
+		VulkanTexture2D(VulkanImage&& image) noexcept
 			: _image{ std::move(image) } {}
 		constexpr auto viewHandle() const noexcept { return _image.viewHandle(); }
 
 	private:
-		seir::VulkanImage _image;
+		VulkanImage _image;
 	};
 
-	class VulkanRenderPass : public seir::RenderPass
+	class VulkanRenderPass : public RenderPass
 	{
 	public:
-		VulkanRenderPass(VkCommandBuffer commandBuffer, const seir::VulkanPipeline& pipeline)
-			: _commandBuffer{ commandBuffer }, _pipeline{ pipeline } {}
+		VulkanRenderPass(VulkanRenderer& renderer, VkCommandBuffer commandBuffer)
+			: _renderer{ renderer }, _commandBuffer{ commandBuffer } {}
 
-		void drawMesh(const seir::Mesh& mesh) override
+		void bindTexture(const SharedPtr<Texture2D>& texture) override
 		{
-			updatePushConstants();
+			_texture = texture ? staticCast<VulkanTexture2D>(texture) : _renderer._whiteTexture2D;
+			_updateTexture = true;
+		}
+
+		void drawMesh(const Mesh& mesh) override
+		{
+			processUpdates();
 			const auto vulkanMesh = static_cast<const VulkanMesh*>(&mesh);
 			VkBuffer vertexBuffers[]{ vulkanMesh->vertexBufferHandle() };
 			VkDeviceSize offsets[]{ 0 };
@@ -102,40 +104,49 @@ namespace
 			vkCmdDrawIndexed(_commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
 		}
 
-		void setProjection(const seir::Mat4& projection, const seir::Mat4& view) override
+		void setProjection(const Mat4& projection, const Mat4& view) override
 		{
 			_projectionView = projection * view;
 			_pushConstants._matrix = _projectionView;
 			_updatePushConstants = true;
 		}
 
-		void setTransformation(const seir::Mat4& transformation) override
+		void setTransformation(const Mat4& transformation) override
 		{
 			_pushConstants._matrix = _projectionView * transformation;
 			_updatePushConstants = true;
 		}
 
 	private:
-		void updatePushConstants()
+		void processUpdates()
 		{
-			if (!_updatePushConstants)
-				return;
-			vkCmdPushConstants(_commandBuffer, _pipeline.pipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof _pushConstants, &_pushConstants);
-			_updatePushConstants = false;
+			if (_updateTexture)
+			{
+				_updateTexture = false;
+				const auto descriptorSet =
+					vulkan::DescriptorBuilder{}
+						.bindImage(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _renderer._textureSampler.handle(), _texture->viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+						.build(_renderer._descriptorAllocator, _renderer._pipeline.descriptorSetLayout(0));
+				vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer._pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
+			}
+			if (_updatePushConstants)
+			{
+				_updatePushConstants = false;
+				vkCmdPushConstants(_commandBuffer, _renderer._pipeline.pipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof _pushConstants, &_pushConstants);
+			}
 		}
 
 	private:
+		VulkanRenderer& _renderer;
 		const VkCommandBuffer _commandBuffer;
-		const seir::VulkanPipeline& _pipeline;
-		seir::Mat4 _projectionView = seir::Mat4::identity();
-		PushConstants _pushConstants{ ._matrix = seir::Mat4::identity() };
+		SharedPtr<VulkanTexture2D> _texture = _renderer._whiteTexture2D;
+		bool _updateTexture = true;
+		Mat4 _projectionView = Mat4::identity();
+		PushConstants _pushConstants{ ._matrix = Mat4::identity() };
 		bool _updatePushConstants = true;
 	};
-}
 
-namespace seir
-{
-	VulkanRenderer::VulkanRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
+	VulkanRenderer::VulkanRenderer(const SharedPtr<Window>& window) noexcept
 		: _window{ window }
 		, _context{
 			RendererOptions{
@@ -166,14 +177,15 @@ namespace seir
 			_textureSampler = _context.createSampler2D();
 			_frameSync.create(_context._device);
 		}
-		catch ([[maybe_unused]] const seir::VulkanError& e)
+		catch ([[maybe_unused]] const VulkanError& e)
 		{
 #ifndef NDEBUG
 			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
 #endif
 			return false;
 		}
-		_whiteTexture2D = createTexture2D({ 1, 2, 8, PixelFormat::Bgra32 }, kTextureData.data());
+		static uint32_t kWhite = 0xffffffff;
+		_whiteTexture2D = staticCast<VulkanTexture2D>(createTexture2D({ 1, 1, 4, PixelFormat::Bgra32 }, &kWhite)); // TODO: Remove the cast.
 		return static_cast<bool>(_whiteTexture2D);
 	}
 
@@ -198,7 +210,7 @@ namespace seir
 			return makeUnique<Mesh, VulkanMesh>(_context.createDeviceBuffer(vertexData, vertexSize * vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
 				_context.createDeviceBuffer(indexData, indexSize * indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT), vulkanIndexType, static_cast<uint32_t>(indexCount));
 		}
-		catch ([[maybe_unused]] const seir::VulkanError& e)
+		catch ([[maybe_unused]] const VulkanError& e)
 		{
 #ifndef NDEBUG
 			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
@@ -207,7 +219,7 @@ namespace seir
 		}
 	}
 
-	UniquePtr<Texture2D> VulkanRenderer::createTexture2D(const ImageInfo& info, const void* data)
+	SharedPtr<Texture2D> VulkanRenderer::createTexture2D(const ImageInfo& info, const void* data)
 	{
 		if (info.pixelFormat() != PixelFormat::Bgra32)
 			return {};
@@ -217,9 +229,9 @@ namespace seir
 			return {};
 		try
 		{
-			return makeUnique<Texture2D, VulkanTexture2D>(_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
+			return makeShared<Texture2D, VulkanTexture2D>(_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
 		}
-		catch ([[maybe_unused]] const seir::VulkanError& e)
+		catch ([[maybe_unused]] const VulkanError& e)
 		{
 #ifndef NDEBUG
 			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
@@ -262,10 +274,6 @@ namespace seir
 			_uniformBuffers.update(index, &ubo);
 		}
 		_descriptorAllocator.setFrameIndex(index);
-		const auto textureDescriptors =
-			vulkan::DescriptorBuilder{}
-				.bindImage(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _whiteTexture2D.get<VulkanTexture2D>()->viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-				.build(_descriptorAllocator, _pipeline.descriptorSetLayout(0));
 		const auto uniformDescriptors =
 			vulkan::DescriptorBuilder{}
 				.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBuffers[index])
@@ -275,10 +283,9 @@ namespace seir
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 1, 1, &uniformDescriptors, 0, nullptr);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &textureDescriptors, 0, nullptr);
 		{
 			const auto viewportSize = _renderTarget.extent();
-			VulkanRenderPass renderPass{ commandBuffer, _pipeline };
+			VulkanRenderPass renderPass{ *this, commandBuffer };
 			callback({ static_cast<float>(viewportSize.width), static_cast<float>(viewportSize.height) }, renderPass);
 		}
 		vkCmdEndRenderPass(commandBuffer);

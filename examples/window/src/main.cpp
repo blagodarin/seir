@@ -5,6 +5,7 @@
 #include <seir_app/app.hpp>
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
+#include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/renderer.hpp>
@@ -18,6 +19,13 @@
 
 namespace
 {
+	constexpr std::array<uint8_t, 16> kTextureData{
+		0x99, 0xbb, 0xbb, 0xff,
+		0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff
+	};
+
 	struct Vertex
 	{
 		seir::Vec3 position;
@@ -65,7 +73,7 @@ namespace
 		}
 
 	private:
-		seir::Vec3 _cameraPosition{ 0, -3, 3 };
+		seir::Vec3 _cameraPosition{ 0, -5, 5 };
 	};
 
 	class FrameClock
@@ -108,14 +116,19 @@ int u8main(int, char**)
 	const auto app = seir::SharedPtr{ seir::App::create() };
 	const auto window = seir::SharedPtr{ seir::Window::create(app, "Window") };
 	const auto renderer = seir::Renderer::create(window);
+	const auto texture = renderer->createTexture2D({ 1, 2, 8, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer->createMesh(kVertexData.data(), sizeof(Vertex), kVertexData.size(), kIndexData.data(), seir::Mesh::IndexType::U16, kIndexData.size());
 	window->show();
 	FrameClock clock;
 	for (State state; app->processEvents(state);)
 	{
-		renderer->render([&mesh, &clock, &state](const seir::Vec2& viewportSize, seir::RenderPass& renderPass) {
+		renderer->render([&texture, &mesh, &clock, &state](const seir::Vec2& viewportSize, seir::RenderPass& renderPass) {
 			renderPass.setProjection(seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1), state.cameraMatrix());
-			renderPass.setTransformation(seir::Mat4::rotation(40 * clock.seconds(), { 0, 0, 1 }));
+			renderPass.setTransformation(seir::Mat4::translation({ 0, -1, -.25 }) * seir::Mat4::rotation(-20 * clock.seconds(), { 0, 0, 1 }));
+			renderPass.bindTexture({});
+			renderPass.drawMesh(*mesh);
+			renderPass.setTransformation(seir::Mat4::scaling(1.5) * seir::Mat4::rotation(40 * clock.seconds(), { 0, 0, 1 }));
+			renderPass.bindTexture(texture);
 			renderPass.drawMesh(*mesh);
 		});
 		if (const auto fps = clock.advance())

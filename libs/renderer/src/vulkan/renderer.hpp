@@ -11,6 +11,9 @@
 
 namespace seir
 {
+	class VulkanRenderPass;
+	class VulkanTexture2D;
+
 	class VulkanRenderer final : public Renderer
 	{
 	public:
@@ -20,7 +23,7 @@ namespace seir
 		bool initialize();
 
 		UniquePtr<Mesh> createMesh(const void*, size_t, size_t, const void*, Mesh::IndexType, size_t) override;
-		UniquePtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
+		SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
 		void render(const std::function<void(const Vec2&, RenderPass&)>&) override;
 
 	private:
@@ -33,10 +36,11 @@ namespace seir
 		VulkanShader _fragmentShader;
 		VulkanSampler _textureSampler;
 		VulkanFrameSync _frameSync;
-		UniquePtr<Texture2D> _whiteTexture2D;
+		SharedPtr<VulkanTexture2D> _whiteTexture2D;
 		VulkanRenderTarget _renderTarget;
 		VulkanPipeline _pipeline;
 		VulkanUniformBuffers _uniformBuffers;
 		vulkan::DescriptorAllocator _descriptorAllocator;
+		friend VulkanRenderPass;
 	};
 }
