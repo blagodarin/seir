@@ -49,7 +49,7 @@ namespace seir
 			return reinterpret_cast<const T*>(_data)[_size - 1];
 		}
 
-		void clear() noexcept
+		constexpr void clear() noexcept
 		{
 			std::destroy_n(reinterpret_cast<T*>(_data), _size);
 			_size = 0;
@@ -79,13 +79,13 @@ namespace seir
 			return *item;
 		}
 
-		[[nodiscard]] T& operator[](size_t index) noexcept
+		[[nodiscard]] constexpr T& operator[](size_t index) noexcept
 		{
 			assert(index < _size);
 			return reinterpret_cast<T*>(_data)[index];
 		}
 
-		[[nodiscard]] const T& operator[](size_t index) const noexcept
+		[[nodiscard]] constexpr const T& operator[](size_t index) const noexcept
 		{
 			assert(index < _size);
 			return reinterpret_cast<const T*>(_data)[index];

@@ -25,14 +25,14 @@ namespace seir
 		~VulkanPipeline() noexcept { destroy(); }
 		VulkanPipeline& operator=(VulkanPipeline&&) noexcept;
 
-		[[nodiscard]] constexpr VkDescriptorSetLayout descriptorSetLayout() const noexcept { return _descriptorSetLayout; }
+		[[nodiscard]] constexpr VkDescriptorSetLayout descriptorSetLayout(size_t index) const noexcept { return _descriptorSetLayouts[index]; }
 		[[nodiscard]] constexpr VkPipelineLayout pipelineLayout() const noexcept { return _pipelineLayout; }
 		[[nodiscard]] constexpr VkPipeline pipeline() const noexcept { return _pipeline; }
 		void destroy() noexcept;
 
 	private:
 		VkDevice _device = VK_NULL_HANDLE;
-		VkDescriptorSetLayout _descriptorSetLayout = VK_NULL_HANDLE;
+		StaticVector<VkDescriptorSetLayout, 2> _descriptorSetLayouts;
 		VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline _pipeline = VK_NULL_HANDLE;
 		constexpr explicit VulkanPipeline(VkDevice device) noexcept
@@ -46,6 +46,7 @@ namespace seir
 		explicit VulkanPipelineBuilder(const VkExtent2D&, VkSampleCountFlagBits, bool sampleShading) noexcept;
 
 		VulkanPipeline build(VkDevice, VkRenderPass);
+		void addDescriptorSetLayout() noexcept;
 		void setDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType, VkShaderStageFlags) noexcept;
 		void setInputAssembly(VkPrimitiveTopology, bool enablePrimitiveRestart) noexcept;
 		void setPushConstantRange(uint32_t offset, uint32_t size, VkShaderStageFlags) noexcept;
@@ -53,8 +54,8 @@ namespace seir
 		void setVertexInput(uint32_t binding, std::initializer_list<VertexAttribute>, VkVertexInputRate = VK_VERTEX_INPUT_RATE_VERTEX) noexcept;
 
 	private:
-		StaticVector<VkDescriptorSetLayoutBinding, 2> _descriptorSetLayoutBindings;
-		VkDescriptorSetLayoutCreateInfo _descriptorSetLayoutInfo;
+		StaticVector<VkDescriptorSetLayoutBinding, 4> _descriptorSetLayoutBindings;
+		StaticVector<VkDescriptorSetLayoutCreateInfo, 2> _descriptorSetLayouts;
 		StaticVector<VkPushConstantRange, 1> _pushConstantRanges;
 		VkPipelineLayoutCreateInfo _pipelineLayoutInfo;
 		StaticVector<VkPipelineShaderStageCreateInfo, 4> _stages;
@@ -76,12 +77,13 @@ namespace seir
 
 constexpr seir::VulkanPipeline::VulkanPipeline(VulkanPipeline&& other) noexcept
 	: _device{ other._device }
-	, _descriptorSetLayout{ other._descriptorSetLayout }
 	, _pipelineLayout{ other._pipelineLayout }
 	, _pipeline{ other._pipeline }
 {
+	for (const auto layout : other._descriptorSetLayouts)
+		_descriptorSetLayouts.emplace_back(layout);
 	other._device = VK_NULL_HANDLE;
-	other._descriptorSetLayout = VK_NULL_HANDLE;
+	other._descriptorSetLayouts.clear();
 	other._pipelineLayout = VK_NULL_HANDLE;
 	other._pipeline = VK_NULL_HANDLE;
 }

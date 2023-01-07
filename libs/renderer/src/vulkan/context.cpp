@@ -983,11 +983,44 @@ namespace seir
 							_maxSampleCount = VK_SAMPLE_COUNT_2_BIT;
 					}
 #ifndef NDEBUG
-					fmt::print(stderr, "Vulkan physical device selected: {}\n", _physicalDeviceProperties.deviceName);
 					fmt::print(stderr, "Vulkan device extensions:\n");
 					for (const auto& extension : extensions)
 						fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);
 					fmt::print(stderr, "Vulkan MSAA sample count: {}\n", toUnderlying(_maxSampleCount));
+					fmt::print(stderr, "\n");
+					fmt::print(stderr, "[VkPhysicalDeviceProperties]\n");
+					fmt::print(stderr, "deviceName = {}\n", _physicalDeviceProperties.deviceName);
+					fmt::print(stderr, "\n");
+					fmt::print(stderr, "[VkPhysicalDeviceLimits]\n");
+					fmt::print(stderr, "maxImageDimension1D = {}\n", _physicalDeviceProperties.limits.maxImageDimension1D);
+					fmt::print(stderr, "maxImageDimension2D = {}\n", _physicalDeviceProperties.limits.maxImageDimension2D);
+					fmt::print(stderr, "maxImageDimension3D = {}\n", _physicalDeviceProperties.limits.maxImageDimension3D);
+					fmt::print(stderr, "maxImageDimensionCube = {}\n", _physicalDeviceProperties.limits.maxImageDimensionCube);
+					fmt::print(stderr, "maxImageArrayLayers = {}\n", _physicalDeviceProperties.limits.maxImageArrayLayers);
+					fmt::print(stderr, "maxTexelBufferElements = {}\n", _physicalDeviceProperties.limits.maxTexelBufferElements);
+					fmt::print(stderr, "maxUniformBufferRange = {}\n", _physicalDeviceProperties.limits.maxUniformBufferRange);
+					fmt::print(stderr, "maxStorageBufferRange = {}\n", _physicalDeviceProperties.limits.maxStorageBufferRange);
+					fmt::print(stderr, "maxPushConstantsSize = {}\n", _physicalDeviceProperties.limits.maxPushConstantsSize);
+					fmt::print(stderr, "maxMemoryAllocationCount = {}\n", _physicalDeviceProperties.limits.maxMemoryAllocationCount);
+					fmt::print(stderr, "maxSamplerAllocationCount = {}\n", _physicalDeviceProperties.limits.maxSamplerAllocationCount);
+					fmt::print(stderr, "bufferImageGranularity = {}\n", _physicalDeviceProperties.limits.bufferImageGranularity);
+					fmt::print(stderr, "sparseAddressSpaceSize = {}\n", _physicalDeviceProperties.limits.sparseAddressSpaceSize);
+					fmt::print(stderr, "maxBoundDescriptorSets = {}\n", _physicalDeviceProperties.limits.maxBoundDescriptorSets);
+					fmt::print(stderr, "maxPerStageDescriptorSamplers = {}\n", _physicalDeviceProperties.limits.maxPerStageDescriptorSamplers);
+					fmt::print(stderr, "maxPerStageDescriptorUniformBuffers = {}\n", _physicalDeviceProperties.limits.maxPerStageDescriptorUniformBuffers);
+					fmt::print(stderr, "maxPerStageDescriptorStorageBuffers = {}\n", _physicalDeviceProperties.limits.maxPerStageDescriptorStorageBuffers);
+					fmt::print(stderr, "maxPerStageDescriptorSampledImages = {}\n", _physicalDeviceProperties.limits.maxPerStageDescriptorSampledImages);
+					fmt::print(stderr, "maxPerStageDescriptorStorageImages = {}\n", _physicalDeviceProperties.limits.maxPerStageDescriptorStorageImages);
+					fmt::print(stderr, "maxPerStageDescriptorInputAttachments = {}\n", _physicalDeviceProperties.limits.maxPerStageDescriptorInputAttachments);
+					fmt::print(stderr, "maxPerStageResources = {}\n", _physicalDeviceProperties.limits.maxPerStageResources);
+					fmt::print(stderr, "maxDescriptorSetSamplers = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetSamplers);
+					fmt::print(stderr, "maxDescriptorSetUniformBuffers = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetUniformBuffers);
+					fmt::print(stderr, "maxDescriptorSetUniformBuffersDynamic = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetUniformBuffersDynamic);
+					fmt::print(stderr, "maxDescriptorSetStorageBuffers = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetStorageBuffers);
+					fmt::print(stderr, "maxDescriptorSetStorageBuffersDynamic = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetStorageBuffersDynamic);
+					fmt::print(stderr, "maxDescriptorSetSampledImages = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetSampledImages);
+					fmt::print(stderr, "maxDescriptorSetStorageImages = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetStorageImages);
+					fmt::print(stderr, "maxDescriptorSetInputAttachments = {}\n", _physicalDeviceProperties.limits.maxDescriptorSetInputAttachments);
 					fmt::print(stderr, "\n");
 #endif
 					return;

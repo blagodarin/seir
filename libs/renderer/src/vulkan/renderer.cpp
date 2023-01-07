@@ -45,8 +45,10 @@ namespace
 	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader)
 	{
 		seir::VulkanPipelineBuilder builder{ renderTarget.extent(), context._maxSampleCount, context._options.sampleShading };
+		builder.addDescriptorSetLayout();
+		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.addDescriptorSetLayout();
 		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-		builder.setDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		builder.setPushConstantRange(0, sizeof(PushConstants), VK_SHADER_STAGE_VERTEX_BIT);
 		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
@@ -260,16 +262,20 @@ namespace seir
 			_uniformBuffers.update(index, &ubo);
 		}
 		_descriptorAllocator.setFrameIndex(index);
-		const auto descriptorSet =
+		const auto textureDescriptors =
+			vulkan::DescriptorBuilder{}
+				.bindImage(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _whiteTexture2D.get<VulkanTexture2D>()->viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+				.build(_descriptorAllocator, _pipeline.descriptorSetLayout(0));
+		const auto uniformDescriptors =
 			vulkan::DescriptorBuilder{}
 				.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBuffers[index])
-				.bindImage(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, _textureSampler.handle(), _whiteTexture2D.get<VulkanTexture2D>()->viewHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-				.build(_descriptorAllocator, _pipeline.descriptorSetLayout());
+				.build(_descriptorAllocator, _pipeline.descriptorSetLayout(1));
 		auto commandBuffer = _context.createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		const auto renderPassInfo = _renderTarget.renderPassInfo(index);
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline());
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 1, 1, &uniformDescriptors, 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipelineLayout(), 0, 1, &textureDescriptors, 0, nullptr);
 		{
 			const auto viewportSize = _renderTarget.extent();
 			VulkanRenderPass renderPass{ commandBuffer, _pipeline };

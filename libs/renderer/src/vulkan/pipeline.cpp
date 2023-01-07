@@ -12,11 +12,12 @@ namespace seir
 	{
 		destroy();
 		_device = other._device;
-		_descriptorSetLayout = other._descriptorSetLayout;
+		for (const auto layout : other._descriptorSetLayouts)
+			_descriptorSetLayouts.emplace_back(layout);
 		_pipelineLayout = other._pipelineLayout;
 		_pipeline = other._pipeline;
 		other._device = VK_NULL_HANDLE;
-		other._descriptorSetLayout = VK_NULL_HANDLE;
+		other._descriptorSetLayouts.clear();
 		other._pipelineLayout = VK_NULL_HANDLE;
 		other._pipeline = VK_NULL_HANDLE;
 		return *this;
@@ -34,21 +35,15 @@ namespace seir
 			vkDestroyPipelineLayout(_device, _pipelineLayout, nullptr);
 			_pipelineLayout = VK_NULL_HANDLE;
 		}
-		if (_descriptorSetLayout)
-		{
-			vkDestroyDescriptorSetLayout(_device, _descriptorSetLayout, nullptr);
-			_descriptorSetLayout = VK_NULL_HANDLE;
-		}
+		for (const auto layout : _descriptorSetLayouts)
+			if (layout)
+				vkDestroyDescriptorSetLayout(_device, layout, nullptr);
+		_descriptorSetLayouts.clear();
 		_device = VK_NULL_HANDLE;
 	}
 
 	VulkanPipelineBuilder::VulkanPipelineBuilder(const VkExtent2D& extent, VkSampleCountFlagBits sampleCount, bool sampleShading) noexcept
-		: _descriptorSetLayoutInfo{
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-			.bindingCount = 0,
-			.pBindings = _descriptorSetLayoutBindings.data(),
-		}
-		, _pipelineLayoutInfo{
+		: _pipelineLayoutInfo{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.setLayoutCount = 0,
 			.pSetLayouts = VK_NULL_HANDLE,
@@ -157,10 +152,15 @@ namespace seir
 	VulkanPipeline VulkanPipelineBuilder::build(VkDevice device, VkRenderPass renderPass)
 	{
 		VulkanPipeline pipeline{ device };
-		_descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(_descriptorSetLayoutBindings.size());
-		SEIR_VK(vkCreateDescriptorSetLayout(device, &_descriptorSetLayoutInfo, nullptr, &pipeline._descriptorSetLayout));
-		_pipelineLayoutInfo.setLayoutCount = 1;
-		_pipelineLayoutInfo.pSetLayouts = &pipeline._descriptorSetLayout;
+		for (auto bindings = _descriptorSetLayoutBindings.data(); auto& layout : _descriptorSetLayouts)
+		{
+			layout.pBindings = bindings;
+			bindings += layout.bindingCount;
+			pipeline._descriptorSetLayouts.emplace_back(VK_NULL_HANDLE);
+			SEIR_VK(vkCreateDescriptorSetLayout(device, &layout, nullptr, &pipeline._descriptorSetLayouts.back()));
+		}
+		_pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(_descriptorSetLayouts.size());
+		_pipelineLayoutInfo.pSetLayouts = pipeline._descriptorSetLayouts.data();
 		_pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(_pushConstantRanges.size());
 		SEIR_VK(vkCreatePipelineLayout(device, &_pipelineLayoutInfo, nullptr, &pipeline._pipelineLayout));
 		_vertexInput.vertexBindingDescriptionCount = static_cast<uint32_t>(_vertexInputBindings.size());
@@ -172,8 +172,17 @@ namespace seir
 		return pipeline;
 	}
 
+	void VulkanPipelineBuilder::addDescriptorSetLayout() noexcept
+	{
+		_descriptorSetLayouts.emplace_back(VkDescriptorSetLayoutCreateInfo{
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+			.bindingCount = 0,
+		});
+	}
+
 	void VulkanPipelineBuilder::setDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType type, VkShaderStageFlags flags) noexcept
 	{
+		assert(!_descriptorSetLayouts.empty());
 		_descriptorSetLayoutBindings.emplace_back(VkDescriptorSetLayoutBinding{
 			.binding = binding,
 			.descriptorType = type,
@@ -181,6 +190,7 @@ namespace seir
 			.stageFlags = flags,
 			.pImmutableSamplers = nullptr,
 		});
+		++_descriptorSetLayouts.back().bindingCount;
 	}
 
 	void VulkanPipelineBuilder::setInputAssembly(VkPrimitiveTopology topology, bool enablePrimitiveRestart) noexcept
