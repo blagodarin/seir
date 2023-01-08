@@ -19,11 +19,11 @@
 
 namespace
 {
-	constexpr std::array<uint8_t, 16> kTextureData{
-		0x99, 0xbb, 0xbb, 0xff,
-		0xff, 0xff, 0xff, 0xff,
-		0xff, 0xff, 0xff, 0xff,
-		0xff, 0xff, 0xff, 0xff
+	constexpr std::array<uint8_t, 64> kTextureData{
+		0x00, 0x00, 0x00, 0xff, 0x11, 0x11, 0x11, 0xff, 0x22, 0x22, 0x22, 0xff, 0x33, 0x33, 0x33, 0xff,
+		0x44, 0x44, 0x44, 0xff, 0x55, 0x55, 0x55, 0xff, 0x66, 0x66, 0x66, 0xff, 0x77, 0x77, 0x77, 0xff,
+		0x88, 0x88, 0x88, 0xff, 0x99, 0x99, 0x99, 0xff, 0xaa, 0xaa, 0xaa, 0xff, 0xbb, 0xbb, 0xbb, 0xff,
+		0xcc, 0xcc, 0xcc, 0xff, 0xdd, 0xdd, 0xdd, 0xff, 0xee, 0xee, 0xee, 0xff, 0xff, 0xff, 0xff, 0xff
 	};
 
 	struct Vertex
@@ -34,21 +34,55 @@ namespace
 	};
 
 	constexpr std::array kVertexData{
-		Vertex{ .position{ -1, -1, .5 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, -1, .5 }, .color{ 1, 1, 1 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, 1, .5 }, .color{ 0, 1, 0 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, 1, .5 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
+		// Top.
+		Vertex{ .position{ -1, -1, 1 }, .color{ .25, 0, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, 1 }, .color{ .5, 0, 0 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, 1, 1 }, .color{ .75, 0, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1, 1 }, .color{ 1, 0, 0 }, .texCoord{ 1, 1 } },
 
-		Vertex{ .position{ -1, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, -1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, 1, 0 }, .color{ 1, 0, 1 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, 1, 0 }, .color{ 0, 0, 0 }, .texCoord{ 1, 1 } },
+		// Front.
+		Vertex{ .position{ -1, -1, -1 }, .color{ .25, .25, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, -1 }, .color{ .5, .5, 0 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, -1, 1 }, .color{ .75, .75, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, -1, 1 }, .color{ 1, 1, 0 }, .texCoord{ 1, 1 } },
+
+		// Left.
+		Vertex{ .position{ -1, 1, -1 }, .color{ .25, 0, .25 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ -1, -1, -1 }, .color{ .5, 0, .5 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, 1, 1 }, .color{ .75, 0, .75 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ -1, -1, 1 }, .color{ 1, 0, 1 }, .texCoord{ 1, 1 } },
+
+		// Right.
+		Vertex{ .position{ 1, -1, -1 }, .color{ 0, .25, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, 1, -1 }, .color{ 0, .5, 0 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ 1, -1, 1 }, .color{ 0, .75, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1, 1 }, .color{ 0, 1, 0 }, .texCoord{ 1, 1 } },
+
+		// Back.
+		Vertex{ .position{ 1, 1, -1 }, .color{ 0, .25, .25 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ -1, 1, -1 }, .color{ 0, .5, .5 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ 1, 1, 1 }, .color{ 0, .75, .75 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ -1, 1, 1 }, .color{ 0, 1, 1 }, .texCoord{ 1, 1 } },
+
+		// Bottom.
+		Vertex{ .position{ -1, 1, -1 }, .color{ 0, 0, .25 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, 1, -1 }, .color{ 0, 0, .5 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, -1, -1 }, .color{ 0, 0, .75 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, -1, -1 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
 	};
 
-	constexpr std::array<uint16_t, 10> kIndexData{
+	constexpr std::array<uint16_t, 29> kIndexData{
 		0, 1, 2, 3,
 		0xffff,
-		4, 5, 6, 7
+		4, 5, 6, 7,
+		0xffff,
+		8, 9, 10, 11,
+		0xffff,
+		12, 13, 14, 15,
+		0xffff,
+		16, 17, 18, 19,
+		0xffff,
+		20, 21, 22, 23
 	};
 
 	class State : public seir::EventCallbacks
@@ -56,7 +90,7 @@ namespace
 	public:
 		seir::Mat4 cameraMatrix() const noexcept
 		{
-			return seir::Mat4::camera(_cameraPosition, { 0, -45, 0 });
+			return seir::Mat4::camera(_cameraPosition, { 0, 0, 0 });
 		}
 
 	public:
@@ -73,7 +107,7 @@ namespace
 		}
 
 	private:
-		seir::Vec3 _cameraPosition{ 0, -5, 5 };
+		seir::Vec3 _cameraPosition{ 0, -5, 0 };
 	};
 
 	class FrameClock
@@ -116,7 +150,7 @@ int u8main(int, char**)
 	const auto app = seir::SharedPtr{ seir::App::create() };
 	const auto window = seir::SharedPtr{ seir::Window::create(app, "Window") };
 	const auto renderer = seir::Renderer::create(window);
-	const auto texture = renderer->createTexture2D({ 1, 2, 8, seir::PixelFormat::Bgra32 }, kTextureData.data());
+	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer->createMesh(kVertexData.data(), sizeof(Vertex), kVertexData.size(), kIndexData.data(), seir::Mesh::IndexType::U16, kIndexData.size());
 	window->show();
 	FrameClock clock;
@@ -124,11 +158,8 @@ int u8main(int, char**)
 	{
 		renderer->render([&texture, &mesh, &clock, &state](const seir::Vec2& viewportSize, seir::RenderPass& renderPass) {
 			renderPass.setProjection(seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1), state.cameraMatrix());
-			renderPass.setTransformation(seir::Mat4::translation({ 0, -1, -.25 }) * seir::Mat4::rotation(-20 * clock.seconds(), { 0, 0, 1 }));
-			renderPass.bindTexture({});
-			renderPass.drawMesh(*mesh);
-			renderPass.setTransformation(seir::Mat4::scaling(1.5) * seir::Mat4::rotation(40 * clock.seconds(), { 0, 0, 1 }));
 			renderPass.bindTexture(texture);
+			renderPass.setTransformation(seir::Mat4::rotation(29 * clock.seconds(), { 0, 0, 1 }) * seir::Mat4::rotation(19 * clock.seconds(), { 1, 0, 0 }));
 			renderPass.drawMesh(*mesh);
 		});
 		if (const auto fps = clock.advance())
