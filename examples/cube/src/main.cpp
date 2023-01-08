@@ -148,7 +148,7 @@ int u8main(int, char**)
 	// - making create() return SharedPtr;
 	// - removing SharedPtr and passing App and Window by reference.
 	const auto app = seir::SharedPtr{ seir::App::create() };
-	const auto window = seir::SharedPtr{ seir::Window::create(app, "Window") };
+	const auto window = seir::SharedPtr{ seir::Window::create(app, "Cube") };
 	const auto renderer = seir::Renderer::create(window);
 	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer->createMesh(kVertexData.data(), sizeof(Vertex), kVertexData.size(), kIndexData.data(), seir::Mesh::IndexType::U16, kIndexData.size());
@@ -163,7 +163,7 @@ int u8main(int, char**)
 			renderPass.drawMesh(*mesh);
 		});
 		if (const auto fps = clock.advance())
-			window->setTitle(fmt::format("Window [{:.1f} fps]", *fps));
+			window->setTitle(fmt::format("Cube [{:.1f} fps]", *fps));
 	}
 	return 0;
 }
