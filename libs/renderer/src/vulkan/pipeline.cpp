@@ -194,10 +194,19 @@ namespace seir
 		++_descriptorSetLayouts.back().bindingCount;
 	}
 
-	void VulkanPipelineBuilder::setInputAssembly(VkPrimitiveTopology topology, bool enablePrimitiveRestart) noexcept
+	void VulkanPipelineBuilder::setInputAssembly(MeshTopology topology) noexcept
 	{
-		_inputAssembly.topology = topology;
-		_inputAssembly.primitiveRestartEnable = enablePrimitiveRestart;
+		switch (topology)
+		{
+		case MeshTopology::TriangleList:
+			_inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			_inputAssembly.primitiveRestartEnable = VK_FALSE;
+			break;
+		case MeshTopology::TriangleStrip:
+			_inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+			_inputAssembly.primitiveRestartEnable = VK_TRUE;
+			break;
+		}
 	}
 
 	void VulkanPipelineBuilder::setPushConstantRange(uint32_t offset, uint32_t size, VkShaderStageFlags flags) noexcept
@@ -219,7 +228,7 @@ namespace seir
 		});
 	}
 
-	void VulkanPipelineBuilder::setVertexInput(uint32_t binding, std::initializer_list<VertexAttribute> attributes, VkVertexInputRate rate) noexcept
+	void VulkanPipelineBuilder::setVertexInput(uint32_t binding, std::span<const VertexAttribute> attributes, VkVertexInputRate rate) noexcept
 	{
 		uint32_t location = 0;
 		uint32_t offset = 0;

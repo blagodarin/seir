@@ -38,7 +38,7 @@ namespace seir
 		VulkanFrameSync _frameSync;
 		SharedPtr<VulkanTexture2D> _whiteTexture2D;
 		VulkanRenderTarget _renderTarget;
-		VulkanPipeline _pipeline;
+		std::unordered_map<unsigned, VulkanPipeline> _pipelineCache;
 		VulkanUniformBuffers _uniformBuffers;
 		vulkan::DescriptorAllocator _descriptorAllocator;
 		friend VulkanRenderPass;

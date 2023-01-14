@@ -7,8 +7,11 @@
 #include <seir_base/static_vector.hpp>
 #include "vulkan.hpp"
 
+#include <span>
+
 namespace seir
 {
+	enum class MeshTopology;
 	enum class VertexAttribute;
 	class VulkanPipelineBuilder;
 
@@ -43,10 +46,10 @@ namespace seir
 		VulkanPipeline build(VkDevice, VkRenderPass);
 		void addDescriptorSetLayout() noexcept;
 		void setDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType, VkShaderStageFlags) noexcept;
-		void setInputAssembly(VkPrimitiveTopology, bool enablePrimitiveRestart) noexcept;
+		void setInputAssembly(MeshTopology) noexcept;
 		void setPushConstantRange(uint32_t offset, uint32_t size, VkShaderStageFlags) noexcept;
 		void setStage(VkShaderStageFlagBits, VkShaderModule) noexcept;
-		void setVertexInput(uint32_t binding, std::initializer_list<VertexAttribute>, VkVertexInputRate = VK_VERTEX_INPUT_RATE_VERTEX) noexcept;
+		void setVertexInput(uint32_t binding, std::span<const VertexAttribute>, VkVertexInputRate) noexcept;
 
 	private:
 		StaticVector<VkDescriptorSetLayoutBinding, 4> _descriptorSetLayoutBindings;

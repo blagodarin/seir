@@ -16,11 +16,16 @@ namespace seir
 	{
 	public:
 		constexpr StaticVector() noexcept = default;
-		StaticVector(const StaticVector&) = delete;
 		~StaticVector() noexcept { clear(); }
 		StaticVector& operator=(const StaticVector&) = delete;
 
-		StaticVector(std::initializer_list<T> initializers) noexcept // cppcheck-suppress[noExplicitConstructor]
+		explicit StaticVector(const StaticVector& other) noexcept(std::is_nothrow_copy_constructible_v<T>)
+			: _size{ other._size }
+		{
+			std::uninitialized_copy_n(other.data(), _size, reinterpret_cast<T*>(_data));
+		}
+
+		StaticVector(std::initializer_list<T> initializers) noexcept(std::is_nothrow_copy_constructible_v<T>) // cppcheck-suppress[noExplicitConstructor]
 			: _size{ initializers.size() <= kCapacity ? initializers.size() : kCapacity }
 		{
 			std::uninitialized_copy_n(initializers.begin(), _size, reinterpret_cast<T*>(_data));
