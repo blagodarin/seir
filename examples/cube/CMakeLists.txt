@@ -9,8 +9,15 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(cube ${SOURCES})
 target_link_libraries(cube PRIVATE Seir::app Seir::image Seir::renderer Seir::u8main fmt::fmt)
 set_target_properties(cube PROPERTIES WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-	target_compile_options(cube PRIVATE -Wno-unused-macros) # macro "__OPTIMIZE__" is not used
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	target_compile_options(cube PRIVATE
+		-Wno-exit-time-destructors
+		-Wno-global-constructors
+		)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	target_compile_options(cube PRIVATE
+		-Wno-unused-macros # macro "__OPTIMIZE__" is not used
+		)
 endif()
 seir_target(cube FOLDER examples STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 if(WIN32)

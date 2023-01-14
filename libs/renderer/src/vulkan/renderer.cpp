@@ -7,6 +7,7 @@
 #include <seir_app/window.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
+#include <seir_renderer/mesh.hpp>
 #include "commands.hpp"
 #include "error.hpp"
 #include "utils.hpp"
@@ -189,18 +190,27 @@ namespace seir
 		return static_cast<bool>(_whiteTexture2D);
 	}
 
-	UniquePtr<Mesh> VulkanRenderer::createMesh(const void* vertexData, size_t vertexSize, size_t vertexCount, const void* indexData, Mesh::IndexType indexType, size_t indexCount)
+	UniquePtr<Mesh> VulkanRenderer::createMesh(const MeshFormat& format, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount)
 	{
 		if (indexCount > std::numeric_limits<uint32_t>::max())
 			return {};
+		size_t vertexSize = 0;
+		for (const auto attribute : format.vertexAttributes)
+		{
+			switch (attribute)
+			{
+			case VertexAttribute::f32x2: vertexSize += sizeof(float) * 2; break;
+			case VertexAttribute::f32x3: vertexSize += sizeof(float) * 3; break;
+			}
+		}
 		auto vulkanIndexType = VK_INDEX_TYPE_UINT16;
 		size_t indexSize = 0;
-		switch (indexType)
+		switch (format.indexType)
 		{
-		case Mesh::IndexType::U16:
+		case MeshIndexType::u16:
 			indexSize = sizeof(uint16_t);
 			break;
-		case Mesh::IndexType::U32:
+		case MeshIndexType::u32:
 			vulkanIndexType = VK_INDEX_TYPE_UINT32;
 			indexSize = sizeof(uint32_t);
 			break;

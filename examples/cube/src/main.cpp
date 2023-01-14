@@ -8,6 +8,7 @@
 #include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
+#include <seir_renderer/mesh.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
@@ -24,6 +25,16 @@ namespace
 		0x44, 0x44, 0x44, 0xff, 0x55, 0x55, 0x55, 0xff, 0x66, 0x66, 0x66, 0xff, 0x77, 0x77, 0x77, 0xff,
 		0x88, 0x88, 0x88, 0xff, 0x99, 0x99, 0x99, 0xff, 0xaa, 0xaa, 0xaa, 0xff, 0xbb, 0xbb, 0xbb, 0xff,
 		0xcc, 0xcc, 0xcc, 0xff, 0xdd, 0xdd, 0xdd, 0xff, 0xee, 0xee, 0xee, 0xff, 0xff, 0xff, 0xff, 0xff
+	};
+
+	const seir::MeshFormat kMeshFormat{
+		.vertexAttributes{
+			seir::VertexAttribute::f32x3,
+			seir::VertexAttribute::f32x3,
+			seir::VertexAttribute::f32x2,
+		},
+		.topology = seir::MeshTopology::TriangleStrip,
+		.indexType = seir::MeshIndexType::u16,
 	};
 
 	struct Vertex
@@ -151,7 +162,7 @@ int u8main(int, char**)
 	const auto window = seir::SharedPtr{ seir::Window::create(app, "Cube") };
 	const auto renderer = seir::Renderer::create(window);
 	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
-	const auto mesh = renderer->createMesh(kVertexData.data(), sizeof(Vertex), kVertexData.size(), kIndexData.data(), seir::Mesh::IndexType::U16, kIndexData.size());
+	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
 	window->show();
 	FrameClock clock;
 	for (State state; app->processEvents(state);)

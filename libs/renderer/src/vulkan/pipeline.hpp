@@ -9,13 +9,8 @@
 
 namespace seir
 {
+	enum class VertexAttribute;
 	class VulkanPipelineBuilder;
-
-	enum class VertexAttribute
-	{
-		f32x2,
-		f32x3,
-	};
 
 	class VulkanPipeline
 	{

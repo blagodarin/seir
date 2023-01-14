@@ -20,10 +20,10 @@ namespace seir
 		~StaticVector() noexcept { clear(); }
 		StaticVector& operator=(const StaticVector&) = delete;
 
-		explicit StaticVector(std::initializer_list<T> initializers) noexcept
+		StaticVector(std::initializer_list<T> initializers) noexcept // cppcheck-suppress[noExplicitConstructor]
 			: _size{ initializers.size() <= kCapacity ? initializers.size() : kCapacity }
 		{
-			std::uninitialized_copy_n(initializers.begin(), _size, _data);
+			std::uninitialized_copy_n(initializers.begin(), _size, reinterpret_cast<T*>(_data));
 		}
 
 		[[nodiscard]] constexpr T* begin() noexcept { return reinterpret_cast<T*>(_data); }

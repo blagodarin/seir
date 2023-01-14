@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(HEADERS
+	include/seir_renderer/mesh.hpp
 	include/seir_renderer/renderer.hpp
 	)
 set(SOURCES

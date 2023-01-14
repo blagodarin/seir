@@ -13,22 +13,10 @@ namespace seir
 	class Image;
 	class ImageInfo;
 	class Mat4;
+	class Mesh;
+	struct MeshFormat;
 	class Vec2;
 	class Window;
-
-	//
-	class Mesh : public ReferenceCounter
-	{
-	public:
-		//
-		enum class IndexType
-		{
-			U16, //
-			U32, //
-		};
-
-		virtual ~Mesh() noexcept = default;
-	};
 
 	//
 	class Texture2D : public ReferenceCounter
@@ -66,7 +54,7 @@ namespace seir
 		virtual ~Renderer() noexcept = default;
 
 		//
-		[[nodiscard]] virtual UniquePtr<Mesh> createMesh(const void* vertexData, size_t vertexSize, size_t vertexCount, const void* indexData, Mesh::IndexType, size_t indexCount) = 0;
+		[[nodiscard]] virtual UniquePtr<Mesh> createMesh(const MeshFormat&, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount) = 0;
 
 		//
 		[[nodiscard]] virtual SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) = 0;

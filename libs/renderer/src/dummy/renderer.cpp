@@ -5,6 +5,7 @@
 #include <seir_renderer/renderer.hpp>
 
 #include <seir_app/window.hpp>
+#include <seir_renderer/mesh.hpp>
 
 namespace
 {
@@ -14,7 +15,7 @@ namespace
 		explicit DummyRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
 			: _window{ window } {}
 
-		seir::UniquePtr<seir::Mesh> createMesh(const void*, size_t, size_t, const void*, seir::Mesh::IndexType, size_t) override { return {}; }
+		seir::UniquePtr<seir::Mesh> createMesh(const seir::MeshFormat&, const void*, size_t, const void*, size_t) override { return {}; }
 		seir::SharedPtr<seir::Texture2D> createTexture2D(const seir::ImageInfo&, const void*) override { return {}; }
 		void render(const std::function<void(const seir::Vec2&, seir::RenderPass&)>&) override {}
 

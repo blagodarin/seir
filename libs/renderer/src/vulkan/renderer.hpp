@@ -22,7 +22,7 @@ namespace seir
 
 		bool initialize();
 
-		UniquePtr<Mesh> createMesh(const void*, size_t, size_t, const void*, Mesh::IndexType, size_t) override;
+		UniquePtr<Mesh> createMesh(const MeshFormat&, const void*, size_t, const void*, size_t) override;
 		SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
 		void render(const std::function<void(const Vec2&, RenderPass&)>&) override;
 
