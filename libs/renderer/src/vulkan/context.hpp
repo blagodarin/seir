@@ -12,6 +12,8 @@
 #include <cassert>
 #include <vector>
 
+#include <vk_mem_alloc.h>
+
 namespace seir::vulkan
 {
 	class CommandBuffer;
@@ -53,14 +55,14 @@ namespace seir
 
 		void destroy() noexcept;
 		[[nodiscard]] constexpr VkBuffer handle() const noexcept { return _buffer; }
-		void write(const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+		void write(const void* data, VkDeviceSize size);
 
 	private:
-		VkDevice _device = VK_NULL_HANDLE;
+		VmaAllocator _allocator = VK_NULL_HANDLE;
 		VkBuffer _buffer = VK_NULL_HANDLE;
-		VkDeviceMemory _memory = VK_NULL_HANDLE;
-		constexpr explicit VulkanBuffer(VkDevice device) noexcept
-			: _device{ device } {}
+		VmaAllocation _allocation = VK_NULL_HANDLE;
+		constexpr explicit VulkanBuffer(VmaAllocator allocator) noexcept
+			: _allocator{ allocator } {}
 		friend VulkanContext;
 	};
 
@@ -80,13 +82,14 @@ namespace seir
 		[[nodiscard]] constexpr VkImageView viewHandle() const noexcept { return _view; }
 
 	private:
-		VkDevice _device = VK_NULL_HANDLE;
+		VmaAllocator _allocator = VK_NULL_HANDLE;
 		VkImage _image = VK_NULL_HANDLE;
-		VkDeviceMemory _memory = VK_NULL_HANDLE;
+		VmaAllocation _allocation = VK_NULL_HANDLE;
+		VkDevice _device = VK_NULL_HANDLE;
 		VkImageView _view = VK_NULL_HANDLE;
 		VkFormat _format = VK_FORMAT_UNDEFINED;
-		constexpr VulkanImage(VkDevice device, VkFormat format) noexcept
-			: _device{ device }, _format{ format } {}
+		constexpr VulkanImage(VmaAllocator allocator, VkDevice device, VkFormat format) noexcept
+			: _allocator{ allocator }, _device{ device }, _format{ format } {}
 		friend VulkanContext;
 	};
 
@@ -204,6 +207,7 @@ namespace seir
 		VkDevice _device = VK_NULL_HANDLE;
 		VkQueue _graphicsQueue = VK_NULL_HANDLE;
 		VkQueue _presentQueue = VK_NULL_HANDLE;
+		VmaAllocator _allocator = VK_NULL_HANDLE;
 		VkCommandPool _commandPool = VK_NULL_HANDLE;
 
 		explicit VulkanContext(const RendererOptions& options) noexcept
@@ -211,7 +215,7 @@ namespace seir
 		~VulkanContext() noexcept;
 
 		void create(const WindowDescriptor&);
-		[[nodiscard]] VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags) const;
+		[[nodiscard]] VulkanBuffer createBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags, VmaAllocationCreateFlags) const;
 		[[nodiscard]] vulkan::CommandBuffer createCommandBuffer(VkCommandBufferUsageFlags) const;
 		[[nodiscard]] VulkanBuffer createDeviceBuffer(const void* data, VkDeviceSize, VkBufferUsageFlags) const;
 		[[nodiscard]] VulkanImage createImage2D(const VkExtent2D&, VkFormat, VkSampleCountFlagBits, VkImageTiling, VkImageUsageFlags, VkImageAspectFlags) const;
@@ -231,30 +235,33 @@ namespace seir
 		void selectPhysicalDevice();
 		void createDevice();
 		void createCommandPool();
+		void createAllocator();
 		void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize) const;
 	};
 }
 
 constexpr seir::VulkanBuffer::VulkanBuffer(VulkanBuffer&& other) noexcept
-	: _device{ other._device }
+	: _allocator{ other._allocator }
 	, _buffer{ other._buffer }
-	, _memory{ other._memory }
+	, _allocation{ other._allocation }
 {
-	other._device = VK_NULL_HANDLE;
+	other._allocator = VK_NULL_HANDLE;
 	other._buffer = VK_NULL_HANDLE;
-	other._memory = VK_NULL_HANDLE;
+	other._allocation = VK_NULL_HANDLE;
 }
 
 constexpr seir::VulkanImage::VulkanImage(VulkanImage&& other) noexcept
-	: _device{ other._device }
+	: _allocator{ other._allocator }
 	, _image{ other._image }
-	, _memory{ other._memory }
+	, _allocation{ other._allocation }
+	, _device{ other._device }
 	, _view{ other._view }
 	, _format{ other._format }
 {
-	other._device = VK_NULL_HANDLE;
+	other._allocator = VK_NULL_HANDLE;
 	other._image = VK_NULL_HANDLE;
-	other._memory = VK_NULL_HANDLE;
+	other._allocation = VK_NULL_HANDLE;
+	other._device = VK_NULL_HANDLE;
 	other._view = VK_NULL_HANDLE;
 	other._format = VK_FORMAT_UNDEFINED;
 }

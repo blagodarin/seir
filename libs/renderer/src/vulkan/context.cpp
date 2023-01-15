@@ -490,49 +490,46 @@ namespace seir
 	VulkanBuffer& VulkanBuffer::operator=(VulkanBuffer&& other) noexcept
 	{
 		destroy();
-		_device = other._device;
+		_allocator = other._allocator;
 		_buffer = other._buffer;
-		_memory = other._memory;
-		other._device = VK_NULL_HANDLE;
+		_allocation = other._allocation;
+		other._allocator = VK_NULL_HANDLE;
 		other._buffer = VK_NULL_HANDLE;
-		other._memory = VK_NULL_HANDLE;
+		other._allocation = VK_NULL_HANDLE;
 		return *this;
 	}
 
 	void VulkanBuffer::destroy() noexcept
 	{
-		if (_buffer)
-		{
-			vkDestroyBuffer(_device, _buffer, nullptr);
-			_buffer = VK_NULL_HANDLE;
-		}
-		if (_memory)
-		{
-			vkFreeMemory(_device, _memory, nullptr);
-			_memory = VK_NULL_HANDLE;
-		}
-		_device = VK_NULL_HANDLE;
+		if (!_allocator)
+			return;
+		vmaDestroyBuffer(_allocator, _buffer, _allocation);
+		_allocator = VK_NULL_HANDLE;
+		_buffer = VK_NULL_HANDLE;
+		_allocation = VK_NULL_HANDLE;
 	}
 
-	void VulkanBuffer::write(const void* data, VkDeviceSize size, VkDeviceSize offset)
+	void VulkanBuffer::write(const void* data, VkDeviceSize size)
 	{
 		void* mapped = nullptr;
-		SEIR_VK(vkMapMemory(_device, _memory, offset, size, 0, &mapped));
+		SEIR_VK(vmaMapMemory(_allocator, _allocation, &mapped));
 		std::memcpy(mapped, data, size);
-		vkUnmapMemory(_device, _memory);
+		vmaUnmapMemory(_allocator, _allocation);
 	}
 
 	VulkanImage& VulkanImage::operator=(VulkanImage&& other) noexcept
 	{
 		destroy();
-		_device = other._device;
+		_allocator = other._allocator;
 		_image = other._image;
-		_memory = other._memory;
+		_allocation = other._allocation;
+		_device = other._device;
 		_view = other._view;
 		_format = other._format;
-		other._device = VK_NULL_HANDLE;
+		other._allocator = VK_NULL_HANDLE;
 		other._image = VK_NULL_HANDLE;
-		other._memory = VK_NULL_HANDLE;
+		other._allocation = VK_NULL_HANDLE;
+		other._device = VK_NULL_HANDLE;
 		other._view = VK_NULL_HANDLE;
 		other._format = VK_FORMAT_UNDEFINED;
 		return *this;
@@ -568,23 +565,20 @@ namespace seir
 
 	void VulkanImage::destroy() noexcept
 	{
-		_format = VK_FORMAT_UNDEFINED;
-		if (_view)
+		if (_device)
 		{
 			vkDestroyImageView(_device, _view, nullptr);
+			_device = VK_NULL_HANDLE;
 			_view = VK_NULL_HANDLE;
 		}
-		if (_image)
+		if (_allocator)
 		{
-			vkDestroyImage(_device, _image, nullptr);
+			vmaDestroyImage(_allocator, _image, _allocation);
+			_allocator = VK_NULL_HANDLE;
 			_image = VK_NULL_HANDLE;
+			_allocation = VK_NULL_HANDLE;
 		}
-		if (_memory)
-		{
-			vkFreeMemory(_device, _memory, nullptr);
-			_memory = VK_NULL_HANDLE;
-		}
-		_device = VK_NULL_HANDLE;
+		_format = VK_FORMAT_UNDEFINED;
 	}
 
 	void VulkanImage::transitionLayout(const VulkanContext& context, VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -683,6 +677,7 @@ namespace seir
 	VulkanContext::~VulkanContext() noexcept
 	{
 		vkDestroyCommandPool(_device, _commandPool, nullptr);
+		vmaDestroyAllocator(_allocator);
 		vkDestroyDevice(_device, nullptr);
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
 #ifndef NDEBUG
@@ -704,29 +699,31 @@ namespace seir
 		createSurface(windowDescriptor);
 		selectPhysicalDevice();
 		createDevice();
+		createAllocator();
 		createCommandPool();
 	}
 
-	VulkanBuffer VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) const
+	VulkanBuffer VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VmaAllocationCreateFlags allocationFlags) const
 	{
-		assert(_device);
-		VulkanBuffer buffer{ _device };
+		assert(_allocator);
+		VulkanBuffer buffer{ _allocator };
 		const VkBufferCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 			.size = size,
 			.usage = usage,
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		};
-		SEIR_VK(vkCreateBuffer(_device, &createInfo, nullptr, &buffer._buffer));
-		VkMemoryRequirements memoryRequirements{};
-		vkGetBufferMemoryRequirements(_device, buffer._buffer, &memoryRequirements);
-		const VkMemoryAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = memoryRequirements.size,
-			.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, properties),
+		const VmaAllocationCreateInfo allocateInfo{
+			.flags = allocationFlags,
+			.usage = VMA_MEMORY_USAGE_AUTO,
+			.requiredFlags = properties,
+			.preferredFlags = 0,
+			.memoryTypeBits = 0,
+			.pool = VK_NULL_HANDLE,
+			.pUserData = nullptr,
+			.priority = 0,
 		};
-		SEIR_VK(vkAllocateMemory(_device, &allocateInfo, nullptr, &buffer._memory));
-		SEIR_VK(vkBindBufferMemory(_device, buffer._buffer, buffer._memory, 0));
+		SEIR_VK(vmaCreateBuffer(_allocator, &createInfo, &allocateInfo, &buffer._buffer, &buffer._allocation, nullptr));
 		return buffer;
 	}
 
@@ -750,17 +747,17 @@ namespace seir
 
 	VulkanBuffer VulkanContext::createDeviceBuffer(const void* data, VkDeviceSize size, VkBufferUsageFlags usage) const
 	{
-		auto stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		auto stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 		stagingBuffer.write(data, size);
-		auto buffer = createBuffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		auto buffer = createBuffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		copyBuffer(buffer.handle(), stagingBuffer.handle(), size);
 		return buffer;
 	}
 
 	VulkanImage VulkanContext::createImage2D(const VkExtent2D& extent, VkFormat format, VkSampleCountFlagBits sampleCount, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags aspect) const
 	{
-		assert(_device);
-		VulkanImage image{ _device, format };
+		assert(_allocator);
+		VulkanImage image{ _allocator, _device, format };
 		const VkImageCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 			.flags = 0,
@@ -778,16 +775,17 @@ namespace seir
 			.usage = usage,
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		};
-		SEIR_VK(vkCreateImage(_device, &createInfo, nullptr, &image._image));
-		VkMemoryRequirements memoryRequirements{};
-		vkGetImageMemoryRequirements(_device, image._image, &memoryRequirements);
-		const VkMemoryAllocateInfo allocateInfo{
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = memoryRequirements.size,
-			.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+		const VmaAllocationCreateInfo allocateInfo{
+			.flags = 0,
+			.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+			.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			.preferredFlags = 0,
+			.memoryTypeBits = 0,
+			.pool = VK_NULL_HANDLE,
+			.pUserData = nullptr,
+			.priority = 0,
 		};
-		SEIR_VK(vkAllocateMemory(_device, &allocateInfo, nullptr, &image._memory));
-		SEIR_VK(vkBindImageMemory(_device, image._image, image._memory, 0));
+		SEIR_VK(vmaCreateImage(_allocator, &createInfo, &allocateInfo, &image._image, &image._allocation, nullptr));
 		image._view = ::createImageView2D(_device, image._image, format, aspect);
 		return image;
 	}
@@ -836,7 +834,7 @@ namespace seir
 		auto image = createImage2D(extent, format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 		image.transitionLayout(*this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		{
-			auto stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			auto stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			stagingBuffer.write(data, size);
 			image.copy2D(*this, stagingBuffer.handle(), extent, pixelStride);
 		}
@@ -850,7 +848,7 @@ namespace seir
 		VulkanUniformBuffers buffers{ size };
 		buffers._buffers.resize(count);
 		for (auto& buffer : buffers._buffers)
-			buffer = createBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			buffer = createBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 		return buffers;
 	}
 
@@ -1067,6 +1065,24 @@ namespace seir
 		SEIR_VK(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device));
 		vkGetDeviceQueue(_device, _graphicsQueueFamily, 0, &_graphicsQueue);
 		vkGetDeviceQueue(_device, _presentQueueFamily, 0, &_presentQueue);
+	}
+
+	void VulkanContext::createAllocator()
+	{
+		const VmaAllocatorCreateInfo createInfo{
+			.flags = 0,
+			.physicalDevice = _physicalDevice,
+			.device = _device,
+			.preferredLargeHeapBlockSize = 0,
+			.pAllocationCallbacks = nullptr,
+			.pDeviceMemoryCallbacks = nullptr,
+			.pHeapSizeLimit = nullptr,
+			.pVulkanFunctions = nullptr,
+			.instance = _instance,
+			.vulkanApiVersion = VK_API_VERSION_1_0,
+			.pTypeExternalMemoryHandleTypes = nullptr,
+		};
+		SEIR_VK(vmaCreateAllocator(&createInfo, &_allocator));
 	}
 
 	void VulkanContext::createCommandPool()

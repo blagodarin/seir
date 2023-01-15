@@ -52,7 +52,7 @@ target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURREN
 target_link_libraries(seir_renderer PUBLIC Seir::math PRIVATE Seir::app Seir::image)
 if(SEIR_RENDERER STREQUAL "Vulkan")
 	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
-	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan $<$<CONFIG:Debug>:fmt::fmt>)
+	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan VulkanMemoryAllocator::VulkanMemoryAllocator $<$<CONFIG:Debug>:fmt::fmt>)
 	seir_embed_spirv(seir_renderer
 		VERTEX src/vulkan/vertex_shader.glsl
 		FRAGMENT src/vulkan/fragment_shader.glsl

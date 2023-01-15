@@ -89,6 +89,8 @@ if(SEIR_RENDERER STREQUAL "Vulkan")
 	if(NOT TARGET Vulkan::glslc)
 		message(SEND_ERROR "Could not find glslc, please install Vulkan SDK")
 	endif()
+	seir_provide_vma(VulkanMemoryAllocator_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
+	find_package(VulkanMemoryAllocator REQUIRED)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "^Clang|GNU$" AND SEIR_ARCHITECTURE MATCHES "^amd64|x86$")
