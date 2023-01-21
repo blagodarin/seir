@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <string>
 
+#include <fmt/core.h>
+
 namespace
 {
 	struct Location
@@ -27,7 +29,7 @@ namespace
 	{
 	public:
 		CompositionError(const Location& location, const std::string& message)
-			: std::runtime_error("(" + std::to_string(location._line) + ':' + std::to_string(location._offset + 1) + ") " + message) {}
+			: std::runtime_error{ fmt::format("({}:{}) {}", location._line, location._offset + 1, message) } {}
 	};
 }
 

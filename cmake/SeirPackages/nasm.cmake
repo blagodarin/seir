@@ -5,11 +5,11 @@
 function(seir_provide_nasm result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED" "" ${ARGN})
 	_seir_provide_begin("nasm")
-	set(version "2.15.05")
+	set(version "2.16.01")
 	set(package "nasm-${version}")
 	if(WIN32)
 		seir_download("https://www.nasm.us/pub/nasm/releasebuilds/${version}/win64/${package}-win64.zip"
-			SHA1 "f3d25401783109ec999508af4dc967facf64971a"
+			SHA1 "412520f192224715fb91d643f9640ce1005cab99"
 			NAME "${package}.zip"
 			EXTRACT_DIR "${package}"
 			RESULT downloaded
