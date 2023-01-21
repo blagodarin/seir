@@ -12,11 +12,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - cc: gcc-11
-            cxx: g++-11
+          - cc: gcc-12
+            cxx: g++-12
             config: Release
-          - cc: gcc-11
-            cxx: g++-11
+          - cc: gcc-12
+            cxx: g++-12
             config: Debug
           - cc: clang-14
             cxx: clang++-14
@@ -79,9 +79,9 @@ jobs:
     name: Coverage
     runs-on: ubuntu-22.04
     env:
-      CC: gcc-11
+      CC: gcc-12
       CFLAGS: --coverage
-      CXX: g++-11
+      CXX: g++-12
       CXXFLAGS: --coverage
       LDFLAGS: --coverage
     steps:
@@ -121,4 +121,4 @@ jobs:
       - name: Upload coverage reports
         run: |
           pip install --user codecov
-          codecov --gcov-root "${{ github.workspace }}/build" --gcov-exec gcov-11 --gcov-args "-s ${{ github.workspace }}"
+          codecov --gcov-root "${{ github.workspace }}/build" --gcov-exec gcov-12 --gcov-args "-s ${{ github.workspace }}"

@@ -28,8 +28,8 @@ jobs:
           brew install nasm ninja
       - name: Run CMake
         run: |
-          export CC=$(brew --prefix llvm@14)/bin/clang
-          export CXX=$(brew --prefix llvm@14)/bin/clang++
+          export CC=$(brew --prefix llvm@15)/bin/clang
+          export CXX=$(brew --prefix llvm@15)/bin/clang++
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
@@ -57,8 +57,8 @@ jobs:
           ctest --verbose
       - name: Check exports
         run: |
-          export CC=$(brew --prefix llvm@14)/bin/clang
-          export CXX=$(brew --prefix llvm@14)/bin/clang++
+          export CC=$(brew --prefix llvm@15)/bin/clang
+          export CXX=$(brew --prefix llvm@15)/bin/clang++
           cmake --build build --target install
           cmake -S cmake/test -B build.test \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
