@@ -38,9 +38,6 @@ namespace seir
 		virtual void drawMesh(const Mesh&) = 0;
 
 		//
-		virtual void setProjection(const Mat4& projection, const Mat4& view) = 0;
-
-		//
 		virtual void setTransformation(const Mat4&) = 0;
 	};
 
@@ -61,6 +58,6 @@ namespace seir
 		[[nodiscard]] SharedPtr<Texture2D> createTexture2D(const Image&);
 
 		//
-		virtual void render(const std::function<void(const Vec2&, RenderPass&)>&) = 0;
+		virtual void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&) = 0;
 	};
 }

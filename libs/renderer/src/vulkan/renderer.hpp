@@ -24,7 +24,7 @@ namespace seir
 
 		UniquePtr<Mesh> createMesh(const MeshFormat&, const void*, size_t, const void*, size_t) override;
 		SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
-		void render(const std::function<void(const Vec2&, RenderPass&)>&) override;
+		void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&) override;
 
 	private:
 		void resetRenderTarget();

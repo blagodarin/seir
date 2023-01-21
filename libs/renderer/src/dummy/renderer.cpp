@@ -17,7 +17,7 @@ namespace
 
 		seir::UniquePtr<seir::Mesh> createMesh(const seir::MeshFormat&, const void*, size_t, const void*, size_t) override { return {}; }
 		seir::SharedPtr<seir::Texture2D> createTexture2D(const seir::ImageInfo&, const void*) override { return {}; }
-		void render(const std::function<void(const seir::Vec2&, seir::RenderPass&)>&) override {}
+		void render(const std::function<seir::Mat4(const seir::Vec2&)>&, const std::function<void(seir::RenderPass&)>&) override {}
 
 	private:
 		const seir::SharedPtr<seir::Window> _window;

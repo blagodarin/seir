@@ -21,14 +21,15 @@
 namespace
 {
 	constexpr std::array<uint8_t, 64> kTextureData{
-		0x00, 0x00, 0x00, 0xff, 0x11, 0x11, 0x11, 0xff, 0x22, 0x22, 0x22, 0xff, 0x33, 0x33, 0x33, 0xff,
-		0x44, 0x44, 0x44, 0xff, 0x55, 0x55, 0x55, 0xff, 0x66, 0x66, 0x66, 0xff, 0x77, 0x77, 0x77, 0xff,
-		0x88, 0x88, 0x88, 0xff, 0x99, 0x99, 0x99, 0xff, 0xaa, 0xaa, 0xaa, 0xff, 0xbb, 0xbb, 0xbb, 0xff,
-		0xcc, 0xcc, 0xcc, 0xff, 0xdd, 0xdd, 0xdd, 0xff, 0xee, 0xee, 0xee, 0xff, 0xff, 0xff, 0xff, 0xff
+		0xff, 0xff, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0xff,
+		0xcc, 0xcc, 0xcc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0xff,
+		0xcc, 0xcc, 0xcc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0xff, 0xff, 0xff, 0xff, 0xff
 	};
 
 	const seir::MeshFormat kMeshFormat{
 		.vertexAttributes{
+			seir::VertexAttribute::f32x3,
 			seir::VertexAttribute::f32x3,
 			seir::VertexAttribute::f32x3,
 			seir::VertexAttribute::f32x2,
@@ -40,46 +41,47 @@ namespace
 	struct Vertex
 	{
 		seir::Vec3 position;
+		seir::Vec3 normal;
 		seir::Vec3 color;
 		seir::Vec2 texCoord;
 	};
 
 	constexpr std::array kVertexData{
 		// Top.
-		Vertex{ .position{ -1, -1, 1 }, .color{ .25, 0, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, -1, 1 }, .color{ .5, 0, 0 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, 1, 1 }, .color{ .75, 0, 0 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, 1, 1 }, .color{ 1, 0, 0 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, -1, 1 }, .normal{ 0, 0, 1 }, .color{ 1, 0, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, -1, 1 }, .normal{ 0, 0, 1 }, .color{ 1, 0, 0 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, 1, 1 }, .normal{ 0, 0, 1 }, .color{ 1, 0, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, 1, 1 }, .normal{ 0, 0, 1 }, .color{ 1, 0, 0 }, .texCoord{ 1, 0 } },
 
 		// Front.
-		Vertex{ .position{ -1, -1, -1 }, .color{ .25, .25, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, -1, -1 }, .color{ .5, .5, 0 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, -1, 1 }, .color{ .75, .75, 0 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, -1, 1 }, .color{ 1, 1, 0 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, -1, -1 }, .normal{ 0, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, -1 }, .normal{ 0, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, -1, 1 }, .normal{ 0, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, -1, 1 }, .normal{ 0, -1, 0 }, .color{ 1, 1, 0 }, .texCoord{ 1, 1 } },
 
 		// Left.
-		Vertex{ .position{ -1, 1, -1 }, .color{ .25, 0, .25 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ -1, -1, -1 }, .color{ .5, 0, .5 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, 1, 1 }, .color{ .75, 0, .75 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ -1, -1, 1 }, .color{ 1, 0, 1 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, 1, -1 }, .normal{ -1, 0, 0 }, .color{ 1, 0, 1 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ -1, -1, -1 }, .normal{ -1, 0, 0 }, .color{ 1, 0, 1 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ -1, 1, 1 }, .normal{ -1, 0, 0 }, .color{ 1, 0, 1 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, -1, 1 }, .normal{ -1, 0, 0 }, .color{ 1, 0, 1 }, .texCoord{ 0, 1 } },
 
 		// Right.
-		Vertex{ .position{ 1, -1, -1 }, .color{ 0, .25, 0 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, 1, -1 }, .color{ 0, .5, 0 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ 1, -1, 1 }, .color{ 0, .75, 0 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, 1, 1 }, .color{ 0, 1, 0 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ 1, -1, -1 }, .normal{ 1, 0, 0 }, .color{ 0, 1, 0 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ 1, 1, -1 }, .normal{ 1, 0, 0 }, .color{ 0, 1, 0 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, 1 }, .normal{ 1, 0, 0 }, .color{ 0, 1, 0 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ 1, 1, 1 }, .normal{ 1, 0, 0 }, .color{ 0, 1, 0 }, .texCoord{ 0, 1 } },
 
 		// Back.
-		Vertex{ .position{ 1, 1, -1 }, .color{ 0, .25, .25 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ -1, 1, -1 }, .color{ 0, .5, .5 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ 1, 1, 1 }, .color{ 0, .75, .75 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ -1, 1, 1 }, .color{ 0, 1, 1 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ 1, 1, -1 }, .normal{ 0, 1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ -1, 1, -1 }, .normal{ 0, 1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 1, 0 } },
+		Vertex{ .position{ 1, 1, 1 }, .normal{ 0, 1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ -1, 1, 1 }, .normal{ 0, 1, 0 }, .color{ 0, 1, 1 }, .texCoord{ 1, 1 } },
 
 		// Bottom.
-		Vertex{ .position{ -1, 1, -1 }, .color{ 0, 0, .25 }, .texCoord{ 0, 0 } },
-		Vertex{ .position{ 1, 1, -1 }, .color{ 0, 0, .5 }, .texCoord{ 1, 0 } },
-		Vertex{ .position{ -1, -1, -1 }, .color{ 0, 0, .75 }, .texCoord{ 0, 1 } },
-		Vertex{ .position{ 1, -1, -1 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, 1, -1 }, .normal{ 0, 0, -1 }, .color{ 0, 0, 1 }, .texCoord{ 0, 1 } },
+		Vertex{ .position{ 1, 1, -1 }, .normal{ 0, 0, -1 }, .color{ 0, 0, 1 }, .texCoord{ 1, 1 } },
+		Vertex{ .position{ -1, -1, -1 }, .normal{ 0, 0, -1 }, .color{ 0, 0, 1 }, .texCoord{ 0, 0 } },
+		Vertex{ .position{ 1, -1, -1 }, .normal{ 0, 0, -1 }, .color{ 0, 0, 1 }, .texCoord{ 1, 0 } },
 	};
 
 	constexpr std::array<uint16_t, 29> kIndexData{
@@ -167,12 +169,15 @@ int u8main(int, char**)
 	FrameClock clock;
 	for (State state; app->processEvents(state);)
 	{
-		renderer->render([&texture, &mesh, &clock, &state](const seir::Vec2& viewportSize, seir::RenderPass& renderPass) {
-			renderPass.setProjection(seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1), state.cameraMatrix());
-			renderPass.bindTexture(texture);
-			renderPass.setTransformation(seir::Mat4::rotation(29 * clock.seconds(), { 0, 0, 1 }) * seir::Mat4::rotation(19 * clock.seconds(), { 1, 0, 0 }));
-			renderPass.drawMesh(*mesh);
-		});
+		renderer->render(
+			[&state](const seir::Vec2& viewportSize) {
+				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * state.cameraMatrix();
+			},
+			[&texture, &mesh, &clock](seir::RenderPass& renderPass) {
+				renderPass.bindTexture(texture);
+				renderPass.setTransformation(seir::Mat4::rotation(29 * clock.seconds(), { 0, 0, 1 }) * seir::Mat4::rotation(19 * clock.seconds(), { 1, 0, 0 }));
+				renderPass.drawMesh(*mesh);
+			});
 		if (const auto fps = clock.advance())
 			window->setTitle(fmt::format("Cube [{:.1f} fps]", *fps));
 	}

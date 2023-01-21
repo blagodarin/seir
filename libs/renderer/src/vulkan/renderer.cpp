@@ -20,7 +20,7 @@ namespace
 {
 	struct UniformBufferObject
 	{
-		seir::Mat4 _matrix = seir::Mat4::identity(); // TODO: Replace with something useful.
+		seir::Mat4 _matrix;
 	};
 
 	struct PushConstants
@@ -119,16 +119,9 @@ namespace seir
 			vkCmdDrawIndexed(_commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
 		}
 
-		void setProjection(const Mat4& projection, const Mat4& view) override
-		{
-			_projectionView = projection * view;
-			_pushConstants._matrix = _projectionView;
-			_updatePushConstants = true;
-		}
-
 		void setTransformation(const Mat4& transformation) override
 		{
-			_pushConstants._matrix = _projectionView * transformation;
+			_pushConstants._matrix = transformation;
 			_updatePushConstants = true;
 		}
 
@@ -192,7 +185,6 @@ namespace seir
 		bool _updateUniformBuffer = true;
 		SharedPtr<VulkanTexture2D> _texture = _renderer._whiteTexture2D;
 		bool _updateTexture = true;
-		Mat4 _projectionView = Mat4::identity();
 		PushConstants _pushConstants{ ._matrix = Mat4::identity() };
 		bool _updatePushConstants = true;
 	};
@@ -300,7 +292,7 @@ namespace seir
 		}
 	}
 
-	void VulkanRenderer::render(const std::function<void(const Vec2&, RenderPass&)>& callback)
+	void VulkanRenderer::render(const std::function<Mat4(const Vec2&)>& setup, const std::function<void(RenderPass&)>& callback)
 	{
 		if (!_renderTarget)
 		{
@@ -330,7 +322,10 @@ namespace seir
 		if (!_renderTarget.acquireFrame(_context._device, frameAvailableSemaphore, frameFence, index))
 			return resetRenderTarget();
 		{
-			const UniformBufferObject ubo;
+			const auto viewportSize = _renderTarget.extent();
+			const UniformBufferObject ubo{
+				._matrix = setup({ static_cast<float>(viewportSize.width), static_cast<float>(viewportSize.height) }),
+			};
 			_uniformBuffers.update(index, &ubo);
 		}
 		_descriptorAllocator.setFrameIndex(index);
@@ -338,9 +333,8 @@ namespace seir
 		const auto renderPassInfo = _renderTarget.renderPassInfo(index);
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		{
-			const auto viewportSize = _renderTarget.extent();
 			VulkanRenderPass renderPass{ *this, _uniformBuffers[index], commandBuffer };
-			callback({ static_cast<float>(viewportSize.width), static_cast<float>(viewportSize.height) }, renderPass);
+			callback(renderPass);
 		}
 		vkCmdEndRenderPass(commandBuffer);
 		commandBuffer.finish();
