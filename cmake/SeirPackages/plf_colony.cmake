@@ -5,9 +5,9 @@
 function(seir_provide_plf_colony result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED" "" ${ARGN})
 	_seir_provide_begin("plf_colony")
-	set(version "348174f0da2ea65b7a561b08412e81ce1f5e6161") # 7.06
+	set(version "2555dea957eb8e5dc93818df7d16517da80c9dd7") # 7.08
 	seir_download("https://raw.githubusercontent.com/mattreecebentley/plf_colony/${version}/plf_colony.h"
-		SHA1 "90013e815f794c095221fcbe203780611744d56a"
+		SHA1 "464ab557cc9c69f57e9d33a6877056e523adcf30"
 		RESULT downloaded
 		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/plf_colony)
