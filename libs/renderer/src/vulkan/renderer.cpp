@@ -80,6 +80,19 @@ namespace
 
 namespace seir
 {
+	class VulkanShaderSet : public ShaderSet
+	{
+	public:
+		VulkanShaderSet(seir::VulkanShader&& vertexShader, seir::VulkanShader&& fragmentShader)
+			: _vertexShader{ std::move(vertexShader) }, _fragmentShader{ std::move(fragmentShader) } {}
+		constexpr auto fragmentShader() const noexcept { return _fragmentShader.handle(); }
+		constexpr auto vertexShader() const noexcept { return _vertexShader.handle(); }
+
+	private:
+		seir::VulkanShader _vertexShader;
+		seir::VulkanShader _fragmentShader;
+	};
+
 	class VulkanTexture2D : public Texture2D
 	{
 	public:
@@ -99,6 +112,11 @@ namespace seir
 			, _uniformBufferInfo{ uniformBufferInfo }
 			, _commandBuffer{ commandBuffer }
 		{
+		}
+
+		void bindShaders(const SharedPtr<ShaderSet>& shaderSet) override
+		{
+			_shaderSet = staticCast<VulkanShaderSet>(shaderSet ? shaderSet : _renderer._shaders);
 		}
 
 		void bindTexture(const SharedPtr<Texture2D>& texture) override
@@ -163,15 +181,21 @@ namespace seir
 
 		void selectPipeline(const MeshFormat& meshFormat)
 		{
+			assert(_shaderSet);
 			auto key = static_cast<unsigned>(meshFormat.topology);
 			for (size_t i = 0; i < meshFormat.vertexAttributes.size(); ++i)
 				key += (static_cast<unsigned>(meshFormat.vertexAttributes[i]) + 1) << (2 * (i + 1));
-			auto i = _renderer._pipelineCache.find(key);
-			if (i == _renderer._pipelineCache.end())
-				i = _renderer._pipelineCache.emplace(key, ::createPipeline(_renderer._context, _renderer._renderTarget, _renderer._vertexShader.handle(), _renderer._fragmentShader.handle(), meshFormat)).first;
-			if (&i->second != _pipeline)
+			auto [i, end] = _renderer._pipelineCache.equal_range(_shaderSet.get());
+			while (i != end && i->second.first != key)
+				++i;
+			if (i == end)
+				i = _renderer._pipelineCache.emplace(
+					std::piecewise_construct,
+					std::forward_as_tuple(_shaderSet.get()),
+					std::forward_as_tuple(key, ::createPipeline(_renderer._context, _renderer._renderTarget, _shaderSet->vertexShader(), _shaderSet->fragmentShader(), meshFormat)));
+			if (&i->second.second != _pipeline)
 			{
-				_pipeline = &i->second;
+				_pipeline = &i->second.second;
 				_updatePipeline = true;
 			}
 		}
@@ -180,6 +204,7 @@ namespace seir
 		VulkanRenderer& _renderer;
 		const VkDescriptorBufferInfo& _uniformBufferInfo;
 		const VkCommandBuffer _commandBuffer;
+		SharedPtr<VulkanShaderSet> _shaderSet;
 		VulkanPipeline* _pipeline = nullptr;
 		bool _updatePipeline = true;
 		bool _updateUniformBuffer = true;
@@ -215,8 +240,7 @@ namespace seir
 		try
 		{
 			_context.create(_window->descriptor());
-			_vertexShader = _context.createShader(kVertexShader, sizeof kVertexShader);
-			_fragmentShader = _context.createShader(kFragmentShader, sizeof kFragmentShader);
+			_shaders = createShaders(kVertexShader, kFragmentShader);
 			_textureSampler = _context.createSampler2D();
 			_frameSync.create(_context._device);
 		}
@@ -269,6 +293,13 @@ namespace seir
 #endif
 			return {};
 		}
+	}
+
+	SharedPtr<ShaderSet> VulkanRenderer::createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader)
+	{
+		return makeShared<ShaderSet, VulkanShaderSet>(
+			_context.createShader(vertexShader.data(), vertexShader.size() * sizeof(uint32_t)),
+			_context.createShader(fragmentShader.data(), fragmentShader.size() * sizeof(uint32_t)));
 	}
 
 	SharedPtr<Texture2D> VulkanRenderer::createTexture2D(const ImageInfo& info, const void* data)

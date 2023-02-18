@@ -7,6 +7,7 @@
 #include <seir_base/shared_ptr.hpp>
 
 #include <functional>
+#include <span>
 
 namespace seir
 {
@@ -17,6 +18,13 @@ namespace seir
 	struct MeshFormat;
 	class Vec2;
 	class Window;
+
+	//
+	class ShaderSet : public ReferenceCounter
+	{
+	public:
+		virtual ~ShaderSet() noexcept = default;
+	};
 
 	//
 	class Texture2D : public ReferenceCounter
@@ -30,6 +38,9 @@ namespace seir
 	{
 	public:
 		virtual ~RenderPass() noexcept = default;
+
+		//
+		virtual void bindShaders(const SharedPtr<ShaderSet>&) = 0;
 
 		//
 		virtual void bindTexture(const SharedPtr<Texture2D>&) = 0;
@@ -52,6 +63,9 @@ namespace seir
 
 		//
 		[[nodiscard]] virtual UniquePtr<Mesh> createMesh(const MeshFormat&, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount) = 0;
+
+		//
+		[[nodiscard]] virtual SharedPtr<ShaderSet> createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader) = 0;
 
 		//
 		[[nodiscard]] virtual SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) = 0;

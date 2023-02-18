@@ -173,10 +173,11 @@ int u8main(int, char**)
 			[&state](const seir::Vec2& viewportSize) {
 				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * state.cameraMatrix();
 			},
-			[&texture, &mesh, &clock](seir::RenderPass& renderPass) {
-				renderPass.bindTexture(texture);
-				renderPass.setTransformation(seir::Mat4::rotation(29 * clock.seconds(), { 0, 0, 1 }) * seir::Mat4::rotation(19 * clock.seconds(), { 1, 0, 0 }));
-				renderPass.drawMesh(*mesh);
+			[&texture, &mesh, &clock](seir::RenderPass& pass) {
+				pass.bindShaders({});
+				pass.bindTexture(texture);
+				pass.setTransformation(seir::Mat4::rotation(29 * clock.seconds(), { 0, 0, 1 }) * seir::Mat4::rotation(19 * clock.seconds(), { 1, 0, 0 }));
+				pass.drawMesh(*mesh);
 			});
 		if (const auto fps = clock.advance())
 			window->setTitle(fmt::format("Cube [{:.1f} fps]", *fps));
