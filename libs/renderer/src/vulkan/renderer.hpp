@@ -34,7 +34,6 @@ namespace seir
 	private:
 		const SharedPtr<Window> _window;
 		VulkanContext _context;
-		SharedPtr<ShaderSet> _shaders; // TODO: Remove.
 		VulkanSampler _textureSampler;
 		VulkanFrameSync _frameSync;
 		SharedPtr<VulkanTexture2D> _whiteTexture2D;

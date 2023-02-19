@@ -28,14 +28,6 @@ namespace
 		seir::Mat4 _matrix;
 	};
 
-	const uint32_t kVertexShader[]{
-#include "vertex_shader.glsl.spirv.inc"
-	};
-
-	const uint32_t kFragmentShader[]{
-#include "fragment_shader.glsl.spirv.inc"
-	};
-
 	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader, const seir::MeshFormat& meshFormat)
 	{
 		seir::VulkanPipelineBuilder builder{ renderTarget.extent(), context._maxSampleCount, context._options.sampleShading };
@@ -116,7 +108,8 @@ namespace seir
 
 		void bindShaders(const SharedPtr<ShaderSet>& shaderSet) override
 		{
-			_shaderSet = staticCast<VulkanShaderSet>(shaderSet ? shaderSet : _renderer._shaders);
+			assert(shaderSet);
+			_shaderSet = staticCast<VulkanShaderSet>(shaderSet);
 		}
 
 		void bindTexture(const SharedPtr<Texture2D>& texture) override
@@ -240,7 +233,6 @@ namespace seir
 		try
 		{
 			_context.create(_window->descriptor());
-			_shaders = createShaders(kVertexShader, kFragmentShader);
 			_textureSampler = _context.createSampler2D();
 			_frameSync.create(_context._device);
 		}

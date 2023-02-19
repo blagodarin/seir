@@ -24,3 +24,9 @@ if(WIN32)
 	target_sources(cube PRIVATE cube.rc)
 	source_group("res" FILES cube.rc)
 endif()
+if(SEIR_RENDERER STREQUAL "Vulkan")
+	seir_embed_spirv(cube
+		VERTEX src/vertex_shader.glsl
+		FRAGMENT src/fragment_shader.glsl
+		)
+endif()

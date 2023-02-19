@@ -98,6 +98,24 @@ namespace
 		20, 21, 22, 23
 	};
 
+	const uint32_t kVertexShader[]
+	{
+#if SEIR_RENDERER_VULKAN
+#	include "vertex_shader.glsl.spirv.inc"
+#else
+		0
+#endif
+	};
+
+	const uint32_t kFragmentShader[]
+	{
+#if SEIR_RENDERER_VULKAN
+#	include "fragment_shader.glsl.spirv.inc"
+#else
+		0
+#endif
+	};
+
 	class State : public seir::EventCallbacks
 	{
 	public:
@@ -165,6 +183,7 @@ int u8main(int, char**)
 	const auto renderer = seir::Renderer::create(window);
 	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
+	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
 	window->show();
 	FrameClock clock;
 	for (State state; app->processEvents(state);)
@@ -173,8 +192,8 @@ int u8main(int, char**)
 			[&state](const seir::Vec2& viewportSize) {
 				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * state.cameraMatrix();
 			},
-			[&texture, &mesh, &clock](seir::RenderPass& pass) {
-				pass.bindShaders({});
+			[&texture, &mesh, &shaders, &clock](seir::RenderPass& pass) {
+				pass.bindShaders(shaders);
 				pass.bindTexture(texture);
 				pass.setTransformation(seir::Mat4::rotation(29 * clock.seconds(), { 0, 0, 1 }) * seir::Mat4::rotation(19 * clock.seconds(), { 1, 0, 0 }));
 				pass.drawMesh(*mesh);
