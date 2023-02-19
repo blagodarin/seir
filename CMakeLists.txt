@@ -2,7 +2,7 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.25)
 
 project(Seir LANGUAGES CXX)
 
@@ -51,14 +51,15 @@ seir_provide_plf_colony(plf_colony_ROOT)
 find_package(fmt REQUIRED)
 find_package(plf_colony REQUIRED)
 find_package(Threads REQUIRED)
-if(NOT WIN32)
-	find_package(PkgConfig REQUIRED)
-endif()
-if(SEIR_AUDIO AND NOT WIN32)
+if(SEIR_AUDIO AND LINUX)
 	find_package(ALSA REQUIRED)
 endif()
 if(SEIR_AUDIO_OGGVORBIS)
-	if("vorbis" IN_LIST SEIR_3RDPARTY_SKIP AND NOT WIN32)
+	# Ubuntu 22.10 Vorbis package doesn't provide CMake configs,
+	# and find_package won't find Vorbis without CMake configs,
+	# so we need a workaround if we aren't providing Vorbis either.
+	if(LINUX AND "vorbis" IN_LIST SEIR_3RDPARTY_SKIP)
+		find_package(PkgConfig REQUIRED)
 		pkg_check_modules(vorbisfile REQUIRED IMPORTED_TARGET vorbisfile)
 		add_library(Vorbis::vorbisfile ALIAS PkgConfig::vorbisfile)
 	else()

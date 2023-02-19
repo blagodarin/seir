@@ -30,7 +30,7 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DSEIR_3RDPARTY_SKIP="freetype;jpeg;vorbis;zlib;zstd" \
+            -DSEIR_3RDPARTY_SKIP="freetype;jpeg;ogg;vorbis;zlib;zstd" \
             -DSEIR_AUDIO_OGGVORBIS=ON \
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_BENCHMARKS=ON \
