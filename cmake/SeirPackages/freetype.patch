@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -449,6 +449,7 @@
+@@ -460,6 +460,7 @@
  
  set_target_properties(
    freetype PROPERTIES

@@ -5,10 +5,10 @@
 function(seir_provide_zstd result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("zstd")
-	set(version "1.5.2")
+	set(version "1.5.5")
 	set(package "zstd-${version}")
 	seir_download("https://github.com/facebook/zstd/releases/download/v${version}/${package}.tar.zst"
-		SHA1 "48f24a434f1f06ac682638a81f59688f0bc072b0"
+		SHA1 "63aa06e440623bfb55342ad0db097557571321ac"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)

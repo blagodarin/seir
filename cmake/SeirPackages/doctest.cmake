@@ -5,7 +5,7 @@
 function(seir_provide_doctest result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("doctest")
-	set(version "2.4.9")
+	set(version "2.4.11")
 	set(package "doctest-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME}
 		${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest_static.patch
@@ -13,7 +13,7 @@ function(seir_provide_doctest result)
 		)
 	seir_download("https://github.com/doctest/doctest/archive/refs/tags/v${version}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA1 "9c2a6b805fb3d52a4eb0ea88da0f8b38cff4ebc0"
+		SHA1 "e3761cf44ae253fefe9010985a2ef50e3bc66194"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded

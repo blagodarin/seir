@@ -26,7 +26,11 @@ jobs:
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
       - name: Install prerequisites
         run: |
-          cinst --no-progress ninja vulkan-sdk
+          choco install --no-progress ninja
+          Invoke-WebRequest `
+            -Uri https://sdk.lunarg.com/sdk/download/1.3.250.1/windows/VulkanSDK-1.3.250.1-Installer.exe `
+            -OutFile VulkanSDK-1.3.250.1-Installer.exe
+          & '${{ github.workspace }}\VulkanSDK-1.3.250.1-Installer.exe' install --accept-licenses --confirm-command
       - name: Run CMake
         run: |
           $Env:VULKAN_SDK = "C:\VulkanSDK\$(Get-ChildItem 'C:\VulkanSDK' -Name)"
