@@ -147,23 +147,6 @@ namespace
 
 namespace seir
 {
-	void VulkanFrameSync::create(VkDevice device)
-	{
-		const VkSemaphoreCreateInfo semaphoreInfo{
-			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-		};
-		const VkFenceCreateInfo fenceInfo{
-			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-			.flags = VK_FENCE_CREATE_SIGNALED_BIT,
-		};
-		for (auto& item : _items)
-		{
-			SEIR_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &item._imageAvailableSemaphore));
-			SEIR_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &item._renderFinishedSemaphore));
-			SEIR_VK(vkCreateFence(device, &fenceInfo, nullptr, &item._fence));
-		}
-	}
-
 	void VulkanFrameSync::destroy(VkDevice device) noexcept
 	{
 		for (auto& item : _items)
@@ -174,6 +157,29 @@ namespace seir
 			item._renderFinishedSemaphore = VK_NULL_HANDLE;
 			vkDestroyFence(device, item._fence, nullptr);
 			item._fence = VK_NULL_HANDLE;
+		}
+	}
+
+	void VulkanFrameSync::resize(VkDevice device, uint32_t requiredSize)
+	{
+		if (requiredSize <= _items.size())
+			return;
+		_items.resize(requiredSize);
+		const VkSemaphoreCreateInfo semaphoreInfo{
+			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		};
+		const VkFenceCreateInfo fenceInfo{
+			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+			.flags = VK_FENCE_CREATE_SIGNALED_BIT,
+		};
+		for (auto& item : _items)
+		{
+			if (!item._imageAvailableSemaphore)
+				SEIR_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &item._imageAvailableSemaphore));
+			if (!item._renderFinishedSemaphore)
+				SEIR_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &item._renderFinishedSemaphore));
+			if (!item._fence)
+				SEIR_VK(vkCreateFence(device, &fenceInfo, nullptr, &item._fence));
 		}
 	}
 

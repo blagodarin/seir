@@ -234,7 +234,11 @@ namespace seir
 		{
 			_context.create(_window->descriptor());
 			_textureSampler = _context.createSampler2D();
-			_frameSync.create(_context._device);
+			{
+				constexpr VkExtent2D kSize{ .width = 1, .height = 1 };
+				static uint32_t kData = 0xffffffff;
+				_whiteTexture2D = makeShared<VulkanTexture2D>(_context.createTextureImage2D(kSize, VK_FORMAT_B8G8R8A8_SRGB, sizeof(kData), &kData, kSize.width));
+			}
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
 		{
@@ -243,9 +247,7 @@ namespace seir
 #endif
 			return false;
 		}
-		static uint32_t kWhite = 0xffffffff;
-		_whiteTexture2D = staticCast<VulkanTexture2D>(createTexture2D({ 1, 1, 4, PixelFormat::Bgra32 }, &kWhite)); // TODO: Remove the cast.
-		return static_cast<bool>(_whiteTexture2D);
+		return true;
 	}
 
 	UniquePtr<Mesh> VulkanRenderer::createMesh(const MeshFormat& format, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount)
@@ -326,6 +328,7 @@ namespace seir
 				return;
 			}
 			_renderTarget.create(_context, windowSize);
+			_frameSync.resize(_context._device, _renderTarget.frameCount());
 			assert(_pipelineCache.empty());
 			_uniformBuffers = _context.createUniformBuffers(sizeof(UniformBufferObject), _renderTarget.frameCount());
 			_descriptorAllocator.reset(_context._device, _renderTarget.frameCount(), 1'000,

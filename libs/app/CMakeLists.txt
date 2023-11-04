@@ -23,7 +23,7 @@ if(WIN32)
 			)
 	endif()
 else()
-	# TODO: Implement.
+	# TODO: Add XCB implementation.
 	list(APPEND SOURCES
 		src/app_stub.cpp
 		src/window_stub.cpp

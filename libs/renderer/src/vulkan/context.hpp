@@ -36,13 +36,13 @@ namespace seir
 			VkFence _fence = VK_NULL_HANDLE;
 		};
 
-		void create(VkDevice);
 		void destroy(VkDevice) noexcept;
+		void resize(VkDevice, uint32_t);
 		Item switchFrame(VkDevice);
 
 	private:
 		size_t _index = 0;
-		std::array<Item, 2> _items; // TODO: Proper number of frames.
+		std::vector<Item> _items;
 	};
 
 	class VulkanBuffer
