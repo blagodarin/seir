@@ -5,11 +5,11 @@
 function(seir_provide_zlib result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("zlib")
-	set(version "1.2.13")
+	set(version "1.3")
 	set(package "zlib-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/zlib.patch)
 	seir_download("https://zlib.net/${package}.tar.xz"
-		SHA1 "b459b42aa533968ae403c0002a255d62d3136954"
+		SHA256 "8a9ba2898e1d0d774eca6ba5b4627a11e5588ba85c8851336eb38de4683050a7"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded

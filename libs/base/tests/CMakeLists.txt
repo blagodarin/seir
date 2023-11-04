@@ -31,6 +31,8 @@ add_executable(seir_base_tests ${SOURCES})
 target_link_libraries(seir_base_tests PRIVATE Seir::base doctest::doctest_with_main)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	target_compile_options(seir_base_tests PRIVATE -Wno-self-assign-overloaded -Wno-self-move)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	set_property(SOURCE src/shared_ptr.cpp src/unique_ptr.cpp APPEND PROPERTY COMPILE_OPTIONS -Wno-self-move)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	set_property(SOURCE src/base64.cpp src/base85.cpp APPEND PROPERTY COMPILE_OPTIONS
 		/wd4866 # compiler may not enforce left-to-right evaluation order for call to 'operator<<'

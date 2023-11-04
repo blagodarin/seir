@@ -42,12 +42,12 @@ namespace seir
 
 constexpr uint16_t seir::first16(uint32_t x) noexcept
 {
-	return static_cast<uint16_t>(std::endian::native == std::endian::little ? x : x >> 24);
+	return static_cast<uint16_t>(std::endian::native == std::endian::little ? x : x >> 16);
 }
 
 constexpr uint16_t seir::first16(uint64_t x) noexcept
 {
-	return static_cast<uint16_t>(std::endian::native == std::endian::little ? x : x >> 56);
+	return static_cast<uint16_t>(std::endian::native == std::endian::little ? x : x >> 48);
 }
 
 constexpr uint16_t seir::makeCC(char c0, char c1) noexcept

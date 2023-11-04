@@ -5,11 +5,11 @@
 function(seir_provide_freetype result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("freetype")
-	set(version "2.13.1")
+	set(version "2.13.2")
 	set(package "freetype-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/freetype.patch)
 	seir_download("https://downloads.sourceforge.net/project/freetype/freetype2/${version}/${package}.tar.xz"
-		SHA1 "af9b6b754320a0526179f166e3f8cffce78526ca"
+		SHA256 "12991c4e55c506dd7f9b765933e62fd2be2e06d421505d7950a132e4f1bb484d"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded

@@ -5,6 +5,7 @@
 #include <seir_data/compression.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <limits>
 #include <vector>

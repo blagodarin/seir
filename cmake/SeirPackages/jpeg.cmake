@@ -8,11 +8,11 @@ function(seir_provide_jpeg result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("jpeg")
 	seir_provide_nasm(nasm_flag FLAG SET_UPDATED nasm_updated)
-	set(version "3.0.0")
+	set(version "3.0.1")
 	set(package "libjpeg-turbo-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/jpeg.patch)
 	seir_download("https://downloads.sourceforge.net/project/libjpeg-turbo/${version}/${package}.tar.gz"
-		SHA1 "ed0e0e88eeebf19bc2c0c6953a60d0f01c1706e4"
+		SHA256 "22429507714ae147b3acacd299e82099fce5d9f456882fc28e252e4579ba2a75"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded
