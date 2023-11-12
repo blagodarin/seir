@@ -75,7 +75,7 @@ namespace seir
 	Image::Image(const ImageInfo& info, Buffer&& buffer) noexcept
 		: _info{ info }, _data{ buffer.data() }, _buffer{ std::move(buffer) } {}
 
-	bool Image::save(ImageFormat format, Writer& writer, [[maybe_unused]] int compressionLevel) const noexcept
+	bool Image::save(ImageFormat format, [[maybe_unused]] Writer& writer, [[maybe_unused]] int compressionLevel) const noexcept
 	{
 		switch (format)
 		{

@@ -4,11 +4,13 @@
 
 set(HEADERS
 	include/seir_image/image.hpp
+	include/seir_image/utils.hpp
 	)
 set(SOURCES
 	src/bmp.hpp
 	src/format.hpp
 	src/image.cpp
+	src/utils.cpp
 	)
 if(SEIR_IMAGE_BMP)
 	list(APPEND SOURCES src/format_bmp.cpp)

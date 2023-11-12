@@ -6,6 +6,7 @@ set(SOURCES
 	src/format.cpp
 	src/image.cpp
 	src/image.hpp
+	src/utils.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_image_tests ${SOURCES})
