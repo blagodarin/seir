@@ -68,6 +68,7 @@ namespace seir
 	{
 		Tga,  // Truevision TARGA (TGA) file format.
 		Jpeg, // Joint Photographic Experts Group (JPEG) file format.
+		Png,  // Portable Network Graphics (PNG) file format.
 	};
 
 	//

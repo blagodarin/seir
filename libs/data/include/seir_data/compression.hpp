@@ -21,8 +21,10 @@ namespace seir
 	//
 	enum class CompressionLevel
 	{
-		BestSpeed,
-		BestCompression,
+		None,
+		Minimum,
+		Default,
+		Maximum,
 	};
 
 	// Data compression interface.

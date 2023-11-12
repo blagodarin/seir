@@ -91,6 +91,12 @@ namespace seir
 #else
 			break;
 #endif
+		case ImageFormat::Png:
+#if SEIR_IMAGE_PNG
+			return savePngImage(writer, _info, _data, std::clamp(compressionLevel, 0, 100));
+#else
+			break;
+#endif
 		}
 		return false;
 	}

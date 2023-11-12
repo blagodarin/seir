@@ -28,6 +28,9 @@ namespace seir
 #endif
 
 	constexpr auto kPngFileID = makeCC('\x89', 'P', 'N', 'G', '\r', '\n', '\x1a', '\n');
+#if SEIR_IMAGE_PNG
+	bool savePngImage(Writer&, const ImageInfo&, const void* data, int compressionLevel) noexcept;
+#endif
 
 #if SEIR_IMAGE_TGA
 	const void* loadTgaImage(Reader&, ImageInfo&) noexcept;

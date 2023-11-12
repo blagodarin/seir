@@ -19,8 +19,10 @@ namespace
 		{
 			switch (level)
 			{
-			case seir::CompressionLevel::BestSpeed: _level = 1; break; // Negative levels (ZSTD_minCLevel() to -1) ara faster but have impractical compression ratios.
-			case seir::CompressionLevel::BestCompression: _level = ::ZSTD_maxCLevel(); break;
+			case seir::CompressionLevel::None: _level = 1; break; // There is no zero compression level in zstd.
+			case seir::CompressionLevel::Minimum: _level = 1; break; // Negative levels (ZSTD_minCLevel() to -1) ara faster but have impractical compression ratios.
+			case seir::CompressionLevel::Default: _level = ::ZSTD_defaultCLevel(); break;
+			case seir::CompressionLevel::Maximum: _level = ::ZSTD_maxCLevel(); break;
 			}
 			return true;
 		}

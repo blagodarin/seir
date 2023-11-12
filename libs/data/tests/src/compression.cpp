@@ -41,21 +41,34 @@ TEST_CASE("Compression")
 				}
 				const auto size = compressor->compress(result.data(), dstCapacity, original.data(), original.size());
 				REQUIRE(size > 0);
-				CHECK(size < original.size());
+				if (level != seir::CompressionLevel::None)
+					CHECK(size < original.size());
 				result.resize(size);
 				return result;
 			};
 			{
-				INFO("CompressionLevel::BestSpeed");
-				compressed.emplace_back(compressNext(seir::CompressionLevel::BestSpeed, false));
+				INFO("CompressionLevel::None");
+				compressed.emplace_back(compressNext(seir::CompressionLevel::None, false));
 				MESSAGE("Compressed ", original.size(), " bytes into ", compressed.back().size(), " bytes");
-				CHECK(compressNext(seir::CompressionLevel::BestSpeed, true) == compressed.back());
+				CHECK(compressNext(seir::CompressionLevel::None, true) == compressed.back());
 			}
 			{
-				INFO("CompressionLevel::BestCompression");
-				compressed.emplace_back(compressNext(seir::CompressionLevel::BestCompression, false));
+				INFO("CompressionLevel::Minimum");
+				compressed.emplace_back(compressNext(seir::CompressionLevel::Minimum, false));
 				MESSAGE("Compressed ", original.size(), " bytes into ", compressed.back().size(), " bytes");
-				CHECK(compressNext(seir::CompressionLevel::BestCompression, true) == compressed.back());
+				CHECK(compressNext(seir::CompressionLevel::Minimum, true) == compressed.back());
+			}
+			{
+				INFO("CompressionLevel::Default");
+				compressed.emplace_back(compressNext(seir::CompressionLevel::Default, false));
+				MESSAGE("Compressed ", original.size(), " bytes into ", compressed.back().size(), " bytes");
+				CHECK(compressNext(seir::CompressionLevel::Default, true) == compressed.back());
+			}
+			{
+				INFO("CompressionLevel::Maximum");
+				compressed.emplace_back(compressNext(seir::CompressionLevel::Maximum, false));
+				MESSAGE("Compressed ", original.size(), " bytes into ", compressed.back().size(), " bytes");
+				CHECK(compressNext(seir::CompressionLevel::Maximum, true) == compressed.back());
 			}
 		}
 		const auto decompressor = seir::Decompressor::create(compression);

@@ -103,7 +103,7 @@ namespace
 						metaWriter.write(file._name.data(), file._name.size());
 					}
 				}
-				if (!writeBlock(_header._metaBlock, metaBuffer.data(), metaSize, seir::CompressionLevel::BestCompression))
+				if (!writeBlock(_header._metaBlock, metaBuffer.data(), metaSize, seir::CompressionLevel::Maximum))
 					return false;
 			}
 			else

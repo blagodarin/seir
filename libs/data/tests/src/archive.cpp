@@ -47,7 +47,7 @@ TEST_CASE("Archiver")
 #endif
 		REQUIRE(archiver);
 		for (const auto& [name, contents] : entries)
-			REQUIRE(archiver->add(name, *seir::Blob::from(contents.data(), contents.size()), seir::CompressionLevel::BestCompression));
+			REQUIRE(archiver->add(name, *seir::Blob::from(contents.data(), contents.size()), seir::CompressionLevel::Maximum));
 		CHECK(archiver->finish());
 	}
 	seir::Storage storage{ seir::Storage::UseFileSystem::Never };

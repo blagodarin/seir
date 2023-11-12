@@ -31,6 +31,9 @@ if(SEIR_IMAGE_JPEG)
 			)
 	endif()
 endif()
+if(SEIR_IMAGE_PNG)
+	list(APPEND SOURCES src/format_png.cpp)
+endif()
 if(SEIR_IMAGE_TGA)
 	list(APPEND SOURCES src/format_tga.cpp)
 endif()
@@ -42,6 +45,7 @@ target_compile_definitions(seir_image PUBLIC
 	SEIR_IMAGE_BMP=$<BOOL:${SEIR_IMAGE_BMP}>
 	SEIR_IMAGE_ICO=$<BOOL:${SEIR_IMAGE_ICO}>
 	SEIR_IMAGE_JPEG=$<BOOL:${SEIR_IMAGE_JPEG}>
+	SEIR_IMAGE_PNG=$<BOOL:${SEIR_IMAGE_PNG}>
 	SEIR_IMAGE_TGA=$<BOOL:${SEIR_IMAGE_TGA}>
 	)
 target_include_directories(seir_image PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)

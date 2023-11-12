@@ -32,8 +32,10 @@ namespace
 			int levelValue = Z_NO_COMPRESSION;
 			switch (level)
 			{
-			case seir::CompressionLevel::BestSpeed: levelValue = Z_BEST_SPEED; break;
-			case seir::CompressionLevel::BestCompression: levelValue = Z_BEST_COMPRESSION; break;
+			case seir::CompressionLevel::None: break;
+			case seir::CompressionLevel::Minimum: levelValue = Z_BEST_SPEED; break;
+			case seir::CompressionLevel::Default: levelValue = Z_DEFAULT_COMPRESSION; break;
+			case seir::CompressionLevel::Maximum: levelValue = Z_BEST_COMPRESSION; break;
 			}
 			if (_level
 					? ::deflateParams(&_stream, levelValue, Z_DEFAULT_STRATEGY) != Z_OK

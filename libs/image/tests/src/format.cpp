@@ -198,12 +198,27 @@ TEST_CASE("JPEG")
 }
 #endif
 
+#if SEIR_IMAGE_PNG
 TEST_CASE("PNG")
 {
-	auto blob = seir::Blob::from(SEIR_TEST_DIR "rgb24.png");
-	REQUIRE(blob);
-	CHECK_FALSE(static_cast<bool>(seir::Image::load(blob)));
+	SUBCASE("load")
+	{
+		auto blob = seir::Blob::from(SEIR_TEST_DIR "rgb24.png");
+		REQUIRE(blob);
+		CHECK_FALSE(static_cast<bool>(seir::Image::load(blob)));
+	}
+	SUBCASE("save")
+	{
+		seir::Image image;
+		SUBCASE("without padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYDown); }
+		SUBCASE("with padding") { image = ::makeColorImage(false, seir::ImageAxes::XRightYDown, true); }
+		seir::Buffer buffer;
+		seir::BufferWriter writer{ buffer };
+		REQUIRE(image.save(seir::ImageFormat::Png, writer, 0));
+		::checkSavedImage(buffer.data(), writer.size(), "rgb24.png");
+	}
 }
+#endif
 
 #if SEIR_IMAGE_TGA
 TEST_CASE("TGA")
