@@ -148,17 +148,17 @@ namespace seir
 		if (width != dstInfo.width() || height != dstInfo.height())
 			return false;
 
-		const auto src = static_cast<const std::uint8_t*>(srcData);
-		const auto srcStride = static_cast<std::ptrdiff_t>(srcInfo.stride());
+		const auto src = static_cast<const uint8_t*>(srcData);
+		const auto srcStride = static_cast<ptrdiff_t>(srcInfo.stride());
 		const auto srcFormat = srcInfo.pixelFormat();
 
-		auto dst = static_cast<std::uint8_t*>(dstData);
-		auto dstStride = static_cast<std::ptrdiff_t>(dstInfo.stride());
+		auto dst = static_cast<uint8_t*>(dstData);
+		auto dstStride = static_cast<ptrdiff_t>(dstInfo.stride());
 		const auto dstFormat = dstInfo.pixelFormat();
 
 		if (srcInfo.axes() != dstInfo.axes())
 		{
-			dst += static_cast<std::ptrdiff_t>(height - 1) * dstStride;
+			dst += static_cast<ptrdiff_t>(height - 1) * dstStride;
 			dstStride = -dstStride;
 		}
 
@@ -174,22 +174,22 @@ namespace seir
 			if (dstFormat == PixelFormat::Bgra32 || dstFormat == PixelFormat::Rgba32)
 				::copyImage_x8_xxxa32(width, height, src, srcStride, dst, dstStride);
 			else
-				return false;
-			break;
+				break;
+			return true;
 
 		case PixelFormat::Intensity8:
 			if (dstFormat == PixelFormat::Bgra32 || dstFormat == PixelFormat::Rgba32)
 				::copyImage_x8_xxxx32(width, height, src, srcStride, dst, dstStride);
 			else
-				return false;
-			break;
+				break;
+			return true;
 
 		case PixelFormat::GrayAlpha16:
 			if (dstFormat == PixelFormat::Bgra32 || dstFormat == PixelFormat::Rgba32)
 				::copyImage_xa16_xxxa32(width, height, src, srcStride, dst, dstStride);
 			else
-				return false;
-			break;
+				break;
+			return true;
 
 		case PixelFormat::Rgb24:
 			if (dstFormat == PixelFormat::Bgr24)
@@ -199,8 +199,8 @@ namespace seir
 			else if (dstFormat == PixelFormat::Bgra32)
 				::copyImage_rgb24_bgra32(width, height, src, srcStride, dst, dstStride);
 			else
-				return false;
-			break;
+				break;
+			return true;
 
 		case PixelFormat::Bgr24:
 			if (dstFormat == PixelFormat::Rgb24)
@@ -210,28 +210,25 @@ namespace seir
 			else if (dstFormat == PixelFormat::Bgra32)
 				::copyImage_rgb24_rgba32(width, height, src, srcStride, dst, dstStride);
 			else
-				return false;
-			break;
+				break;
+			return true;
 
 		case PixelFormat::Rgba32:
 			if (dstFormat == PixelFormat::Bgra32)
 				::copyImage_rgba32_bgra32(width, height, src, srcStride, dst, dstStride);
 			else
-				return false;
-			break;
+				break;
+			return true;
 
 		case PixelFormat::Bgra32:
 			if (dstFormat == PixelFormat::Rgba32)
 				::copyImage_rgba32_bgra32(width, height, src, srcStride, dst, dstStride);
 			else
-				return false;
-			break;
-
-		default:
-			return false;
+				break;
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	bool copyImage(const Image& src, const ImageInfo& dstInfo, void* dstData) noexcept

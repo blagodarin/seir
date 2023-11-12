@@ -2,8 +2,6 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma once
-
 #include "image.hpp"
 
 #include <seir_image/utils.hpp>
@@ -142,5 +140,52 @@ TEST_CASE("copyImage")
 		check(
 			::makeImage({ 3, 2, 16, seir::PixelFormat::Bgra32 }, bgraWithStride.data()),
 			::makeImage({ 3, 2, seir::PixelFormat::Bgra32 }, bgra.data()));
+	}
+}
+
+TEST_CASE("copyImage = false")
+{
+	SUBCASE("PixelFormat")
+	{
+		const auto check = [](seir::PixelFormat src, seir::PixelFormat dst) {
+			const seir::ImageInfo srcInfo{ 1, 1, src };
+			const seir::ImageInfo dstInfo{ 1, 1, dst };
+			CHECK_FALSE(seir::copyImage(srcInfo, nullptr, dstInfo, nullptr));
+		};
+
+		check(seir::PixelFormat::Gray8, seir::PixelFormat::Intensity8);
+		check(seir::PixelFormat::Gray8, seir::PixelFormat::GrayAlpha16);
+		check(seir::PixelFormat::Gray8, seir::PixelFormat::Rgb24);
+		check(seir::PixelFormat::Gray8, seir::PixelFormat::Bgr24);
+
+		check(seir::PixelFormat::Intensity8, seir::PixelFormat::Gray8);
+		check(seir::PixelFormat::Intensity8, seir::PixelFormat::GrayAlpha16);
+		check(seir::PixelFormat::Intensity8, seir::PixelFormat::Rgb24);
+		check(seir::PixelFormat::Intensity8, seir::PixelFormat::Bgr24);
+
+		check(seir::PixelFormat::GrayAlpha16, seir::PixelFormat::Gray8);
+		check(seir::PixelFormat::GrayAlpha16, seir::PixelFormat::Intensity8);
+		check(seir::PixelFormat::GrayAlpha16, seir::PixelFormat::Rgb24);
+		check(seir::PixelFormat::GrayAlpha16, seir::PixelFormat::Bgr24);
+
+		check(seir::PixelFormat::Rgb24, seir::PixelFormat::Gray8);
+		check(seir::PixelFormat::Rgb24, seir::PixelFormat::Intensity8);
+		check(seir::PixelFormat::Rgb24, seir::PixelFormat::GrayAlpha16);
+
+		check(seir::PixelFormat::Bgr24, seir::PixelFormat::Gray8);
+		check(seir::PixelFormat::Bgr24, seir::PixelFormat::Intensity8);
+		check(seir::PixelFormat::Bgr24, seir::PixelFormat::GrayAlpha16);
+
+		check(seir::PixelFormat::Rgba32, seir::PixelFormat::Gray8);
+		check(seir::PixelFormat::Rgba32, seir::PixelFormat::Intensity8);
+		check(seir::PixelFormat::Rgba32, seir::PixelFormat::GrayAlpha16);
+		check(seir::PixelFormat::Rgba32, seir::PixelFormat::Rgb24);
+		check(seir::PixelFormat::Rgba32, seir::PixelFormat::Bgr24);
+
+		check(seir::PixelFormat::Bgra32, seir::PixelFormat::Gray8);
+		check(seir::PixelFormat::Bgra32, seir::PixelFormat::Intensity8);
+		check(seir::PixelFormat::Bgra32, seir::PixelFormat::GrayAlpha16);
+		check(seir::PixelFormat::Bgra32, seir::PixelFormat::Rgb24);
+		check(seir::PixelFormat::Bgra32, seir::PixelFormat::Bgr24);
 	}
 }
