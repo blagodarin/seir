@@ -87,5 +87,5 @@ TEST_CASE("Writer::create(const std::string&)")
 
 TEST_CASE("Writer::create({})")
 {
-	CHECK_FALSE(static_cast<bool>(seir::Writer::create({})));
+	CHECK_FALSE(static_cast<bool>(seir::Writer::create(std::string{})));
 }

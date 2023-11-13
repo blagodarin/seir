@@ -97,6 +97,9 @@ namespace seir
 		//
 		bool save(ImageFormat, Writer&, int compressionLevel) const noexcept;
 
+		//
+		bool saveAsScreenshot(ImageFormat, int compressionLevel) const;
+
 	private:
 		ImageInfo _info;
 		const void* _data = nullptr;

@@ -7,6 +7,7 @@
 #include <seir_base/unique_ptr.hpp>
 
 #include <cstdint>
+#include <filesystem>
 #include <string>
 
 namespace seir
@@ -16,6 +17,7 @@ namespace seir
 	{
 	public:
 		// Creates a Writer thet writes to the specified file.
+		[[nodiscard]] static UniquePtr<Writer> create(const std::filesystem::path&);
 		[[nodiscard]] static UniquePtr<Writer> create(const std::string&);
 
 		virtual ~Writer() noexcept = default;

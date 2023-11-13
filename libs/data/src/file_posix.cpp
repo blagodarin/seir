@@ -4,6 +4,7 @@
 
 #include <seir_base/scope.hpp>
 #include <seir_data/blob.hpp>
+#include <seir_data/paths.hpp>
 #include <seir_data/save_file.hpp>
 #include <seir_data/temporary.hpp>
 
@@ -81,6 +82,19 @@ namespace
 		bool writeImpl(uint64_t offset, const void* data, size_t size) noexcept override { return ::writeFile(_file._descriptor, offset, data, size); }
 	};
 
+	seir::UniquePtr<seir::Writer> createFileWriter(const char* path)
+	{
+		constexpr int flags = O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC
+#ifdef __linux__
+			| O_NOATIME
+#endif
+			;
+		if (Descriptor file{ ::open(path, flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) }; file._descriptor != -1)
+			return seir::makeUnique<seir::Writer, FileWriter>(std::move(file));
+		::perror("open");
+		return {};
+	}
+
 	struct SaveFileImpl final : seir::SaveFile
 	{
 		const Descriptor _file;
@@ -127,6 +141,13 @@ namespace
 				::perror("unlink");
 		}
 	};
+
+	std::filesystem::path homeDirectoryPath()
+	{
+		if (const char* home = std::getenv("HOME"))
+			return home;
+		return std::filesystem::current_path(); // TODO: Get directory from getpwuid(getuid()).
+	}
 }
 
 namespace seir
@@ -203,16 +224,18 @@ namespace seir
 		return {};
 	}
 
+	UniquePtr<Writer> Writer::create(const std::filesystem::path& path)
+	{
+		return ::createFileWriter(path.c_str());
+	}
+
 	UniquePtr<Writer> Writer::create(const std::string& path)
 	{
-		constexpr int flags = O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC
-#ifdef __linux__
-			| O_NOATIME
-#endif
-			;
-		if (Descriptor file{ ::open(path.c_str(), flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) }; file._descriptor != -1)
-			return makeUnique<Writer, FileWriter>(std::move(file));
-		::perror("open");
-		return {};
+		return ::createFileWriter(path.c_str());
+	}
+
+	std::filesystem::path screenshotPath()
+	{
+		return ::homeDirectoryPath();
 	}
 }

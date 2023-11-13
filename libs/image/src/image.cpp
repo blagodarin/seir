@@ -5,13 +5,15 @@
 #include <seir_image/image.hpp>
 
 #include <seir_base/endian.hpp>
+#include <seir_data/paths.hpp>
+#include <seir_data/writer.hpp>
 #include "format.hpp"
 
 #include <algorithm>
+#include <array>
 
 // TODO: Add support for:
 // - writing image data at aligned offsets (for more efficient copying of memory-mapped data);
-// - saving screenshots (with default names and to the default screenshot location);
 // - loading image data into the specified buffer (e.g. mapped texture memory);
 // - compressed pixel formats (e.g. S3TC);
 // - multi-layer images (e.g. textures with mipmaps);
@@ -98,6 +100,31 @@ namespace seir
 			break;
 #endif
 		}
+		return false;
+	}
+
+	bool Image::saveAsScreenshot(ImageFormat format, int compressionLevel) const
+	{
+		const auto time = std::time(nullptr);
+		::tm tm;
+#ifdef _MSC_VER
+		::localtime_s(&tm, &time);
+#else
+		::localtime_r(&time, &tm);
+#endif
+		std::array<char, 24> buffer;
+		const auto offset = std::strftime(buffer.data(), buffer.size(), "%Y-%m-%d_%H-%M-%S", &tm);
+		std::snprintf(buffer.data() + offset, buffer.size() - offset, "%s", [format] {
+			switch (format)
+			{
+			case ImageFormat::Tga: return ".tga";
+			case ImageFormat::Jpeg: return ".jpg";
+			case ImageFormat::Png: return ".png";
+			}
+			return "";
+		}());
+		if (const auto writer = Writer::create(screenshotPath() / buffer.data()))
+			return save(format, *writer, compressionLevel);
 		return false;
 	}
 }

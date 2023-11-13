@@ -8,6 +8,7 @@ set(HEADERS
 	include/seir_data/buffer_blob.hpp
 	include/seir_data/buffer_writer.hpp
 	include/seir_data/compression.hpp
+	include/seir_data/paths.hpp
 	include/seir_data/reader.hpp
 	include/seir_data/save_file.hpp
 	include/seir_data/storage.hpp

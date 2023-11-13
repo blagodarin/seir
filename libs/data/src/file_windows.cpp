@@ -2,17 +2,22 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
+#include <seir_base/int_utils.hpp>
+#include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
 #include <seir_data/blob.hpp>
+#include <seir_data/paths.hpp>
 #include <seir_data/save_file.hpp>
 #include <seir_data/temporary.hpp>
 
 #include <array>
 
 #define NOGDI
-#define NOUSER
 #define WIN32_LEAN_AND_MEAN
 #include <seir_base/windows_utils.hpp>
+
+#include <shlobj.h>
+#include <versionhelpers.h>
 
 namespace
 {
@@ -148,6 +153,17 @@ namespace
 		}
 		constexpr explicit operator bool() const noexcept { return _size > 0; }
 	};
+
+	std::filesystem::path knownFolderPath(const KNOWNFOLDERID& id)
+	{
+		seir::CPtr<wchar_t, ::CoTaskMemFree> path;
+		if (const auto hr = ::SHGetKnownFolderPath(id, KF_FLAG_CREATE, nullptr, path.out()); FAILED(hr))
+		{
+			seir::windows::reportError("SHGetKnownFolderPath", seir::toUnsigned(hr));
+			return std::filesystem::current_path();
+		}
+		return path.get();
+	}
 }
 
 namespace seir
@@ -257,10 +273,20 @@ namespace seir
 		return {};
 	}
 
+	UniquePtr<Writer> Writer::create(const std::filesystem::path& path)
+	{
+		return ::createFileWriter(path.c_str(), FILE_ATTRIBUTE_NORMAL);
+	}
+
 	UniquePtr<Writer> Writer::create(const std::string& path)
 	{
 		if (const WPath wpath{ path })
 			return ::createFileWriter(wpath._buffer.data(), FILE_ATTRIBUTE_NORMAL);
 		return {};
+	}
+
+	std::filesystem::path screenshotPath()
+	{
+		return ::knownFolderPath(::IsWindows8OrGreater() ? FOLDERID_Screenshots : FOLDERID_Pictures);
 	}
 }
