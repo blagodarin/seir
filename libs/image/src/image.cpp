@@ -35,6 +35,9 @@ namespace seir
 #endif
 				break;
 			case first16(kDdsFileID):
+#if SEIR_IMAGE_DDS
+				result._data = loadDdsImage(reader, result._info);
+#endif
 				break;
 			case kJpegFileID:
 #if SEIR_IMAGE_JPEG

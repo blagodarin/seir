@@ -14,6 +14,7 @@ include(cmake/SeirPackages.cmake)
 option(SEIR_AUDIO_OGGVORBIS "Enable Ogg Vorbis audio support")
 option(SEIR_AUDIO_WAV "Enable Waveform audio support")
 option(SEIR_IMAGE_BMP "Enable BMP image support")
+option(SEIR_IMAGE_DDS "Enable DDS image support")
 option(SEIR_IMAGE_ICO "Enable ICO image support")
 option(SEIR_IMAGE_JPEG "Enable JPEG image support")
 option(SEIR_IMAGE_PNG "Enable PNG image support")
@@ -28,7 +29,7 @@ set_property(CACHE SEIR_RENDERER PROPERTY STRINGS "" "Dummy" "Vulkan")
 cmake_dependent_option(SEIR_APP "Build app library" OFF "NOT SEIR_RENDERER" ON)
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO;NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD" ON)
-cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_ICO;NOT SEIR_IMAGE_JPEG;NOT SEIR_IMAGE_PNG;NOT SEIR_IMAGE_TGA;NOT SEIR_RENDERER" ON)
+cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_DDS;NOT SEIR_IMAGE_ICO;NOT SEIR_IMAGE_JPEG;NOT SEIR_IMAGE_PNG;NOT SEIR_IMAGE_TGA;NOT SEIR_RENDERER" ON)
 cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_RENDERER" ON)
 option(SEIR_SYNTH "Build synth library")
 option(SEIR_U8MAIN "Build u8main library")
@@ -148,8 +149,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		/wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 		/wd5246 # the initialization of a subobject should be wrapped in braces
 		# Warnings from the standard library headers:
-		/wd5262 # implicit fall-through occurs here
-		/wd5264 # 'const' variable is not used
+		/wd4668 # '__STDC_WANT_SECURE_LIB__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 		)
 endif()
 

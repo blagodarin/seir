@@ -109,12 +109,13 @@ TEST_CASE("BMP")
 }
 #endif
 
+#if SEIR_IMAGE_DDS
 TEST_CASE("DDS")
 {
-	auto blob = seir::Blob::from(SEIR_TEST_DIR "bgra32.dds");
-	REQUIRE(blob);
-	CHECK_FALSE(static_cast<bool>(seir::Image::load(blob)));
+	const auto image = ::loadImage("bgra32.dds");
+	CHECK(image == ::makeColorImage(true, seir::ImageAxes::XRightYDown));
 }
+#endif
 
 #if SEIR_IMAGE_ICO
 TEST_CASE("ICO")

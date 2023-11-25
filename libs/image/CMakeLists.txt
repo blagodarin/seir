@@ -15,6 +15,9 @@ set(SOURCES
 if(SEIR_IMAGE_BMP)
 	list(APPEND SOURCES src/format_bmp.cpp)
 endif()
+if(SEIR_IMAGE_DDS)
+	list(APPEND SOURCES src/format_dds.cpp)
+endif()
 if(SEIR_IMAGE_ICO)
 	list(APPEND SOURCES src/format_ico.cpp)
 endif()
@@ -43,6 +46,7 @@ add_library(seir_image STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::image ALIAS seir_image)
 target_compile_definitions(seir_image PUBLIC
 	SEIR_IMAGE_BMP=$<BOOL:${SEIR_IMAGE_BMP}>
+	SEIR_IMAGE_DDS=$<BOOL:${SEIR_IMAGE_DDS}>
 	SEIR_IMAGE_ICO=$<BOOL:${SEIR_IMAGE_ICO}>
 	SEIR_IMAGE_JPEG=$<BOOL:${SEIR_IMAGE_JPEG}>
 	SEIR_IMAGE_PNG=$<BOOL:${SEIR_IMAGE_PNG}>

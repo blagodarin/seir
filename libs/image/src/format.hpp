@@ -16,6 +16,9 @@ namespace seir
 #endif
 
 	constexpr auto kDdsFileID = makeCC('D', 'D', 'S', ' ');
+#if SEIR_IMAGE_DDS
+	const void* loadDdsImage(Reader&, ImageInfo&) noexcept;
+#endif
 
 #if SEIR_IMAGE_ICO
 	const void* loadIcoImage(Reader&, ImageInfo&) noexcept;
