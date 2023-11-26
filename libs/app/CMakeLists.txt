@@ -12,21 +12,18 @@ set(SOURCES
 	)
 if(WIN32)
 	list(APPEND SOURCES
-		src/app_windows.cpp
-		src/app_windows.hpp
-		src/window_windows.cpp
-		src/window_windows.hpp
+		src/windows/app.cpp
+		src/windows/app.hpp
+		src/windows/helpers.cpp
+		src/windows/helpers.hpp
+		src/windows/window.cpp
+		src/windows/window.hpp
 		)
-	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-		set_property(SOURCE src/app_windows.cpp src/window_windows.cpp APPEND PROPERTY COMPILE_OPTIONS
-			/wd4668 # '___' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-			)
-	endif()
 else()
 	# TODO: Add XCB implementation.
 	list(APPEND SOURCES
-		src/app_stub.cpp
-		src/window_stub.cpp
+		src/stub/app.cpp
+		src/stub/window.cpp
 		)
 endif()
 source_group("include" FILES ${HEADERS})
@@ -34,7 +31,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(seir_app STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::app ALIAS seir_app)
 target_include_directories(seir_app PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_app PUBLIC Seir::base)
+target_link_libraries(seir_app PUBLIC Seir::base PRIVATE Seir::image)
 seir_target(seir_app FOLDER libs/app STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_app EXPORT SeirTargets)
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_app)

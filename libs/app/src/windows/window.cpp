@@ -2,9 +2,11 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "window_windows.hpp"
+#include "window.hpp"
 
-#include "app_windows.hpp"
+#include <seir_image/image.hpp>
+#include <seir_image/utils.hpp>
+#include "app.hpp"
 
 #include <memory>
 
@@ -31,12 +33,6 @@ namespace
 
 namespace seir
 {
-	void HwndDeleter::free(HWND hwnd) noexcept
-	{
-		if (hwnd && !::DestroyWindow(hwnd))
-			windows::reportError("DestroyWindow");
-	}
-
 	WindowsWindow::WindowsWindow(SharedPtr<WindowsApp>&& app, Hwnd&& hwnd) noexcept
 		: _app{ std::move(app) }
 		, _hwnd{ std::move(hwnd) }
@@ -52,6 +48,37 @@ namespace seir
 	WindowDescriptor WindowsWindow::descriptor() const noexcept
 	{
 		return { _app->instance(), reinterpret_cast<intptr_t>(_hwnd.get()) };
+	}
+
+	void WindowsWindow::setIcon(const Image& image) noexcept
+	{
+		const ImageInfo info{ image.info().width(), image.info().height(), PixelFormat::Bgra32, ImageAxes::XRightYUp };
+		const auto maskSize = (info.width() + 7) / 8 * info.height();
+		const auto bufferSize = sizeof(BITMAPINFOHEADER) + info.frameSize() + maskSize;
+		Buffer buffer;
+		if (!buffer.tryReserve(bufferSize, 0))
+			return;
+		auto* header = reinterpret_cast<BITMAPINFOHEADER*>(buffer.data());
+		header->biSize = sizeof *header;
+		header->biWidth = static_cast<LONG>(info.width());
+		header->biHeight = static_cast<LONG>(info.height()) * 2;
+		header->biPlanes = 1;
+		header->biBitCount = 32;
+		header->biCompression = BI_RGB;
+		header->biSizeImage = info.frameSize();
+		header->biXPelsPerMeter = 0;
+		header->biYPelsPerMeter = 0;
+		header->biClrUsed = 0;
+		header->biClrImportant = 0;
+		if (!copyImage(image, info, buffer.data() + sizeof *header))
+			return;
+		std::memset(buffer.data() + sizeof *header + header->biSizeImage, 0xff, maskSize);
+		Hicon icon{ ::CreateIconFromResourceEx(reinterpret_cast<BYTE*>(buffer.data()), static_cast<DWORD>(bufferSize), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR) };
+		if (!icon)
+			return windows::reportError("CreateIconFromResourceEx");
+		_icon = std::move(icon);
+		::SendMessageW(_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(_icon.get()));
+		::SendMessageW(_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(_icon.get()));
 	}
 
 	void WindowsWindow::setTitle(const std::string& title) noexcept

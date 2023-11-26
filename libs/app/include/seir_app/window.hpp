@@ -11,6 +11,7 @@
 namespace seir
 {
 	class App;
+	class Image;
 
 	//
 	struct Size2D
@@ -45,6 +46,9 @@ namespace seir
 
 		//
 		[[nodiscard]] virtual WindowDescriptor descriptor() const noexcept = 0;
+
+		//
+		virtual void setIcon(const Image&) noexcept = 0;
 
 		//
 		virtual void setTitle(const std::string&) noexcept = 0;

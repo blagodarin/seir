@@ -6,30 +6,13 @@
 
 #include <seir_app/app.hpp>
 
-#include <seir_base/pointer.hpp>
+#include "helpers.hpp"
 
 #include <unordered_map>
-
-#define WIN32_LEAN_AND_MEAN
-#include <seir_base/windows_utils.hpp>
 
 namespace seir
 {
 	class WindowsWindow;
-
-	struct HcursorDeleter
-	{
-		static void free(HCURSOR) noexcept;
-	};
-
-	using Hcursor = Pointer<std::remove_pointer_t<HCURSOR>, HcursorDeleter>;
-
-	struct HiconDeleter
-	{
-		static void free(HICON) noexcept;
-	};
-
-	using Hicon = Pointer<std::remove_pointer_t<HICON>, HiconDeleter>;
 
 	class WindowsApp final : public App
 	{

@@ -16,6 +16,7 @@ namespace
 
 		void close() noexcept override { _app->quit(); }
 		seir::WindowDescriptor descriptor() const noexcept override { return { nullptr, 0 }; }
+		void setIcon(const seir::Image&) noexcept override {}
 		void setTitle(const std::string&) noexcept override {}
 		void show() noexcept override {}
 		seir::Size2D size() const noexcept override { return {}; }

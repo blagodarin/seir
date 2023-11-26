@@ -2,16 +2,16 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "app_windows.hpp"
+#include "app.hpp"
 
 #include <seir_app/events.hpp>
+#include <seir_base/buffer.hpp>
 #include <seir_base/int_utils.hpp>
 #include <seir_base/scope.hpp>
 #include <seir_base/utf8.hpp>
-#include "window_windows.hpp"
+#include "window.hpp"
 
 #include <cassert>
-#include <memory>
 
 namespace
 {
@@ -20,10 +20,10 @@ namespace
 		const auto width = ::GetSystemMetrics(SM_CXCURSOR);
 		const auto height = ::GetSystemMetrics(SM_CYCURSOR);
 		const auto maskSize = static_cast<size_t>(width * height / 8);
-		const auto buffer = std::make_unique<uint8_t[]>(2 * maskSize);
-		std::memset(buffer.get(), 0xff, maskSize);            // AND mask.
-		std::memset(buffer.get() + maskSize, 0x00, maskSize); // XOR mask.
-		if (const auto cursor = ::CreateCursor(instance, 0, 0, width, height, buffer.get(), buffer.get() + maskSize))
+		seir::Buffer buffer{ 2 * maskSize };
+		std::memset(buffer.data(), 0xff, maskSize);            // AND mask.
+		std::memset(buffer.data() + maskSize, 0x00, maskSize); // XOR mask.
+		if (const auto cursor = ::CreateCursor(instance, 0, 0, width, height, buffer.data(), buffer.data() + maskSize))
 			return seir::Hcursor{ cursor };
 		seir::windows::reportError("CreateCursor");
 		return {};
@@ -129,19 +129,6 @@ namespace
 
 namespace seir
 {
-	void HcursorDeleter::free(HCURSOR handle) noexcept
-	{
-		if (handle && !::DestroyCursor(handle))
-			if (const auto error = ::GetLastError(); error != ERROR_SUCCESS)
-				windows::reportError("DestroyCursor", error);
-	}
-
-	void HiconDeleter::free(HICON handle) noexcept
-	{
-		if (handle && !::DestroyIcon(handle))
-			windows::reportError("DestroyIcon");
-	}
-
 	WindowsApp::WindowsApp(HINSTANCE instance, Hicon&& icon, Hcursor&& emptyCursor)
 		: _instance{ instance }
 		, _icon{ std::move(icon) }
