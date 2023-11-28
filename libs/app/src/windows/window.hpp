@@ -18,11 +18,12 @@ namespace seir
 		WindowsWindow(SharedPtr<WindowsApp>&&, Hwnd&&) noexcept;
 
 		void close() noexcept override;
+		std::optional<Point> cursor() const noexcept override;
 		WindowDescriptor descriptor() const noexcept override;
 		void setIcon(const Image&) noexcept override;
 		void setTitle(const std::string&) noexcept override;
 		void show() noexcept override;
-		Size2D size() const noexcept override;
+		Size size() const noexcept override;
 
 		void reset() noexcept;
 

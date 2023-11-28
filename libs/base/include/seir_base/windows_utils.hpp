@@ -86,6 +86,9 @@ namespace seir
 				{
 					::OutputDebugStringA(buffer);
 					::LocalFree(buffer);
+#ifndef NDEBUG
+					::DebugBreak();
+#endif
 				}
 			}
 		}

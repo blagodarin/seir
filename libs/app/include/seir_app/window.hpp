@@ -6,22 +6,15 @@
 
 #include <seir_base/shared_ptr.hpp>
 
+#include <optional>
 #include <string>
 
 namespace seir
 {
 	class App;
 	class Image;
-
-	//
-	struct Size2D
-	{
-		int _width = 0;
-		int _height = 0;
-		constexpr Size2D() noexcept = default;
-		constexpr Size2D(int width, int height) noexcept
-			: _width{ width }, _height{ height } {}
-	};
+	class Point;
+	class Size;
 
 	//
 	struct WindowDescriptor
@@ -45,6 +38,9 @@ namespace seir
 		virtual void close() noexcept = 0;
 
 		//
+		virtual std::optional<Point> cursor() const noexcept = 0;
+
+		//
 		[[nodiscard]] virtual WindowDescriptor descriptor() const noexcept = 0;
 
 		//
@@ -57,6 +53,6 @@ namespace seir
 		virtual void show() noexcept = 0;
 
 		//
-		[[nodiscard]] virtual Size2D size() const noexcept = 0;
+		[[nodiscard]] virtual Size size() const noexcept = 0;
 	};
 }

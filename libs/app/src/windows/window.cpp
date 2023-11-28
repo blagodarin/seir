@@ -6,6 +6,7 @@
 
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
+#include <seir_math/raster.hpp>
 #include "app.hpp"
 
 #include <memory>
@@ -43,6 +44,19 @@ namespace seir
 	void WindowsWindow::close() noexcept
 	{
 		::SendMessageW(_hwnd, WM_CLOSE, 0, 0);
+	}
+
+	std::optional<Point> WindowsWindow::cursor() const noexcept
+	{
+		POINT point{ .x = 0, .y = 0 };
+		if (!::GetCursorPos(&point))
+		{
+			seir::windows::reportError("GetCursorPos");
+			return {};
+		}
+		if (!::ScreenToClient(_hwnd, &point))
+			return {};
+		return std::make_optional<Point>(point.x, point.y);
 	}
 
 	WindowDescriptor WindowsWindow::descriptor() const noexcept
@@ -96,10 +110,11 @@ namespace seir
 		::SetFocus(_hwnd);
 	}
 
-	Size2D WindowsWindow::size() const noexcept
+	Size WindowsWindow::size() const noexcept
 	{
 		RECT clientRect{};
-		::GetClientRect(_hwnd, &clientRect);
+		if (!::GetClientRect(_hwnd, &clientRect))
+			windows::reportError("GetClientRect");
 		return { clientRect.right - clientRect.left, clientRect.bottom - clientRect.top };
 	}
 
@@ -115,6 +130,7 @@ namespace seir
 		if (Hwnd hwnd{ ::CreateWindowExW(WS_EX_APPWINDOW, WindowsApp::kWindowClass, wtitle ? wtitle.get() : L"", WS_OVERLAPPEDWINDOW,
 				CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, windowsApp->instance(), windowsApp.get()) })
 			return makeUnique<Window, WindowsWindow>(std::move(windowsApp), std::move(hwnd));
+		windows::reportError("CreateWindowExW");
 		return {};
 	}
 }

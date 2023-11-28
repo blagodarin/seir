@@ -7,6 +7,7 @@
 #include <seir_app/window.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
+#include <seir_math/raster.hpp>
 #include <seir_renderer/mesh.hpp>
 #include "commands.hpp"
 #include "error.hpp"

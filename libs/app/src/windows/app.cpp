@@ -23,8 +23,8 @@ namespace
 		seir::Buffer buffer{ 2 * maskSize };
 		std::memset(buffer.data(), 0xff, maskSize);            // AND mask.
 		std::memset(buffer.data() + maskSize, 0x00, maskSize); // XOR mask.
-		if (const auto cursor = ::CreateCursor(instance, 0, 0, width, height, buffer.data(), buffer.data() + maskSize))
-			return seir::Hcursor{ cursor };
+		if (seir::Hcursor cursor{ ::CreateCursor(instance, 0, 0, width, height, buffer.data(), buffer.data() + maskSize) })
+			return cursor;
 		seir::windows::reportError("CreateCursor");
 		return {};
 	}

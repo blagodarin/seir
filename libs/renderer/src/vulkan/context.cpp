@@ -6,6 +6,7 @@
 
 #include <seir_app/window.hpp>
 #include <seir_base/int_utils.hpp>
+#include <seir_math/raster.hpp>
 #include "commands.hpp"
 #include "error.hpp"
 #include "pipeline.hpp"
@@ -206,7 +207,7 @@ namespace seir
 		return true;
 	}
 
-	void VulkanRenderTarget::create(const VulkanContext& context, const Size2D& windowSize)
+	void VulkanRenderTarget::create(const VulkanContext& context, const Size& windowSize)
 	{
 		createSwapchain(context, windowSize);
 		createSwapchainImageViews(context._device, context._surfaceFormat);
@@ -286,7 +287,7 @@ namespace seir
 		};
 	}
 
-	void VulkanRenderTarget::createSwapchain(const VulkanContext& context, const Size2D& windowSize)
+	void VulkanRenderTarget::createSwapchain(const VulkanContext& context, const Size& windowSize)
 	{
 		VkSurfaceCapabilitiesKHR surfaceCapabilities{};
 		SEIR_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context._physicalDevice, context._surface, &surfaceCapabilities));

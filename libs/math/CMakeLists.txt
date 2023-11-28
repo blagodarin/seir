@@ -5,6 +5,7 @@
 set(HEADERS
 	include/seir_math/euler.hpp
 	include/seir_math/mat.hpp
+	include/seir_math/raster.hpp
 	include/seir_math/vec.hpp
 	)
 set(SOURCES

@@ -35,7 +35,10 @@ namespace
 	seir::SharedPtr<seir::Blob> createFileBlob(const wchar_t* path)
 	{
 		if (const seir::windows::Handle file{ ::CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) }; file == INVALID_HANDLE_VALUE)
-			seir::windows::reportError("CreateFileW");
+		{
+			if (const auto error = ::GetLastError(); error != ERROR_PATH_NOT_FOUND)
+				seir::windows::reportError("CreateFileW", error);
+		}
 		else if (LARGE_INTEGER size{}; !::GetFileSizeEx(file, &size))
 			seir::windows::reportError("GetFileSizeEx");
 		else
