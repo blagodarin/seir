@@ -4,9 +4,9 @@
 
 #include "window.hpp"
 
+#include <seir_graphics/rect.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
-#include <seir_math/raster.hpp>
 #include "app.hpp"
 
 #include <memory>

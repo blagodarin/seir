@@ -5,7 +5,7 @@
 #include <seir_app/window.hpp>
 
 #include <seir_app/app.hpp>
-#include <seir_math/raster.hpp>
+#include <seir_graphics/rect.hpp>
 
 namespace
 {

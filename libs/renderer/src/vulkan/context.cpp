@@ -6,7 +6,7 @@
 
 #include <seir_app/window.hpp>
 #include <seir_base/int_utils.hpp>
-#include <seir_math/raster.hpp>
+#include <seir_graphics/size.hpp>
 #include "commands.hpp"
 #include "error.hpp"
 #include "pipeline.hpp"

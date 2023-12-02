@@ -4,7 +4,6 @@
 
 set(SOURCES
 	src/mat.cpp
-	src/raster.cpp
 	src/vec.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})

@@ -2,41 +2,13 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_math/raster.hpp>
+#include <seir_graphics/rect.hpp>
 
 #include <doctest/doctest.h>
 
 using seir::Point;
 using seir::Rect;
 using seir::Size;
-
-TEST_CASE("Point::Point()")
-{
-	Point p;
-	CHECK(p._x == 0);
-	CHECK(p._y == 0);
-}
-
-TEST_CASE("Point::Point(int, int)")
-{
-	Point p{ 1, 2 };
-	CHECK(p._x == 1);
-	CHECK(p._y == 2);
-}
-
-TEST_CASE("Size::Size()")
-{
-	Size s;
-	CHECK(s._width == 0);
-	CHECK(s._height == 0);
-}
-
-TEST_CASE("Size::Size(int, int)")
-{
-	Size s{ 1, 2 };
-	CHECK(s._width == 1);
-	CHECK(s._height == 2);
-}
 
 TEST_CASE("Rect::Rect()")
 {

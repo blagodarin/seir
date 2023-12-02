@@ -4,30 +4,11 @@
 
 #pragma once
 
+#include <seir_graphics/point.hpp>
+#include <seir_graphics/size.hpp>
+
 namespace seir
 {
-	class Point
-	{
-	public:
-		int _x = 0;
-		int _y = 0;
-
-		constexpr Point() noexcept = default;
-		constexpr Point(int x, int y) noexcept
-			: _x{ x }, _y{ y } {}
-	};
-
-	class Size
-	{
-	public:
-		int _width = 0;
-		int _height = 0;
-
-		constexpr Size() noexcept = default;
-		constexpr Size(int width, int height) noexcept
-			: _width{ width }, _height{ height } {}
-	};
-
 	class Rect
 	{
 	public:
@@ -66,8 +47,6 @@ namespace seir
 		int _bottom = 0;
 	};
 
-	[[nodiscard]] constexpr bool operator==(const Point& a, const Point& b) noexcept { return a._x == b._x && a._y == b._y; }
-	[[nodiscard]] constexpr bool operator==(const Size& a, const Size& b) noexcept { return a._width == b._width && a._height == b._height; }
 	[[nodiscard]] constexpr bool operator==(const Rect& a, const Rect& b) noexcept { return a.left() == b.left() && a.top() == b.top() && a.right() == b.right() && a.bottom() == b.bottom(); }
 }
 
