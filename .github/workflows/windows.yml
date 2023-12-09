@@ -48,6 +48,7 @@ jobs:
             -DSEIR_IMAGE_JPEG=ON `
             -DSEIR_IMAGE_TGA=ON `
             -DSEIR_RENDERER=Vulkan `
+            -DSEIR_SERIALIZATION=ON `
             -DSEIR_STATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }} `
             -DSEIR_SYNTH=ON `
             -DSEIR_TESTS=ON `
@@ -94,6 +95,7 @@ jobs:
             -DSEIR_IMAGE_JPEG=ON `
             -DSEIR_IMAGE_TGA=ON `
             -DSEIR_RENDERER=Dummy `
+            -DSEIR_SERIALIZATION=ON `
             -DSEIR_SYNTH=ON `
             -DSEIR_TESTS=ON
       - name: Build Debug
