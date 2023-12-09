@@ -36,7 +36,15 @@ namespace seir
 	}
 }
 
-TEST_CASE("StReader")
+TEST_CASE("StReader::StReader")
+{
+	seir::StReader reader{ {} };
+	const seir::StToken end{ 1, 1, seir::StToken::Type::End, "" };
+	CHECK(reader.read() == end);
+	CHECK(reader.read() == end);
+}
+
+TEST_CASE("StReader::read")
 {
 	const auto check = [](std::string_view data, const std::vector<seir::StToken>& tokens) {
 		seir::StReader reader{ seir::Blob::from(data.data(), data.size()) };
@@ -48,14 +56,14 @@ TEST_CASE("StReader")
 		}
 	};
 
-	const auto end = [](size_t line, ptrdiff_t column) { return seir::StToken{ line, column, seir::StToken::Type::End, "" }; };
-	const auto error = [](size_t line, ptrdiff_t column) { return seir::StToken{ line, column, seir::StToken::Type::Error, "" }; };
-	const auto listBegin = [](size_t line, ptrdiff_t column) { return seir::StToken{ line, column, seir::StToken::Type::ListBegin, "[" }; };
-	const auto listEnd = [](size_t line, ptrdiff_t column) { return seir::StToken{ line, column, seir::StToken::Type::ListEnd, "]" }; };
-	const auto name = [](size_t line, ptrdiff_t column, std::string_view text) { return seir::StToken{ line, column, seir::StToken::Type::Name, text }; };
-	const auto objectBegin = [](size_t line, ptrdiff_t column) { return seir::StToken{ line, column, seir::StToken::Type::ObjectBegin, "{" }; };
-	const auto objectEnd = [](size_t line, ptrdiff_t column) { return seir::StToken{ line, column, seir::StToken::Type::ObjectEnd, "}" }; };
-	const auto value = [](size_t line, ptrdiff_t column, std::string_view text) { return seir::StToken{ line, column, seir::StToken::Type::Value, text }; };
+	const auto end = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::End, "" }; };
+	const auto error = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::Error, "" }; };
+	const auto listBegin = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ListBegin, "[" }; };
+	const auto listEnd = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ListEnd, "]" }; };
+	const auto name = [](size_t line, size_t column, std::string_view text) { return seir::StToken{ line, column, seir::StToken::Type::Name, text }; };
+	const auto objectBegin = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ObjectBegin, "{" }; };
+	const auto objectEnd = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ObjectEnd, "}" }; };
+	const auto value = [](size_t line, size_t column, std::string_view text) { return seir::StToken{ line, column, seir::StToken::Type::Value, text }; };
 
 	SUBCASE("spaces")
 	{

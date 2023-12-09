@@ -18,28 +18,29 @@ namespace seir
 	public:
 		enum class Type
 		{
+			Error,
+			End,
 			Name,
 			Value,
 			ListBegin,
 			ListEnd,
 			ObjectBegin,
 			ObjectEnd,
-			End,
-			Error,
 		};
 
-		constexpr StToken(size_t line, ptrdiff_t column, Type type, std::string_view text) noexcept
+		constexpr StToken() noexcept = default;
+		constexpr StToken(size_t line, size_t column, Type type, std::string_view text) noexcept
 			: _line{ line }, _column{ column }, _type{ type }, _text{ text } {}
 
-		[[nodiscard]] constexpr ptrdiff_t column() const noexcept { return _column; }
+		[[nodiscard]] constexpr size_t column() const noexcept { return _column; }
 		[[nodiscard]] constexpr size_t line() const noexcept { return _line; }
 		[[nodiscard]] constexpr std::string_view text() const noexcept { return _text; }
 		[[nodiscard]] constexpr Type type() const noexcept { return _type; }
 
 	private:
-		size_t _line;
-		ptrdiff_t _column;
-		Type _type;
+		size_t _line = 0;
+		size_t _column = 0;
+		Type _type = Type::Error;
 		std::string_view _text;
 	};
 

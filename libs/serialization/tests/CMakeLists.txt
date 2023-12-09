@@ -4,6 +4,7 @@
 
 set(SOURCES
 	src/st_reader.cpp
+	src/st_stream.cpp
 	)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	set_property(SOURCE src/st_reader.cpp APPEND PROPERTY COMPILE_OPTIONS

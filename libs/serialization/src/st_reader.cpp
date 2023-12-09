@@ -87,11 +87,12 @@ namespace seir
 	class StReaderImpl
 	{
 	public:
-		explicit StReaderImpl(const SharedPtr<Blob>& blob) noexcept
-			: _size{ blob->size() }
+		explicit StReaderImpl(const SharedPtr<Blob>& blob)
+			: _size{ blob ? blob->size() : 0 }
 		{
-			std::memcpy(_buffer.data(), blob->data(), blob->size());
-			_buffer.data()[blob->size()] = std::byte{}; // To simplify parsing.
+			if (blob)
+				std::memcpy(_buffer.data(), blob->data(), blob->size());
+			_buffer.data()[_size] = std::byte{}; // To simplify parsing.
 		}
 
 		StToken read()
@@ -207,14 +208,14 @@ namespace seir
 	private:
 		constexpr StToken makeError(const char* at) noexcept
 		{
-			return { _line, at - _lineBase, StToken::Type::Error, std::string_view{} };
+			return { _line, static_cast<size_t>(at - _lineBase), StToken::Type::Error, std::string_view{} };
 		}
 
 		template <ptrdiff_t columnOffset = 0>
 		StToken makeToken(StToken::Type type, const char* begin, ptrdiff_t size) noexcept
 		{
 			const std::string_view text{ begin, static_cast<size_t>(size) };
-			return { _line, begin - _lineBase + columnOffset, type, text };
+			return { _line, static_cast<size_t>(begin - _lineBase + columnOffset), type, text };
 		}
 
 	private:

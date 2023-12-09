@@ -4,9 +4,11 @@
 
 set(HEADERS
 	include/seir_serialization/st_reader.hpp
+	include/seir_serialization/st_stream.hpp
 	)
 set(SOURCES
 	src/st_reader.cpp
+	src/st_stream.cpp
 	)
 source_group("include" FILES ${HEADERS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
