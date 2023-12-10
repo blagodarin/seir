@@ -12,7 +12,7 @@ namespace seir
 {
 	std::optional<seir::Vec3> Line3::intersection(const Plane& plane) const noexcept
 	{
-		const auto s = dotProduct(_vector, plane._normal);
+		const auto s = dotProduct(_vector, plane.normal());
 		if (std::abs(s) < 1e-6f)
 			return {};
 		const auto u = plane.distanceTo(_origin) / -s;
