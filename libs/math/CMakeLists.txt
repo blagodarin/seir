@@ -4,10 +4,13 @@
 
 set(HEADERS
 	include/seir_math/euler.hpp
+	include/seir_math/line.hpp
 	include/seir_math/mat.hpp
+	include/seir_math/plane.hpp
 	include/seir_math/vec.hpp
 	)
 set(SOURCES
+	src/line.cpp
 	src/mat.cpp
 	src/vec.cpp
 	)
