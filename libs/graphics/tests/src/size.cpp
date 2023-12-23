@@ -10,14 +10,14 @@ using seir::Size;
 
 TEST_CASE("Size::Size()")
 {
-	Size s;
+	const Size s;
 	CHECK(s._width == 0);
 	CHECK(s._height == 0);
 }
 
 TEST_CASE("Size::Size(int, int)")
 {
-	Size s{ 1, 2 };
+	const Size s{ 1, 2 };
 	CHECK(s._width == 1);
 	CHECK(s._height == 2);
 }

@@ -115,7 +115,7 @@ namespace seir
 		RECT clientRect{};
 		if (!::GetClientRect(_hwnd, &clientRect))
 			windows::reportError("GetClientRect");
-		return { clientRect.right - clientRect.left, clientRect.bottom - clientRect.top };
+		return { static_cast<int>(clientRect.right - clientRect.left), static_cast<int>(clientRect.bottom - clientRect.top) };
 	}
 
 	void WindowsWindow::reset() noexcept

@@ -12,7 +12,7 @@ using seir::Size;
 
 TEST_CASE("Rect::Rect()")
 {
-	Rect r;
+	const Rect r;
 	CHECK(r.left() == 0);
 	CHECK(r.top() == 0);
 	CHECK(r.right() == 0);
@@ -23,7 +23,7 @@ TEST_CASE("Rect::Rect()")
 
 TEST_CASE("Rect::Rect(Point, Point)")
 {
-	Rect r{ { 1, 2 }, Point{ 4, 7 } };
+	const Rect r{ { 1, 2 }, Point{ 4, 7 } };
 	CHECK(r.left() == 1);
 	CHECK(r.top() == 2);
 	CHECK(r.right() == 4);
@@ -34,7 +34,7 @@ TEST_CASE("Rect::Rect(Point, Point)")
 
 TEST_CASE("Rect::Rect(Point, Size)")
 {
-	Rect r{ { 1, 2 }, Size{ 3, 5 } };
+	const Rect r{ { 1, 2 }, Size{ 3, 5 } };
 	CHECK(r.left() == 1);
 	CHECK(r.top() == 2);
 	CHECK(r.right() == 4);
@@ -45,7 +45,7 @@ TEST_CASE("Rect::Rect(Point, Size)")
 
 TEST_CASE("Rect::Rect(Size)")
 {
-	Rect r{ Size{ 1, 2 } };
+	const Rect r{ Size{ 1, 2 } };
 	CHECK(r.left() == 0);
 	CHECK(r.top() == 0);
 	CHECK(r.right() == 1);

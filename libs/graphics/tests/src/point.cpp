@@ -10,14 +10,14 @@ using seir::Point;
 
 TEST_CASE("Point::Point()")
 {
-	Point p;
+	const Point p;
 	CHECK(p._x == 0);
 	CHECK(p._y == 0);
 }
 
 TEST_CASE("Point::Point(int, int)")
 {
-	Point p{ 1, 2 };
+	const Point p{ 1, 2 };
 	CHECK(p._x == 1);
 	CHECK(p._y == 2);
 }

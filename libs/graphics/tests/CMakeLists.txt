@@ -4,9 +4,14 @@
 
 set(SOURCES
 	src/color.cpp
+	src/margins.cpp
+	src/marginsf.cpp
 	src/point.cpp
+	src/quadf.cpp
 	src/rect.cpp
+	src/rectf.cpp
 	src/size.cpp
+	src/sizef.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_graphics_tests ${SOURCES})
