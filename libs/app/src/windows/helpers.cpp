@@ -9,7 +9,7 @@ namespace seir
 	void HcursorDeleter::free(HCURSOR handle) noexcept
 	{
 		if (handle && !::DestroyCursor(handle))
-			if (const auto error = ::GetLastError(); error != ERROR_ALREADY_EXISTS)
+			if (const auto error = ::GetLastError(); error != ERROR_SUCCESS && error != ERROR_ALREADY_EXISTS)
 				windows::reportError("DestroyCursor", error);
 	}
 
