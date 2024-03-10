@@ -13,7 +13,7 @@ function(seir_provide_doctest result)
 		)
 	seir_download("https://github.com/doctest/doctest/archive/refs/tags/v${version}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA1 "e3761cf44ae253fefe9010985a2ef50e3bc66194"
+		SHA256 "632ed2c05a7f53fa961381497bf8069093f0d6628c5f26286161fbd32a560186"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded

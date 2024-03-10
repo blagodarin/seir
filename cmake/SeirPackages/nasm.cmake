@@ -9,7 +9,7 @@ function(seir_provide_nasm result)
 	set(package "nasm-${version}")
 	if(WIN32)
 		seir_download("https://www.nasm.us/pub/nasm/releasebuilds/${version}/win64/${package}-win64.zip"
-			SHA1 "412520f192224715fb91d643f9640ce1005cab99"
+			SHA256 "029eed31faf0d2c5f95783294432cbea6c15bf633430f254bb3c1f195c67ca3a"
 			NAME "${package}.zip"
 			EXTRACT_DIR "${package}"
 			RESULT downloaded

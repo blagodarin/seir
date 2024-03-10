@@ -8,11 +8,11 @@ function(seir_provide_jpeg result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("jpeg")
 	seir_provide_nasm(nasm_flag FLAG SET_UPDATED nasm_updated)
-	set(version "3.0.1")
+	set(version "3.0.2")
 	set(package "libjpeg-turbo-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/jpeg.patch)
 	seir_download("https://downloads.sourceforge.net/project/libjpeg-turbo/${version}/${package}.tar.gz"
-		SHA256 "22429507714ae147b3acacd299e82099fce5d9f456882fc28e252e4579ba2a75"
+		SHA256 "c2ce515a78d91b09023773ef2770d6b0df77d674e144de80d63e0389b3a15ca6"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded
@@ -25,7 +25,6 @@ function(seir_provide_jpeg result)
 		seir_select(extra_options "${WIN32}" -DWITH_CRT_DLL=ON) # Doesn't work, set to ON to prevent manual flag manipulation.
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET jpeg-static OPTIONS
 			${nasm_flag}
-			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
 			-DENABLE_SHARED=OFF
 			-DREQUIRE_SIMD=ON
 			-DWITH_ARITH_DEC=OFF

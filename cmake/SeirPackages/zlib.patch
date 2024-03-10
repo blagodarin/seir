@@ -1,7 +1,7 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -151,6 +151,7 @@
- add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+@@ -155,6 +155,7 @@
+ target_include_directories(zlibstatic PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
  set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
  set_target_properties(zlib PROPERTIES SOVERSION 1)
 +set_target_properties(zlibstatic PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

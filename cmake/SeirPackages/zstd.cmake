@@ -8,7 +8,7 @@ function(seir_provide_zstd result)
 	set(version "1.5.5")
 	set(package "zstd-${version}")
 	seir_download("https://github.com/facebook/zstd/releases/download/v${version}/${package}.tar.zst"
-		SHA1 "63aa06e440623bfb55342ad0db097557571321ac"
+		SHA256 "ce264bca60eb2f0e99e4508cffd0d4d19dd362e84244d7fc941e79fa69ccf673"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)

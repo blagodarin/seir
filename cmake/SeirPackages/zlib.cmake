@@ -5,11 +5,11 @@
 function(seir_provide_zlib result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("zlib")
-	set(version "1.3")
+	set(version "1.3.1")
 	set(package "zlib-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/zlib.patch)
 	seir_download("https://zlib.net/${package}.tar.xz"
-		SHA256 "8a9ba2898e1d0d774eca6ba5b4627a11e5588ba85c8851336eb38de4683050a7"
+		SHA256 "38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded
@@ -19,10 +19,7 @@ function(seir_provide_zlib result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building ZLIB from ${source_dir}")
-		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET zlibstatic OPTIONS
-			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
-			MSVC_WARNINGS 4244
-			)
+		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET zlibstatic)
 		file(INSTALL
 			${build_dir}/zconf.h
 			${source_dir}/zlib.h

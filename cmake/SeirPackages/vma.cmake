@@ -10,7 +10,7 @@ function(seir_provide_vma result)
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/vma.patch)
 	seir_download("https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/archive/${version}.zip"
 		NAME "${package}.zip"
-		SHA1 "730e961a100507d2bbffbd5d955d5056705a4dec"
+		SHA256 "6d5e3d725374ddf73027a6b41cf66c9fc800476d19e25f223c3ec7c715cdf8c9"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded

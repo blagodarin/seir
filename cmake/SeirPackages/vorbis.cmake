@@ -12,7 +12,7 @@ function(seir_provide_vorbis result)
 	set(package "libvorbis-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/vorbis.patch)
 	seir_download("http://downloads.xiph.org/releases/vorbis/${package}.tar.xz"
-		SHA1 "0a2dd71a999656b8091506839e8007a61a8fda1f"
+		SHA256 "b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b"
 		EXTRACT_DIR ${package}
 		PATCH ${patch}
 		RESULT downloaded

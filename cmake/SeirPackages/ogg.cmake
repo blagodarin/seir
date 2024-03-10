@@ -9,7 +9,7 @@ function(seir_provide_ogg result)
 	set(package "libogg-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ogg.patch)
 	seir_download("http://downloads.xiph.org/releases/ogg/${package}.tar.xz"
-		SHA1 "5a368421a636f7faa4c2f662857cb507dffd7c99"
+		SHA256 "c4d91be36fc8e54deae7575241e03f4211eb102afb3fc0775fbbc1b740016705"
 		EXTRACT_DIR ${package}
 		PATCH ${patch}
 		RESULT downloaded
