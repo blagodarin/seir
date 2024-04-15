@@ -7,6 +7,7 @@ set(SOURCES
 	src/base64.cpp
 	src/base85.cpp
 	src/buffer.cpp
+	src/clock.cpp
 	src/endian.cpp
 	src/fixed.cpp
 	src/int_utils.cpp

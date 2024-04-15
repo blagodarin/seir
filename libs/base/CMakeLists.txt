@@ -7,6 +7,7 @@ set(HEADERS
 	include/seir_base/base64.hpp
 	include/seir_base/base85.hpp
 	include/seir_base/buffer.hpp
+	include/seir_base/clock.hpp
 	include/seir_base/endian.hpp
 	include/seir_base/fixed.hpp
 	include/seir_base/int_utils.hpp

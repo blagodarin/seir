@@ -5,6 +5,7 @@
 #include <seir_app/app.hpp>
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
+#include <seir_base/clock.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
@@ -13,8 +14,6 @@
 #include <seir_u8main/u8main.hpp>
 
 #include <array>
-#include <chrono>
-#include <optional>
 
 #include <fmt/core.h>
 
@@ -140,36 +139,6 @@ namespace
 	private:
 		seir::Vec3 _cameraPosition{ 0, -5, 0 };
 	};
-
-	class FrameClock
-	{
-	public:
-		float seconds() const noexcept
-		{
-			return std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(_totalOffset).count();
-		}
-
-		std::optional<float> advance() noexcept
-		{
-			++_frames;
-			const auto currentTime = Clock::now();
-			_totalOffset = currentTime - _startTime;
-			const auto duration = currentTime - _baseTime;
-			if (duration < std::chrono::seconds{ 1 })
-				return {};
-			const auto result = _frames * std::chrono::duration_cast<std::chrono::duration<float, Clock::period>>(duration).count() / Clock::period::den;
-			_baseTime = currentTime;
-			_frames = 0;
-			return result;
-		}
-
-	private:
-		using Clock = std::chrono::steady_clock;
-		const Clock::time_point _startTime = Clock::now();
-		Clock::duration _totalOffset = Clock::duration::zero();
-		Clock::time_point _baseTime = _startTime;
-		float _frames = 0;
-	};
 }
 
 int u8main(int, char**)
@@ -185,7 +154,7 @@ int u8main(int, char**)
 	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
 	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
 	window->show();
-	FrameClock clock;
+	seir::FrameClock clock;
 	for (State state; app->processEvents(state);)
 	{
 		renderer->render(
@@ -198,8 +167,8 @@ int u8main(int, char**)
 				pass.setTransformation(seir::Mat4::rotation(29 * clock.seconds(), { 0, 0, 1 }) * seir::Mat4::rotation(19 * clock.seconds(), { 1, 0, 0 }));
 				pass.drawMesh(*mesh);
 			});
-		if (const auto fps = clock.advance())
-			window->setTitle(fmt::format("Cube [{:.1f} fps]", *fps));
+		if (const auto period = clock.tick())
+			window->setTitle(fmt::format("Cube [{:.1f} fps @ ~{} ms]", period->_framesPerSecond, period->_maxFrameMilliseconds));
 	}
 	return 0;
 }
