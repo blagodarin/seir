@@ -11,7 +11,7 @@ function(seir_provide_jpeg result)
 	set(version "3.0.2")
 	set(package "libjpeg-turbo-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/jpeg.patch)
-	seir_download("https://downloads.sourceforge.net/project/libjpeg-turbo/${version}/${package}.tar.gz"
+	seir_download("https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/${version}/${package}.tar.gz"
 		SHA256 "c2ce515a78d91b09023773ef2770d6b0df77d674e144de80d63e0389b3a15ca6"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
