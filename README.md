@@ -1,4 +1,3 @@
-[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Windows](https://github.com/blagodarin/seir/actions/workflows/windows.yml/badge.svg?branch=main)](https://github.com/blagodarin/seir/actions/workflows/windows.yml)
 [![Linux (GCC)](https://github.com/blagodarin/seir/actions/workflows/linux_gcc.yml/badge.svg?branch=main)](https://github.com/blagodarin/seir/actions/workflows/linux_gcc.yml)
 [![Linux (Clang)](https://github.com/blagodarin/seir/actions/workflows/linux_clang.yml/badge.svg?branch=main)](https://github.com/blagodarin/seir/actions/workflows/linux_clang.yml)
