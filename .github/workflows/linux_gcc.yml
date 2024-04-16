@@ -1,4 +1,4 @@
-name: Linux
+name: Linux (GCC)
 on:
   push:
     paths-ignore:
@@ -17,12 +17,6 @@ jobs:
             config: Release
           - cc: gcc-13
             cxx: g++-13
-            config: Debug
-          - cc: clang-15
-            cxx: clang++-15
-            config: Release
-          - cc: clang-15
-            cxx: clang++-15
             config: Debug
       fail-fast: false
     env:

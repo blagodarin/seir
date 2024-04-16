@@ -1,0 +1,72 @@
+name: Linux (Clang)
+on:
+  push:
+    paths-ignore:
+      - '.clang-tidy'
+      - 'LICENSE'
+      - 'README.md'
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - cc: clang-15
+            cxx: clang++-15
+            config: Release
+          - cc: clang-15
+            cxx: clang++-15
+            config: Debug
+      fail-fast: false
+    env:
+      CC: ${{ matrix.cxx }}
+      CFLAGS: -fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute
+      CXX: ${{ matrix.cxx }}
+      CXXFLAGS: -fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute
+      LDFLAGS: -fsanitize=address -fsanitize=undefined
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/build/_SeirDownloads
+          key: linux-${{ hashFiles('cmake/SeirPackages/*.cmake') }}
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install libasound2-dev libvorbis-dev ninja-build
+      - name: Run CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
+            -DSEIR_3RDPARTY_SKIP="freetype;jpeg;ogg;vorbis;zlib;zstd" \
+            -DSEIR_AUDIO_OGGVORBIS=ON \
+            -DSEIR_AUDIO_WAV=ON \
+            -DSEIR_BENCHMARKS=ON \
+            -DSEIR_COMPRESSION_ZLIB=ON \
+            -DSEIR_COMPRESSION_ZSTD=OFF \
+            -DSEIR_EXAMPLES=ON \
+            -DSEIR_IMAGE_BMP=ON \
+            -DSEIR_IMAGE_ICO=ON \
+            -DSEIR_IMAGE_JPEG=ON \
+            -DSEIR_IMAGE_TGA=ON \
+            -DSEIR_RENDERER=Dummy \
+            -DSEIR_SERIALIZATION=ON \
+            -DSEIR_SYNTH=ON \
+            -DSEIR_TESTS=ON \
+            -DSEIR_U8MAIN=ON
+      - name: Build
+        run: |
+          cmake --build build
+      - name: Run tests
+        run: |
+          cd build
+          ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
+      - name: Check exports
+        run: |
+          cmake --build build --target install
+          cmake -S cmake/test -B build.test -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
+          cmake --build build.test
