@@ -10,15 +10,17 @@
 
 namespace seir
 {
+	// Variable frame rate clock.
 	template <typename Clock = std::chrono::steady_clock>
+	requires std::chrono::is_clock_v<Clock>
 	class FrameClock
 	{
 	public:
 		struct Period
 		{
-			unsigned _frameCount = 0;           // Number of frames in the period.
-			float _framesPerSecond = 0;         // Average frame rate during the period.
-			unsigned _maxFrameMilliseconds = 0; // Maximum frame duration in the period.
+			unsigned _frameCount = 0;       // Number of frames in the period.
+			float _averageFps = 0;          // Average frame rate during the period.
+			unsigned _peakMilliseconds = 0; // Peak frame duration in milliseconds, rounded up.
 		};
 
 		[[nodiscard]] float seconds() const noexcept
@@ -29,7 +31,8 @@ namespace seir
 		[[nodiscard]] std::optional<Period> tick() noexcept
 		{
 			const auto now = Clock::now();
-			const auto frameDuration = now - std::exchange(_lastTickTime, now);
+			const auto frameDuration = now - _lastTickTime;
+			_lastTickTime = now;
 			if (frameDuration > _maxFrameDuration)
 				_maxFrameDuration = frameDuration;
 			constexpr auto periodDurationLimit = std::chrono::seconds{ 1 };
@@ -38,12 +41,12 @@ namespace seir
 			++_framesInPeriod;
 			if (_periodDuration < periodDurationLimit)
 				return {};
-			const auto periodsInSecond = Clock::period::den / (std::chrono::duration_cast<std::chrono::duration<float, Clock::period>>(_periodDuration).count() * Clock::period::num);
+			const auto periodsInSecond = Clock::period::den / (std::chrono::duration_cast<std::chrono::duration<float, typename Clock::period>>(_periodDuration).count() * Clock::period::num);
 			assert(periodsInSecond <= 1.f);
 			Period period{
 				._frameCount = _framesInPeriod,
-				._framesPerSecond = static_cast<float>(_framesInPeriod) * periodsInSecond,
-				._maxFrameMilliseconds = static_cast<unsigned>(std::chrono::ceil<std::chrono::milliseconds>(_maxFrameDuration).count()),
+				._averageFps = static_cast<float>(_framesInPeriod) * periodsInSecond,
+				._peakMilliseconds = static_cast<unsigned>(std::chrono::ceil<std::chrono::milliseconds>(_maxFrameDuration).count()),
 			};
 			_maxFrameDuration = Clock::duration::zero();
 			_periodDuration = Clock::duration::zero();

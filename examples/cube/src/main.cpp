@@ -168,7 +168,7 @@ int u8main(int, char**)
 				pass.drawMesh(*mesh);
 			});
 		if (const auto period = clock.tick())
-			window->setTitle(fmt::format("Cube [{:.1f} fps @ ~{} ms]", period->_framesPerSecond, period->_maxFrameMilliseconds));
+			window->setTitle(fmt::format("Cube [{:.1f} fps @ ~{} ms]", period->_averageFps, period->_peakMilliseconds));
 	}
 	return 0;
 }
