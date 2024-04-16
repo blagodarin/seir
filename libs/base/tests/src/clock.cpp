@@ -16,7 +16,7 @@ namespace
 		using rep = duration::rep;
 		using time_point = std::chrono::time_point<ClockMock, duration>;
 
-		static constexpr bool is_steady = true;
+		[[maybe_unused]] static constexpr bool is_steady = true;
 
 		static time_point now() noexcept { return _now; }
 

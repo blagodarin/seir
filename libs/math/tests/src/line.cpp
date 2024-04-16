@@ -10,6 +10,7 @@
 
 TEST_CASE("Line3::intersection")
 {
+	// (2, 3, 6, 7) is a Pythagorean quadruple.
 	const seir::Plane plane{ { 1, 1.5f, 3 }, { 2, 3, 6 } };
 	SUBCASE("forward hit")
 	{
@@ -37,8 +38,9 @@ TEST_CASE("Line3::intersection")
 	}
 	SUBCASE("parallel")
 	{
-		const seir::Line3 line{ { 2, 3, 6 }, { 5, 7, 3 } };                         // Both points are on the plane.
-		REQUIRE(plane.distanceTo(line.first()) == plane.distanceTo(line.second())); // Ensure the line is parallel to the plane.
+		const seir::Line3 line{ { 2, 3, 6 }, { 5, 7, 3 } };
+		REQUIRE(plane.distanceTo(line.first()) == 0.f);
+		REQUIRE(plane.distanceTo(line.second()) == doctest::Approx{ 0.f }); // Not exact on ARM64.
 		CHECK_FALSE(line.intersection(plane));
 	}
 }

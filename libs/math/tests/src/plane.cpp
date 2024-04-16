@@ -8,6 +8,7 @@
 
 TEST_CASE("Plane::distanceTo")
 {
+	// (2, 3, 6, 7) is a Pythagorean quadruple.
 	const seir::Plane plane{ { 1, 1.5f, 3 }, { 2, 3, 6 } };
 	CHECK(plane.distanceTo({ 0, 0, 0 }) == -7);
 	CHECK(plane.distanceTo({ 2, 3, 6 }) == 0);

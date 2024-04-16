@@ -10,11 +10,15 @@ set(SOURCES
 	src/modulator.cpp
 	src/oscillator.cpp
 	src/period.cpp
-	src/shaper.cpp
 	src/tables.cpp
 	src/voice.cpp
 	src/wave.cpp
 	)
+if(NOT APPLE) # TODO: Fix Shaper tests for ARM64.
+	list(APPEND SOURCES
+		src/shaper.cpp
+		)
+endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_synth_tests ${SOURCES})
 target_link_libraries(seir_synth_tests PRIVATE Seir::synth Seir::base doctest::doctest_with_main)

@@ -12,7 +12,9 @@ namespace seir
 {
 	// Variable frame rate clock.
 	template <typename Clock = std::chrono::steady_clock>
+#ifndef __APPLE__ // TODO: Remove when P0355 is implemented: https://libcxx.llvm.org/Status/Cxx20.html
 	requires std::chrono::is_clock_v<Clock>
+#endif
 	class FrameClock
 	{
 	public:
@@ -56,9 +58,9 @@ namespace seir
 
 	private:
 		const typename Clock::time_point _startTime = Clock::now();
-		Clock::time_point _lastTickTime = _startTime;
-		Clock::duration _maxFrameDuration = Clock::duration::zero();
-		Clock::duration _periodDuration = Clock::duration::zero();
+		typename Clock::time_point _lastTickTime = _startTime;
+		typename Clock::duration _maxFrameDuration = Clock::duration::zero();
+		typename Clock::duration _periodDuration = Clock::duration::zero();
 		unsigned _framesInPeriod = 0;
 	};
 }
