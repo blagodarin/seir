@@ -8,39 +8,136 @@
 
 namespace
 {
-	class ClockMock
+	class Clock
 	{
 	public:
 		using duration = std::chrono::microseconds;
 		using period = std::micro;
 		using rep = duration::rep;
-		using time_point = std::chrono::time_point<ClockMock, duration>;
+		using time_point = std::chrono::time_point<Clock, duration>;
 
 		[[maybe_unused]] static constexpr bool is_steady = true;
 
 		static time_point now() noexcept { return _now; }
 
-		constexpr ClockMock(const duration& d) noexcept { _now = time_point{ d }; }
+		constexpr Clock(const duration& d) noexcept { _now = time_point{ d }; }
 		constexpr void advance(const duration& d) noexcept { _now += d; }
 
 	private:
 		static time_point _now;
 	};
 
-	ClockMock::time_point ClockMock::_now;
+	Clock::time_point Clock::_now;
 }
 
-TEST_CASE("FrameClock")
+TEST_CASE("ConstantRate")
+{
+	using namespace std::literals::chrono_literals;
+	Clock clock{ 999'999'999us };
+	seir::ConstantRate<Clock> rate{ 3ms };
+	const auto advance = [&clock, &rate](const Clock::duration& duration, unsigned expectedFrames) {
+		clock.advance(duration);
+		REQUIRE(rate.advance() == expectedFrames);
+		REQUIRE(rate.advance() == 0);
+	};
+	advance(999'999'999us, 0); // The delay before the first advance doesn't count.
+	SUBCASE("advance()")
+	{
+		SUBCASE("1ms + 2ms + 3ms + 4ms + 5ms")
+		{
+			advance(1ms, 0);
+			advance(2ms, 1);
+			advance(3ms, 1);
+			advance(4ms, 1);
+			advance(5ms, 2);
+		}
+		SUBCASE("2999us + 1us + 1us + 2999us")
+		{
+			advance(2999us, 0);
+			advance(1us, 1);
+			advance(1us, 0);
+			advance(2999us, 1);
+		}
+		SUBCASE("6999us + 2000us + 2us + 2999us")
+		{
+			advance(6999us, 2);
+			advance(2000us, 0);
+			advance(2us, 1);
+			advance(2999us, 1);
+		}
+	}
+	SUBCASE("start()")
+	{
+		SUBCASE("after 2999us")
+		{
+			clock.advance(2999us);
+			SUBCASE("without start")
+			{
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 1);
+			}
+			SUBCASE("with start")
+			{
+				rate.start();
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 0);
+				clock.advance(2998us);
+				REQUIRE(rate.advance() == 0);
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 1);
+			}
+		}
+		SUBCASE("after 3000us")
+		{
+			clock.advance(3000us);
+			SUBCASE("without start")
+			{
+				REQUIRE(rate.advance() == 1);
+			}
+			SUBCASE("with start")
+			{
+				rate.start();
+				REQUIRE(rate.advance() == 0);
+			}
+			clock.advance(2999us);
+			REQUIRE(rate.advance() == 0);
+			clock.advance(1us);
+			REQUIRE(rate.advance() == 1);
+		}
+		SUBCASE("after 3001us")
+		{
+			clock.advance(3001us);
+			SUBCASE("without start")
+			{
+				REQUIRE(rate.advance() == 1);
+				clock.advance(2999us);
+				REQUIRE(rate.advance() == 1);
+			}
+			SUBCASE("with start")
+			{
+				rate.start();
+				REQUIRE(rate.advance() == 0);
+				clock.advance(2999us);
+				REQUIRE(rate.advance() == 0);
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 1);
+			}
+		}
+		REQUIRE(rate.advance() == 0);
+	}
+}
+
+TEST_CASE("VariableRate")
 {
 	using namespace std::literals::chrono_literals;
 	using doctest::Approx;
-	ClockMock mock{ 999'999'999us };
-	seir::FrameClock<ClockMock> clock;
-	REQUIRE(clock.seconds() == 0.f);
-	const auto tick = [&mock, &clock](const ClockMock::duration& duration, auto&& expectedSeconds) {
-		mock.advance(duration);
-		auto period = clock.tick();
-		REQUIRE(clock.seconds() == expectedSeconds);
+	Clock clock{ 999'999'999us };
+	seir::VariableRate<Clock> rate;
+	REQUIRE(rate.time() == 0.f);
+	const auto tick = [&clock, &rate](const Clock::duration& duration, auto&& expectedSeconds) {
+		clock.advance(duration);
+		auto period = rate.tick();
+		REQUIRE(rate.time() == expectedSeconds);
 		return period;
 	};
 	SUBCASE("0s + 999'001us + 998us + 1us + 999ms + 1ms")
@@ -53,16 +150,16 @@ TEST_CASE("FrameClock")
 		auto period = tick(1us, 1.f);
 		REQUIRE(period);
 		CHECK(period->_frameCount == 4);
-		CHECK(period->_averageFps == 4.f);
-		CHECK(period->_peakMilliseconds == 1000);
+		CHECK(period->_averageFrameRate == 4.f);
+		CHECK(period->_maxFrameDuration == 1000);
 
 		// Peak frame duration metric doesn't have an extra millisecond.
 		REQUIRE_FALSE(tick(999ms, Approx{ 1.999f }));
 		period = tick(1ms, 2.f);
 		REQUIRE(period);
 		CHECK(period->_frameCount == 2);
-		CHECK(period->_averageFps == 2.f);
-		CHECK(period->_peakMilliseconds == 999);
+		CHECK(period->_averageFrameRate == 2.f);
+		CHECK(period->_maxFrameDuration == 999);
 	}
 	SUBCASE("250ms + 500ms + 750ms + 999'999us + 1us")
 	{
@@ -72,15 +169,15 @@ TEST_CASE("FrameClock")
 		auto period = tick(750ms, 1.5f);
 		REQUIRE(period);
 		CHECK(period->_frameCount == 3);
-		CHECK(period->_averageFps == 2.f);
-		CHECK(period->_peakMilliseconds == 750);
+		CHECK(period->_averageFrameRate == 2.f);
+		CHECK(period->_maxFrameDuration == 750);
 
 		// The second period is not affected by the preceding long period.
 		REQUIRE_FALSE(tick(999'999us, Approx{ 2.499'999f }));
 		period = tick(1us, 2.5f);
 		REQUIRE(period);
 		CHECK(period->_frameCount == 2);
-		CHECK(period->_averageFps == 2.f);
-		CHECK(period->_peakMilliseconds == 1000);
+		CHECK(period->_averageFrameRate == 2.f);
+		CHECK(period->_maxFrameDuration == 1000);
 	}
 }

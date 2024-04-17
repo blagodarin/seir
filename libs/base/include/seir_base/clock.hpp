@@ -8,53 +8,60 @@
 #include <chrono>
 #include <optional>
 
+// TODO: Remove '#ifndef __APPLE__' when P0355 is implemented: https://libcxx.llvm.org/Status/Cxx20.html
+
 namespace seir
 {
-	// Variable frame rate clock.
+	// Constant frame rate clock.
 	template <typename Clock = std::chrono::steady_clock>
-#ifndef __APPLE__ // TODO: Remove when P0355 is implemented: https://libcxx.llvm.org/Status/Cxx20.html
+#ifndef __APPLE__
 	requires std::chrono::is_clock_v<Clock>
 #endif
-	class FrameClock
+	class ConstantRate
 	{
 	public:
-		struct Period
-		{
-			unsigned _frameCount = 0;       // Number of frames in the period.
-			float _averageFps = 0;          // Average frame rate during the period.
-			unsigned _peakMilliseconds = 0; // Peak frame duration in milliseconds, rounded up.
-		};
+		// Creates the clock with the specified interval.
+		// The clock is not started after construction.
+		constexpr ConstantRate(const typename Clock::duration& interval) noexcept
+			: _interval{ interval } { assert(_interval.count() > 0); }
 
-		[[nodiscard]] float seconds() const noexcept
-		{
-			return std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(_lastTickTime - _startTime).count();
-		}
+		// Returns the number of new frames since the last call
+		// if the clock is started, starts the clock and returns zero if not.
+		[[nodiscard]] unsigned advance() noexcept;
 
-		[[nodiscard]] std::optional<Period> tick() noexcept
-		{
-			const auto now = Clock::now();
-			const auto frameDuration = now - _lastTickTime;
-			_lastTickTime = now;
-			if (frameDuration > _maxFrameDuration)
-				_maxFrameDuration = frameDuration;
-			constexpr auto periodDurationLimit = std::chrono::seconds{ 1 };
-			assert(_periodDuration < periodDurationLimit);
-			_periodDuration += frameDuration;
-			++_framesInPeriod;
-			if (_periodDuration < periodDurationLimit)
-				return {};
-			const auto periodsInSecond = Clock::period::den / (std::chrono::duration_cast<std::chrono::duration<float, typename Clock::period>>(_periodDuration).count() * Clock::period::num);
-			assert(periodsInSecond <= 1.f);
-			Period period{
-				._frameCount = _framesInPeriod,
-				._averageFps = static_cast<float>(_framesInPeriod) * periodsInSecond,
-				._peakMilliseconds = static_cast<unsigned>(std::chrono::ceil<std::chrono::milliseconds>(_maxFrameDuration).count()),
-			};
-			_maxFrameDuration = Clock::duration::zero();
-			_periodDuration = Clock::duration::zero();
-			_framesInPeriod = 0;
-			return period;
-		}
+		// Starts (or restarts) the clock.
+		void start() noexcept;
+
+	private:
+		const typename Clock::duration _interval;
+		typename Clock::time_point _base;
+		bool _started = false;
+	};
+
+	//
+	struct VariablePeriod
+	{
+		unsigned _frameCount = 0;       // Number of frames in the period.
+		float _averageFrameRate = 0;    // Average frame rate during the period.
+		unsigned _maxFrameDuration = 0; // Maximum frame duration in milliseconds, rounded up.
+	};
+
+	// Variable frame rate clock, useful for FPS measurement.
+	template <typename Clock = std::chrono::steady_clock>
+#ifndef __APPLE__
+	requires std::chrono::is_clock_v<Clock>
+#endif
+	class VariableRate
+	{
+	public:
+		// Creates the clock and starts it.
+		VariableRate() noexcept = default;
+
+		//
+		[[nodiscard]] std::optional<VariablePeriod> tick() noexcept;
+
+		// Returns the accounted time in seconds.
+		[[nodiscard]] constexpr float time() const noexcept;
 
 	private:
 		const typename Clock::time_point _startTime = Clock::now();
@@ -63,4 +70,72 @@ namespace seir
 		typename Clock::duration _periodDuration = Clock::duration::zero();
 		unsigned _framesInPeriod = 0;
 	};
+}
+
+template <typename Clock>
+#ifndef __APPLE__
+requires std::chrono::is_clock_v<Clock>
+#endif
+unsigned seir::ConstantRate<Clock>::advance() noexcept
+{
+	const auto now = Clock::now();
+	if (!_started)
+	{
+		_base = now;
+		_started = true;
+		return 0;
+	}
+	const auto frames = (now - _base).count() / _interval.count();
+	_base += frames * _interval;
+	return static_cast<unsigned>(frames);
+}
+
+template <typename Clock>
+#ifndef __APPLE__
+requires std::chrono::is_clock_v<Clock>
+#endif
+void seir::ConstantRate<Clock>::start() noexcept
+{
+	_base = Clock::now();
+	_started = true;
+}
+
+template <typename Clock>
+#ifndef __APPLE__
+requires std::chrono::is_clock_v<Clock>
+#endif
+	std::optional<seir::VariablePeriod> seir::VariableRate<Clock>::tick()
+noexcept
+{
+	const auto now = Clock::now();
+	const auto frameDuration = now - _lastTickTime;
+	_lastTickTime = now;
+	if (frameDuration > _maxFrameDuration)
+		_maxFrameDuration = frameDuration;
+	constexpr auto periodDurationLimit = std::chrono::seconds{ 1 };
+	assert(_periodDuration < periodDurationLimit);
+	_periodDuration += frameDuration;
+	++_framesInPeriod;
+	if (_periodDuration < periodDurationLimit)
+		return {};
+	const auto periodsInSecond = Clock::period::den / (std::chrono::duration_cast<std::chrono::duration<float, typename Clock::period>>(_periodDuration).count() * Clock::period::num);
+	assert(periodsInSecond <= 1.f);
+	VariablePeriod period{
+		._frameCount = _framesInPeriod,
+		._averageFrameRate = static_cast<float>(_framesInPeriod) * periodsInSecond,
+		._maxFrameDuration = static_cast<unsigned>(std::chrono::ceil<std::chrono::milliseconds>(_maxFrameDuration).count()),
+	};
+	_maxFrameDuration = Clock::duration::zero();
+	_periodDuration = Clock::duration::zero();
+	_framesInPeriod = 0;
+	return period;
+}
+
+template <typename Clock>
+#ifndef __APPLE__
+requires std::chrono::is_clock_v<Clock>
+#endif
+constexpr float seir::VariableRate<Clock>::time() const noexcept
+{
+	return std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(_lastTickTime - _startTime).count();
 }
