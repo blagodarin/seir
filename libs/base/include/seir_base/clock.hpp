@@ -29,6 +29,9 @@ namespace seir
 		// if the clock is started, starts the clock and returns zero if not.
 		[[nodiscard]] unsigned advance() noexcept;
 
+		// Resets the clock to the initial (non-started) state.
+		constexpr void reset() noexcept;
+
 		// Starts (or restarts) the clock.
 		void start() noexcept;
 
@@ -88,6 +91,15 @@ unsigned seir::ConstantRate<Clock>::advance() noexcept
 	const auto frames = (now - _base).count() / _interval.count();
 	_base += frames * _interval;
 	return static_cast<unsigned>(frames);
+}
+
+template <typename Clock>
+#ifndef __APPLE__
+requires std::chrono::is_clock_v<Clock>
+#endif
+constexpr void seir::ConstantRate<Clock>::reset() noexcept
+{
+	_started = false;
 }
 
 template <typename Clock>

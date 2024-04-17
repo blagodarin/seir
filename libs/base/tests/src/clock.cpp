@@ -66,6 +66,65 @@ TEST_CASE("ConstantRate")
 			advance(2999us, 1);
 		}
 	}
+	SUBCASE("reset()")
+	{
+		SUBCASE("after 2999us")
+		{
+			clock.advance(2999us);
+			SUBCASE("without reset")
+			{
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 1);
+			}
+			SUBCASE("with reset")
+			{
+				rate.reset();
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 0);
+				clock.advance(2999us);
+				REQUIRE(rate.advance() == 0);
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 1);
+			}
+		}
+		SUBCASE("after 3000us")
+		{
+			clock.advance(3000us);
+			SUBCASE("without reset")
+			{
+				REQUIRE(rate.advance() == 1);
+			}
+			SUBCASE("with reset")
+			{
+				rate.reset();
+				REQUIRE(rate.advance() == 0);
+			}
+			clock.advance(2999us);
+			REQUIRE(rate.advance() == 0);
+			clock.advance(1us);
+			REQUIRE(rate.advance() == 1);
+		}
+		SUBCASE("after 3001us")
+		{
+			clock.advance(3001us);
+			SUBCASE("without reset")
+			{
+				REQUIRE(rate.advance() == 1);
+				clock.advance(2999us);
+				REQUIRE(rate.advance() == 1);
+			}
+			SUBCASE("with reset")
+			{
+				rate.reset();
+				REQUIRE(rate.advance() == 0);
+				clock.advance(2999us);
+				REQUIRE(rate.advance() == 0);
+				clock.advance(1us);
+				REQUIRE(rate.advance() == 1);
+			}
+		}
+		REQUIRE(rate.advance() == 0);
+	}
 	SUBCASE("start()")
 	{
 		SUBCASE("after 2999us")
