@@ -41,7 +41,7 @@ namespace seir
 		bool _started = false;
 	};
 
-	//
+	// Variable period metrics.
 	struct VariablePeriod
 	{
 		unsigned _frameCount = 0;       // Number of frames in the period.
@@ -57,18 +57,22 @@ namespace seir
 	class VariableRate
 	{
 	public:
-		// Creates the clock and starts it.
-		VariableRate() noexcept = default;
+		// Advances the clock for the next frame.
+		// Returns period metrics if enough data is collected.
+		[[nodiscard]] std::optional<VariablePeriod> advance() noexcept;
 
-		//
-		[[nodiscard]] std::optional<VariablePeriod> tick() noexcept;
+		// Resets the clock to the initial (non-started) state.
+		constexpr void reset() noexcept;
+
+		// Starts (or restarts) the clock.
+		void start() noexcept;
 
 		// Returns the accounted time in seconds.
 		[[nodiscard]] constexpr float time() const noexcept;
 
 	private:
-		const typename Clock::time_point _startTime = Clock::now();
-		typename Clock::time_point _lastTickTime = _startTime;
+		typename Clock::time_point _startTime;
+		typename Clock::time_point _lastFrameTime;
 		typename Clock::duration _maxFrameDuration = Clock::duration::zero();
 		typename Clock::duration _periodDuration = Clock::duration::zero();
 		unsigned _framesInPeriod = 0;
@@ -82,7 +86,7 @@ requires std::chrono::is_clock_v<Clock>
 unsigned seir::ConstantRate<Clock>::advance() noexcept
 {
 	const auto now = Clock::now();
-	if (!_started)
+	if (!_started) [[unlikely]]
 	{
 		_base = now;
 		_started = true;
@@ -116,19 +120,26 @@ template <typename Clock>
 #ifndef __APPLE__
 requires std::chrono::is_clock_v<Clock>
 #endif
-	std::optional<seir::VariablePeriod> seir::VariableRate<Clock>::tick()
+	std::optional<seir::VariablePeriod> seir::VariableRate<Clock>::advance()
 noexcept
 {
 	const auto now = Clock::now();
-	const auto frameDuration = now - _lastTickTime;
-	_lastTickTime = now;
+	if (_startTime == decltype(_startTime){}) [[unlikely]]
+	{
+		assert(now != decltype(_startTime){});
+		_startTime = now;
+		_lastFrameTime = now;
+		return {};
+	}
+	const auto frameDuration = now - _lastFrameTime;
+	_lastFrameTime = now;
 	if (frameDuration > _maxFrameDuration)
 		_maxFrameDuration = frameDuration;
 	constexpr auto periodDurationLimit = std::chrono::seconds{ 1 };
 	assert(_periodDuration < periodDurationLimit);
 	_periodDuration += frameDuration;
 	++_framesInPeriod;
-	if (_periodDuration < periodDurationLimit)
+	if (_periodDuration < periodDurationLimit) [[likely]]
 		return {};
 	const auto periodsInSecond = Clock::period::den / (std::chrono::duration_cast<std::chrono::duration<float, typename Clock::period>>(_periodDuration).count() * Clock::period::num);
 	assert(periodsInSecond <= 1.f);
@@ -147,7 +158,27 @@ template <typename Clock>
 #ifndef __APPLE__
 requires std::chrono::is_clock_v<Clock>
 #endif
+constexpr void seir::VariableRate<Clock>::reset() noexcept
+{
+	_startTime = {};
+	_lastFrameTime = {};
+}
+
+template <typename Clock>
+#ifndef __APPLE__
+requires std::chrono::is_clock_v<Clock>
+#endif
+void seir::VariableRate<Clock>::start() noexcept
+{
+	_startTime = Clock::now();
+	_lastFrameTime = _startTime;
+}
+
+template <typename Clock>
+#ifndef __APPLE__
+requires std::chrono::is_clock_v<Clock>
+#endif
 constexpr float seir::VariableRate<Clock>::time() const noexcept
 {
-	return std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(_lastTickTime - _startTime).count();
+	return std::chrono::duration_cast<std::chrono::duration<float, std::chrono::seconds::period>>(_lastFrameTime - _startTime).count();
 }

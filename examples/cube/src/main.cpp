@@ -154,10 +154,10 @@ int u8main(int, char**)
 	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
 	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
 	window->show();
-	seir::VariableRate rate;
+	seir::VariableRate clock;
 	for (State state; app->processEvents(state);)
 	{
-		const auto time = rate.time();
+		const auto time = clock.time();
 		renderer->render(
 			[&state](const seir::Vec2& viewportSize) {
 				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * state.cameraMatrix();
@@ -168,7 +168,7 @@ int u8main(int, char**)
 				pass.setTransformation(seir::Mat4::rotation(29 * time, { 0, 0, 1 }) * seir::Mat4::rotation(19 * time, { 1, 0, 0 }));
 				pass.drawMesh(*mesh);
 			});
-		if (const auto period = rate.tick())
+		if (const auto period = clock.advance())
 			window->setTitle(fmt::format("Cube [{:.1f} fps @ ~{} ms]", period->_averageFrameRate, period->_maxFrameDuration));
 	}
 	return 0;
