@@ -114,7 +114,9 @@ jobs:
         run: |
           cd build
           ctest --verbose
-      - name: Upload coverage reports
-        run: |
-          pip install --user codecov
-          codecov --gcov-root "${{ github.workspace }}/build" --gcov-exec gcov-13 --gcov-args "-s ${{ github.workspace }}"
+      - uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+          plugin: gcov
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
