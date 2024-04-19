@@ -120,8 +120,7 @@ template <typename Clock>
 #ifndef __APPLE__
 requires std::chrono::is_clock_v<Clock>
 #endif
-	std::optional<seir::VariablePeriod> seir::VariableRate<Clock>::advance()
-noexcept
+std::optional<seir::VariablePeriod> seir::VariableRate<Clock>::advance() noexcept
 {
 	const auto now = Clock::now();
 	if (_startTime == decltype(_startTime){}) [[unlikely]]
