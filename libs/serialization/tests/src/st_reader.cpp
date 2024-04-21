@@ -23,7 +23,7 @@ namespace seir
 	{
 		switch (token.type())
 		{
-		case StToken::Type::Name: stream << "Name"; break;
+		case StToken::Type::Key: stream << "Key"; break;
 		case StToken::Type::Value: stream << "Value"; break;
 		case StToken::Type::ListBegin: stream << "ListBegin"; break;
 		case StToken::Type::ListEnd: stream << "ListEnd"; break;
@@ -60,7 +60,7 @@ TEST_CASE("StReader::read")
 	const auto error = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::Error, "" }; };
 	const auto listBegin = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ListBegin, "[" }; };
 	const auto listEnd = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ListEnd, "]" }; };
-	const auto name = [](size_t line, size_t column, std::string_view text) { return seir::StToken{ line, column, seir::StToken::Type::Name, text }; };
+	const auto key = [](size_t line, size_t column, std::string_view text) { return seir::StToken{ line, column, seir::StToken::Type::Key, text }; };
 	const auto objectBegin = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ObjectBegin, "{" }; };
 	const auto objectEnd = [](size_t line, size_t column) { return seir::StToken{ line, column, seir::StToken::Type::ObjectEnd, "}" }; };
 	const auto value = [](size_t line, size_t column, std::string_view text) { return seir::StToken{ line, column, seir::StToken::Type::Value, text }; };
@@ -85,29 +85,29 @@ TEST_CASE("StReader::read")
 			check("\xff", { error(1, 1) });
 		}
 	}
-	SUBCASE("names")
+	SUBCASE("keys")
 	{
 		SUBCASE("ok")
 		{
 			check(
 				"one",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					end(1, 4),
 				});
 			check(
 				"one two",
 				{
-					name(1, 1, "one"),
-					name(1, 5, "two"),
+					key(1, 1, "one"),
+					key(1, 5, "two"),
 					end(1, 8),
 				});
 			check(
 				"one\n"
 				"two",
 				{
-					name(1, 1, "one"),
-					name(2, 1, "two"),
+					key(1, 1, "one"),
+					key(2, 1, "two"),
 					end(2, 4),
 				});
 		}
@@ -123,7 +123,7 @@ TEST_CASE("StReader::read")
 			check(
 				"one \"two\"",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					value(1, 5, "two"),
 					end(1, 10),
 				});
@@ -131,14 +131,14 @@ TEST_CASE("StReader::read")
 				"one\n"
 				"  \"two\"",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					value(2, 3, "two"),
 					end(2, 8),
 				});
 			check(
 				"one \"two\" \"three\"",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					value(1, 5, "two"),
 					value(1, 11, "three"),
 					end(1, 18),
@@ -147,7 +147,7 @@ TEST_CASE("StReader::read")
 				"one \"two\"\n"
 				"  \"three\"",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					value(1, 5, "two"),
 					value(2, 3, "three"),
 					end(2, 10),
@@ -156,9 +156,9 @@ TEST_CASE("StReader::read")
 				"one \"two\"\n"
 				"three \"four\"",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					value(1, 5, "two"),
-					name(2, 1, "three"),
+					key(2, 1, "three"),
 					value(2, 7, "four"),
 					end(2, 13),
 				});
@@ -167,10 +167,10 @@ TEST_CASE("StReader::read")
 		{
 			using namespace std::literals::string_literals;
 			check("\"", { error(1, 1) });
-			check("name\"", { name(1, 1, "name"), error(1, 6) });
-			check("name\"\0"s, { name(1, 1, "name"), error(1, 6) });
-			check("name\"\n", { name(1, 1, "name"), error(1, 6) });
-			check("name\"\r", { name(1, 1, "name"), error(1, 6) });
+			check("key\"", { key(1, 1, "key"), error(1, 5) });
+			check("key\"\0"s, { key(1, 1, "key"), error(1, 5) });
+			check("key\"\n", { key(1, 1, "key"), error(1, 5) });
+			check("key\"\r", { key(1, 1, "key"), error(1, 5) });
 		}
 	}
 	SUBCASE("lists")
@@ -179,7 +179,7 @@ TEST_CASE("StReader::read")
 		{
 			check(R"(one[]["two"]["three""four"[]["five"]])",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					listBegin(1, 4),
 					listEnd(1, 5),
 					listBegin(1, 6),
@@ -208,7 +208,7 @@ TEST_CASE("StReader::read")
 				"  ]\n"          // 9
 				"]\n",           // 10
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					listBegin(1, 5),
 					listEnd(2, 1),
 					listBegin(2, 3),
@@ -230,9 +230,9 @@ TEST_CASE("StReader::read")
 		{
 			check("[", { error(1, 1) });
 			check("]", { error(1, 1) });
-			check("name]", { name(1, 1, "name"), error(1, 5) });
-			check("name[name", { name(1, 1, "name"), listBegin(1, 5), error(1, 6) });
-			check("name[]]", { name(1, 1, "name"), listBegin(1, 5), listEnd(1, 6), error(1, 7) });
+			check("key]", { key(1, 1, "key"), error(1, 4) });
+			check("key[key", { key(1, 1, "key"), listBegin(1, 4), error(1, 5) });
+			check("key[]]", { key(1, 1, "key"), listBegin(1, 4), listEnd(1, 5), error(1, 6) });
 		}
 	}
 	SUBCASE("objects")
@@ -241,19 +241,19 @@ TEST_CASE("StReader::read")
 		{
 			check("one{}{two}{three four{}{five}}",
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					objectBegin(1, 4),
 					objectEnd(1, 5),
 					objectBegin(1, 6),
-					name(1, 7, "two"),
+					key(1, 7, "two"),
 					objectEnd(1, 10),
 					objectBegin(1, 11),
-					name(1, 12, "three"),
-					name(1, 18, "four"),
+					key(1, 12, "three"),
+					key(1, 18, "four"),
 					objectBegin(1, 22),
 					objectEnd(1, 23),
 					objectBegin(1, 24),
-					name(1, 25, "five"),
+					key(1, 25, "five"),
 					objectEnd(1, 29),
 					objectEnd(1, 30),
 					end(1, 31),
@@ -270,19 +270,19 @@ TEST_CASE("StReader::read")
 				"  }\n"      // 9
 				"}\n",       // 10
 				{
-					name(1, 1, "one"),
+					key(1, 1, "one"),
 					objectBegin(1, 5),
 					objectEnd(2, 1),
 					objectBegin(2, 3),
-					name(3, 3, "two"),
+					key(3, 3, "two"),
 					objectEnd(4, 1),
 					objectBegin(4, 3),
-					name(5, 3, "three"),
-					name(6, 3, "four"),
+					key(5, 3, "three"),
+					key(6, 3, "four"),
 					objectBegin(6, 8),
 					objectEnd(7, 3),
 					objectBegin(7, 5),
-					name(8, 5, "five"),
+					key(8, 5, "five"),
 					objectEnd(9, 3),
 					objectEnd(10, 1),
 					end(11, 1),
@@ -292,11 +292,11 @@ TEST_CASE("StReader::read")
 		{
 			check("{", { error(1, 1) });
 			check("}", { error(1, 1) });
-			check("name}", { name(1, 1, "name"), error(1, 5) });
-			check("name{[", { name(1, 1, "name"), objectBegin(1, 5), error(1, 6) });
-			check("name{]", { name(1, 1, "name"), objectBegin(1, 5), error(1, 6) });
-			check("name{{", { name(1, 1, "name"), objectBegin(1, 5), error(1, 6) });
-			check("name{}}", { name(1, 1, "name"), objectBegin(1, 5), objectEnd(1, 6), error(1, 7) });
+			check("key}", { key(1, 1, "key"), error(1, 4) });
+			check("key{[", { key(1, 1, "key"), objectBegin(1, 4), error(1, 5) });
+			check("key{]", { key(1, 1, "key"), objectBegin(1, 4), error(1, 5) });
+			check("key{{", { key(1, 1, "key"), objectBegin(1, 4), error(1, 5) });
+			check("key{}}", { key(1, 1, "key"), objectBegin(1, 4), objectEnd(1, 5), error(1, 6) });
 		}
 	}
 	SUBCASE("comments")
@@ -307,9 +307,9 @@ TEST_CASE("StReader::read")
 			check("//comment", { end(1, 10) });
 			check("//\n", { end(2, 1) });
 			check("//comment\n", { end(2, 1) });
-			check("//comment\nname", { name(2, 1, "name"), end(2, 5) });
-			check("name//", { name(1, 1, "name"), end(1, 7) });
-			check("name//comment", { name(1, 1, "name"), end(1, 14) });
+			check("//comment\nkey", { key(2, 1, "key"), end(2, 4) });
+			check("key//", { key(1, 1, "key"), end(1, 6) });
+			check("key//comment", { key(1, 1, "key"), end(1, 13) });
 		}
 		SUBCASE("errors")
 		{

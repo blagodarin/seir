@@ -20,7 +20,7 @@ namespace seir
 		{
 			Error,
 			End,
-			Name,
+			Key,
 			Value,
 			ListBegin,
 			ListEnd,

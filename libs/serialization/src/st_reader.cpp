@@ -28,7 +28,7 @@ namespace
 		LBrace,
 		RBrace,
 		Comment,
-		Name = kAlphanumeric,
+		Key = kAlphanumeric,
 		Digit,
 	};
 
@@ -41,14 +41,14 @@ namespace
 		Other, Other, Other, Other, Other, Other, Other, Comment, // ( ) * + , - . /
 		Digit, Digit, Digit, Digit, Digit, Digit, Digit, Digit,   // 0 1 2 3 4 5 6 7
 		Digit, Digit, Other, Other, Other, Other, Other, Other,   // 8 9 : ; < = > ?
-		Other, Name, Name, Name, Name, Name, Name, Name,          // @ A B C D E F G
-		Name, Name, Name, Name, Name, Name, Name, Name,           // H I J K L M N O
-		Name, Name, Name, Name, Name, Name, Name, Name,           // P Q R S T U V W
-		Name, Name, Name, LBracket, Other, RBracket, Other, Name, // X Y Z [ \ ] ^ _
-		Quote, Name, Name, Name, Name, Name, Name, Name,          // ` a b c d e f g
-		Name, Name, Name, Name, Name, Name, Name, Name,           // h i j k l m n o
-		Name, Name, Name, Name, Name, Name, Name, Name,           // p q r s t u v w
-		Name, Name, Name, LBrace, Other, RBrace, Other, Other,    // x y z { | } ~
+		Other, Key, Key, Key, Key, Key, Key, Key,                 // @ A B C D E F G
+		Key, Key, Key, Key, Key, Key, Key, Key,                   // H I J K L M N O
+		Key, Key, Key, Key, Key, Key, Key, Key,                   // P Q R S T U V W
+		Key, Key, Key, LBracket, Other, RBracket, Other, Key,     // X Y Z [ \ ] ^ _
+		Quote, Key, Key, Key, Key, Key, Key, Key,                 // ` a b c d e f g
+		Key, Key, Key, Key, Key, Key, Key, Key,                   // h i j k l m n o
+		Key, Key, Key, Key, Key, Key, Key, Key,                   // p q r s t u v w
+		Key, Key, Key, LBrace, Other, RBrace, Other, Other,       // x y z { | } ~
 		Other, Other, Other, Other, Other, Other, Other, Other,   //
 		Other, Other, Other, Other, Other, Other, Other, Other,   //
 		Other, Other, Other, Other, Other, Other, Other, Other,   //
@@ -124,13 +124,13 @@ namespace seir
 					++_line;
 					break;
 
-				case Name:
-					if (_stack.back() & AcceptNames)
+				case Key:
+					if (_stack.back() & AcceptKeys)
 					{
 						const auto begin = _cursor;
 						_cursor = ::skipWhile(_cursor, [](char c) { return ::classOf(c) & kAlphanumeric; });
 						_stack.back() |= AcceptValues;
-						return makeToken(StToken::Type::Name, begin, _cursor - begin);
+						return makeToken(StToken::Type::Key, begin, _cursor - begin);
 					}
 					else
 						return makeError(_cursor);
@@ -178,14 +178,14 @@ namespace seir
 				case LBrace:
 					if (_stack.back() & AcceptValues)
 					{
-						_stack.emplace_back(AcceptNames);
+						_stack.emplace_back(AcceptKeys);
 						return makeToken(StToken::Type::ObjectBegin, _cursor++, 1);
 					}
 					else
 						return makeError(_cursor);
 
 				case RBrace:
-					if (_stack.back() & AcceptNames && _stack.size() > 1)
+					if (_stack.back() & AcceptKeys && _stack.size() > 1)
 					{
 						_stack.pop_back();
 						return makeToken(StToken::Type::ObjectEnd, _cursor++, 1);
@@ -221,7 +221,7 @@ namespace seir
 	private:
 		enum : uint8_t
 		{
-			AcceptNames = 1 << 0,
+			AcceptKeys = 1 << 0,
 			AcceptValues = 1 << 1,
 		};
 
@@ -230,7 +230,7 @@ namespace seir
 		const char* _cursor = reinterpret_cast<const char*>(_buffer.data());
 		size_t _line = 1;
 		const char* _lineBase = _cursor - 1;
-		std::vector<uint8_t> _stack{ AcceptNames };
+		std::vector<uint8_t> _stack{ AcceptKeys };
 	};
 
 	StReader::StReader(const SharedPtr<Blob>& blob)
