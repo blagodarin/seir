@@ -54,6 +54,9 @@ namespace seir
 		[[nodiscard]] static std::string commit(StWriter&&);
 
 	private:
+		void beginPrettyValue(uint8_t);
+
+	private:
 		std::vector<uint8_t> _stack;
 		std::string _buffer;
 		const bool _pretty;

@@ -7,7 +7,11 @@ set(SOURCES
 	src/st_stream.cpp
 	src/st_writer.cpp
 	)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	set_property(SOURCE src/st_writer.cpp APPEND PROPERTY COMPILE_OPTIONS
+		-Wno-extra-semi-stmt
+		)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	set_property(SOURCE src/st_reader.cpp APPEND PROPERTY COMPILE_OPTIONS
 		/wd4868 # compiler may not enforce left-to-right evaluation order in braced initializer list
 		)

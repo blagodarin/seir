@@ -17,77 +17,264 @@ TEST_CASE("StWriter")
 			seir::StWriter pretty{ seir::StWriter::Formatting::Pretty };
 			usage(compact);
 			usage(pretty);
-			CHECK(seir::StWriter::commit(std::move(compact)) == expectedCompact);
-			CHECK(seir::StWriter::commit(std::move(pretty)) == expectedPretty);
+			const auto wrap = [](const std::string& value) { // To simplify visual comparison of problematic cases.
+				const std::string separator(64, '-');
+				return '\n' + separator + '\n' + value + separator + '\n';
+			};
+			CHECK(wrap(seir::StWriter::commit(std::move(pretty))) == wrap(expectedPretty));
+			CHECK(wrap(seir::StWriter::commit(std::move(compact))) == wrap(expectedCompact));
 		};
 		SUBCASE("empty")
 		{
-			check([](seir::StWriter&) {}, "", R"()");
+			check([](seir::StWriter&) {
+				; // Begin + End
+			},
+				"", R"()");
 		}
-		SUBCASE("keys and values")
+		SUBCASE("keys")
 		{
 			check([](seir::StWriter& w) {
-				w.addKey("key");
+				w.addKey("key1"); // Begin + Key
+				w.addKey("key2"); // Key + Key
+				;                 // Key + End
 			},
-				"key\n", R"(key)");
-			check([](seir::StWriter& w) {
-				w.addKey("key");
-				w.addValue("value");
-			},
-				"key \"value\"\n", R"(key"value")");
-			check([](seir::StWriter& w) {
-				w.addKey("key");
-				w.addValue("value1");
-				w.addValue("value2");
-			},
-				"key \"value1\" \"value2\"\n", R"(key"value1""value2")");
-			check([](seir::StWriter& w) {
-				w.addKey("key1");
-				w.addValue("value11");
-				w.addValue("value12");
-				w.addKey("key2");
-			},
-				"key1 \"value11\" \"value12\"\n"
+				"key1\n"
 				"key2\n",
-				R"(key1"value11""value12"key2)");
+				R"(key1 key2)");
 		}
-		SUBCASE("lists")
+		SUBCASE("values")
 		{
 			check([](seir::StWriter& w) {
-				w.addKey("key");
-				w.beginList();
-				w.endList();
-				w.addKey("key2");
-				w.beginList();
-				w.addValue("value21");
-				w.addValue("value22");
-				w.endList();
+				w.addKey("key1");     //
+				w.addValue("value1"); // Key + Value
+				w.addValue("value2"); // Value + Value
+				w.addKey("key2");     // Value + Key
+				w.addValue("value3"); //
+				;                     // Value + End
 			},
-				"key [\n"
+				"key1 \"value1\" \"value2\"\n"
+				"key2 \"value3\"\n",
+				R"(key1"value1""value2"key2"value3")");
+		}
+		SUBCASE("value contents")
+		{
+			check([](seir::StWriter& w) {
+				w.addKey("empty");
+				w.addValue("");
+				w.addKey("tab");
+				w.addValue("\t");
+				w.addKey("lf");
+				w.addValue("\n");
+				w.addKey("cr");
+				w.addValue("\r");
+				w.addKey("backslash");
+				w.addValue("\\");
+				w.addKey("quote");
+				w.addValue("\"");
+			},
+				"empty \"\"\n"
+				"tab \"\t\"\n"
+				"lf \"\n"
+				"\"\n"
+				"cr \"\r\"\n"
+				"backslash \"\\\\\"\n"
+				"quote \"\\\"\"\n",
+				"empty\"\"tab\"\t\"lf\"\n\"cr\"\r\"backslash\"\\\\\"quote\"\\\"\"");
+		}
+		SUBCASE("lists without values")
+		{
+			// Key + ListBegin
+			// ListBegin + ListBegin
+			// ListBegin + ListEnd
+			// ListEnd + End
+			// ListEnd + Key
+			// ListEnd + ListBegin
+			// ListEnd + ListEnd
+			check([](seir::StWriter& w) {
+				w.addKey("key1"); //
+				w.beginList();    // Key + ListBegin
+				w.endList();      // ListBegin + ListEnd
+				w.addKey("key2"); // ListEnd + Key
+				w.beginList();    //
+				w.endList();      //
+				w.beginList();    // ListEnd + ListBegin
+				w.beginList();    // ListBegin + ListBegin
+				w.endList();      // [ ListBegin + ListEnd ]
+				w.beginList();    // [ ListEnd + ListBegin ]
+				w.beginList();    // [ ListBegin + ListBegin ]
+				w.endList();      // [ [ ListBegin + ListEnd ] ]
+				w.beginList();    // [ [ ListEnd + ListBegin ] ]
+				w.beginList();    // [ [ ListBegin + ListBegin ] ]
+				w.endList();      // [ [ [ ListBegin + ListEnd ] ] ]
+				w.endList();      // [ [ ListEnd + ListEnd ] ]
+				w.endList();      // [ ListEnd + ListEnd ]
+				w.endList();      // ListEnd + ListEnd
+				;                 // ListEnd + End
+			},
+				"key1 [\n"
 				"]\n"
 				"key2 [\n"
-				"\t\"value21\"\n"
-				"\t\"value22\"\n"
+				"] [\n"
+				"  [\n"
+				"  ]\n"
+				"  [\n"
+				"    [\n"
+				"    ]\n"
+				"    [\n"
+				"      [\n"
+				"      ]\n"
+				"    ]\n"
+				"  ]\n"
 				"]\n",
-				R"(key[]key2["value21""value22"])");
-			check([](seir::StWriter& w) {
-				w.addKey("key");
-				w.addValue("value1");
-				w.beginList();
-				w.addValue("value2");
-				w.endList();
-				w.addValue("value3");
-				w.addKey("key2");
-			},
-				"key \"value1\" [\n"
-				"\t\"value2\"\n"
-				"] \"value3\"\n"
-				"key2\n",
-				R"(key"value1"["value2"]"value3"key2)");
+				R"(key1[]key2[][[][[][[]]]])");
 		}
-		// TODO: Add nested lists tests.
-		// TODO: Add object tests.
-		// TODO: Add value escaping tests.
+		SUBCASE("lists with values")
+		{
+			// Value + Value (in lists)
+			// Value + ListBegin
+			// Value + ListEnd
+			// ListBegin + Value
+			// ListEnd + Value
+			check([](seir::StWriter& w) {
+				w.addKey("key");   //
+				w.addValue("1.1"); //
+				w.beginList();     // Value + ListBegin
+				w.addValue("2.1"); // ListBegin + Value
+				w.addValue("2.2"); // [ Value + Value ]
+				w.beginList();     // [ Value + ListBegin ]
+				w.addValue("3.1"); // [ ListBegin + Value ]
+				w.addValue("3.2"); // [ [ Value + Value ] ]
+				w.beginList();     // [ [ Value + ListBegin ] ]
+				w.addValue("4.1"); // [ [ ListBegin + Value ] ]
+				w.endList();       // [ [ Value + ListEnd ] ]
+				w.addValue("3.3"); // [ [ ListEnd + Value ] ]
+				w.endList();       // [ Value + ListEnd ]
+				w.addValue("2.3"); // [ ListEnd + Value ]
+				w.endList();       // Value + ListEnd
+				w.addValue("1.2"); // ListEnd + Value
+			},
+				"key \"1.1\" [\n"
+				"  \"2.1\"\n"
+				"  \"2.2\"\n"
+				"  [\n"
+				"    \"3.1\"\n"
+				"    \"3.2\"\n"
+				"    [\n"
+				"      \"4.1\"\n"
+				"    ]\n"
+				"    \"3.3\"\n"
+				"  ]\n"
+				"  \"2.3\"\n"
+				"] \"1.2\"\n",
+				R"(key"1.1"["2.1""2.2"["3.1""3.2"["4.1"]"3.3"]"2.3"]"1.2")");
+		}
+		SUBCASE("objects without values")
+		{
+			// Key + Key (in objects)
+			// Key + ObjectBegin
+			// Key + ObjectEnd
+			// ObjectBegin + Key
+			// ObjectBegin + ObjectEnd
+			// ObjectEnd + End
+			// ObjectEnd + Key
+			// ObjectEnd + ObjectBegin
+			// ObjectEnd + ObjectEnd
+			check([](seir::StWriter& w) {
+				w.addKey("key11"); //
+				w.beginObject();   // Key + ObjectBegin
+				w.endObject();     // ObjectBegin + ObjectEnd
+				w.beginObject();   // ObjectEnd + ObjectBegin
+				w.addKey("key12"); // ObjectBegin + Key
+				w.endObject();     // Key + ObjectEnd
+				w.addKey("key13"); // ObjectEnd + Key
+				w.beginObject();   //
+				w.addKey("key20"); //
+				w.addKey("key21"); // { Key + Key }
+				w.beginObject();   // { Key + ObjectBegin }
+				w.endObject();     // { ObjectBegin + ObjectEnd }
+				w.beginObject();   // { ObjectEnd + ObjectBegin }
+				w.addKey("key22"); // { ObjectBegin + Key }
+				w.endObject();     // { Key + ObjectEnd }
+				w.addKey("key23"); // { ObjectEnd + Key }
+				w.beginObject();   //
+				w.addKey("key30"); //
+				w.addKey("key31"); // { { Key + Key } }
+				w.beginObject();   // { { Key + ObjectBegin } }
+				w.endObject();     // { { ObjectBegin + ObjectEnd } }
+				w.beginObject();   // { { ObjectEnd + ObjectBegin } }
+				w.addKey("key32"); // { { ObjectBegin + Key } }
+				w.endObject();     // { { Key + ObjectEnd } }
+				w.addKey("key33"); // { { ObjectEnd + Key } }
+				w.beginObject();   //
+				w.endObject();     //
+				w.endObject();     // { ObjectEnd + ObjectEnd }
+				w.endObject();     // ObjectEnd + ObjectEnd
+				;                  // ObjectEnd + End
+			},
+				"key11 {\n"
+				"} {\n"
+				"  key12\n"
+				"}\n"
+				"key13 {\n"
+				"  key20\n"
+				"  key21 {\n"
+				"  } {\n"
+				"    key22\n"
+				"  }\n"
+				"  key23 {\n"
+				"    key30\n"
+				"    key31 {\n"
+				"    } {\n"
+				"      key32\n"
+				"    }\n"
+				"    key33 {\n"
+				"    }\n"
+				"  }\n"
+				"}\n",
+				R"(key11{}{key12}key13{key20 key21{}{key22}key23{key30 key31{}{key32}key33{}}})");
+		}
+		SUBCASE("objects with values")
+		{
+			// Key + Value (in objects)
+			// Value + Key (in objects)
+			// Value + Value (in objects)
+			// Value + ObjectBegin
+			// Value + ObjectEnd
+			// ObjectEnd + Value
+			check([](seir::StWriter& w) {
+				w.addKey("level1");   //
+				w.addValue("begin1"); //
+				w.beginObject();      // Value + ObjectBegin
+				w.addKey("key1");     //
+				w.addValue("1.1");    // { Key + Value }
+				w.addValue("1.2");    // { Value + Value }
+				w.addKey("level2");   // { Value + Key }
+				w.addValue("begin2"); //
+				w.beginObject();      // { Value + ObjectBegin }
+				w.addKey("key2");     //
+				w.addValue("2.1");    // { { Key + Value } }
+				w.addValue("2.2");    // { { Value + Value } }
+				w.addKey("level3");   // { { Value + Key } }
+				w.addValue("begin3"); //
+				w.beginObject();      // { { Value + ObjectBegin } }
+				w.endObject();        //
+				w.addValue("end3");   // { { ObjectEnd + Value } }
+				w.endObject();        // { Value + ObjectEnd }
+				w.addValue("end2");   // { ObjectEnd + Value }
+				w.endObject();        // Value + ObjectEnd
+				w.addValue("end1");   // ObjectEnd + Value
+			},
+				"level1 \"begin1\" {\n"
+				"  key1 \"1.1\" \"1.2\"\n"
+				"  level2 \"begin2\" {\n"
+				"    key2 \"2.1\" \"2.2\"\n"
+				"    level3 \"begin3\" {\n"
+				"    } \"end3\"\n"
+				"  } \"end2\"\n"
+				"} \"end1\"\n",
+				R"(level1"begin1"{key1"1.1""1.2"level2"begin2"{key2"2.1""2.2"level3"begin3"{}"end3"}"end2"}"end1")");
+		}
+		// TODO: Test objects in lists and lists in objects.
 	}
 	SUBCASE("negative")
 	{

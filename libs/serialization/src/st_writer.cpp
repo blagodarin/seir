@@ -39,7 +39,7 @@ namespace seir
 		{
 			if (!_buffer.empty())
 				_buffer += '\n';
-			_buffer.append(_stack.size() - 1, '\t');
+			_buffer.append(2 * (_stack.size() - 1), ' ');
 		}
 		else if (!(entry & HasValues))
 			_buffer += ' ';
@@ -53,15 +53,7 @@ namespace seir
 		if (!(entry & AcceptsValues)) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
-		{
-			if (entry & IsObject)
-				_buffer += ' ';
-			else
-			{
-				_buffer += '\n';
-				_buffer.append(_stack.size() - 1, '\t');
-			}
-		}
+			beginPrettyValue(entry);
 		_buffer += '"';
 		for (auto begin = value.data(), end = begin + value.size();;)
 		{
@@ -84,7 +76,7 @@ namespace seir
 		if (!(entry & AcceptsValues)) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
-			_buffer += ' ';
+			beginPrettyValue(entry);
 		_buffer += '[';
 		_stack.back() = static_cast<uint8_t>(entry | HasValues);
 		_stack.emplace_back(AcceptsValues);
@@ -96,7 +88,7 @@ namespace seir
 		if (!(entry & AcceptsValues)) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
-			_buffer += ' ';
+			beginPrettyValue(entry);
 		_buffer += '{';
 		_stack.back() = static_cast<uint8_t>(entry | HasValues);
 		_stack.emplace_back(static_cast<uint8_t>(IsObject | HasValues));
@@ -109,7 +101,7 @@ namespace seir
 		if (_pretty)
 		{
 			_buffer += '\n';
-			_buffer.append(_stack.size() - 2, '\t');
+			_buffer.append(2 * (_stack.size() - 2), ' ');
 		}
 		_buffer += ']';
 		_stack.pop_back();
@@ -123,7 +115,7 @@ namespace seir
 		if (_pretty)
 		{
 			_buffer += '\n';
-			_buffer.append(_stack.size() - 2, '\t');
+			_buffer.append(2 * (_stack.size() - 2), ' ');
 		}
 		_buffer += '}';
 		_stack.pop_back();
@@ -137,5 +129,16 @@ namespace seir
 		if (writer._pretty && !writer._buffer.empty())
 			writer._buffer += '\n';
 		return std::move(writer._buffer);
+	}
+
+	void StWriter::beginPrettyValue(uint8_t entry)
+	{
+		if (entry & IsObject)
+			_buffer += ' ';
+		else
+		{
+			_buffer += '\n';
+			_buffer.append(2 * (_stack.size() - 1), ' ');
+		}
 	}
 }
