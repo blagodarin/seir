@@ -63,13 +63,13 @@ jobs:
         run: |
           cd build
           ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
-      - name: Check exports
+      - name: Build standalone example
         run: |
           cmake --build build --target install
-          cmake -S cmake/test -B build.test -G Ninja \
+          cmake -S examples/standalone -B build.standalone -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
-          cmake --build build.test
+          cmake --build build.standalone
   coverage:
     name: Coverage
     runs-on: ubuntu-22.04
