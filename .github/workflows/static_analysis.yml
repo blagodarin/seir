@@ -37,6 +37,7 @@ jobs:
             -DSEIR_COMPRESSION_ZLIB=ON \
             -DSEIR_COMPRESSION_ZSTD=OFF \
             -DSEIR_EXAMPLES=ON \
+            -DSEIR_GUI=ON \
             -DSEIR_IMAGE_BMP=ON \
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \

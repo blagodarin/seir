@@ -47,6 +47,7 @@ jobs:
             -DSEIR_COMPRESSION_ZLIB=ON \
             -DSEIR_COMPRESSION_ZSTD=OFF \
             -DSEIR_EXAMPLES=ON \
+            -DSEIR_GUI=ON \
             -DSEIR_IMAGE_BMP=ON \
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \
@@ -63,13 +64,17 @@ jobs:
         run: |
           cd build
           ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
-      - name: Build standalone example
+      - name: Build usage examples
         run: |
+          cmake -S examples/use_github -B build.use_github -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DREPLACE_WITH_COMMIT_HASH=${{ github.sha }}
+          cmake --build build.use_github
           cmake --build build --target install
-          cmake -S examples/standalone -B build.standalone -G Ninja \
+          cmake -S examples/use_package -B build.use_package -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
-          cmake --build build.standalone
+          cmake --build build.use_package
   coverage:
     name: Coverage
     runs-on: ubuntu-22.04

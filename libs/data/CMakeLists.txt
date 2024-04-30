@@ -34,6 +34,11 @@ if(SEIR_COMPRESSION_ZSTD)
 endif()
 if(WIN32)
 	list(APPEND SOURCES src/file_windows.cpp)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		set_property(SOURCE src/file_windows.cpp APPEND PROPERTY COMPILE_OPTIONS
+			/wd5039 # pointer or reference to potentially throwing function passed to 'extern "C"' function under -EHc
+			)
+	endif()
 else()
 	list(APPEND SOURCES src/file_posix.cpp)
 	set_property(SOURCE src/file_posix.cpp APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
