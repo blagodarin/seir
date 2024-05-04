@@ -13,16 +13,19 @@ TEST_CASE("StWriter")
 	SUBCASE("positive")
 	{
 		const auto check = [](const std::function<void(seir::StWriter&)>& usage, const std::string& expectedPretty, const std::string& expectedCompact) {
-			seir::StWriter compact{ seir::StWriter::Formatting::Compact };
-			seir::StWriter pretty{ seir::StWriter::Formatting::Pretty };
-			usage(compact);
-			usage(pretty);
+			const auto write = [&usage](seir::StWriter::Formatting formatting) {
+				std::string buffer;
+				seir::StWriter writer{ buffer, formatting };
+				usage(writer);
+				writer.finish();
+				return buffer;
+			};
 			const auto wrap = [](const std::string& value) { // To simplify visual comparison of problematic cases.
 				const std::string separator(64, '-');
 				return '\n' + separator + '\n' + value + separator + '\n';
 			};
-			CHECK(wrap(seir::StWriter::commit(std::move(pretty))) == wrap(expectedPretty));
-			CHECK(wrap(seir::StWriter::commit(std::move(compact))) == wrap(expectedCompact));
+			CHECK(wrap(write(seir::StWriter::Formatting::Compact)) == wrap(expectedCompact));
+			CHECK(wrap(write(seir::StWriter::Formatting::Pretty)) == wrap(expectedPretty));
 		};
 		SUBCASE("empty")
 		{
@@ -279,10 +282,13 @@ TEST_CASE("StWriter")
 	SUBCASE("negative")
 	{
 		const auto check = [](const std::function<void(seir::StWriter&)>& usage) {
-			seir::StWriter compact{ seir::StWriter::Formatting::Compact };
-			seir::StWriter pretty{ seir::StWriter::Formatting::Pretty };
-			CHECK_THROWS_AS(usage(compact), seir::StWriter::UnexpectedToken);
-			CHECK_THROWS_AS(usage(pretty), seir::StWriter::UnexpectedToken);
+			const auto write = [&usage](seir::StWriter::Formatting formatting) {
+				std::string buffer;
+				seir::StWriter writer{ buffer, formatting };
+				CHECK_THROWS_AS(usage(writer), seir::StWriter::UnexpectedToken);
+			};
+			write(seir::StWriter::Formatting::Compact);
+			write(seir::StWriter::Formatting::Pretty);
 		};
 
 		check([](seir::StWriter& w) { w.addValue("value"); });
@@ -296,12 +302,12 @@ TEST_CASE("StWriter")
 
 		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginList()); w.addKey("key2"); });
 		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginList()); w.endObject(); });
-		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginList()); std::ignore = seir::StWriter::commit(std::move(w)); });
+		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginList()); w.finish(); });
 
 		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginObject()); w.addValue("value"); });
 		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginObject()); w.beginList(); });
 		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginObject()); w.beginObject(); });
 		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginObject()); w.endList(); });
-		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginObject()); std::ignore = seir::StWriter::commit(std::move(w)); });
+		check([](seir::StWriter& w) { CHECK_NOTHROW(w.addKey("key")); CHECK_NOTHROW(w.beginObject()); w.finish(); });
 	}
 }

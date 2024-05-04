@@ -12,17 +12,18 @@ namespace
 {
 	enum : uint8_t
 	{
-		IsObject = 1 << 0,
-		AcceptsValues = 1 << 1,
-		HasValues = 1 << 2,
-		IsRoot = 1 << 3,
+		IsRoot = 1 << 0,
+		IsNonEmptyObject = 1 << 1,
+		EndsWithKey = 1 << 2, // Implies IsNonEmptyObject.
+		IsList = 1 << 3,
 	};
 }
 
 namespace seir
 {
-	StWriter::StWriter(Formatting formatting)
-		: _stack{ IsObject | HasValues | IsRoot }
+	StWriter::StWriter(std::string& buffer, Formatting formatting)
+		: _buffer{ buffer }
+		, _stack{ IsRoot }
 		, _pretty{ formatting == StWriter::Formatting::Pretty }
 	{
 	}
@@ -33,7 +34,7 @@ namespace seir
 	{
 		// TODO: Add key validation.
 		const auto entry = _stack.back();
-		if (!(entry & IsObject)) [[unlikely]]
+		if (entry & IsList) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
 		{
@@ -41,16 +42,16 @@ namespace seir
 				_buffer += '\n';
 			_buffer.append(2 * (_stack.size() - 1), ' ');
 		}
-		else if (!(entry & HasValues))
+		else if (entry & EndsWithKey)
 			_buffer += ' ';
 		_buffer += key;
-		_stack.back() = static_cast<uint8_t>((entry | AcceptsValues) & ~HasValues);
+		_stack.back() = static_cast<uint8_t>(entry | IsNonEmptyObject | EndsWithKey);
 	}
 
 	void StWriter::addValue(std::string_view value)
 	{
 		const auto entry = _stack.back();
-		if (!(entry & AcceptsValues)) [[unlikely]]
+		if (!(entry & (IsNonEmptyObject | IsList))) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
 			beginPrettyValue(entry);
@@ -67,36 +68,36 @@ namespace seir
 			begin = i + 1;
 		}
 		_buffer += '"';
-		_stack.back() = static_cast<uint8_t>(entry | HasValues);
+		_stack.back() = static_cast<uint8_t>(entry & ~EndsWithKey);
 	}
 
 	void StWriter::beginList()
 	{
 		const auto entry = _stack.back();
-		if (!(entry & AcceptsValues)) [[unlikely]]
+		if (!(entry & (IsNonEmptyObject | IsList))) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
 			beginPrettyValue(entry);
 		_buffer += '[';
-		_stack.back() = static_cast<uint8_t>(entry | HasValues);
-		_stack.emplace_back(AcceptsValues);
+		_stack.back() = static_cast<uint8_t>(entry & ~EndsWithKey);
+		_stack.emplace_back(IsList);
 	}
 
 	void StWriter::beginObject()
 	{
 		const auto entry = _stack.back();
-		if (!(entry & AcceptsValues)) [[unlikely]]
+		if (!(entry & (IsNonEmptyObject | IsList))) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
 			beginPrettyValue(entry);
 		_buffer += '{';
-		_stack.back() = static_cast<uint8_t>(entry | HasValues);
-		_stack.emplace_back(static_cast<uint8_t>(IsObject | HasValues));
+		_stack.back() = static_cast<uint8_t>(entry & ~EndsWithKey);
+		_stack.emplace_back(uint8_t{});
 	}
 
 	void StWriter::endList()
 	{
-		if (_stack.back() & IsObject) [[unlikely]]
+		if (!(_stack.back() & IsList)) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
 		{
@@ -110,7 +111,7 @@ namespace seir
 
 	void StWriter::endObject()
 	{
-		if ((_stack.back() & (IsObject | IsRoot)) != IsObject) [[unlikely]]
+		if (_stack.back() & (IsRoot | IsList)) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
 		if (_pretty)
 		{
@@ -122,23 +123,23 @@ namespace seir
 		assert(!_stack.empty());
 	}
 
-	std::string StWriter::commit(StWriter&& writer)
+	void StWriter::finish()
 	{
-		if (writer._stack.size() != 1) [[unlikely]]
+		if (_stack.size() != 1) [[unlikely]]
 			throw StWriter::UnexpectedToken{};
-		if (writer._pretty && !writer._buffer.empty())
-			writer._buffer += '\n';
-		return std::move(writer._buffer);
+		assert((_stack.back() & (IsRoot | IsList)) == IsRoot);
+		if (_pretty && _stack.back() & IsNonEmptyObject)
+			_buffer += '\n';
 	}
 
 	void StWriter::beginPrettyValue(uint8_t entry)
 	{
-		if (entry & IsObject)
-			_buffer += ' ';
-		else
+		if (entry & IsList)
 		{
 			_buffer += '\n';
 			_buffer.append(2 * (_stack.size() - 1), ' ');
 		}
+		else
+			_buffer += ' ';
 	}
 }

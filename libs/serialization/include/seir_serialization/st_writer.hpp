@@ -29,7 +29,9 @@ namespace seir
 			Pretty,  //
 		};
 
-		explicit StWriter(Formatting);
+		//
+		StWriter(std::string& buffer, Formatting);
+
 		~StWriter() noexcept;
 
 		//
@@ -51,14 +53,14 @@ namespace seir
 		void endObject();
 
 		//
-		[[nodiscard]] static std::string commit(StWriter&&);
+		void finish();
 
 	private:
 		void beginPrettyValue(uint8_t);
 
 	private:
+		std::string& _buffer;
 		std::vector<uint8_t> _stack;
-		std::string _buffer;
 		const bool _pretty;
 	};
 }
