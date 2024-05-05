@@ -277,7 +277,94 @@ TEST_CASE("StWriter")
 				"} \"end1\"\n",
 				R"(level1"begin1"{key1"1.1""1.2"level2"begin2"{key2"2.1""2.2"level3"begin3"{}"end3"}"end2"}"end1")");
 		}
-		// TODO: Test objects in lists and lists in objects.
+		SUBCASE("lists and objects")
+		{
+			// ListBegin + ObjectBegin
+			// ListEnd + ObjectBegin
+			// ListEnd + ObjectEnd
+			// ObjectEnd + ListBegin
+			// ObjectEnd + ListEnd
+			check([](seir::StWriter& w) {
+				w.addKey("key1"); //
+				w.beginList();    //
+				w.beginObject();  // ListBegin + ObjectBegin
+				w.endObject();    //
+				w.endList();      // ObjectEnd + ListEnd
+				w.beginObject();  // ListEnd + ObjectBegin
+				w.addKey("key2"); //
+				w.beginList();    //
+				w.endList();      //
+				w.endObject();    // ListEnd + ObjectEnd
+				w.beginList();    // ObjectEnd + ListBegin
+				w.endList();      //
+			},
+				"key1 [\n"
+				"  {\n"
+				"  }\n"
+				"] {\n"
+				"  key2 [\n"
+				"  ]\n"
+				"} [\n"
+				"]\n",
+				R"(key1[{}]{key2[]}[])");
+			check([](seir::StWriter& w) {
+				w.addKey("key1"); //
+				w.beginList();    //
+				w.beginList();    //
+				w.beginObject();  // [ ListBegin + ObjectBegin ]
+				w.endObject();    //
+				w.endList();      // [ ObjectEnd + ListEnd ]
+				w.beginObject();  // [ ListEnd + ObjectBegin ]
+				w.addKey("key2"); //
+				w.beginList();    //
+				w.endList();      //
+				w.endObject();    // [ ListEnd + ObjectEnd ]
+				w.beginList();    // [ ObjectEnd + ListBegin ]
+				w.endList();      //
+				w.endList();      //
+			},
+				"key1 [\n"
+				"  [\n"
+				"    {\n"
+				"    }\n"
+				"  ]\n"
+				"  {\n"
+				"    key2 [\n"
+				"    ]\n"
+				"  }\n"
+				"  [\n"
+				"  ]\n"
+				"]\n",
+				R"(key1[[{}]{key2[]}[]])");
+			check([](seir::StWriter& w) {
+				w.addKey("key0"); //
+				w.beginObject();  //
+				w.addKey("key1"); //
+				w.beginList();    //
+				w.beginObject();  // { ListBegin + ObjectBegin }
+				w.endObject();    //
+				w.endList();      // { ObjectEnd + ListEnd }
+				w.beginObject();  // { ListEnd + ObjectBegin }
+				w.addKey("key2"); //
+				w.beginList();    //
+				w.endList();      //
+				w.endObject();    // { ListEnd + ObjectEnd }
+				w.beginList();    // { ObjectEnd + ListBegin }
+				w.endList();      //
+				w.endObject();    //
+			},
+				"key0 {\n"
+				"  key1 [\n"
+				"    {\n"
+				"    }\n"
+				"  ] {\n"
+				"    key2 [\n"
+				"    ]\n"
+				"  } [\n"
+				"  ]\n"
+				"}\n",
+				R"(key0{key1[{}]{key2[]}[]})");
+		}
 	}
 	SUBCASE("negative")
 	{
@@ -285,11 +372,15 @@ TEST_CASE("StWriter")
 			const auto write = [&usage](seir::StWriter::Formatting formatting) {
 				std::string buffer;
 				seir::StWriter writer{ buffer, formatting };
-				CHECK_THROWS_AS(usage(writer), seir::StWriter::UnexpectedToken);
+				CHECK_THROWS_AS(usage(writer), seir::StWriter::BadToken);
 			};
 			write(seir::StWriter::Formatting::Compact);
 			write(seir::StWriter::Formatting::Pretty);
 		};
+
+		check([](seir::StWriter& w) { w.addKey(""); });
+		check([](seir::StWriter& w) { w.addKey("1key"); });
+		check([](seir::StWriter& w) { w.addKey("key 1"); });
 
 		check([](seir::StWriter& w) { w.addValue("value"); });
 		check([](seir::StWriter& w) { w.beginList(); });

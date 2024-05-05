@@ -17,6 +17,18 @@ namespace
 		EndsWithKey = 1 << 2, // Implies IsNonEmptyObject.
 		IsList = 1 << 3,
 	};
+
+	constexpr bool isKeyValid(std::string_view key) noexcept
+	{
+		if (key.empty()) [[unlikely]]
+			return false;
+		if (const char c = key[0]; !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')) [[unlikely]]
+			return false;
+		for (size_t i = 1; i < key.size(); ++i)
+			if (const char c = key[i]; !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || (c >= '0' && c <= '9'))) [[unlikely]]
+				return false;
+		return true;
+	}
 }
 
 namespace seir
@@ -32,13 +44,14 @@ namespace seir
 
 	void StWriter::addKey(std::string_view key)
 	{
-		// TODO: Add key validation.
+		if (!::isKeyValid(key)) [[unlikely]]
+			throw BadToken{};
 		const auto entry = _stack.back();
 		if (entry & IsList) [[unlikely]]
-			throw StWriter::UnexpectedToken{};
+			throw BadToken{};
 		if (_pretty)
 		{
-			if (!_buffer.empty())
+			if ((entry & (IsRoot | IsNonEmptyObject)) != IsRoot) [[likely]]
 				_buffer += '\n';
 			_buffer.append(2 * (_stack.size() - 1), ' ');
 		}
@@ -52,7 +65,7 @@ namespace seir
 	{
 		const auto entry = _stack.back();
 		if (!(entry & (IsNonEmptyObject | IsList))) [[unlikely]]
-			throw StWriter::UnexpectedToken{};
+			throw BadToken{};
 		if (_pretty)
 			beginPrettyValue(entry);
 		_buffer += '"';
@@ -63,8 +76,7 @@ namespace seir
 				_buffer.append(begin, static_cast<size_t>(i - begin));
 			if (i == end)
 				break;
-			const std::array<char, 2> sequence{ '\\', *i };
-			_buffer += std::string_view{ sequence.data(), sequence.size() };
+			_buffer.append({ '\\', *i });
 			begin = i + 1;
 		}
 		_buffer += '"';
@@ -75,7 +87,7 @@ namespace seir
 	{
 		const auto entry = _stack.back();
 		if (!(entry & (IsNonEmptyObject | IsList))) [[unlikely]]
-			throw StWriter::UnexpectedToken{};
+			throw BadToken{};
 		if (_pretty)
 			beginPrettyValue(entry);
 		_buffer += '[';
@@ -87,7 +99,7 @@ namespace seir
 	{
 		const auto entry = _stack.back();
 		if (!(entry & (IsNonEmptyObject | IsList))) [[unlikely]]
-			throw StWriter::UnexpectedToken{};
+			throw BadToken{};
 		if (_pretty)
 			beginPrettyValue(entry);
 		_buffer += '{';
@@ -98,7 +110,7 @@ namespace seir
 	void StWriter::endList()
 	{
 		if (!(_stack.back() & IsList)) [[unlikely]]
-			throw StWriter::UnexpectedToken{};
+			throw BadToken{};
 		if (_pretty)
 		{
 			_buffer += '\n';
@@ -112,7 +124,7 @@ namespace seir
 	void StWriter::endObject()
 	{
 		if (_stack.back() & (IsRoot | IsList)) [[unlikely]]
-			throw StWriter::UnexpectedToken{};
+			throw BadToken{};
 		if (_pretty)
 		{
 			_buffer += '\n';
@@ -126,14 +138,16 @@ namespace seir
 	void StWriter::finish()
 	{
 		if (_stack.size() != 1) [[unlikely]]
-			throw StWriter::UnexpectedToken{};
+			throw BadToken{};
 		assert((_stack.back() & (IsRoot | IsList)) == IsRoot);
-		if (_pretty && _stack.back() & IsNonEmptyObject)
-			_buffer += '\n';
+		if (_pretty)
+			if (_stack.back() & IsNonEmptyObject) [[likely]]
+				_buffer += '\n';
 	}
 
 	void StWriter::beginPrettyValue(uint8_t entry)
 	{
+		assert(_pretty);
 		if (entry & IsList)
 		{
 			_buffer += '\n';

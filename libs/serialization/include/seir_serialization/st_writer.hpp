@@ -16,10 +16,10 @@ namespace seir
 	{
 	public:
 		//
-		struct UnexpectedToken : public std::logic_error
+		struct BadToken : public std::logic_error
 		{
-			UnexpectedToken()
-				: std::logic_error{ "Unexpected token" } {}
+			BadToken()
+				: std::logic_error{ "Bad token" } {}
 		};
 
 		//
