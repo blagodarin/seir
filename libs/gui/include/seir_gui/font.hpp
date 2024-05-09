@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string_view>
+
 namespace seir
 {
 	class Blob;
@@ -20,5 +22,11 @@ namespace seir
 		[[nodiscard]] static UniquePtr<Font> load(const SharedPtr<Blob>&);
 
 		virtual ~Font() noexcept = default;
+
+		//
+		[[nodiscard]] virtual float size() const noexcept = 0;
+
+		//
+		[[nodiscard]] virtual float textWidth(std::string_view text, float fontSize) const noexcept = 0;
 	};
 }

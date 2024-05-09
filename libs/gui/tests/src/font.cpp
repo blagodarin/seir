@@ -14,6 +14,12 @@ TEST_CASE("Font")
 	REQUIRE(blob);
 	const auto font = seir::Font::load(blob);
 	REQUIRE(font);
+	SUBCASE("Font::textWidth")
+	{
+		const auto width = font->textWidth("!", font->size());
+		CHECK(width > 0);
+		CHECK(width < font->size());
+	}
 }
 
 TEST_CASE("Font::load")
