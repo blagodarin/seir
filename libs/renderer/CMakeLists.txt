@@ -3,10 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(HEADERS
+	include/seir_renderer/2d.hpp
 	include/seir_renderer/mesh.hpp
 	include/seir_renderer/renderer.hpp
 	)
 set(SOURCES
+	src/2d.cpp
+	src/2d.hpp
 	src/renderer.cpp
 	)
 if(SEIR_RENDERER STREQUAL "Dummy")

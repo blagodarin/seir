@@ -11,6 +11,7 @@ namespace seir
 	class Blob;
 	class RectF;
 	class Renderer;
+	class Renderer2D;
 	template <class>
 	class SharedPtr;
 	class Texture2D;
@@ -27,7 +28,10 @@ namespace seir
 		virtual ~Font() noexcept = default;
 
 		//
-		[[nodiscard]] virtual SharedPtr<const Texture2D> bitmapTexture() const noexcept = 0;
+		[[nodiscard]] virtual SharedPtr<Texture2D> bitmapTexture() const noexcept = 0;
+
+		//
+		virtual void renderLine(Renderer2D&, const RectF&, std::string_view) const = 0;
 
 		//
 		[[nodiscard]] virtual float size() const noexcept = 0;

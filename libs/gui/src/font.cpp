@@ -9,6 +9,7 @@
 #include <seir_graphics/rectf.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
+#include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>
 
 #include <cassert>
@@ -33,7 +34,7 @@ namespace
 	};
 	constexpr seir::RectF kWhiteRect{ {}, seir::SizeF{ 1, 1 } };
 
-	class FreeTypeFont : public seir::Font
+	class FreeTypeFont final : public seir::Font
 	{
 	public:
 		FreeTypeFont(const seir::SharedPtr<seir::Blob>& blob, seir::Renderer& renderer)
@@ -60,9 +61,51 @@ namespace
 			return static_cast<bool>(_bitmapTexture);
 		}
 
-		seir::SharedPtr<const seir::Texture2D> bitmapTexture() const noexcept override
+		seir::SharedPtr<seir::Texture2D> bitmapTexture() const noexcept override
 		{
 			return _bitmapTexture;
+		}
+
+		void renderLine(seir::Renderer2D& renderer, const seir::RectF& rect, std::string_view text) const override
+		{
+			const auto scale = rect.height() / static_cast<float>(_size);
+			int x = 0;
+			auto previous = _bitmapGlyphs.end();
+			renderer.setTexture(_bitmapTexture);
+			for (size_t i = 0; i < text.size();)
+			{
+				const auto current = _bitmapGlyphs.find(seir::readUtf8(text, i));
+				if (current == _bitmapGlyphs.end())
+					continue;
+				if (_hasKerning && previous != _bitmapGlyphs.end())
+				{
+					FT_Vector kerning;
+					if (!::FT_Get_Kerning(_face, previous->second._id, current->second._id, FT_KERNING_DEFAULT, &kerning))
+						x += static_cast<int>(kerning.x >> 6);
+				}
+				const auto left = rect.left() + static_cast<float>(x + current->second._offset._x) * scale;
+				if (left >= rect.right())
+					break;
+				seir::RectF positionRect{
+					{ left, rect.top() + static_cast<float>(current->second._offset._y) * scale },
+					seir::SizeF{ current->second._rect.size() } * scale,
+				};
+				seir::RectF glyphRect{ current->second._rect };
+				bool clipped = false;
+				if (positionRect.right() > rect.right())
+				{
+					const auto originalWidth = positionRect.width();
+					positionRect._right = rect._right;
+					glyphRect.setWidth(glyphRect.width() * positionRect.width() / originalWidth);
+					clipped = true;
+				}
+				renderer.setTextureRect(glyphRect);
+				renderer.addRect(positionRect);
+				if (clipped)
+					break;
+				x += current->second._advance;
+				previous = current;
+			}
 		}
 
 		float size() const noexcept override
@@ -83,7 +126,7 @@ namespace
 				if (_hasKerning && previous != _bitmapGlyphs.end())
 				{
 					FT_Vector kerning;
-					if (!FT_Get_Kerning(_face, previous->second._id, current->second._id, FT_KERNING_DEFAULT, &kerning))
+					if (!::FT_Get_Kerning(_face, previous->second._id, current->second._id, FT_KERNING_DEFAULT, &kerning))
 						x += static_cast<int>(kerning.x >> 6);
 				}
 				x += current->second._advance;
@@ -175,7 +218,7 @@ namespace
 		bool _hasKerning = false;
 		float _size = 0;
 		std::unordered_map<char32_t, Glyph> _bitmapGlyphs; // TODO: Use single allocation container.
-		seir::SharedPtr<const seir::Texture2D> _bitmapTexture;
+		seir::SharedPtr<seir::Texture2D> _bitmapTexture;
 	};
 }
 
