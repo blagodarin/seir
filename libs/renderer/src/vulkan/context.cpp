@@ -14,13 +14,15 @@
 
 #include <unordered_set>
 
-#ifndef NDEBUG
+#define DEBUG_RENDERER 0 // TODO: Redesign debug info collection.
+
+#if !defined(NDEBUG) && DEBUG_RENDERER
 #	include <fmt/core.h>
 #endif
 
 namespace
 {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && DEBUG_RENDERER
 	void printInstanceInfo()
 	{
 		uint32_t count = 0;
@@ -45,11 +47,13 @@ namespace
 		}
 		fmt::print(stderr, "\n");
 	}
+#endif
 
+#ifndef NDEBUG
 	VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* data, void*)
 	{
 		if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-			fmt::print(stderr, "{}\n", data->pMessage);
+			std::fprintf(stderr, "%s\n", data->pMessage);
 		return VK_FALSE;
 	}
 
@@ -696,7 +700,7 @@ namespace seir
 
 	void VulkanContext::create(const WindowDescriptor& windowDescriptor)
 	{
-#ifndef NDEBUG
+#if !defined(NDEBUG) && DEBUG_RENDERER
 		::printInstanceInfo();
 #endif
 		createInstance();
@@ -987,7 +991,7 @@ namespace seir
 						else if (sampleCountMask & VK_SAMPLE_COUNT_2_BIT)
 							_maxSampleCount = VK_SAMPLE_COUNT_2_BIT;
 					}
-#ifndef NDEBUG
+#if !defined(NDEBUG) && DEBUG_RENDERER
 					fmt::print(stderr, "Vulkan device extensions:\n");
 					for (const auto& extension : extensions)
 						fmt::print(stderr, "   - {} - v.{}\n", extension.extensionName, extension.specVersion);

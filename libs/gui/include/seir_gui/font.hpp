@@ -9,8 +9,11 @@
 namespace seir
 {
 	class Blob;
+	class RectF;
+	class Renderer;
 	template <class>
 	class SharedPtr;
+	class Texture2D;
 	template <class>
 	class UniquePtr;
 
@@ -19,14 +22,20 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<Font> load(const SharedPtr<Blob>&);
+		[[nodiscard]] static UniquePtr<Font> load(const SharedPtr<Blob>&, Renderer&);
 
 		virtual ~Font() noexcept = default;
+
+		//
+		[[nodiscard]] virtual SharedPtr<const Texture2D> bitmapTexture() const noexcept = 0;
 
 		//
 		[[nodiscard]] virtual float size() const noexcept = 0;
 
 		//
 		[[nodiscard]] virtual float textWidth(std::string_view text, float fontSize) const noexcept = 0;
+
+		//
+		[[nodiscard]] virtual RectF whiteRect() const noexcept = 0;
 	};
 }

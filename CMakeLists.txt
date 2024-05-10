@@ -42,6 +42,7 @@ option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime")
 if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_BENCHMARKS "Build Seir benchmarks")
 	option(SEIR_EXAMPLES "Build Seir examples")
+	option(SEIR_RENDERER_RUN_TESTS "Run renderer tests" ON) # Tests which require non-dummy renderer may be unable to even start on CI workers.
 	option(SEIR_TESTS "Build Seir tests")
 endif()
 

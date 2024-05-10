@@ -6,8 +6,10 @@
 
 #include <seir_base/utf8.hpp>
 #include <seir_data/blob.hpp>
-#include <seir_graphics/rect.hpp>
+#include <seir_graphics/rectf.hpp>
 #include <seir_image/image.hpp>
+#include <seir_image/utils.hpp>
+#include <seir_renderer/renderer.hpp>
 
 #include <cassert>
 #include <cstring>
@@ -21,10 +23,20 @@ namespace
 {
 	constexpr FT_UInt kPixelSize = 64;
 
+	constexpr size_t kWhiteWidth = 4;
+	constexpr size_t kWhiteHeight = 4;
+	constexpr uint8_t kWhiteData[kWhiteHeight][kWhiteWidth]{
+		{ 0xff, 0xff, 0x00, 0x00 },
+		{ 0xff, 0xff, 0x00, 0x00 },
+		{ 0x00, 0x00, 0x00, 0x00 },
+		{ 0x00, 0x00, 0x00, 0x00 },
+	};
+	constexpr seir::RectF kWhiteRect{ {}, seir::SizeF{ 1, 1 } };
+
 	class FreeTypeFont : public seir::Font
 	{
 	public:
-		FreeTypeFont(const seir::SharedPtr<seir::Blob>& blob)
+		FreeTypeFont(const seir::SharedPtr<seir::Blob>& blob, seir::Renderer& renderer)
 		{
 			if (::FT_Init_FreeType(&_library))
 				return;
@@ -33,7 +45,7 @@ namespace
 				return;
 			_blob = blob;
 			_hasKerning = FT_HAS_KERNING(_face);
-			buildBitmap(kPixelSize);
+			buildBitmap(renderer, kPixelSize);
 		}
 
 		~FreeTypeFont() noexcept override
@@ -45,7 +57,12 @@ namespace
 
 		bool isLoaded() noexcept
 		{
-			return static_cast<bool>(_blob);
+			return static_cast<bool>(_bitmapTexture);
+		}
+
+		seir::SharedPtr<const seir::Texture2D> bitmapTexture() const noexcept override
+		{
+			return _bitmapTexture;
 		}
 
 		float size() const noexcept override
@@ -75,14 +92,19 @@ namespace
 			return static_cast<float>(x) * scale;
 		}
 
+		seir::RectF whiteRect() const noexcept override
+		{
+			return ::kWhiteRect;
+		}
+
 	private:
-		void buildBitmap(FT_UInt size)
+		void buildBitmap(seir::Renderer& renderer, FT_UInt size)
 		{
 			assert(_bitmapGlyphs.empty());
 			_size = static_cast<float>(size);
-			const seir::ImageInfo imageInfo{ size * 32, size * 32, seir::PixelFormat::Gray8 };
-			seir::Buffer buffer{ imageInfo.frameSize() };
-			std::memset(buffer.data(), 0, buffer.capacity());
+			const seir::ImageInfo bitmapInfo{ size * 32, size * 32, seir::PixelFormat::Intensity8 };
+			seir::Buffer bitmapBuffer{ bitmapInfo.frameSize() };
+			std::memset(bitmapBuffer.data(), 0, bitmapBuffer.capacity());
 			size_t x = 0;
 			size_t y = 0;
 			size_t rowHeight = 0;
@@ -91,18 +113,19 @@ namespace
 				{
 					if (stride < 0)
 						src += (height - 1) * static_cast<size_t>(-stride);
-					auto dst = buffer.data() + imageInfo.stride() * y + x;
+					auto dst = bitmapBuffer.data() + bitmapInfo.stride() * y + x;
 					for (size_t row = 0; row < height; ++row)
 					{
 						std::memcpy(dst, src, width);
 						src += stride;
-						dst += imageInfo.stride();
+						dst += bitmapInfo.stride();
 					}
 					if (rowHeight < height)
 						rowHeight = height;
 				}
 				x += width + 1;
 			};
+			copyGlyph(::kWhiteData[0], ::kWhiteWidth, ::kWhiteHeight, ::kWhiteWidth);
 			::FT_Set_Pixel_Sizes(_face, 0, size);
 			const auto baseline = static_cast<FT_Int>(size) * _face->ascender / _face->height;
 			for (FT_UInt codepoint = 0; codepoint < 65536; ++codepoint)
@@ -113,13 +136,13 @@ namespace
 				if (FT_Load_Glyph(_face, id, FT_LOAD_RENDER))
 					continue; // TODO: Report error.
 				const auto glyph = _face->glyph;
-				if (x + glyph->bitmap.width > imageInfo.width())
+				if (x + glyph->bitmap.width > bitmapInfo.width())
 				{
 					x = 0;
 					y += rowHeight + 1;
 					rowHeight = 0;
 				}
-				if (y + glyph->bitmap.rows > imageInfo.height())
+				if (y + glyph->bitmap.rows > bitmapInfo.height())
 					break; // TODO: Report error.
 				copyGlyph(glyph->bitmap.buffer, glyph->bitmap.width, glyph->bitmap.rows, glyph->bitmap.pitch);
 				auto& bitmapGlyph = _bitmapGlyphs[codepoint];
@@ -131,7 +154,10 @@ namespace
 				bitmapGlyph._offset = { glyph->bitmap_left, baseline - glyph->bitmap_top };
 				bitmapGlyph._advance = static_cast<int>(glyph->advance.x >> 6);
 			}
-			_bitmap = { imageInfo, std::move(buffer) };
+			const seir::ImageInfo textureInfo{ bitmapInfo.width(), bitmapInfo.height(), seir::PixelFormat::Bgra32 };
+			seir::Buffer textureBuffer{ textureInfo.frameSize() };
+			seir::copyImage(bitmapInfo, bitmapBuffer.data(), textureInfo, textureBuffer.data());
+			_bitmapTexture = renderer.createTexture2D(textureInfo, textureBuffer.data());
 		}
 
 	private:
@@ -148,18 +174,18 @@ namespace
 		FT_Face _face = nullptr;
 		bool _hasKerning = false;
 		float _size = 0;
-		seir::Image _bitmap;
 		std::unordered_map<char32_t, Glyph> _bitmapGlyphs; // TODO: Use single allocation container.
+		seir::SharedPtr<const seir::Texture2D> _bitmapTexture;
 	};
 }
 
 namespace seir
 {
-	UniquePtr<Font> Font::load(const SharedPtr<Blob>& blob)
+	UniquePtr<Font> Font::load(const SharedPtr<Blob>& blob, Renderer& renderer)
 	{
 		if (!blob)
 			return {};
-		auto font = makeUnique<FreeTypeFont>(blob);
+		auto font = makeUnique<FreeTypeFont>(blob, renderer);
 		return font->isLoaded()
 			? staticCast<Font>(std::move(font))
 			: nullptr;
