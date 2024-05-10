@@ -9,6 +9,7 @@
 namespace seir
 {
 	class RectF;
+	class RenderPass;
 	class Rgba32;
 	template <class>
 	class SharedPtr;
@@ -23,6 +24,9 @@ namespace seir
 
 		//
 		void addRect(const RectF&);
+
+		//
+		void draw(RenderPass&);
 
 		//
 		void setColor(const Rgba32&);

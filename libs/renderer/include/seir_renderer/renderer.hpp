@@ -16,6 +16,7 @@ namespace seir
 	class Mat4;
 	class Mesh;
 	struct MeshFormat;
+	class SizeF;
 	class Vec2;
 	class Window;
 
@@ -31,6 +32,9 @@ namespace seir
 	{
 	public:
 		virtual ~Texture2D() noexcept = default;
+
+		//
+		[[nodiscard]] virtual SizeF size() const noexcept = 0;
 	};
 
 	//

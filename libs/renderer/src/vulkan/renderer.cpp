@@ -5,7 +5,7 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
-#include <seir_graphics/size.hpp>
+#include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/mesh.hpp>
@@ -73,7 +73,7 @@ namespace
 
 namespace seir
 {
-	class VulkanShaderSet : public ShaderSet
+	class VulkanShaderSet final : public ShaderSet
 	{
 	public:
 		VulkanShaderSet(seir::VulkanShader&& vertexShader, seir::VulkanShader&& fragmentShader)
@@ -86,18 +86,20 @@ namespace seir
 		seir::VulkanShader _fragmentShader;
 	};
 
-	class VulkanTexture2D : public Texture2D
+	class VulkanTexture2D final : public Texture2D
 	{
 	public:
-		VulkanTexture2D(VulkanImage&& image) noexcept
-			: _image{ std::move(image) } {}
+		VulkanTexture2D(const SizeF& size, VulkanImage&& image) noexcept
+			: _size{ size }, _image{ std::move(image) } {}
+		SizeF size() const noexcept override { return _size; }
 		constexpr auto viewHandle() const noexcept { return _image.viewHandle(); }
 
 	private:
+		const SizeF _size;
 		VulkanImage _image;
 	};
 
-	class VulkanRenderPass : public RenderPass
+	class VulkanRenderPass final : public RenderPass
 	{
 	public:
 		VulkanRenderPass(VulkanRenderer& renderer, const VkDescriptorBufferInfo& uniformBufferInfo, VkCommandBuffer commandBuffer)
@@ -236,9 +238,11 @@ namespace seir
 			_context.create(_window->descriptor());
 			_textureSampler = _context.createSampler2D();
 			{
-				constexpr VkExtent2D kSize{ .width = 1, .height = 1 };
-				static uint32_t kData = 0xffffffff;
-				_whiteTexture2D = makeShared<VulkanTexture2D>(_context.createTextureImage2D(kSize, VK_FORMAT_B8G8R8A8_SRGB, sizeof(kData), &kData, kSize.width));
+				constexpr uint32_t width = 1;
+				constexpr uint32_t height = 1;
+				static uint32_t data = 0xffffffff;
+				_whiteTexture2D = makeShared<VulkanTexture2D>(SizeF{ width, height },
+					_context.createTextureImage2D({ width, height }, VK_FORMAT_B8G8R8A8_SRGB, sizeof(data), &data, width));
 			}
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
@@ -307,7 +311,8 @@ namespace seir
 			return {};
 		try
 		{
-			return makeShared<Texture2D, VulkanTexture2D>(_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
+			return makeShared<Texture2D, VulkanTexture2D>(SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) },
+				_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
 		{
