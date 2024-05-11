@@ -2,6 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma once
+
 #include <seir_graphics/color.hpp>
 #include <seir_math/vec.hpp>
 

@@ -53,8 +53,11 @@ namespace seir
 		VulkanBuffer& operator=(VulkanBuffer&&) noexcept;
 		~VulkanBuffer() noexcept { destroy(); }
 
+		[[nodiscard]] constexpr VmaAllocation allocation() const noexcept { return _allocation; }
 		void destroy() noexcept;
 		[[nodiscard]] constexpr VkBuffer handle() const noexcept { return _buffer; }
+		[[nodiscard]] void* map();
+		void unmap() noexcept { vmaUnmapMemory(_allocator, _allocation); }
 		void write(const void* data, VkDeviceSize size);
 
 	private:

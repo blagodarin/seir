@@ -520,6 +520,13 @@ namespace seir
 		_allocation = VK_NULL_HANDLE;
 	}
 
+	void* VulkanBuffer::map()
+	{
+		void* mapped = nullptr;
+		SEIR_VK(vmaMapMemory(_allocator, _allocation, &mapped));
+		return mapped;
+	}
+
 	void VulkanBuffer::write(const void* data, VkDeviceSize size)
 	{
 		void* mapped = nullptr;

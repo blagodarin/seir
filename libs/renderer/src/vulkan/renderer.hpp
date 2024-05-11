@@ -5,6 +5,7 @@
 #pragma once
 
 #include <seir_renderer/renderer.hpp>
+#include "2d.hpp"
 #include "context.hpp"
 #include "descriptors.hpp"
 #include "pipeline.hpp"
@@ -41,6 +42,7 @@ namespace seir
 		std::unordered_multimap<const VulkanShaderSet*, std::pair<unsigned, VulkanPipeline>> _pipelineCache;
 		VulkanUniformBuffers _uniformBuffers;
 		vulkan::DescriptorAllocator _descriptorAllocator;
+		Vulkan2D _2d;
 		friend VulkanRenderPass;
 	};
 }

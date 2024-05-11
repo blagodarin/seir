@@ -26,6 +26,9 @@ namespace seir
 		void addRect(const RectF&);
 
 		//
+		void clear();
+
+		//
 		void draw(RenderPass&);
 
 		//

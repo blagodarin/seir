@@ -12,8 +12,9 @@ namespace seir
 	//
 	enum class VertexAttribute
 	{
-		f32x2, //
-		f32x3, //
+		f32x2, // Two 32-bit floats.
+		f32x3, // Three 32-bit floats.
+		un8x4, // Four 8-bit unsigned integers which get converted into 32-bit floats in [0, 1] range.
 	};
 
 	//

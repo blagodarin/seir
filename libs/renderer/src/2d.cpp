@@ -7,8 +7,10 @@
 #include <seir_base/scope.hpp>
 #include <seir_base/shared_ptr.hpp>
 #include <seir_graphics/rectf.hpp>
+#include <seir_renderer/mesh.hpp>
 #include <seir_renderer/renderer.hpp>
 #include "2d.hpp"
+#include "pass.hpp"
 
 #include <cassert>
 #include <limits>
@@ -22,26 +24,26 @@ namespace seir
 		struct Range
 		{
 			SharedPtr<Texture2D> _texture;
-			size_t _indices = 0;
+			uint32_t _indices = 0;
 		};
 
 		std::vector<Vertex2D> _vertexBuffer;
 		std::vector<uint16_t> _indexBuffer;
 		std::vector<Range> _ranges{ { nullptr, 0 } };
-		seir::RectF _textureRect{ seir::SizeF{ 1, 1 } };
-		seir::Rgba32 _color = seir::Rgba32::white();
+		RectF _textureRect{ SizeF{ 1, 1 } };
+		Rgba32 _color = Rgba32::white();
 
 		struct Batch
 		{
 			Vertex2D* _vertices = nullptr;
 			uint16_t* _indices = nullptr;
-			size_t _baseIndex = 0;
+			uint32_t _baseIndex = 0;
 		};
 
-		Batch prepareBatch(size_t vertexCount, size_t indexCount)
+		Batch prepareBatch(uint32_t vertexCount, uint32_t indexCount)
 		{
 			assert(vertexCount <= std::numeric_limits<uint16_t>::max());
-			const auto nextIndex = _vertexBuffer.size();
+			const auto nextIndex = static_cast<uint32_t>(_vertexBuffer.size());
 			assert(nextIndex <= std::numeric_limits<uint16_t>::max() - vertexCount); // TODO: Support larger meshes.
 			auto& currentRange = _ranges.back();
 			const bool needDegenerate = currentRange._indices > 0;
@@ -50,8 +52,8 @@ namespace seir
 			const auto indexBufferSize = _indexBuffer.size() + addedIndices;
 			_vertexBuffer.reserve(vertexBufferSize);
 			_indexBuffer.reserve(indexBufferSize);
-			auto* const vertices = _vertexBuffer.data() + vertexBufferSize;
-			auto* indices = _indexBuffer.data() + indexBufferSize;
+			auto* const vertices = _vertexBuffer.data() + _vertexBuffer.size();
+			auto* indices = _indexBuffer.data() + _indexBuffer.size();
 			_vertexBuffer.resize(vertexBufferSize);
 			_indexBuffer.resize(indexBufferSize);
 			currentRange._indices += addedIndices;
@@ -84,23 +86,33 @@ namespace seir
 		batch._indices[3] = static_cast<uint16_t>(batch._baseIndex + 3);
 	}
 
+	void Renderer2D::clear()
+	{
+		_impl->_vertexBuffer.clear();
+		_impl->_indexBuffer.clear();
+		_impl->_ranges.clear();
+		_impl->_ranges.emplace_back(Renderer2DImpl::Range{ nullptr, 0 });
+		_impl->_textureRect = RectF{ SizeF{ 1, 1 } };
+		_impl->_color = Rgba32::white();
+	}
+
 	void Renderer2D::draw(RenderPass& pass)
 	{
-		SEIR_FINALLY([&] {
-			_impl->_vertexBuffer.clear();
-			_impl->_indexBuffer.clear();
-			_impl->_ranges.clear();
-			_impl->_ranges.emplace_back(Renderer2DImpl::Range{ nullptr, 0 });
-			_impl->_textureRect = (RectF{ SizeF{ 1, 1 } });
-			_impl->_color = seir::Rgba32::white();
+		SEIR_FINALLY([this] { clear(); });
+		static_cast<RenderPassImpl&>(pass).bind2DShaders();
+		static_cast<RenderPassImpl&>(pass).update2DBuffers(_impl->_vertexBuffer, _impl->_indexBuffer);
+		static_cast<RenderPassImpl&>(pass).begin2DRendering({
+			.vertexAttributes{ VertexAttribute::f32x2, VertexAttribute::f32x2, VertexAttribute::un8x4 },
+			.topology = MeshTopology::TriangleStrip,
+			.indexType = MeshIndexType::u16,
 		});
-		// TODO: Bind shaders.
-		for (const auto& range : _impl->_ranges)
+		for (uint32_t baseIndex = 0; const auto& range : _impl->_ranges)
 		{
 			if (!range._indices)
 				continue;
 			pass.bindTexture(range._texture);
-			// TODO: Actually draw.
+			static_cast<RenderPassImpl&>(pass).draw2D(baseIndex, range._indices);
+			baseIndex += range._indices;
 		}
 	}
 

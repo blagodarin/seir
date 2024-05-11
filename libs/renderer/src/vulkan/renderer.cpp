@@ -9,6 +9,7 @@
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/mesh.hpp>
+#include "../pass.hpp"
 #include "commands.hpp"
 #include "error.hpp"
 #include "utils.hpp"
@@ -99,14 +100,27 @@ namespace seir
 		VulkanImage _image;
 	};
 
-	class VulkanRenderPass final : public RenderPass
+	class VulkanRenderPass final : public RenderPassImpl
 	{
 	public:
-		VulkanRenderPass(VulkanRenderer& renderer, const VkDescriptorBufferInfo& uniformBufferInfo, VkCommandBuffer commandBuffer)
+		VulkanRenderPass(VulkanRenderer& renderer, uint32_t frameIndex, const VkDescriptorBufferInfo& uniformBufferInfo, VkCommandBuffer commandBuffer)
 			: _renderer{ renderer }
+			, _frameIndex{ frameIndex }
 			, _uniformBufferInfo{ uniformBufferInfo }
 			, _commandBuffer{ commandBuffer }
 		{
+		}
+
+		void begin2DRendering(const MeshFormat& format)
+		{
+			selectPipeline(format);
+			const auto extent = _renderer._renderTarget.extent();
+			setTransformation(seir::Mat4::projection2D(static_cast<float>(extent.width), static_cast<float>(extent.height)));
+			processUpdates();
+			VkBuffer vertexBuffers[]{ _renderer._2d.vertexBuffer(_frameIndex) };
+			VkDeviceSize offsets[]{ 0 };
+			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(_commandBuffer, _renderer._2d.indexBuffer(_frameIndex), 0, VK_INDEX_TYPE_UINT16); // TODO: Use actial index type.
 		}
 
 		void bindShaders(const SharedPtr<ShaderSet>& shaderSet) override
@@ -115,10 +129,21 @@ namespace seir
 			_shaderSet = staticCast<VulkanShaderSet>(shaderSet);
 		}
 
+		void bind2DShaders() override
+		{
+			_shaderSet = staticCast<VulkanShaderSet>(_renderer._2d.shaders());
+		}
+
 		void bindTexture(const SharedPtr<Texture2D>& texture) override
 		{
 			_texture = texture ? staticCast<VulkanTexture2D>(texture) : _renderer._whiteTexture2D;
 			_updateTexture = true;
+		}
+
+		void draw2D(uint32_t firstIndex, uint32_t indexCount) override
+		{
+			processUpdates();
+			vkCmdDrawIndexed(_commandBuffer, indexCount, 1, firstIndex, 0, 0);
 		}
 
 		void drawMesh(const Mesh& mesh) override
@@ -137,6 +162,11 @@ namespace seir
 		{
 			_pushConstants._matrix = transformation;
 			_updatePushConstants = true;
+		}
+
+		void update2DBuffers(std::span<const Vertex2D> vertices, std::span<const uint16_t> indices) override
+		{
+			_renderer._2d.updateBuffers(_renderer._context, _frameIndex, vertices.data(), vertices.size_bytes(), indices.data(), indices.size_bytes());
 		}
 
 	private:
@@ -198,6 +228,7 @@ namespace seir
 
 	private:
 		VulkanRenderer& _renderer;
+		const uint32_t _frameIndex;
 		const VkDescriptorBufferInfo& _uniformBufferInfo;
 		const VkCommandBuffer _commandBuffer;
 		SharedPtr<VulkanShaderSet> _shaderSet;
@@ -244,6 +275,7 @@ namespace seir
 				_whiteTexture2D = makeShared<VulkanTexture2D>(SizeF{ width, height },
 					_context.createTextureImage2D({ width, height }, VK_FORMAT_B8G8R8A8_SRGB, sizeof(data), &data, width));
 			}
+			_2d.initialize(*this);
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
 		{
@@ -266,6 +298,7 @@ namespace seir
 			{
 			case VertexAttribute::f32x2: vertexSize += sizeof(float) * 2; break;
 			case VertexAttribute::f32x3: vertexSize += sizeof(float) * 3; break;
+			case VertexAttribute::un8x4: vertexSize += sizeof(uint8_t) * 4; break;
 			}
 		}
 		auto vulkanIndexType = VK_INDEX_TYPE_UINT16;
@@ -334,10 +367,11 @@ namespace seir
 				return;
 			}
 			_renderTarget.create(_context, windowSize);
-			_frameSync.resize(_context._device, _renderTarget.frameCount());
+			const auto frameCount = _renderTarget.frameCount();
+			_frameSync.resize(_context._device, frameCount);
 			assert(_pipelineCache.empty());
-			_uniformBuffers = _context.createUniformBuffers(sizeof(UniformBufferObject), _renderTarget.frameCount());
-			_descriptorAllocator.reset(_context._device, _renderTarget.frameCount(), 1'000,
+			_uniformBuffers = _context.createUniformBuffers(sizeof(UniformBufferObject), frameCount);
+			_descriptorAllocator.reset(_context._device, frameCount, 1'000,
 				{
 					VkDescriptorPoolSize{
 						.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -348,6 +382,7 @@ namespace seir
 						.descriptorCount = 1'000,
 					},
 				});
+			_2d.resize(frameCount);
 		}
 		const auto [frameAvailableSemaphore, frameRenderedSemaphore, frameFence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;
@@ -365,7 +400,7 @@ namespace seir
 		const auto renderPassInfo = _renderTarget.renderPassInfo(index);
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		{
-			VulkanRenderPass renderPass{ *this, _uniformBuffers[index], commandBuffer };
+			VulkanRenderPass renderPass{ *this, index, _uniformBuffers[index], commandBuffer };
 			callback(renderPass);
 		}
 		vkCmdEndRenderPass(commandBuffer);

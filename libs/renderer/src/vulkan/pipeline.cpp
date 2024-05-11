@@ -246,6 +246,10 @@ namespace seir
 				format = VK_FORMAT_R32G32B32_SFLOAT;
 				size = 3 * sizeof(float);
 				break;
+			case VertexAttribute::un8x4:
+				format = VK_FORMAT_R8G8B8A8_UNORM;
+				size = 4 * sizeof(uint8_t);
+				break;
 			}
 			_vertexAttributes.emplace_back(VkVertexInputAttributeDescription{
 				.location = location++,

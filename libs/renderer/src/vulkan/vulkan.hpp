@@ -2,6 +2,8 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma once
+
 // <vulkan.h> shamelessly includes <windows.h>,
 // so we should prevent it from pulling too much garbage.
 #ifdef _WIN32

@@ -10,6 +10,7 @@ set(HEADERS
 set(SOURCES
 	src/2d.cpp
 	src/2d.hpp
+	src/pass.hpp
 	src/renderer.cpp
 	)
 if(SEIR_RENDERER STREQUAL "Dummy")
@@ -18,6 +19,8 @@ if(SEIR_RENDERER STREQUAL "Dummy")
 		)
 elseif(SEIR_RENDERER STREQUAL "Vulkan")
 	list(APPEND SOURCES
+		src/vulkan/2d.cpp
+		src/vulkan/2d.hpp
 		src/vulkan/commands.cpp
 		src/vulkan/commands.hpp
 		src/vulkan/context.cpp
@@ -56,6 +59,10 @@ target_link_libraries(seir_renderer PUBLIC Seir::math PRIVATE Seir::app Seir::gr
 if(SEIR_RENDERER STREQUAL "Vulkan")
 	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
 	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan VulkanMemoryAllocator::VulkanMemoryAllocator $<$<CONFIG:Debug>:fmt::fmt>)
+	seir_embed_spirv(seir_renderer
+		VERTEX src/vulkan/2d_vertex.glsl
+		FRAGMENT src/vulkan/2d_fragment.glsl
+		)
 endif()
 seir_target(seir_renderer FOLDER libs/renderer STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_renderer EXPORT SeirTargets)

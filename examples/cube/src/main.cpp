@@ -6,14 +6,18 @@
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
+#include <seir_graphics/color.hpp>
+#include <seir_graphics/rectf.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/mesh.hpp>
+#include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
 #include <array>
+#include <cmath>
 
 #include <fmt/core.h>
 
@@ -150,6 +154,7 @@ int u8main(int, char**)
 	const auto app = seir::SharedPtr{ seir::App::create() };
 	const auto window = seir::SharedPtr{ seir::Window::create(app, "Cube") };
 	const auto renderer = seir::Renderer::create(window);
+	seir::Renderer2D renderer2d;
 	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
 	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
@@ -162,11 +167,18 @@ int u8main(int, char**)
 			[&state](const seir::Vec2& viewportSize) {
 				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * state.cameraMatrix();
 			},
-			[&texture, &mesh, &shaders, time](seir::RenderPass& pass) {
+			[&renderer2d, &texture, &mesh, &shaders, time](seir::RenderPass& pass) {
 				pass.bindShaders(shaders);
 				pass.bindTexture(texture);
 				pass.setTransformation(seir::Mat4::rotation(29 * time, { 0, 0, 1 }) * seir::Mat4::rotation(19 * time, { 1, 0, 0 }));
 				pass.drawMesh(*mesh);
+
+				float unused;
+				const auto phase = std::modf(time, &unused);
+				renderer2d.setTexture({});
+				renderer2d.setColor(seir::Rgba32{ 255 - std::lround(phase * 255), 0, 0 });
+				renderer2d.addRect({ { 10, 10 }, seir::SizeF{ 20, 20 } });
+				renderer2d.draw(pass);
 			});
 		if (const auto period = clock.advance())
 			window->setTitle(fmt::format("Cube [{:.1f} fps @ ~{} ms]", period->_averageFrameRate, period->_maxFrameDuration));
