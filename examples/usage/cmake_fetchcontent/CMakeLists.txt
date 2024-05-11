@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.21)
-project(UseGithub LANGUAGES CXX)
+project(Example LANGUAGES CXX)
 
 # Get Seir for the project.
 set(SEIR_APP ON)
@@ -15,6 +15,6 @@ FetchContent_MakeAvailable(Seir)
 seir_defaults()
 
 # Do the regular CMake stuff.
-add_executable(use_github main.cpp)
-target_link_libraries(use_github PRIVATE Seir::app)
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT use_github)
+add_executable(cmake_fetchcontent main.cpp)
+target_link_libraries(cmake_fetchcontent PRIVATE Seir::app)
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT cmake_fetchcontent)

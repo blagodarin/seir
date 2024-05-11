@@ -66,15 +66,15 @@ jobs:
           ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
       - name: Build usage examples
         run: |
-          cmake -S examples/use_github -B build.use_github -G Ninja \
+          cmake -S examples/usage/cmake_fetchcontent -B build.cmake_fetchcontent -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DREPLACE_WITH_COMMIT_HASH=${{ github.sha }}
-          cmake --build build.use_github
+          cmake --build build.cmake_fetchcontent
           cmake --build build --target install
-          cmake -S examples/use_package -B build.use_package -G Ninja \
+          cmake -S examples/usage/cmake_package -B build.cmake_package -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
-          cmake --build build.use_package
+          cmake --build build.cmake_package
   coverage:
     name: Coverage
     runs-on: ubuntu-22.04
