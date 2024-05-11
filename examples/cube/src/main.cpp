@@ -6,8 +6,10 @@
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
+#include <seir_data/blob.hpp>
 #include <seir_graphics/color.hpp>
 #include <seir_graphics/rectf.hpp>
+#include <seir_gui/font.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
@@ -17,7 +19,6 @@
 #include <seir_u8main/u8main.hpp>
 
 #include <array>
-#include <cmath>
 
 #include <fmt/core.h>
 
@@ -158,8 +159,11 @@ int u8main(int, char**)
 	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
 	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
+	const auto font = seir::Font::load(seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20, *renderer);
 	window->show();
 	seir::VariableRate clock;
+	std::string fps1;
+	std::string fps2;
 	for (State state; app->processEvents(state);)
 	{
 		const auto time = clock.time();
@@ -167,21 +171,22 @@ int u8main(int, char**)
 			[&state](const seir::Vec2& viewportSize) {
 				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * state.cameraMatrix();
 			},
-			[&renderer2d, &texture, &mesh, &shaders, time](seir::RenderPass& pass) {
+			[&](seir::RenderPass& pass) {
 				pass.bindShaders(shaders);
 				pass.bindTexture(texture);
 				pass.setTransformation(seir::Mat4::rotation(29 * time, { 0, 0, 1 }) * seir::Mat4::rotation(19 * time, { 1, 0, 0 }));
 				pass.drawMesh(*mesh);
-
-				float unused;
-				const auto phase = std::modf(time, &unused);
-				renderer2d.setTexture({});
-				renderer2d.setColor(seir::Rgba32{ 255 - std::lround(phase * 255), 0, 0 });
-				renderer2d.addRect({ { 10, 10 }, seir::SizeF{ 20, 20 } });
+				font->renderLine(renderer2d, { { 5, 5 }, seir::SizeF{ 200, 20 } }, fps1);
+				font->renderLine(renderer2d, { { 5, 25 }, seir::SizeF{ 200, 20 } }, fps2);
 				renderer2d.draw(pass);
 			});
 		if (const auto period = clock.advance())
-			window->setTitle(fmt::format("Cube [{:.1f} fps @ ~{} ms]", period->_averageFrameRate, period->_maxFrameDuration));
+		{
+			fps1.clear();
+			fmt::format_to(std::back_inserter(fps1), "{:.1f} fps", period->_averageFrameRate);
+			fps2.clear();
+			fmt::format_to(std::back_inserter(fps2), "{:.1f} < {} ms/f", 1000 / period->_averageFrameRate, period->_maxFrameDuration);
+		}
 	}
 	return 0;
 }

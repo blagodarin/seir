@@ -51,7 +51,6 @@ namespace seir
 			buffers._indexBuffer = context.createBuffer(indexDataSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			buffers._indexBufferSize = indexDataSize;
 		}
-		(void)vertexData, indexData;
 		const auto vertices = buffers._vertexBuffer.map();
 		SEIR_FINALLY([&buffers] { buffers._vertexBuffer.unmap(); });
 		const auto indices = buffers._indexBuffer.map();

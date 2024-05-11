@@ -98,6 +98,8 @@ namespace seir
 
 	void Renderer2D::draw(RenderPass& pass)
 	{
+		if (_impl->_indexBuffer.empty())
+			return;
 		SEIR_FINALLY([this] { clear(); });
 		static_cast<RenderPassImpl&>(pass).bind2DShaders();
 		static_cast<RenderPassImpl&>(pass).update2DBuffers(_impl->_vertexBuffer, _impl->_indexBuffer);

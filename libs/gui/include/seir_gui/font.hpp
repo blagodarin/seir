@@ -23,7 +23,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<Font> load(const SharedPtr<Blob>&, Renderer&);
+		[[nodiscard]] static UniquePtr<Font> load(const SharedPtr<Blob>&, unsigned lineHeight, Renderer&);
 
 		virtual ~Font() noexcept = default;
 

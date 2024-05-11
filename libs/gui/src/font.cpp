@@ -22,8 +22,6 @@
 
 namespace
 {
-	constexpr FT_UInt kPixelSize = 64;
-
 	constexpr size_t kWhiteWidth = 4;
 	constexpr size_t kWhiteHeight = 4;
 	constexpr uint8_t kWhiteData[kWhiteHeight][kWhiteWidth]{
@@ -37,7 +35,7 @@ namespace
 	class FreeTypeFont final : public seir::Font
 	{
 	public:
-		FreeTypeFont(const seir::SharedPtr<seir::Blob>& blob, seir::Renderer& renderer)
+		FreeTypeFont(const seir::SharedPtr<seir::Blob>& blob, unsigned lineHeight, seir::Renderer& renderer)
 		{
 			if (::FT_Init_FreeType(&_library))
 				return;
@@ -46,7 +44,7 @@ namespace
 				return;
 			_blob = blob;
 			_hasKerning = FT_HAS_KERNING(_face);
-			buildBitmap(renderer, kPixelSize);
+			buildBitmap(renderer, lineHeight);
 		}
 
 		~FreeTypeFont() noexcept override
@@ -187,7 +185,6 @@ namespace
 				}
 				if (y + glyph->bitmap.rows > bitmapInfo.height())
 					break; // TODO: Report error.
-				copyGlyph(glyph->bitmap.buffer, glyph->bitmap.width, glyph->bitmap.rows, glyph->bitmap.pitch);
 				auto& bitmapGlyph = _bitmapGlyphs[codepoint];
 				bitmapGlyph._id = id;
 				bitmapGlyph._rect = {
@@ -196,6 +193,7 @@ namespace
 				};
 				bitmapGlyph._offset = { glyph->bitmap_left, baseline - glyph->bitmap_top };
 				bitmapGlyph._advance = static_cast<int>(glyph->advance.x >> 6);
+				copyGlyph(glyph->bitmap.buffer, glyph->bitmap.width, glyph->bitmap.rows, glyph->bitmap.pitch);
 			}
 			const seir::ImageInfo textureInfo{ bitmapInfo.width(), bitmapInfo.height(), seir::PixelFormat::Bgra32 };
 			seir::Buffer textureBuffer{ textureInfo.frameSize() };
@@ -224,11 +222,11 @@ namespace
 
 namespace seir
 {
-	UniquePtr<Font> Font::load(const SharedPtr<Blob>& blob, Renderer& renderer)
+	UniquePtr<Font> Font::load(const SharedPtr<Blob>& blob, unsigned lineHeight, Renderer& renderer)
 	{
-		if (!blob)
+		if (!blob || !lineHeight)
 			return {};
-		auto font = makeUnique<FreeTypeFont>(blob, renderer);
+		auto font = makeUnique<FreeTypeFont>(blob, lineHeight, renderer);
 		return font->isLoaded()
 			? staticCast<Font>(std::move(font))
 			: nullptr;
