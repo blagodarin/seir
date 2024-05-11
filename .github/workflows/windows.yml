@@ -49,7 +49,6 @@ jobs:
             -DSEIR_IMAGE_JPEG=ON `
             -DSEIR_IMAGE_TGA=ON `
             -DSEIR_RENDERER=Vulkan `
-            -DSEIR_RENDERER_RUN_TESTS=OFF `
             -DSEIR_SERIALIZATION=ON `
             -DSEIR_STATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }} `
             -DSEIR_SYNTH=ON `
@@ -61,7 +60,7 @@ jobs:
       - name: Run tests
         run: |
           cd build
-          ctest --verbose
+          ctest --verbose --label-exclude renderer
       - name: Build usage examples
         run: |
           cmake -S examples\use_github -B build.use_github `
