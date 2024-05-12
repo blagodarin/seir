@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <seir_base/shared_ptr.hpp>
+
 #include <string_view>
 
 namespace seir
@@ -12,14 +14,10 @@ namespace seir
 	class RectF;
 	class Renderer;
 	class Renderer2D;
-	template <class>
-	class SharedPtr;
 	class Texture2D;
-	template <class>
-	class UniquePtr;
 
 	//
-	class Font
+	class Font : public ReferenceCounter
 	{
 	public:
 		//
