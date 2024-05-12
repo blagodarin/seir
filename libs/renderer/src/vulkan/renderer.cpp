@@ -287,7 +287,7 @@ namespace seir
 		return true;
 	}
 
-	UniquePtr<Mesh> VulkanRenderer::createMesh(const MeshFormat& format, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount)
+	SharedPtr<Mesh> VulkanRenderer::createMesh(const MeshFormat& format, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount)
 	{
 		if (indexCount > std::numeric_limits<uint32_t>::max())
 			return {};
@@ -315,7 +315,7 @@ namespace seir
 		}
 		try
 		{
-			return makeUnique<Mesh, VulkanMesh>(format, _context.createDeviceBuffer(vertexData, vertexSize * vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+			return makeShared<Mesh, VulkanMesh>(format, _context.createDeviceBuffer(vertexData, vertexSize * vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
 				_context.createDeviceBuffer(indexData, indexSize * indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT), vulkanIndexType, static_cast<uint32_t>(indexCount));
 		}
 		catch ([[maybe_unused]] const VulkanError& e)

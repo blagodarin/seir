@@ -24,7 +24,7 @@ namespace seir
 
 		bool initialize();
 
-		UniquePtr<Mesh> createMesh(const MeshFormat&, const void*, size_t, const void*, size_t) override;
+		SharedPtr<Mesh> createMesh(const MeshFormat&, const void*, size_t, const void*, size_t) override;
 		SharedPtr<ShaderSet> createShaders(std::span<const uint32_t>, std::span<const uint32_t>) override;
 		SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
 		void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&) override;

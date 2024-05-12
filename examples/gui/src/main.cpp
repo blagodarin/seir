@@ -25,7 +25,7 @@ int u8main(int, char**)
 	const auto renderer = seir::Renderer::create(window);
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window };
-	const auto font = seir::SharedPtr{ seir::Font::load(seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20, *renderer) };
+	const auto font = seir::Font::load(*renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20);
 	window.show();
 	seir::VariableRate clock;
 	std::string fps1;

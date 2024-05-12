@@ -21,7 +21,7 @@ TEST_CASE("Font")
 	{
 		const auto blob = seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf");
 		REQUIRE(blob);
-		const auto font = seir::Font::load(blob, 16, *renderer);
+		const auto font = seir::Font::load(*renderer, blob, 16);
 		REQUIRE(font);
 		SUBCASE("Font::textWidth")
 		{
@@ -32,7 +32,14 @@ TEST_CASE("Font")
 	}
 	SUBCASE("no file")
 	{
-		const auto font = seir::Font::load({}, 16, *renderer);
+		const auto font = seir::Font::load(*renderer, {}, 16);
+		CHECK_FALSE(font);
+	}
+	SUBCASE("bad file")
+	{
+		const auto blob = seir::Blob::from(SEIR_DATA_DIR "icon.ico");
+		REQUIRE(blob);
+		const auto font = seir::Font::load(*renderer, blob, 16);
 		CHECK_FALSE(font);
 	}
 }

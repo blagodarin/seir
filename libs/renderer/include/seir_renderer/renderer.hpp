@@ -66,7 +66,7 @@ namespace seir
 		virtual ~Renderer() noexcept = default;
 
 		//
-		[[nodiscard]] virtual UniquePtr<Mesh> createMesh(const MeshFormat&, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount) = 0;
+		[[nodiscard]] virtual SharedPtr<Mesh> createMesh(const MeshFormat&, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount) = 0;
 
 		//
 		[[nodiscard]] virtual SharedPtr<ShaderSet> createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader) = 0;

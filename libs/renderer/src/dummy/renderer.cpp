@@ -32,9 +32,9 @@ namespace
 	class DummyRenderer final : public seir::Renderer
 	{
 	public:
-		seir::UniquePtr<seir::Mesh> createMesh(const seir::MeshFormat&, const void*, size_t, const void*, size_t) override
+		seir::SharedPtr<seir::Mesh> createMesh(const seir::MeshFormat&, const void*, size_t, const void*, size_t) override
 		{
-			return seir::makeUnique<seir::Mesh, DummyMesh>();
+			return seir::makeShared<seir::Mesh, DummyMesh>();
 		}
 
 		seir::SharedPtr<seir::ShaderSet> createShaders(std::span<const uint32_t>, std::span<const uint32_t>) override

@@ -35,7 +35,7 @@ namespace
 	class FreeTypeFont final : public seir::Font
 	{
 	public:
-		FreeTypeFont(const seir::SharedPtr<seir::Blob>& blob, unsigned lineHeight, seir::Renderer& renderer)
+		FreeTypeFont(seir::Renderer& renderer, const seir::SharedPtr<seir::Blob>& blob, unsigned lineHeight)
 		{
 			if (::FT_Init_FreeType(&_library))
 				return;
@@ -222,11 +222,11 @@ namespace
 
 namespace seir
 {
-	UniquePtr<Font> Font::load(const SharedPtr<Blob>& blob, unsigned lineHeight, Renderer& renderer)
+	SharedPtr<Font> Font::load(Renderer& renderer, const SharedPtr<Blob>& blob, unsigned lineHeight)
 	{
 		if (!blob || !lineHeight)
 			return {};
-		auto font = makeUnique<FreeTypeFont>(blob, lineHeight, renderer);
+		auto font = makeShared<FreeTypeFont>(renderer, blob, lineHeight);
 		return font->isLoaded()
 			? staticCast<Font>(std::move(font))
 			: nullptr;
