@@ -241,7 +241,7 @@ namespace seir
 		bool _updatePushConstants = true;
 	};
 
-	VulkanRenderer::VulkanRenderer(const SharedPtr<Window>& window) noexcept
+	VulkanRenderer::VulkanRenderer(const Window& window) noexcept
 		: _window{ window }
 		, _context{
 			RendererOptions{
@@ -266,7 +266,7 @@ namespace seir
 	{
 		try
 		{
-			_context.create(_window->descriptor());
+			_context.create(_window.descriptor());
 			_textureSampler = _context.createSampler2D();
 			{
 				constexpr uint32_t width = 1;
@@ -360,7 +360,7 @@ namespace seir
 	{
 		if (!_renderTarget)
 		{
-			const auto windowSize = _window->size();
+			const auto windowSize = _window.size();
 			if (windowSize._width == 0 || windowSize._height == 0)
 			{
 				sleepFor(1);
@@ -420,7 +420,7 @@ namespace seir
 		_renderTarget.destroy(_context._device);
 	}
 
-	UniquePtr<Renderer> Renderer::create(const SharedPtr<Window>& window)
+	UniquePtr<Renderer> Renderer::create(const Window& window)
 	{
 		if (auto renderer = makeUnique<VulkanRenderer>(window); renderer->initialize())
 			return staticCast<Renderer>(std::move(renderer));

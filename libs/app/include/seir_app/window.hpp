@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include <seir_base/shared_ptr.hpp>
-
 #include <optional>
+#include <memory>
 #include <string>
 
 namespace seir
@@ -26,33 +25,36 @@ namespace seir
 	};
 
 	//
-	class Window : public ReferenceCounter
+	class Window
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<Window> create(App&, const std::string& title);
+		Window(App&, const std::string& title);
 
-		virtual ~Window() noexcept = default;
-
-		//
-		virtual void close() noexcept = 0;
+		~Window() noexcept;
 
 		//
-		virtual std::optional<Point> cursor() const noexcept = 0;
+		void close() noexcept;
 
 		//
-		[[nodiscard]] virtual WindowDescriptor descriptor() const noexcept = 0;
+		[[nodiscard]] std::optional<Point> cursor() const noexcept;
 
 		//
-		virtual void setIcon(const Image&) noexcept = 0;
+		[[nodiscard]] WindowDescriptor descriptor() const noexcept;
 
 		//
-		virtual void setTitle(const std::string&) noexcept = 0;
+		void setIcon(const Image&) noexcept;
 
 		//
-		virtual void show() noexcept = 0;
+		void setTitle(const std::string&) noexcept;
 
 		//
-		[[nodiscard]] virtual Size size() const noexcept = 0;
+		void show() noexcept;
+
+		//
+		[[nodiscard]] Size size() const noexcept;
+
+	private:
+		const std::unique_ptr<class WindowImpl> _impl;
 	};
 }

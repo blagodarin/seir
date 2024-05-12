@@ -12,19 +12,17 @@
 
 namespace seir
 {
-	class WindowsWindow;
+	class WindowImpl;
 
 	class AppImpl
 	{
 	public:
 		static constexpr const wchar_t* kWindowClass = L"Seir";
 
-		static std::unique_ptr<AppImpl> create();
 		AppImpl(HINSTANCE, Hicon&& icon, Hcursor&& emptyCursor);
 		~AppImpl() noexcept;
 
-		void addWindow(HWND, WindowsWindow*);
-		[[nodiscard]] constexpr HCURSOR emptyCursor() const noexcept { return _emptyCursor; }
+		void addWindow(HWND, WindowImpl*);
 		[[nodiscard]] constexpr HINSTANCE instance() const noexcept { return _instance; }
 
 		static LRESULT CALLBACK staticWindowProc(HWND, UINT, WPARAM, LPARAM) noexcept;
@@ -32,13 +30,15 @@ namespace seir
 	private:
 		LRESULT windowProc(HWND, UINT, WPARAM, LPARAM) noexcept;
 
+		static std::unique_ptr<AppImpl> create();
+
 	private:
 		const HINSTANCE _instance;
 		const Hicon _icon;
 		const Hcursor _emptyCursor;
 		EventCallbacks* _callbacks = nullptr;
 		uint16_t _highSurrogate = 0; // High (first) code unit of UTF-16 surrogate pair.
-		std::unordered_map<HWND, WindowsWindow*> _windows;
+		std::unordered_map<HWND, WindowImpl*> _windows;
 		friend App;
 	};
 }

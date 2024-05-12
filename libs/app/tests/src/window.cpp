@@ -19,11 +19,10 @@ namespace
 TEST_CASE("Window")
 {
 	seir::App app;
+	seir::Window window{ app, {} };
 	EventCallbacks callbacks;
-	const auto window = seir::Window::create(app, {});
-	REQUIRE(window);
 	CHECK(app.processEvents(callbacks));
 	CHECK(app.processEvents(callbacks));
-	window->close();
+	window.close();
 	CHECK_FALSE(app.processEvents(callbacks));
 }

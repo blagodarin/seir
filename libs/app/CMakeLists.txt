@@ -19,6 +19,11 @@ if(WIN32)
 		src/windows/window.cpp
 		src/windows/window.hpp
 		)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		set_property(SOURCE src/windows/window.cpp APPEND PROPERTY COMPILE_OPTIONS
+			/wd4355 # 'this': used in base member initializer list
+			)
+	endif()
 else()
 	# TODO: Add XCB implementation.
 	list(APPEND SOURCES

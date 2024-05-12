@@ -129,16 +129,6 @@ namespace
 
 namespace seir
 {
-	std::unique_ptr<AppImpl> AppImpl::create()
-	{
-		const auto instance = ::GetModuleHandleW(nullptr);
-		auto icon = ::loadDefaultIcon(instance);
-		if (auto emptyCursor = ::createEmptyCursor(instance))
-			if (::registerWindowClass(instance, icon, emptyCursor))
-				return std::make_unique<AppImpl>(instance, std::move(icon), std::move(emptyCursor));
-		return nullptr;
-	}
-
 	AppImpl::AppImpl(HINSTANCE instance, Hicon&& icon, Hcursor&& emptyCursor)
 		: _instance{ instance }
 		, _icon{ std::move(icon) }
@@ -151,7 +141,7 @@ namespace seir
 		::unregisterWindowClass(_instance);
 	}
 
-	void AppImpl::addWindow(HWND hwnd, WindowsWindow* window)
+	void AppImpl::addWindow(HWND hwnd, WindowImpl* window)
 	{
 		_windows.emplace(hwnd, window);
 	}
@@ -173,7 +163,7 @@ namespace seir
 	{
 		const auto onKeyEvent = [this, hwnd](Key key, bool pressed, bool repeated) {
 			if (const auto i = _windows.find(hwnd); i != _windows.end())
-				_callbacks->onKeyEvent(*i->second, { key, pressed, repeated });
+				_callbacks->onKeyEvent(i->second->window(), { key, pressed, repeated });
 		};
 
 		const auto onTextEvent = [this, hwnd](char32_t codepoint) {
@@ -182,7 +172,7 @@ namespace seir
 				std::array<char, 4> buffer;
 				if (const auto bytes = writeUtf8(buffer, codepoint))
 					if (const auto c = static_cast<unsigned char>(buffer[0]); c >= 0x20 && c != 0x7f)
-						_callbacks->onTextEvent(*i->second, { buffer.data(), bytes });
+						_callbacks->onTextEvent(i->second->window(), { buffer.data(), bytes });
 			}
 		};
 
@@ -260,6 +250,16 @@ namespace seir
 		return 0;
 	}
 
+	std::unique_ptr<AppImpl> AppImpl::create()
+	{
+		const auto instance = ::GetModuleHandleW(nullptr);
+		auto icon = ::loadDefaultIcon(instance);
+		if (auto emptyCursor = ::createEmptyCursor(instance)) [[likely]]
+			if (::registerWindowClass(instance, icon, emptyCursor)) [[likely]]
+				return std::make_unique<AppImpl>(instance, std::move(icon), std::move(emptyCursor));
+		return nullptr;
+	}
+
 	App::App()
 		: _impl{ AppImpl::create() }
 	{
@@ -269,15 +269,13 @@ namespace seir
 
 	bool App::processEvents(EventCallbacks& callbacks)
 	{
-		if (!_impl)
-			return false;
 		assert(!_impl->_callbacks);
 		_impl->_callbacks = &callbacks;
 		SEIR_FINALLY([this] { _impl->_callbacks = nullptr; });
 		MSG msg;
 		while (::PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			if (msg.message == WM_QUIT)
+			if (msg.message == WM_QUIT) [[unlikely]]
 				return false;
 			::TranslateMessage(&msg);
 			::DispatchMessageW(&msg);

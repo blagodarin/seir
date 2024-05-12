@@ -4,12 +4,11 @@
 
 #include "window.hpp"
 
-#include <seir_graphics/rect.hpp>
+#include <seir_graphics/point.hpp>
+#include <seir_graphics/size.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
 #include "app.hpp"
-
-#include <memory>
 
 namespace
 {
@@ -34,19 +33,45 @@ namespace
 
 namespace seir
 {
-	WindowsWindow::WindowsWindow(AppImpl& app, Hwnd&& hwnd) noexcept
+	WindowImpl::WindowImpl(AppImpl& app, Window& window, Hwnd&& hwnd) noexcept
 		: _app{ app }
+		, _window{ window }
 		, _hwnd{ std::move(hwnd) }
 	{
 		app.addWindow(_hwnd, this);
 	}
 
-	void WindowsWindow::close() noexcept
+	void WindowImpl::reset() noexcept
 	{
-		::SendMessageW(_hwnd, WM_CLOSE, 0, 0);
+		_hwnd.reset();
 	}
 
-	std::optional<Point> WindowsWindow::cursor() const noexcept
+	std::unique_ptr<WindowImpl> WindowImpl::create(AppImpl& app, Window& window, const std::string& title)
+	{
+		const auto wtitle = ::toWChar(title);
+		Hwnd hwnd{ ::CreateWindowExW(WS_EX_APPWINDOW, AppImpl::kWindowClass, wtitle ? wtitle.get() : L"", WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, app.instance(), &app) };
+		if (!hwnd) [[unlikely]]
+		{
+			windows::reportError("CreateWindowExW");
+			return {};
+		}
+		return std::make_unique<WindowImpl>(app, window, std::move(hwnd));
+	}
+
+	Window::Window(App& app, const std::string& title)
+		: _impl{ app._impl ? WindowImpl::create(*app._impl, *this, title) : nullptr }
+	{
+	}
+
+	Window::~Window() noexcept = default;
+
+	void Window::close() noexcept
+	{
+		::SendMessageW(_impl->_hwnd, WM_CLOSE, 0, 0);
+	}
+
+	std::optional<Point> Window::cursor() const noexcept
 	{
 		POINT point{ .x = 0, .y = 0 };
 		if (!::GetCursorPos(&point))
@@ -54,17 +79,17 @@ namespace seir
 			seir::windows::reportError("GetCursorPos");
 			return {};
 		}
-		if (!::ScreenToClient(_hwnd, &point))
+		if (!::ScreenToClient(_impl->_hwnd, &point))
 			return {};
 		return std::make_optional<Point>(point.x, point.y);
 	}
 
-	WindowDescriptor WindowsWindow::descriptor() const noexcept
+	WindowDescriptor Window::descriptor() const noexcept
 	{
-		return { _app.instance(), reinterpret_cast<intptr_t>(_hwnd.get()) };
+		return { _impl->_app.instance(), reinterpret_cast<intptr_t>(_impl->_hwnd.get()) };
 	}
 
-	void WindowsWindow::setIcon(const Image& image) noexcept
+	void Window::setIcon(const Image& image) noexcept
 	{
 		const ImageInfo info{ image.info().width(), image.info().height(), PixelFormat::Bgra32, ImageAxes::XRightYUp };
 		const auto maskSize = (info.width() + 7) / 8 * info.height();
@@ -90,51 +115,31 @@ namespace seir
 		Hicon icon{ ::CreateIconFromResourceEx(reinterpret_cast<BYTE*>(buffer.data()), static_cast<DWORD>(bufferSize), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR) };
 		if (!icon)
 			return windows::reportError("CreateIconFromResourceEx");
-		_icon = std::move(icon);
-		::SendMessageW(_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(_icon.get()));
-		::SendMessageW(_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(_icon.get()));
+		_impl->_icon = std::move(icon);
+		::SendMessageW(_impl->_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(_impl->_icon.get()));
+		::SendMessageW(_impl->_hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(_impl->_icon.get()));
 	}
 
-	void WindowsWindow::setTitle(const std::string& title) noexcept
+	void Window::setTitle(const std::string& title) noexcept
 	{
 		const auto wtitle = ::toWChar(title);
-		if (!::SetWindowTextW(_hwnd, wtitle ? wtitle.get() : L""))
+		if (!::SetWindowTextW(_impl->_hwnd, wtitle ? wtitle.get() : L""))
 			windows::reportError("SetWindowTextW");
 	}
 
-	void WindowsWindow::show() noexcept
+	void Window::show() noexcept
 	{
-		::ShowWindow(_hwnd, SW_SHOW);
-		::UpdateWindow(_hwnd);
-		::SetForegroundWindow(_hwnd);
-		::SetFocus(_hwnd);
+		::ShowWindow(_impl->_hwnd, SW_SHOW);
+		::UpdateWindow(_impl->_hwnd);
+		::SetForegroundWindow(_impl->_hwnd);
+		::SetFocus(_impl->_hwnd);
 	}
 
-	Size WindowsWindow::size() const noexcept
+	Size Window::size() const noexcept
 	{
 		RECT clientRect{};
-		if (!::GetClientRect(_hwnd, &clientRect))
+		if (!::GetClientRect(_impl->_hwnd, &clientRect))
 			windows::reportError("GetClientRect");
 		return { static_cast<int>(clientRect.right - clientRect.left), static_cast<int>(clientRect.bottom - clientRect.top) };
-	}
-
-	void WindowsWindow::reset() noexcept
-	{
-		_hwnd.reset();
-	}
-
-	UniquePtr<Window> Window::create(App& app, const std::string& title)
-	{
-		if (!app._impl)
-			return {};
-		const auto wtitle = ::toWChar(title);
-		Hwnd hwnd{ ::CreateWindowExW(WS_EX_APPWINDOW, AppImpl::kWindowClass, wtitle ? wtitle.get() : L"", WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, app._impl->instance(), app._impl.get()) };
-		if (!hwnd)
-		{
-			windows::reportError("CreateWindowExW");
-			return {};
-		}
-		return makeUnique<Window, WindowsWindow>(*app._impl, std::move(hwnd));
 	}
 }

@@ -131,12 +131,12 @@ namespace
 int u8main(int, char**)
 {
 	seir::App app;
-	const auto window = seir::SharedPtr{ seir::Window::create(app, "Cube") };
+	seir::Window window{ app, "Cube" };
 	const auto renderer = seir::Renderer::create(window);
 	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
 	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
-	window->show();
+	window.show();
 	seir::VariableRate clock;
 	for (EventCallbacks callbacks; app.processEvents(callbacks);)
 	{
@@ -152,7 +152,7 @@ int u8main(int, char**)
 				pass.drawMesh(*mesh);
 			});
 		if (const auto period = clock.advance())
-			window->setTitle(fmt::format("Cube [{:.1f} fps]", period->_averageFrameRate));
+			window.setTitle(fmt::format("Cube [{:.1f} fps]", period->_averageFrameRate));
 	}
 	return 0;
 }

@@ -21,12 +21,12 @@
 int u8main(int, char**)
 {
 	seir::App app;
-	const auto window = seir::SharedPtr{ seir::Window::create(app, "GUI") };
-	seir::GuiContext gui{ *window };
+	seir::Window window{ app, "GUI" };
 	const auto renderer = seir::Renderer::create(window);
 	seir::Renderer2D renderer2d;
+	seir::GuiContext gui{ window };
 	const auto font = seir::SharedPtr{ seir::Font::load(seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20, *renderer) };
-	window->show();
+	window.show();
 	seir::VariableRate clock;
 	std::string fps1;
 	std::string fps2;
@@ -34,7 +34,7 @@ int u8main(int, char**)
 	{
 		seir::GuiFrame frame{ gui };
 		if (frame.takeKeyPress(seir::Key::Escape))
-			window->close();
+			window.close();
 		renderer->render(
 			[](const seir::Vec2&) { return seir::Mat4::identity(); }, // TODO: Get rid of useless (for 2D) matrix.
 			[&](seir::RenderPass& pass) {

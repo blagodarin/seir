@@ -5,33 +5,55 @@
 #include <seir_app/window.hpp>
 
 #include <seir_app/app.hpp>
-#include <seir_graphics/rect.hpp>
-
-namespace
-{
-	class StubWindow : public seir::Window
-	{
-	public:
-		explicit StubWindow(seir::App& app) noexcept
-			: _app{ app } {}
-
-		void close() noexcept override { _app.quit(); }
-		std::optional<seir::Point> cursor() const noexcept override { return {}; }
-		seir::WindowDescriptor descriptor() const noexcept override { return { nullptr, 0 }; }
-		void setIcon(const seir::Image&) noexcept override {}
-		void setTitle(const std::string&) noexcept override {}
-		void show() noexcept override {}
-		seir::Size size() const noexcept override { return {}; }
-
-	private:
-		seir::App& _app;
-	};
-}
+#include <seir_graphics/point.hpp>
+#include <seir_graphics/size.hpp>
 
 namespace seir
 {
-	UniquePtr<Window> Window::create(App& app, const std::string&)
+	class WindowImpl
 	{
-		return makeUnique<Window, StubWindow>(app);
+	public:
+		App& _app;
+		WindowImpl(App& app) noexcept
+			: _app{ app } {}
+	};
+
+	Window::Window(App& app, const std::string&)
+		: _impl{ std::make_unique<WindowImpl>(app) }
+	{
+	}
+
+	Window::~Window() noexcept = default;
+
+	void Window::close() noexcept
+	{
+		_impl->_app.quit();
+	}
+
+	std::optional<Point> Window::cursor() const noexcept
+	{
+		return {};
+	}
+
+	WindowDescriptor Window::descriptor() const noexcept
+	{
+		return { nullptr, 0 };
+	}
+
+	void Window::setIcon(const Image&) noexcept
+	{
+	}
+
+	void Window::setTitle(const std::string&) noexcept
+	{
+	}
+
+	void Window::show() noexcept
+	{
+	}
+
+	Size Window::size() const noexcept
+	{
+		return {};
 	}
 }

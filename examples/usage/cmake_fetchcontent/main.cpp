@@ -21,8 +21,8 @@ namespace
 int main(int, char**)
 {
 	seir::App app;
-	const auto window = seir::SharedPtr{ seir::Window::create(app, "Example") };
-	window->show();
+	seir::Window window{ app, "Example" };
+	window.show();
 	for (State state; app.processEvents(state);)
 		;
 }

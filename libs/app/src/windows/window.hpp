@@ -12,24 +12,22 @@ namespace seir
 {
 	class AppImpl;
 
-	class WindowsWindow final : public Window
+	class WindowImpl
 	{
 	public:
-		WindowsWindow(AppImpl&, Hwnd&&) noexcept;
-
-		void close() noexcept override;
-		std::optional<Point> cursor() const noexcept override;
-		WindowDescriptor descriptor() const noexcept override;
-		void setIcon(const Image&) noexcept override;
-		void setTitle(const std::string&) noexcept override;
-		void show() noexcept override;
-		Size size() const noexcept override;
+		WindowImpl(AppImpl&, Window&, Hwnd&&) noexcept;
 
 		void reset() noexcept;
+		Window& window() noexcept { return _window; }
+
+	private:
+		static std::unique_ptr<WindowImpl> create(AppImpl&, Window&, const std::string&);
 
 	private:
 		const AppImpl& _app;
+		Window& _window;
 		Hicon _icon;
 		Hwnd _hwnd;
+		friend Window;
 	};
 }

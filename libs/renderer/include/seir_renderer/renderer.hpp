@@ -61,7 +61,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<Renderer> create(const SharedPtr<Window>&);
+		[[nodiscard]] static UniquePtr<Renderer> create(const Window&);
 
 		virtual ~Renderer() noexcept = default;
 

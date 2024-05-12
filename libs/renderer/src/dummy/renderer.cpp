@@ -4,7 +4,6 @@
 
 #include <seir_renderer/renderer.hpp>
 
-#include <seir_app/window.hpp>
 #include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
 #include <seir_renderer/mesh.hpp>
@@ -33,9 +32,6 @@ namespace
 	class DummyRenderer final : public seir::Renderer
 	{
 	public:
-		explicit DummyRenderer(const seir::SharedPtr<seir::Window>& window) noexcept
-			: _window{ window } {}
-
 		seir::UniquePtr<seir::Mesh> createMesh(const seir::MeshFormat&, const void*, size_t, const void*, size_t) override
 		{
 			return seir::makeUnique<seir::Mesh, DummyMesh>();
@@ -52,16 +48,13 @@ namespace
 		}
 
 		void render(const std::function<seir::Mat4(const seir::Vec2&)>&, const std::function<void(seir::RenderPass&)>&) override {}
-
-	private:
-		const seir::SharedPtr<seir::Window> _window;
 	};
 }
 
 namespace seir
 {
-	UniquePtr<Renderer> Renderer::create(const SharedPtr<Window>& window)
+	UniquePtr<Renderer> Renderer::create(const Window&)
 	{
-		return makeUnique<Renderer, DummyRenderer>(window);
+		return makeUnique<Renderer, DummyRenderer>();
 	}
 }

@@ -14,8 +14,7 @@
 TEST_CASE("Font")
 {
 	seir::App app;
-	const auto window = seir::SharedPtr{ seir::Window::create(app, {}) };
-	REQUIRE(window);
+	seir::Window window{ app, {} };
 	const auto renderer = seir::Renderer::create(window);
 	REQUIRE(renderer);
 	SUBCASE("ttf file")

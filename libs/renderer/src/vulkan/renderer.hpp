@@ -19,7 +19,7 @@ namespace seir
 	class VulkanRenderer final : public Renderer
 	{
 	public:
-		explicit VulkanRenderer(const SharedPtr<Window>&) noexcept;
+		explicit VulkanRenderer(const Window&) noexcept;
 		~VulkanRenderer() noexcept override;
 
 		bool initialize();
@@ -33,7 +33,7 @@ namespace seir
 		void resetRenderTarget();
 
 	private:
-		const SharedPtr<Window> _window;
+		const Window& _window;
 		VulkanContext _context;
 		VulkanSampler _textureSampler;
 		VulkanFrameSync _frameSync;
