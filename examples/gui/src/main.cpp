@@ -47,7 +47,7 @@ int u8main(int, char**)
 			fps1.clear();
 			fmt::format_to(std::back_inserter(fps1), "{:.1f} fps", period->_averageFrameRate);
 			fps2.clear();
-			fmt::format_to(std::back_inserter(fps2), "{:.1f} < {} ms/f", 1000 / period->_averageFrameRate, period->_maxFrameDuration);
+			fmt::format_to(std::back_inserter(fps2), "{:.1f} < {} ms/frame", 1000 / period->_averageFrameRate, period->_maxFrameDuration);
 		}
 	}
 	return 0;
