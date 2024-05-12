@@ -132,16 +132,16 @@ int u8main(int, char**)
 {
 	seir::App app;
 	seir::Window window{ app, "Cube" };
-	const auto renderer = seir::Renderer::create(window);
-	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
-	const auto mesh = renderer->createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
-	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
+	seir::Renderer renderer{ window };
+	const auto texture = renderer.createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
+	const auto mesh = renderer.createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
+	const auto shaders = renderer.createShaders(kVertexShader, kFragmentShader);
 	window.show();
 	seir::VariableRate clock;
 	for (EventCallbacks callbacks; app.processEvents(callbacks);)
 	{
 		const auto time = clock.time();
-		renderer->render(
+		renderer.render(
 			[](const seir::Vec2& viewportSize) {
 				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * seir::Mat4::camera({ 0, -5, 0 }, { 0, 0, 0 });
 			},

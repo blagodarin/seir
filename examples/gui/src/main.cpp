@@ -22,10 +22,10 @@ int u8main(int, char**)
 {
 	seir::App app;
 	seir::Window window{ app, "GUI" };
-	const auto renderer = seir::Renderer::create(window);
+	seir::Renderer renderer{ window };
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window };
-	const auto font = seir::Font::load(*renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20);
+	const auto font = seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20);
 	window.show();
 	seir::VariableRate clock;
 	std::string fps1;
@@ -35,7 +35,7 @@ int u8main(int, char**)
 		seir::GuiFrame frame{ gui };
 		if (frame.takeKeyPress(seir::Key::Escape))
 			window.close();
-		renderer->render(
+		renderer.render(
 			[](const seir::Vec2&) { return seir::Mat4::identity(); }, // TODO: Get rid of useless (for 2D) matrix.
 			[&](seir::RenderPass& pass) {
 				font->renderLine(renderer2d, { { 5, 5 }, seir::SizeF{ 200, 20 } }, fps1);

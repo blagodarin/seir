@@ -8,15 +8,14 @@
 
 namespace seir
 {
+	class RendererImpl;
 	class ShaderSet;
-	class VulkanRenderPass;
-	class VulkanRenderer;
 
 	class Vulkan2D
 	{
 	public:
 		VkBuffer indexBuffer(uint32_t frameIndex) const noexcept { return _buffers[frameIndex]._indexBuffer.handle(); }
-		void initialize(VulkanRenderer&);
+		void initialize(RendererImpl&);
 		void resize(uint32_t);
 		const SharedPtr<ShaderSet>& shaders() const noexcept { return _shaders; }
 		void updateBuffers(VulkanContext&, uint32_t frameIndex, const void* vertexData, VkDeviceSize vertexDataSize, const void* indexData, VkDeviceSize indexDataSize);

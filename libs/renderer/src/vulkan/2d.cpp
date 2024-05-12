@@ -21,7 +21,7 @@ namespace
 
 namespace seir
 {
-	void Vulkan2D::initialize(VulkanRenderer& renderer)
+	void Vulkan2D::initialize(RendererImpl& renderer)
 	{
 		assert(!_shaders);
 		_shaders = renderer.createShaders(kVertexShader, kFragmentShader);

@@ -103,7 +103,7 @@ namespace seir
 	class VulkanRenderPass final : public RenderPassImpl
 	{
 	public:
-		VulkanRenderPass(VulkanRenderer& renderer, uint32_t frameIndex, const VkDescriptorBufferInfo& uniformBufferInfo, VkCommandBuffer commandBuffer)
+		VulkanRenderPass(RendererImpl& renderer, uint32_t frameIndex, const VkDescriptorBufferInfo& uniformBufferInfo, VkCommandBuffer commandBuffer)
 			: _renderer{ renderer }
 			, _frameIndex{ frameIndex }
 			, _uniformBufferInfo{ uniformBufferInfo }
@@ -227,7 +227,7 @@ namespace seir
 		}
 
 	private:
-		VulkanRenderer& _renderer;
+		RendererImpl& _renderer;
 		const uint32_t _frameIndex;
 		const VkDescriptorBufferInfo& _uniformBufferInfo;
 		const VkCommandBuffer _commandBuffer;
@@ -241,7 +241,7 @@ namespace seir
 		bool _updatePushConstants = true;
 	};
 
-	VulkanRenderer::VulkanRenderer(const Window& window) noexcept
+	RendererImpl::RendererImpl(const Window& window) noexcept
 		: _window{ window }
 		, _context{
 			RendererOptions{
@@ -253,7 +253,7 @@ namespace seir
 	{
 	}
 
-	VulkanRenderer::~VulkanRenderer() noexcept
+	RendererImpl::~RendererImpl() noexcept
 	{
 		vkDeviceWaitIdle(_context._device);
 		_uniformBuffers.destroy();
@@ -262,7 +262,14 @@ namespace seir
 		_frameSync.destroy(_context._device);
 	}
 
-	bool VulkanRenderer::initialize()
+	SharedPtr<ShaderSet> RendererImpl::createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader)
+	{
+		return makeShared<ShaderSet, VulkanShaderSet>(
+			_context.createShader(vertexShader.data(), vertexShader.size() * sizeof(uint32_t)),
+			_context.createShader(fragmentShader.data(), fragmentShader.size() * sizeof(uint32_t)));
+	}
+
+	bool RendererImpl::initialize()
 	{
 		try
 		{
@@ -287,76 +294,7 @@ namespace seir
 		return true;
 	}
 
-	SharedPtr<Mesh> VulkanRenderer::createMesh(const MeshFormat& format, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount)
-	{
-		if (indexCount > std::numeric_limits<uint32_t>::max())
-			return {};
-		size_t vertexSize = 0;
-		for (const auto attribute : format.vertexAttributes)
-		{
-			switch (attribute)
-			{
-			case VertexAttribute::f32x2: vertexSize += sizeof(float) * 2; break;
-			case VertexAttribute::f32x3: vertexSize += sizeof(float) * 3; break;
-			case VertexAttribute::un8x4: vertexSize += sizeof(uint8_t) * 4; break;
-			}
-		}
-		auto vulkanIndexType = VK_INDEX_TYPE_UINT16;
-		size_t indexSize = 0;
-		switch (format.indexType)
-		{
-		case MeshIndexType::u16:
-			indexSize = sizeof(uint16_t);
-			break;
-		case MeshIndexType::u32:
-			vulkanIndexType = VK_INDEX_TYPE_UINT32;
-			indexSize = sizeof(uint32_t);
-			break;
-		}
-		try
-		{
-			return makeShared<Mesh, VulkanMesh>(format, _context.createDeviceBuffer(vertexData, vertexSize * vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
-				_context.createDeviceBuffer(indexData, indexSize * indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT), vulkanIndexType, static_cast<uint32_t>(indexCount));
-		}
-		catch ([[maybe_unused]] const VulkanError& e)
-		{
-#ifndef NDEBUG
-			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
-#endif
-			return {};
-		}
-	}
-
-	SharedPtr<ShaderSet> VulkanRenderer::createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader)
-	{
-		return makeShared<ShaderSet, VulkanShaderSet>(
-			_context.createShader(vertexShader.data(), vertexShader.size() * sizeof(uint32_t)),
-			_context.createShader(fragmentShader.data(), fragmentShader.size() * sizeof(uint32_t)));
-	}
-
-	SharedPtr<Texture2D> VulkanRenderer::createTexture2D(const ImageInfo& info, const void* data)
-	{
-		if (info.pixelFormat() != PixelFormat::Bgra32)
-			return {};
-		const auto pixelSize = info.pixelSize();
-		const auto stride = info.stride();
-		if (stride % pixelSize)
-			return {};
-		try
-		{
-			return makeShared<Texture2D, VulkanTexture2D>(SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) },
-				_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
-		}
-		catch ([[maybe_unused]] const VulkanError& e)
-		{
-#ifndef NDEBUG
-			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
-#endif
-			return {};
-		}
-	}
-
-	void VulkanRenderer::render(const std::function<Mat4(const Vec2&)>& setup, const std::function<void(RenderPass&)>& callback)
+	void RendererImpl::render(const std::function<Mat4(const Vec2&)>& setup, const std::function<void(RenderPass&)>& callback)
 	{
 		if (!_renderTarget)
 		{
@@ -412,7 +350,7 @@ namespace seir
 		SEIR_VK(vkQueueWaitIdle(_context._presentQueue));
 	}
 
-	void VulkanRenderer::resetRenderTarget()
+	void RendererImpl::resetRenderTarget()
 	{
 		vkDeviceWaitIdle(_context._device);
 		_descriptorAllocator.deallocateAll();
@@ -420,10 +358,89 @@ namespace seir
 		_renderTarget.destroy(_context._device);
 	}
 
-	UniquePtr<Renderer> Renderer::create(const Window& window)
+	std::unique_ptr<RendererImpl> RendererImpl::create(const Window& window)
 	{
-		if (auto renderer = makeUnique<VulkanRenderer>(window); renderer->initialize())
-			return staticCast<Renderer>(std::move(renderer));
+		if (auto renderer = std::make_unique<RendererImpl>(window); renderer->initialize())
+			return renderer;
 		return {};
+	}
+
+	Renderer::Renderer(const Window& window)
+		: _impl{ RendererImpl::create(window) }
+	{
+	}
+
+	Renderer::~Renderer() noexcept = default;
+
+	SharedPtr<Mesh> Renderer::createMesh(const MeshFormat& format, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount)
+	{
+		if (indexCount > std::numeric_limits<uint32_t>::max())
+			return {};
+		size_t vertexSize = 0;
+		for (const auto attribute : format.vertexAttributes)
+		{
+			switch (attribute)
+			{
+			case VertexAttribute::f32x2: vertexSize += sizeof(float) * 2; break;
+			case VertexAttribute::f32x3: vertexSize += sizeof(float) * 3; break;
+			case VertexAttribute::un8x4: vertexSize += sizeof(uint8_t) * 4; break;
+			}
+		}
+		auto vulkanIndexType = VK_INDEX_TYPE_UINT16;
+		size_t indexSize = 0;
+		switch (format.indexType)
+		{
+		case MeshIndexType::u16:
+			indexSize = sizeof(uint16_t);
+			break;
+		case MeshIndexType::u32:
+			vulkanIndexType = VK_INDEX_TYPE_UINT32;
+			indexSize = sizeof(uint32_t);
+			break;
+		}
+		try
+		{
+			return makeShared<Mesh, VulkanMesh>(format, _impl->_context.createDeviceBuffer(vertexData, vertexSize * vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+				_impl->_context.createDeviceBuffer(indexData, indexSize * indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT), vulkanIndexType, static_cast<uint32_t>(indexCount));
+		}
+		catch ([[maybe_unused]] const VulkanError& e)
+		{
+#ifndef NDEBUG
+			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
+#endif
+			return {};
+		}
+	}
+
+	SharedPtr<ShaderSet> Renderer::createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader)
+	{
+		return _impl->createShaders(vertexShader, fragmentShader);
+	}
+
+	SharedPtr<Texture2D> Renderer::createTexture2D(const ImageInfo& info, const void* data)
+	{
+		if (info.pixelFormat() != PixelFormat::Bgra32)
+			return {};
+		const auto pixelSize = info.pixelSize();
+		const auto stride = info.stride();
+		if (stride % pixelSize)
+			return {};
+		try
+		{
+			return makeShared<Texture2D, VulkanTexture2D>(SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) },
+				_impl->_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
+		}
+		catch ([[maybe_unused]] const VulkanError& e)
+		{
+#ifndef NDEBUG
+			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
+#endif
+			return {};
+		}
+	}
+
+	void Renderer::render(const std::function<Mat4(const Vec2&)>& setup, const std::function<void(RenderPass&)>& callback)
+	{
+		_impl->render(setup, callback);
 	}
 }

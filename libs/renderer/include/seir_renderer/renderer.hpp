@@ -7,6 +7,7 @@
 #include <seir_base/shared_ptr.hpp>
 
 #include <functional>
+#include <memory>
 #include <span>
 
 namespace seir
@@ -61,21 +62,24 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<Renderer> create(const Window&);
+		Renderer(const Window&);
 
-		virtual ~Renderer() noexcept = default;
-
-		//
-		[[nodiscard]] virtual SharedPtr<Mesh> createMesh(const MeshFormat&, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount) = 0;
+		~Renderer() noexcept;
 
 		//
-		[[nodiscard]] virtual SharedPtr<ShaderSet> createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader) = 0;
+		[[nodiscard]] SharedPtr<Mesh> createMesh(const MeshFormat&, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount);
 
 		//
-		[[nodiscard]] virtual SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) = 0;
+		[[nodiscard]] SharedPtr<ShaderSet> createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader);
+
+		//
+		[[nodiscard]] SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*);
 		[[nodiscard]] SharedPtr<Texture2D> createTexture2D(const Image&);
 
 		//
-		virtual void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&) = 0;
+		void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&);
+
+	private:
+		const std::unique_ptr<class RendererImpl> _impl;
 	};
 }

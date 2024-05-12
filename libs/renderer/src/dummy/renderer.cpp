@@ -28,33 +28,37 @@ namespace
 	private:
 		const seir::SizeF _size;
 	};
-
-	class DummyRenderer final : public seir::Renderer
-	{
-	public:
-		seir::SharedPtr<seir::Mesh> createMesh(const seir::MeshFormat&, const void*, size_t, const void*, size_t) override
-		{
-			return seir::makeShared<seir::Mesh, DummyMesh>();
-		}
-
-		seir::SharedPtr<seir::ShaderSet> createShaders(std::span<const uint32_t>, std::span<const uint32_t>) override
-		{
-			return seir::makeShared<seir::ShaderSet, DummyShaderSet>();
-		}
-
-		seir::SharedPtr<seir::Texture2D> createTexture2D(const seir::ImageInfo& info, const void*) override
-		{
-			return seir::makeShared<seir::Texture2D, DummyTexture>(seir::SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) });
-		}
-
-		void render(const std::function<seir::Mat4(const seir::Vec2&)>&, const std::function<void(seir::RenderPass&)>&) override {}
-	};
 }
 
 namespace seir
 {
-	UniquePtr<Renderer> Renderer::create(const Window&)
+	class RendererImpl
 	{
-		return makeUnique<Renderer, DummyRenderer>();
+	};
+
+	Renderer::Renderer(const Window&)
+		: _impl{ std::make_unique<RendererImpl>() }
+	{
+	}
+
+	Renderer::~Renderer() noexcept = default;
+
+	SharedPtr<Mesh> Renderer::createMesh(const MeshFormat&, const void*, size_t, const void*, size_t)
+	{
+		return makeShared<Mesh, DummyMesh>();
+	}
+
+	SharedPtr<ShaderSet> Renderer::createShaders(std::span<const uint32_t>, std::span<const uint32_t>)
+	{
+		return makeShared<ShaderSet, DummyShaderSet>();
+	}
+
+	SharedPtr<Texture2D> Renderer::createTexture2D(const ImageInfo& info, const void*)
+	{
+		return makeShared<Texture2D, DummyTexture>(SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) });
+	}
+
+	void Renderer::render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&)
+	{
 	}
 }

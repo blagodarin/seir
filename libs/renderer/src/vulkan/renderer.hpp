@@ -16,21 +16,20 @@ namespace seir
 	class VulkanShaderSet;
 	class VulkanTexture2D;
 
-	class VulkanRenderer final : public Renderer
+	class RendererImpl
 	{
 	public:
-		explicit VulkanRenderer(const Window&) noexcept;
-		~VulkanRenderer() noexcept override;
+		explicit RendererImpl(const Window&) noexcept;
+		~RendererImpl() noexcept;
 
-		bool initialize();
-
-		SharedPtr<Mesh> createMesh(const MeshFormat&, const void*, size_t, const void*, size_t) override;
-		SharedPtr<ShaderSet> createShaders(std::span<const uint32_t>, std::span<const uint32_t>) override;
-		SharedPtr<Texture2D> createTexture2D(const ImageInfo&, const void*) override;
-		void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&) override;
+		SharedPtr<ShaderSet> createShaders(std::span<const uint32_t>, std::span<const uint32_t>);
 
 	private:
+		bool initialize();
+		void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&);
 		void resetRenderTarget();
+
+		static std::unique_ptr<RendererImpl> create(const Window&);
 
 	private:
 		const Window& _window;
@@ -43,6 +42,7 @@ namespace seir
 		VulkanUniformBuffers _uniformBuffers;
 		vulkan::DescriptorAllocator _descriptorAllocator;
 		Vulkan2D _2d;
+		friend Renderer;
 		friend VulkanRenderPass;
 	};
 }
