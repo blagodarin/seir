@@ -13,8 +13,7 @@
 
 TEST_CASE("Font")
 {
-	const auto app = seir::SharedPtr{ seir::App::create() };
-	REQUIRE(app);
+	seir::App app;
 	const auto window = seir::SharedPtr{ seir::Window::create(app, {}) };
 	REQUIRE(window);
 	const auto renderer = seir::Renderer::create(window);

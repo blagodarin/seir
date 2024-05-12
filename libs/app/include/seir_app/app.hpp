@@ -4,26 +4,28 @@
 
 #pragma once
 
-#include <seir_base/shared_ptr.hpp>
+#include <memory>
 
 namespace seir
 {
 	class EventCallbacks;
 
 	//
-	class App : public ReferenceCounter
+	class App
 	{
 	public:
-		//
-		[[nodiscard]] static UniquePtr<App> create();
-
-		virtual ~App() noexcept = default;
+		App();
+		~App() noexcept;
 
 		// Processes application events.
 		// Returns false if the application was requested to quit.
-		[[nodiscard]] virtual bool processEvents(EventCallbacks&) = 0;
+		[[nodiscard]] bool processEvents(EventCallbacks&);
 
 		//
-		virtual void quit() noexcept = 0;
+		void quit() noexcept;
+
+	private:
+		const std::unique_ptr<class AppImpl> _impl;
+		friend class Window;
 	};
 }

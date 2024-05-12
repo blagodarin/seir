@@ -18,11 +18,10 @@ namespace
 
 TEST_CASE("App")
 {
-	const auto app = seir::App::create();
-	REQUIRE(app);
+	seir::App app;
 	EventCallbacks callbacks;
-	CHECK(app->processEvents(callbacks));
-	CHECK(app->processEvents(callbacks));
-	app->quit();
-	CHECK_FALSE(app->processEvents(callbacks));
+	CHECK(app.processEvents(callbacks));
+	CHECK(app.processEvents(callbacks));
+	app.quit();
+	CHECK_FALSE(app.processEvents(callbacks));
 }

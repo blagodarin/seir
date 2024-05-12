@@ -12,10 +12,10 @@ namespace
 	class StubWindow : public seir::Window
 	{
 	public:
-		explicit StubWindow(const seir::SharedPtr<seir::App>& app) noexcept
+		explicit StubWindow(seir::App& app) noexcept
 			: _app{ app } {}
 
-		void close() noexcept override { _app->quit(); }
+		void close() noexcept override { _app.quit(); }
 		std::optional<seir::Point> cursor() const noexcept override { return {}; }
 		seir::WindowDescriptor descriptor() const noexcept override { return { nullptr, 0 }; }
 		void setIcon(const seir::Image&) noexcept override {}
@@ -24,13 +24,13 @@ namespace
 		seir::Size size() const noexcept override { return {}; }
 
 	private:
-		const seir::SharedPtr<seir::App> _app;
+		seir::App& _app;
 	};
 }
 
 namespace seir
 {
-	UniquePtr<Window> Window::create(const SharedPtr<App>& app, const std::string&)
+	UniquePtr<Window> Window::create(App& app, const std::string&)
 	{
 		return makeUnique<Window, StubWindow>(app);
 	}

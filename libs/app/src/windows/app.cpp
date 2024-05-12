@@ -108,12 +108,12 @@ namespace
 	{
 		WNDCLASSEXW windowClass{ sizeof windowClass };
 		windowClass.style = CS_VREDRAW | CS_HREDRAW | CS_OWNDC;
-		windowClass.lpfnWndProc = seir::WindowsApp::staticWindowProc;
+		windowClass.lpfnWndProc = seir::AppImpl::staticWindowProc;
 		windowClass.hInstance = instance;
 		windowClass.hIcon = icon;
 		windowClass.hCursor = cursor;
 		windowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
-		windowClass.lpszClassName = seir::WindowsApp::kWindowClass;
+		windowClass.lpszClassName = seir::AppImpl::kWindowClass;
 		if (::RegisterClassExW(&windowClass))
 			return true;
 		seir::windows::reportError("RegisterClassExW");
@@ -122,65 +122,54 @@ namespace
 
 	void unregisterWindowClass(HINSTANCE instance) noexcept
 	{
-		if (!::UnregisterClassW(seir::WindowsApp::kWindowClass, instance))
+		if (!::UnregisterClassW(seir::AppImpl::kWindowClass, instance))
 			seir::windows::reportError("UnregisterClassW");
 	}
 }
 
 namespace seir
 {
-	WindowsApp::WindowsApp(HINSTANCE instance, Hicon&& icon, Hcursor&& emptyCursor)
+	std::unique_ptr<AppImpl> AppImpl::create()
+	{
+		const auto instance = ::GetModuleHandleW(nullptr);
+		auto icon = ::loadDefaultIcon(instance);
+		if (auto emptyCursor = ::createEmptyCursor(instance))
+			if (::registerWindowClass(instance, icon, emptyCursor))
+				return std::make_unique<AppImpl>(instance, std::move(icon), std::move(emptyCursor));
+		return nullptr;
+	}
+
+	AppImpl::AppImpl(HINSTANCE instance, Hicon&& icon, Hcursor&& emptyCursor)
 		: _instance{ instance }
 		, _icon{ std::move(icon) }
 		, _emptyCursor{ std::move(emptyCursor) }
 	{
 	}
 
-	WindowsApp::~WindowsApp() noexcept
+	AppImpl::~AppImpl() noexcept
 	{
 		::unregisterWindowClass(_instance);
 	}
 
-	bool WindowsApp::processEvents(EventCallbacks& callbacks)
-	{
-		assert(!_callbacks);
-		_callbacks = &callbacks;
-		SEIR_FINALLY([this] { _callbacks = nullptr; });
-		MSG msg;
-		while (::PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			if (msg.message == WM_QUIT)
-				return false;
-			::TranslateMessage(&msg);
-			::DispatchMessageW(&msg);
-		}
-		return true;
-	}
-
-	void WindowsApp::quit() noexcept
-	{
-		::PostQuitMessage(0);
-	}
-
-	void WindowsApp::addWindow(HWND hwnd, WindowsWindow* window)
+	void AppImpl::addWindow(HWND hwnd, WindowsWindow* window)
 	{
 		_windows.emplace(hwnd, window);
 	}
 
-	LRESULT CALLBACK WindowsApp::staticWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) noexcept
+	LRESULT CALLBACK AppImpl::staticWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) noexcept
 	{
-		WindowsApp* app = nullptr;
+		AppImpl* app = nullptr;
 		if (msg == WM_NCCREATE)
 		{
-			app = static_cast<WindowsApp*>(((CREATESTRUCTW*)lparam)->lpCreateParams);
+			app = static_cast<AppImpl*>(((CREATESTRUCTW*)lparam)->lpCreateParams);
 			::SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)app);
 		}
 		else
-			app = (WindowsApp*)::GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+			app = (AppImpl*)::GetWindowLongPtrW(hwnd, GWLP_USERDATA);
 		return app->windowProc(hwnd, msg, wparam, lparam);
 	}
 
-	LRESULT WindowsApp::windowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) noexcept
+	LRESULT AppImpl::windowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) noexcept
 	{
 		const auto onKeyEvent = [this, hwnd](Key key, bool pressed, bool repeated) {
 			if (const auto i = _windows.find(hwnd); i != _windows.end())
@@ -271,13 +260,33 @@ namespace seir
 		return 0;
 	}
 
-	UniquePtr<App> App::create()
+	App::App()
+		: _impl{ AppImpl::create() }
 	{
-		const auto instance = ::GetModuleHandleW(nullptr);
-		auto icon = ::loadDefaultIcon(instance);
-		if (auto emptyCursor = ::createEmptyCursor(instance))
-			if (::registerWindowClass(instance, icon, emptyCursor))
-				return makeUnique<App, WindowsApp>(instance, std::move(icon), std::move(emptyCursor));
-		return nullptr;
+	}
+
+	App::~App() noexcept = default;
+
+	bool App::processEvents(EventCallbacks& callbacks)
+	{
+		if (!_impl)
+			return false;
+		assert(!_impl->_callbacks);
+		_impl->_callbacks = &callbacks;
+		SEIR_FINALLY([this] { _impl->_callbacks = nullptr; });
+		MSG msg;
+		while (::PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			if (msg.message == WM_QUIT)
+				return false;
+			::TranslateMessage(&msg);
+			::DispatchMessageW(&msg);
+		}
+		return true;
+	}
+
+	void App::quit() noexcept
+	{
+		::PostQuitMessage(0);
 	}
 }

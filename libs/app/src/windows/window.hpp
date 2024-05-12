@@ -10,12 +10,12 @@
 
 namespace seir
 {
-	class WindowsApp;
+	class AppImpl;
 
 	class WindowsWindow final : public Window
 	{
 	public:
-		WindowsWindow(SharedPtr<WindowsApp>&&, Hwnd&&) noexcept;
+		WindowsWindow(AppImpl&, Hwnd&&) noexcept;
 
 		void close() noexcept override;
 		std::optional<Point> cursor() const noexcept override;
@@ -28,7 +28,7 @@ namespace seir
 		void reset() noexcept;
 
 	private:
-		const SharedPtr<WindowsApp> _app;
+		const AppImpl& _app;
 		Hicon _icon;
 		Hwnd _hwnd;
 	};

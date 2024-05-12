@@ -4,30 +4,28 @@
 
 #include <seir_app/app.hpp>
 
-namespace
-{
-	class StubApp final : public seir::App
-	{
-	public:
-		bool processEvents(seir::EventCallbacks&) override
-		{
-			return !_quit;
-		}
-
-		void quit() noexcept override
-		{
-			_quit = true;
-		}
-
-	private:
-		bool _quit = false;
-	};
-}
-
 namespace seir
 {
-	UniquePtr<App> App::create()
+	class AppImpl
 	{
-		return makeUnique<App, StubApp>();
+	public:
+		bool _quit = false;
+	};
+
+	App::App()
+		: _impl{ std::make_unique<AppImpl>() }
+	{
+	}
+
+	App::~App() noexcept = default;
+
+	bool App::processEvents(EventCallbacks&)
+	{
+		return !_impl->_quit;
+	}
+
+	void App::quit() noexcept
+	{
+		_impl->_quit = true;
 	}
 }

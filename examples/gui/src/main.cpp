@@ -20,7 +20,7 @@
 
 int u8main(int, char**)
 {
-	const auto app = seir::SharedPtr{ seir::App::create() };
+	seir::App app;
 	const auto window = seir::SharedPtr{ seir::Window::create(app, "GUI") };
 	seir::GuiContext gui{ *window };
 	const auto renderer = seir::Renderer::create(window);
@@ -30,7 +30,7 @@ int u8main(int, char**)
 	seir::VariableRate clock;
 	std::string fps1;
 	std::string fps2;
-	while (app->processEvents(gui.eventCallbacks()))
+	while (app.processEvents(gui.eventCallbacks()))
 	{
 		seir::GuiFrame frame{ gui };
 		if (frame.takeKeyPress(seir::Key::Escape))

@@ -30,7 +30,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<Window> create(const SharedPtr<App>&, const std::string& title);
+		[[nodiscard]] static UniquePtr<Window> create(App&, const std::string& title);
 
 		virtual ~Window() noexcept = default;
 

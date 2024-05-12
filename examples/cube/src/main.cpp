@@ -130,11 +130,7 @@ namespace
 
 int u8main(int, char**)
 {
-	// TODO: Make less verbose.
-	// Posible options include:
-	// - making create() return SharedPtr;
-	// - removing SharedPtr and passing App and Window by reference.
-	const auto app = seir::SharedPtr{ seir::App::create() };
+	seir::App app;
 	const auto window = seir::SharedPtr{ seir::Window::create(app, "Cube") };
 	const auto renderer = seir::Renderer::create(window);
 	const auto texture = renderer->createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
@@ -142,7 +138,7 @@ int u8main(int, char**)
 	const auto shaders = renderer->createShaders(kVertexShader, kFragmentShader);
 	window->show();
 	seir::VariableRate clock;
-	for (EventCallbacks callbacks; app->processEvents(callbacks);)
+	for (EventCallbacks callbacks; app.processEvents(callbacks);)
 	{
 		const auto time = clock.time();
 		renderer->render(

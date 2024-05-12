@@ -18,13 +18,12 @@ namespace
 
 TEST_CASE("Window")
 {
-	const auto app = seir::SharedPtr{ seir::App::create() };
-	REQUIRE(app);
+	seir::App app;
 	EventCallbacks callbacks;
 	const auto window = seir::Window::create(app, {});
 	REQUIRE(window);
-	CHECK(app->processEvents(callbacks));
-	CHECK(app->processEvents(callbacks));
+	CHECK(app.processEvents(callbacks));
+	CHECK(app.processEvents(callbacks));
 	window->close();
-	CHECK_FALSE(app->processEvents(callbacks));
+	CHECK_FALSE(app.processEvents(callbacks));
 }

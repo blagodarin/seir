@@ -20,9 +20,9 @@ namespace
 
 int main(int, char**)
 {
-	const auto app = seir::SharedPtr{ seir::App::create() };
+	seir::App app;
 	const auto window = seir::SharedPtr{ seir::Window::create(app, "Example") };
 	window->show();
-	for (State state; app->processEvents(state);)
+	for (State state; app.processEvents(state);)
 		;
 }

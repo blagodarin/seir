@@ -34,11 +34,11 @@ namespace
 
 namespace seir
 {
-	WindowsWindow::WindowsWindow(SharedPtr<WindowsApp>&& app, Hwnd&& hwnd) noexcept
-		: _app{ std::move(app) }
+	WindowsWindow::WindowsWindow(AppImpl& app, Hwnd&& hwnd) noexcept
+		: _app{ app }
 		, _hwnd{ std::move(hwnd) }
 	{
-		_app->addWindow(_hwnd, this);
+		app.addWindow(_hwnd, this);
 	}
 
 	void WindowsWindow::close() noexcept
@@ -61,7 +61,7 @@ namespace seir
 
 	WindowDescriptor WindowsWindow::descriptor() const noexcept
 	{
-		return { _app->instance(), reinterpret_cast<intptr_t>(_hwnd.get()) };
+		return { _app.instance(), reinterpret_cast<intptr_t>(_hwnd.get()) };
 	}
 
 	void WindowsWindow::setIcon(const Image& image) noexcept
@@ -123,14 +123,18 @@ namespace seir
 		_hwnd.reset();
 	}
 
-	UniquePtr<Window> Window::create(const SharedPtr<App>& app, const std::string& title)
+	UniquePtr<Window> Window::create(App& app, const std::string& title)
 	{
+		if (!app._impl)
+			return {};
 		const auto wtitle = ::toWChar(title);
-		auto windowsApp = staticCast<WindowsApp>(app);
-		if (Hwnd hwnd{ ::CreateWindowExW(WS_EX_APPWINDOW, WindowsApp::kWindowClass, wtitle ? wtitle.get() : L"", WS_OVERLAPPEDWINDOW,
-				CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, windowsApp->instance(), windowsApp.get()) })
-			return makeUnique<Window, WindowsWindow>(std::move(windowsApp), std::move(hwnd));
-		windows::reportError("CreateWindowExW");
-		return {};
+		Hwnd hwnd{ ::CreateWindowExW(WS_EX_APPWINDOW, AppImpl::kWindowClass, wtitle ? wtitle.get() : L"", WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, app._impl->instance(), app._impl.get()) };
+		if (!hwnd)
+		{
+			windows::reportError("CreateWindowExW");
+			return {};
+		}
+		return makeUnique<Window, WindowsWindow>(*app._impl, std::move(hwnd));
 	}
 }
