@@ -35,13 +35,11 @@ int u8main(int, char**)
 		seir::GuiFrame frame{ gui };
 		if (frame.takeKeyPress(seir::Key::Escape))
 			window.close();
-		renderer.render(
-			[](const seir::Vec2&) { return seir::Mat4::identity(); }, // TODO: Get rid of useless (for 2D) matrix.
-			[&](seir::RenderPass& pass) {
-				font->renderLine(renderer2d, { { 5, 5 }, seir::SizeF{ 200, 20 } }, fps1);
-				font->renderLine(renderer2d, { { 5, 25 }, seir::SizeF{ 200, 20 } }, fps2);
-				renderer2d.draw(pass);
-			});
+		renderer.render([&](seir::RenderPass& pass) {
+			font->renderLine(renderer2d, { { 5, 5 }, seir::SizeF{ 200, 20 } }, fps1);
+			font->renderLine(renderer2d, { { 5, 25 }, seir::SizeF{ 200, 20 } }, fps2);
+			renderer2d.draw(pass);
+		});
 		if (const auto period = clock.advance())
 		{
 			fps1.clear();

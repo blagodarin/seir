@@ -140,17 +140,15 @@ int u8main(int, char**)
 	seir::VariableRate clock;
 	for (EventCallbacks callbacks; app.processEvents(callbacks);)
 	{
-		const auto time = clock.time();
-		renderer.render(
-			[](const seir::Vec2& viewportSize) {
-				return seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * seir::Mat4::camera({ 0, -5, 0 }, { 0, 0, 0 });
-			},
-			[&texture, &mesh, &shaders, time](seir::RenderPass& pass) {
-				pass.bindShaders(shaders);
-				pass.bindTexture(texture);
-				pass.setTransformation(seir::Mat4::rotation(29 * time, { 0, 0, 1 }) * seir::Mat4::rotation(19 * time, { 1, 0, 0 }));
-				pass.drawMesh(*mesh);
-			});
+		renderer.render([&, time = clock.time()](seir::RenderPass& pass) {
+			const auto viewportSize = pass.size();
+			pass.updateUniformBuffer(seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * seir::Mat4::camera({ 0, -5, 0 }, { 0, 0, 0 }));
+			pass.bindShaders(shaders);
+			pass.bindTexture(texture);
+			pass.bindUniformBuffer();
+			pass.setTransformation(seir::Mat4::rotation(29 * time, { 0, 0, 1 }) * seir::Mat4::rotation(19 * time, { 1, 0, 0 }));
+			pass.drawMesh(*mesh);
+		});
 		if (const auto period = clock.advance())
 			window.setTitle(fmt::format("Cube [{:.1f} fps]", period->_averageFrameRate));
 	}

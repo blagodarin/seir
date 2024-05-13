@@ -26,7 +26,7 @@ namespace seir
 
 	private:
 		bool initialize();
-		void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&);
+		void render(const std::function<void(RenderPass&)>&);
 		void resetRenderTarget();
 
 		static std::unique_ptr<RendererImpl> create(const Window&);

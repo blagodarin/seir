@@ -58,7 +58,7 @@ namespace seir
 		return makeShared<Texture2D, DummyTexture>(SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) });
 	}
 
-	void Renderer::render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&)
+	void Renderer::render(const std::function<void(RenderPass&)>&)
 	{
 	}
 }

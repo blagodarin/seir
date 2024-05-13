@@ -51,10 +51,19 @@ namespace seir
 		virtual void bindTexture(const SharedPtr<Texture2D>&) = 0;
 
 		//
+		virtual void bindUniformBuffer() = 0; // TODO: Add a parameter.
+
+		//
 		virtual void drawMesh(const Mesh&) = 0;
 
 		//
 		virtual void setTransformation(const Mat4&) = 0;
+
+		//
+		virtual Vec2 size() const noexcept = 0;
+
+		//
+		virtual void updateUniformBuffer(const Mat4&) = 0;
 	};
 
 	//
@@ -77,7 +86,7 @@ namespace seir
 		[[nodiscard]] SharedPtr<Texture2D> createTexture2D(const Image&);
 
 		//
-		void render(const std::function<Mat4(const Vec2&)>&, const std::function<void(RenderPass&)>&);
+		void render(const std::function<void(RenderPass&)>&);
 
 	private:
 		const std::unique_ptr<class RendererImpl> _impl;

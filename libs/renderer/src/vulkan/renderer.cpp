@@ -36,7 +36,7 @@ namespace
 		builder.addDescriptorSetLayout();
 		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		builder.addDescriptorSetLayout();
-		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT); // TODO: Add only if required.
 		builder.setPushConstantRange(0, sizeof(PushConstants), VK_SHADER_STAGE_VERTEX_BIT);
 		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
 		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
@@ -103,10 +103,9 @@ namespace seir
 	class VulkanRenderPass final : public RenderPassImpl
 	{
 	public:
-		VulkanRenderPass(RendererImpl& renderer, uint32_t frameIndex, const VkDescriptorBufferInfo& uniformBufferInfo, VkCommandBuffer commandBuffer)
+		VulkanRenderPass(RendererImpl& renderer, uint32_t frameIndex, VkCommandBuffer commandBuffer)
 			: _renderer{ renderer }
 			, _frameIndex{ frameIndex }
-			, _uniformBufferInfo{ uniformBufferInfo }
 			, _commandBuffer{ commandBuffer }
 		{
 		}
@@ -127,6 +126,12 @@ namespace seir
 		{
 			assert(shaderSet);
 			_shaderSet = staticCast<VulkanShaderSet>(shaderSet);
+		}
+
+		void bindUniformBuffer() override
+		{
+			_uniformBufferInfo = _renderer._uniformBuffers[_frameIndex];
+			_updateUniformBuffer = true;
 		}
 
 		void bind2DShaders() override
@@ -164,9 +169,21 @@ namespace seir
 			_updatePushConstants = true;
 		}
 
+		Vec2 size() const noexcept override
+		{
+			const auto viewportSize = _renderer._renderTarget.extent();
+			return { static_cast<float>(viewportSize.width), static_cast<float>(viewportSize.height) };
+		}
+
 		void update2DBuffers(std::span<const Vertex2D> vertices, std::span<const uint16_t> indices) override
 		{
 			_renderer._2d.updateBuffers(_renderer._context, _frameIndex, vertices.data(), vertices.size_bytes(), indices.data(), indices.size_bytes());
+		}
+
+		void updateUniformBuffer(const Mat4& matrix) override
+		{
+			const UniformBufferObject ubo{ ._matrix = matrix };
+			_renderer._uniformBuffers.update(_frameIndex, &ubo);
 		}
 
 	private:
@@ -183,11 +200,14 @@ namespace seir
 			if (_updateUniformBuffer)
 			{
 				_updateUniformBuffer = false;
-				const auto descriptorSet =
-					vulkan::DescriptorBuilder{}
-						.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, _uniformBufferInfo)
-						.build(_renderer._descriptorAllocator, _pipeline->descriptorSetLayout(1));
-				vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->pipelineLayout(), 1, 1, &descriptorSet, 0, nullptr);
+				if (_uniformBufferInfo)
+				{
+					const auto descriptorSet =
+						vulkan::DescriptorBuilder{}
+							.bindBuffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, *_uniformBufferInfo)
+							.build(_renderer._descriptorAllocator, _pipeline->descriptorSetLayout(1));
+					vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->pipelineLayout(), 1, 1, &descriptorSet, 0, nullptr);
+				}
 			}
 			if (_updateTexture)
 			{
@@ -229,7 +249,7 @@ namespace seir
 	private:
 		RendererImpl& _renderer;
 		const uint32_t _frameIndex;
-		const VkDescriptorBufferInfo& _uniformBufferInfo;
+		std::optional<VkDescriptorBufferInfo> _uniformBufferInfo;
 		const VkCommandBuffer _commandBuffer;
 		SharedPtr<VulkanShaderSet> _shaderSet;
 		VulkanPipeline* _pipeline = nullptr;
@@ -294,7 +314,7 @@ namespace seir
 		return true;
 	}
 
-	void RendererImpl::render(const std::function<Mat4(const Vec2&)>& setup, const std::function<void(RenderPass&)>& callback)
+	void RendererImpl::render(const std::function<void(RenderPass&)>& callback)
 	{
 		if (!_renderTarget)
 		{
@@ -326,19 +346,12 @@ namespace seir
 		uint32_t index = 0;
 		if (!_renderTarget.acquireFrame(_context._device, frameAvailableSemaphore, frameFence, index))
 			return resetRenderTarget();
-		{
-			const auto viewportSize = _renderTarget.extent();
-			const UniformBufferObject ubo{
-				._matrix = setup({ static_cast<float>(viewportSize.width), static_cast<float>(viewportSize.height) }),
-			};
-			_uniformBuffers.update(index, &ubo);
-		}
 		_descriptorAllocator.setFrameIndex(index);
 		auto commandBuffer = _context.createCommandBuffer(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		const auto renderPassInfo = _renderTarget.renderPassInfo(index);
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		{
-			VulkanRenderPass renderPass{ *this, index, _uniformBuffers[index], commandBuffer };
+			VulkanRenderPass renderPass{ *this, index, commandBuffer };
 			callback(renderPass);
 		}
 		vkCmdEndRenderPass(commandBuffer);
@@ -439,8 +452,8 @@ namespace seir
 		}
 	}
 
-	void Renderer::render(const std::function<Mat4(const Vec2&)>& setup, const std::function<void(RenderPass&)>& callback)
+	void Renderer::render(const std::function<void(RenderPass&)>& callback)
 	{
-		_impl->render(setup, callback);
+		_impl->render(callback);
 	}
 }
