@@ -145,7 +145,7 @@ int u8main(int, char**)
 			pass.updateUniformBuffer(seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * seir::Mat4::camera({ 0, -5, 0 }, { 0, 0, 0 }));
 			pass.bindShaders(shaders);
 			pass.bindTexture(texture);
-			pass.bindUniformBuffer();
+			pass.bindUniformBuffer(true);
 			pass.setTransformation(seir::Mat4::rotation(29 * time, { 0, 0, 1 }) * seir::Mat4::rotation(19 * time, { 1, 0, 0 }));
 			pass.drawMesh(*mesh);
 		});

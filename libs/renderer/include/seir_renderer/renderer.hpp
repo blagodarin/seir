@@ -51,7 +51,7 @@ namespace seir
 		virtual void bindTexture(const SharedPtr<Texture2D>&) = 0;
 
 		//
-		virtual void bindUniformBuffer() = 0; // TODO: Add a parameter.
+		virtual void bindUniformBuffer(bool) = 0; // TODO: Add a parameter with an actual buffer.
 
 		//
 		virtual void drawMesh(const Mesh&) = 0;

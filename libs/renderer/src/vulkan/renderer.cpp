@@ -30,21 +30,6 @@ namespace
 		seir::Mat4 _matrix;
 	};
 
-	seir::VulkanPipeline createPipeline(const seir::VulkanContext& context, const seir::VulkanRenderTarget& renderTarget, VkShaderModule vertexShader, VkShaderModule fragmentShader, const seir::MeshFormat& meshFormat)
-	{
-		seir::VulkanPipelineBuilder builder{ renderTarget.extent(), context._maxSampleCount, context._options.sampleShading };
-		builder.addDescriptorSetLayout();
-		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-		builder.addDescriptorSetLayout();
-		builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT); // TODO: Add only if required.
-		builder.setPushConstantRange(0, sizeof(PushConstants), VK_SHADER_STAGE_VERTEX_BIT);
-		builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, vertexShader);
-		builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader);
-		builder.setVertexInput(0, { meshFormat.vertexAttributes.data(), meshFormat.vertexAttributes.size() }, VK_VERTEX_INPUT_RATE_VERTEX);
-		builder.setInputAssembly(meshFormat.topology);
-		return builder.build(context._device, renderTarget.renderPass());
-	}
-
 	class VulkanMesh : public seir::Mesh
 	{
 	public:
@@ -112,7 +97,7 @@ namespace seir
 
 		void begin2DRendering(const MeshFormat& format)
 		{
-			selectPipeline(format);
+			selectPipeline(format, false);
 			const auto extent = _renderer._renderTarget.extent();
 			setTransformation(seir::Mat4::projection2D(static_cast<float>(extent.width), static_cast<float>(extent.height)));
 			processUpdates();
@@ -128,9 +113,9 @@ namespace seir
 			_shaderSet = staticCast<VulkanShaderSet>(shaderSet);
 		}
 
-		void bindUniformBuffer() override
+		void bindUniformBuffer(bool bind) override
 		{
-			_uniformBufferInfo = _renderer._uniformBuffers[_frameIndex];
+			_uniformBufferInfo = bind ? std::optional{ _renderer._uniformBuffers[_frameIndex] } : std::nullopt;
 			_updateUniformBuffer = true;
 		}
 
@@ -154,7 +139,7 @@ namespace seir
 		void drawMesh(const Mesh& mesh) override
 		{
 			const auto vulkanMesh = static_cast<const VulkanMesh*>(&mesh);
-			selectPipeline(vulkanMesh->format());
+			selectPipeline(vulkanMesh->format(), _uniformBufferInfo.has_value());
 			processUpdates();
 			VkBuffer vertexBuffers[]{ vulkanMesh->vertexBufferHandle() };
 			VkDeviceSize offsets[]{ 0 };
@@ -225,20 +210,43 @@ namespace seir
 			}
 		}
 
-		void selectPipeline(const MeshFormat& meshFormat)
+		void selectPipeline(const MeshFormat& meshFormat, bool uniformBuffer)
 		{
 			assert(_shaderSet);
-			auto key = static_cast<unsigned>(meshFormat.topology);
+			auto key = static_cast<uint32_t>(meshFormat.topology);
+			assert(key <= 0b11);
 			for (size_t i = 0; i < meshFormat.vertexAttributes.size(); ++i)
-				key += (static_cast<unsigned>(meshFormat.vertexAttributes[i]) + 1) << (2 * (i + 1));
+			{
+				const auto attribute = static_cast<unsigned>(meshFormat.vertexAttributes[i]);
+				assert(attribute <= 0b11);
+				key += (attribute + 1) << (2 * (i + 1));
+			}
+			assert(key < (1u << 14));
+			if (uniformBuffer)
+				key += 1u << 14;
 			auto [i, end] = _renderer._pipelineCache.equal_range(_shaderSet.get());
 			while (i != end && i->second.first != key)
 				++i;
 			if (i == end)
+			{
+				seir::VulkanPipelineBuilder builder{ _renderer._renderTarget.extent(), _renderer._context._maxSampleCount, _renderer._context._options.sampleShading };
+				builder.addDescriptorSetLayout();
+				builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+				if (uniformBuffer)
+				{
+					builder.addDescriptorSetLayout();
+					builder.setDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT); // TODO: Add only if required.
+				}
+				builder.setPushConstantRange(0, sizeof(PushConstants), VK_SHADER_STAGE_VERTEX_BIT);
+				builder.setStage(VK_SHADER_STAGE_VERTEX_BIT, _shaderSet->vertexShader());
+				builder.setStage(VK_SHADER_STAGE_FRAGMENT_BIT, _shaderSet->fragmentShader());
+				builder.setVertexInput(0, { meshFormat.vertexAttributes.data(), meshFormat.vertexAttributes.size() }, VK_VERTEX_INPUT_RATE_VERTEX);
+				builder.setInputAssembly(meshFormat.topology);
 				i = _renderer._pipelineCache.emplace(
 					std::piecewise_construct,
 					std::forward_as_tuple(_shaderSet.get()),
-					std::forward_as_tuple(key, ::createPipeline(_renderer._context, _renderer._renderTarget, _shaderSet->vertexShader(), _shaderSet->fragmentShader(), meshFormat)));
+					std::forward_as_tuple(key, builder.build(_renderer._context._device, _renderer._renderTarget.renderPass())));
+			}
 			if (&i->second.second != _pipeline)
 			{
 				_pipeline = &i->second.second;
