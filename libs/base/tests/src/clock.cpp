@@ -206,8 +206,8 @@ TEST_CASE("VariableRate")
 		{
 			// Frame durations aren't rounded neither up nor down,
 			// but peak frame duration metric is rounded up.
-			REQUIRE_FALSE(advance(999'001us, Approx{ 0.999'001f }));
-			REQUIRE_FALSE(advance(998us, Approx{ 0.999'999f }));
+			REQUIRE_FALSE(advance(999'001us, Approx{ 0.999'001 }));
+			REQUIRE_FALSE(advance(998us, Approx{ 0.999'999 }));
 			auto period = advance(1us, 1.f);
 			REQUIRE(period);
 			CHECK(period->_frameCount == 3);
@@ -215,7 +215,7 @@ TEST_CASE("VariableRate")
 			CHECK(period->_maxFrameDuration == 1000);
 
 			// Peak frame duration metric doesn't have an extra millisecond.
-			REQUIRE_FALSE(advance(999ms, Approx{ 1.999f }));
+			REQUIRE_FALSE(advance(999ms, Approx{ 1.999 }));
 			period = advance(1ms, 2.f);
 			REQUIRE(period);
 			CHECK(period->_frameCount == 2);
@@ -234,7 +234,7 @@ TEST_CASE("VariableRate")
 			CHECK(period->_maxFrameDuration == 750);
 
 			// The second period is not affected by the preceding long period.
-			REQUIRE_FALSE(advance(999'999us, Approx{ 2.499'999f }));
+			REQUIRE_FALSE(advance(999'999us, Approx{ 2.499'999 }));
 			period = advance(1us, 2.5f);
 			REQUIRE(period);
 			CHECK(period->_frameCount == 2);
