@@ -12,8 +12,8 @@ TEST_CASE("FINALLY")
 	SUBCASE("leave")
 	{
 		{
-			SEIR_FINALLY([&value] { value += 1; });
-			SEIR_FINALLY([&value] { value += 2; });
+			SEIR_FINALLY{ [&value]() noexcept { value += 1; } };
+			SEIR_FINALLY{ [&value]() noexcept { value += 2; } };
 			CHECK(value == 0);
 		}
 		CHECK(value == 3);
@@ -23,8 +23,8 @@ TEST_CASE("FINALLY")
 		bool caught = false;
 		try
 		{
-			SEIR_FINALLY([&value] { value += 1; });
-			SEIR_FINALLY([&value] { value += 2; });
+			SEIR_FINALLY{ [&value]() noexcept { value += 1; } };
+			SEIR_FINALLY{ [&value]() noexcept { value += 2; } };
 			CHECK(value == 0);
 			throw 0;
 		}

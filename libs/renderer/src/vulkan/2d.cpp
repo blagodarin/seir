@@ -52,9 +52,9 @@ namespace seir
 			buffers._indexBufferSize = indexDataSize;
 		}
 		const auto vertices = buffers._vertexBuffer.map();
-		SEIR_FINALLY([&buffers] { buffers._vertexBuffer.unmap(); });
+		SEIR_FINALLY{ [&buffers]() noexcept { buffers._vertexBuffer.unmap(); } };
 		const auto indices = buffers._indexBuffer.map();
-		SEIR_FINALLY([&buffers] { buffers._indexBuffer.unmap(); });
+		SEIR_FINALLY{ [&buffers]() noexcept { buffers._indexBuffer.unmap(); } };
 		std::memcpy(vertices, vertexData, vertexDataSize);
 		std::memcpy(indices, indexData, indexDataSize);
 		const VmaAllocation allocations[2]{ buffers._vertexBuffer.allocation(), buffers._indexBuffer.allocation() };

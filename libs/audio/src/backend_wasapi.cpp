@@ -38,7 +38,7 @@ namespace seir
 		};
 		if (const auto hr = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED); FAILED(hr))
 			return error("CoInitializeEx", hr);
-		SEIR_FINALLY([] { ::CoUninitialize(); });
+		SEIR_FINALLY{ []() noexcept { ::CoUninitialize(); } };
 		ComPtr<IMMDeviceEnumerator> deviceEnumerator;
 		if (const auto hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), reinterpret_cast<void**>(&deviceEnumerator)); !deviceEnumerator)
 			return error("CoCreateInstance", hr);
@@ -95,10 +95,10 @@ namespace seir
 		callbacks.onBackendAvailable(format->nSamplesPerSec, bufferFrames);
 		const UINT32 updateFrames = bufferFrames / kAudioFramesPerBlock * kAudioFramesPerBlock / 2;
 		bool audioClientStarted = false;
-		SEIR_FINALLY([&] {
+		SEIR_FINALLY{ [&]() noexcept {
 			if (audioClientStarted)
 				audioClient->Stop();
-		});
+		} };
 		while (callbacks.onBackendIdle())
 		{
 			UINT32 lockedFrames = 0;

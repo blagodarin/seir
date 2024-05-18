@@ -52,10 +52,10 @@ namespace
 					seir::windows::reportError("MapViewOfFile");
 				else
 				{
-					SEIR_FINALLY([&data] {
+					SEIR_FINALLY{ [&data]() noexcept {
 						if (data && !::UnmapViewOfFile(data))
 							seir::windows::reportError("UnmapViewOfFile");
-					});
+					} };
 					return seir::makeShared<seir::Blob, FileBlob>(data, static_cast<size_t>(size.QuadPart));
 				}
 		}
@@ -190,10 +190,10 @@ namespace seir
 				windows::reportError("MapViewOfFile");
 			else
 			{
-				SEIR_FINALLY([&data] {
+				SEIR_FINALLY{ [&data]() noexcept {
 					if (data && !::UnmapViewOfFile(data))
 						windows::reportError("UnmapViewOfFile");
-				});
+				} };
 				return seir::makeShared<seir::Blob, FileBlob>(data, static_cast<size_t>(impl._size));
 			}
 		return {};

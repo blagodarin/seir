@@ -40,6 +40,17 @@ namespace seir
 			uint32_t _baseIndex = 0;
 		};
 
+		void clear() noexcept
+		{
+			_vertexBuffer.clear();
+			_indexBuffer.clear();
+			_ranges.clear();
+			assert(_ranges.capacity() >= 1);
+			_ranges.emplace_back(Renderer2DImpl::Range{ nullptr, 0 });
+			_textureRect = RectF{ SizeF{ 1, 1 } };
+			_color = Rgba32::white();
+		}
+
 		Batch prepareBatch(uint32_t vertexCount, uint32_t indexCount)
 		{
 			assert(vertexCount <= std::numeric_limits<uint16_t>::max());
@@ -86,21 +97,11 @@ namespace seir
 		batch._indices[3] = static_cast<uint16_t>(batch._baseIndex + 3);
 	}
 
-	void Renderer2D::clear()
-	{
-		_impl->_vertexBuffer.clear();
-		_impl->_indexBuffer.clear();
-		_impl->_ranges.clear();
-		_impl->_ranges.emplace_back(Renderer2DImpl::Range{ nullptr, 0 });
-		_impl->_textureRect = RectF{ SizeF{ 1, 1 } };
-		_impl->_color = Rgba32::white();
-	}
-
 	void Renderer2D::draw(RenderPass& pass)
 	{
 		if (_impl->_indexBuffer.empty())
 			return;
-		SEIR_FINALLY([this] { clear(); });
+		SEIR_FINALLY{ [this]() noexcept { _impl->clear(); } };
 		static_cast<RenderPassImpl&>(pass).bind2DShaders();
 		static_cast<RenderPassImpl&>(pass).update2DBuffers(_impl->_vertexBuffer, _impl->_indexBuffer);
 		static_cast<RenderPassImpl&>(pass).begin2DRendering({

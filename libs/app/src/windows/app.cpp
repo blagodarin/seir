@@ -271,7 +271,7 @@ namespace seir
 	{
 		assert(!_impl->_callbacks);
 		_impl->_callbacks = &callbacks;
-		SEIR_FINALLY([this] { _impl->_callbacks = nullptr; });
+		SEIR_FINALLY{ [this]() noexcept { _impl->_callbacks = nullptr; } };
 		MSG msg;
 		while (::PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{

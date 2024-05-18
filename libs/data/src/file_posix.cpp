@@ -46,10 +46,10 @@ namespace
 				::perror("mmap");
 			else
 			{
-				SEIR_FINALLY([&] {
+				SEIR_FINALLY{ [&]() noexcept {
 					if (data != kMapFailed && ::munmap(data, size) == -1)
 						::perror("munmap");
-				});
+				} };
 				return seir::makeShared<seir::Blob, FileBlob>(data, size);
 			}
 			return {};

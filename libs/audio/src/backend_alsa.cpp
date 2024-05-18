@@ -70,7 +70,7 @@ namespace seir
 		}
 		seir::Buffer period{ periodFrames * kAudioFrameSize };
 		callbacks.onBackendAvailable(preferredSamplingRate, periodFrames);
-		SEIR_FINALLY([&] { ::snd_pcm_drain(pcm); });
+		SEIR_FINALLY{ [&]() noexcept { ::snd_pcm_drain(pcm); } };
 		while (callbacks.onBackendIdle())
 		{
 			auto data = period.data();

@@ -14,23 +14,18 @@ namespace seir
 	class Finally
 	{
 	public:
+		static_assert(std::is_nothrow_move_constructible_v<Callback>);
+		static_assert(std::is_nothrow_invocable_r_v<void, Callback&&>);
+
 		Finally(const Finally&) = delete;
 		Finally& operator=(const Finally&) = delete;
-
 		constexpr explicit Finally(Callback&& callback) noexcept
 			: _callback{ std::move(callback) } {}
-
-		~Finally() noexcept { _callback(); }
+		~Finally() noexcept { std::move(_callback)(); }
 
 	private:
-		const Callback _callback;
+		Callback _callback;
 	};
-
-	template <typename Callback>
-	[[nodiscard]] auto makeFinally(Callback&& callback) noexcept
-	{
-		return Finally<Callback>{ std::forward<Callback>(callback) };
-	}
 }
 
-#define SEIR_FINALLY(callback) const auto SEIR_JOIN(seirFinally, __LINE__) = seir::makeFinally(callback)
+#define SEIR_FINALLY const seir::Finally SEIR_JOIN(seirFinally, __LINE__)
