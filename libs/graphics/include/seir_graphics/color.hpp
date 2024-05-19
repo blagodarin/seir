@@ -19,13 +19,17 @@ namespace seir
 
 		constexpr Rgba32() noexcept = default;
 
-		template <typename R, typename G, typename B, typename = std::enable_if_t<std::is_integral_v<R> && std::is_integral_v<G> && std::is_integral_v<B>>>
+		template <typename R, typename G, typename B>
+		requires std::is_integral_v<R> && std::is_integral_v<G> && std::is_integral_v<B>
 		constexpr explicit Rgba32(R r, G g, B b) noexcept
-			: _r{ static_cast<uint8_t>(r) }, _g{ static_cast<uint8_t>(g) }, _b{ static_cast<uint8_t>(b) }, _a{ 255 } {}
+			: _r{ static_cast<uint8_t>(r) }, _g{ static_cast<uint8_t>(g) }, _b{ static_cast<uint8_t>(b) }, _a{ 255 }
+		{}
 
-		template <typename R, typename G, typename B, typename A, typename = std::enable_if_t<std::is_integral_v<R> && std::is_integral_v<G> && std::is_integral_v<B> && std::is_integral_v<A>>>
+		template <typename R, typename G, typename B, typename A>
+		requires std::is_integral_v<R> && std::is_integral_v<G> && std::is_integral_v<B> && std::is_integral_v<A>
 		constexpr explicit Rgba32(R r, G g, B b, A a) noexcept
-			: _r{ static_cast<uint8_t>(r) }, _g{ static_cast<uint8_t>(g) }, _b{ static_cast<uint8_t>(b) }, _a{ static_cast<uint8_t>(a) } {}
+			: _r{ static_cast<uint8_t>(r) }, _g{ static_cast<uint8_t>(g) }, _b{ static_cast<uint8_t>(b) }, _a{ static_cast<uint8_t>(a) }
+		{}
 
 		[[nodiscard]] static constexpr Rgba32 black(uint8_t alpha = 255) noexcept { return Rgba32{ 0, 0, 0, alpha }; }
 		[[nodiscard]] static constexpr Rgba32 blue(uint8_t alpha = 255) noexcept { return Rgba32{ 0, 0, 255, alpha }; }

@@ -21,7 +21,7 @@ namespace
 	class DummyTexture final : public seir::Texture2D
 	{
 	public:
-		DummyTexture(const seir::SizeF& size) noexcept
+		explicit DummyTexture(const seir::SizeF& size) noexcept
 			: _size{ size } {}
 		seir::SizeF size() const noexcept override { return _size; }
 

@@ -226,9 +226,9 @@ namespace seir
 	{
 		if (!blob || !lineHeight)
 			return {};
-		auto font = makeShared<FreeTypeFont>(renderer, blob, lineHeight);
+		const auto font = makeShared<FreeTypeFont>(renderer, blob, lineHeight);
 		return font->isLoaded()
-			? staticCast<Font>(std::move(font))
+			? staticCast<Font>(font)
 			: nullptr;
 	}
 }

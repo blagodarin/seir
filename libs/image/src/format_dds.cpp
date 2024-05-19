@@ -182,7 +182,7 @@ namespace seir
 		if (header->height > std::numeric_limits<uint32_t>::max() / stride)
 			return nullptr;
 
-		const auto data = reader.peek(stride * header->height);
+		const auto data = reader.peek(size_t{ stride } * header->height);
 		if (!data)
 			return nullptr;
 

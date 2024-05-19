@@ -71,7 +71,7 @@ namespace seir
 	{
 	public:
 		//
-		Renderer(const Window&);
+		explicit Renderer(const Window&);
 
 		~Renderer() noexcept;
 

@@ -24,7 +24,7 @@ namespace seir
 			bool released = false;
 		};
 
-		GuiContextImpl(Window&) noexcept;
+		explicit GuiContextImpl(Window&) noexcept;
 
 		KeyCapture captureClick(Key key, bool repeated, bool release = false) noexcept;
 

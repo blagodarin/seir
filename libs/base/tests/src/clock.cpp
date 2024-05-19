@@ -16,11 +16,11 @@ namespace
 		using rep = duration::rep;
 		using time_point = std::chrono::time_point<Clock, duration>;
 
-		[[maybe_unused]] static constexpr bool is_steady = true;
+		[[maybe_unused]] static constexpr bool is_steady = true; // cppcheck-suppress[unusedStructMember]
 
 		static time_point now() noexcept { return _now; }
 
-		constexpr Clock(const duration& d) noexcept { _now = time_point{ d }; }
+		constexpr explicit Clock(const duration& d) noexcept { _now = time_point{ d }; }
 		constexpr void advance(const duration& d) noexcept { _now += d; }
 
 	private:

@@ -14,7 +14,7 @@ namespace seir
 	{
 	public:
 		App& _app;
-		WindowImpl(App& app) noexcept
+		explicit WindowImpl(App& app) noexcept
 			: _app{ app } {}
 	};
 

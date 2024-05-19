@@ -43,7 +43,8 @@ namespace seir
 		constexpr SharedPtr() noexcept = default;
 		constexpr SharedPtr(std::nullptr_t) noexcept {} // cppcheck-suppress[noExplicitConstructor]
 		SharedPtr(const SharedPtr&) noexcept;
-		template <class U, class = std::enable_if_t<std::is_base_of_v<T, U>>>
+		template <class U>
+		requires std::is_base_of_v<T, U>
 		explicit SharedPtr(const SharedPtr<U>&) noexcept;
 		constexpr SharedPtr(SharedPtr&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
@@ -118,7 +119,8 @@ seir::SharedPtr<T>::SharedPtr(const SharedPtr& other) noexcept
 }
 
 template <class T>
-template <class U, class>
+template <class U>
+requires std::is_base_of_v<T, U>
 seir::SharedPtr<T>::SharedPtr(const SharedPtr<U>& other) noexcept
 	: _pointer{ other._pointer }
 {

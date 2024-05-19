@@ -61,6 +61,8 @@ namespace seir
 				{
 				case kSeirFileID:
 					return attachSeirArchive(*this, blob);
+				default:
+					break;
 				}
 		return {};
 	}

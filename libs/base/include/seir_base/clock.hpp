@@ -22,7 +22,7 @@ namespace seir
 	public:
 		// Creates the clock with the specified interval.
 		// The clock is not started after construction.
-		constexpr ConstantRate(const typename Clock::duration& interval) noexcept
+		constexpr explicit ConstantRate(const typename Clock::duration& interval) noexcept
 			: _interval{ interval } { assert(_interval.count() > 0); }
 
 		// Returns the number of new frames since the last call
