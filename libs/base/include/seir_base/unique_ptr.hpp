@@ -19,12 +19,11 @@ namespace seir
 		constexpr UniquePtr(UniquePtr&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
 		template <class U>
-		constexpr explicit UniquePtr(UniquePtr<U>&& other) noexcept
-			: _pointer{ other._pointer } { other._pointer = nullptr; }
+		constexpr explicit UniquePtr(UniquePtr<U>&&) noexcept;
 		~UniquePtr() noexcept { delete _pointer; }
-		UniquePtr& operator=(UniquePtr&& other) noexcept;
+		UniquePtr& operator=(UniquePtr&&) noexcept;
 		template <class U>
-		UniquePtr& operator=(UniquePtr<U>&& other) noexcept;
+		UniquePtr& operator=(UniquePtr<U>&&) noexcept;
 		[[nodiscard]] constexpr T& operator*() const noexcept { return *_pointer; }
 		[[nodiscard]] constexpr T* operator->() const noexcept { return _pointer; }
 		[[nodiscard]] constexpr explicit operator bool() const noexcept { return static_cast<bool>(_pointer); }
@@ -54,10 +53,18 @@ namespace seir
 	}
 
 	template <class To, class From>
-	UniquePtr<To> staticCast(UniquePtr<From>&& from) noexcept
+	UniquePtr<To> staticCast(UniquePtr<From>&& from) noexcept // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
 	{
 		return UniquePtr{ static_cast<To*>(std::exchange(from._pointer, nullptr)) };
 	}
+}
+
+template <class T>
+template <class U>
+constexpr seir::UniquePtr<T>::UniquePtr(UniquePtr<U>&& other) noexcept // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+	: _pointer{ other._pointer }
+{
+	other._pointer = nullptr;
 }
 
 template <class T>
@@ -72,7 +79,7 @@ seir::UniquePtr<T>& seir::UniquePtr<T>::operator=(UniquePtr&& other) noexcept
 
 template <class T>
 template <class U>
-seir::UniquePtr<T>& seir::UniquePtr<T>::operator=(UniquePtr<U>&& other) noexcept
+seir::UniquePtr<T>& seir::UniquePtr<T>::operator=(UniquePtr<U>&& other) noexcept // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
 {
 	const auto pointer = other._pointer;
 	other._pointer = nullptr;

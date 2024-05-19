@@ -42,21 +42,20 @@ namespace seir
 	public:
 		constexpr SharedPtr() noexcept = default;
 		constexpr SharedPtr(std::nullptr_t) noexcept {} // cppcheck-suppress[noExplicitConstructor]
-		SharedPtr(const SharedPtr& other) noexcept;
+		SharedPtr(const SharedPtr&) noexcept;
 		template <class U, class = std::enable_if_t<std::is_base_of_v<T, U>>>
 		explicit SharedPtr(const SharedPtr<U>&) noexcept;
 		constexpr SharedPtr(SharedPtr&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
 		template <class U>
-		constexpr explicit SharedPtr(SharedPtr<U>&& other) noexcept
-			: _pointer{ other._pointer } { other._pointer = nullptr; }
+		constexpr explicit SharedPtr(SharedPtr<U>&&) noexcept;
 		template <class U>
 		constexpr explicit SharedPtr(UniquePtr<U>&&) noexcept;
 		~SharedPtr() noexcept { reset(nullptr); }
 		SharedPtr& operator=(const SharedPtr&) noexcept; // NOLINT(bugprone-unhandled-self-assignment, cert-oop54-cpp)
 		template <class U>
 		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(const SharedPtr<U>&) noexcept;
-		SharedPtr& operator=(SharedPtr&& other) noexcept;
+		SharedPtr& operator=(SharedPtr&&) noexcept;
 		template <class U>
 		std::enable_if_t<std::is_base_of_v<T, U>, SharedPtr<T>>& operator=(SharedPtr<U>&&) noexcept;
 		template <class U>
@@ -124,7 +123,15 @@ seir::SharedPtr<T>::SharedPtr(const SharedPtr<U>& other) noexcept
 
 template <class T>
 template <class U>
-constexpr seir::SharedPtr<T>::SharedPtr(UniquePtr<U>&& other) noexcept
+constexpr seir::SharedPtr<T>::SharedPtr(SharedPtr<U>&& other) noexcept // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
+	: _pointer{ other._pointer }
+{
+	other._pointer = nullptr;
+}
+
+template <class T>
+template <class U>
+constexpr seir::SharedPtr<T>::SharedPtr(UniquePtr<U>&& other) noexcept // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
 	: _pointer{ other._pointer }
 {
 	static_assert(std::is_base_of_v<T, U> && std::is_base_of_v<ReferenceCounter, T>);
@@ -161,7 +168,7 @@ seir::SharedPtr<T>& seir::SharedPtr<T>::operator=(SharedPtr&& other) noexcept
 
 template <class T>
 template <class U>
-std::enable_if_t<std::is_base_of_v<T, U>, seir::SharedPtr<T>>& seir::SharedPtr<T>::operator=(SharedPtr<U>&& other) noexcept
+std::enable_if_t<std::is_base_of_v<T, U>, seir::SharedPtr<T>>& seir::SharedPtr<T>::operator=(SharedPtr<U>&& other) noexcept // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
 {
 	const auto pointer = other._pointer;
 	other._pointer = nullptr;
@@ -171,7 +178,7 @@ std::enable_if_t<std::is_base_of_v<T, U>, seir::SharedPtr<T>>& seir::SharedPtr<T
 
 template <class T>
 template <class U>
-std::enable_if_t<std::is_base_of_v<T, U>, seir::SharedPtr<T>>& seir::SharedPtr<T>::operator=(UniquePtr<U>&& other) noexcept
+std::enable_if_t<std::is_base_of_v<T, U>, seir::SharedPtr<T>>& seir::SharedPtr<T>::operator=(UniquePtr<U>&& other) noexcept // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
 {
 	const auto pointer = other._pointer;
 	other._pointer = nullptr;
