@@ -36,14 +36,14 @@ jobs:
           build\libs\audio\benchmarks\seir_audio_benchmarks.exe
   linux:
     name: Linux
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
-          - cc: gcc-13
-            cxx: g++-13
-          - cc: clang-15
-            cxx: clang++-15
+          - cc: gcc-14
+            cxx: g++-14
+          - cc: clang-18
+            cxx: clang++-18
       fail-fast: false
     env:
       CC: ${{ matrix.cc }}

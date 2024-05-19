@@ -214,10 +214,10 @@ namespace seir
 			if (!compressor->prepare(compressionLevel <= 0
 						? CompressionLevel::None
 						: (compressionLevel < 50
-								? CompressionLevel::Minimum
-								: (compressionLevel < 100
-										? CompressionLevel::Default
-										: CompressionLevel::Maximum))))
+								  ? CompressionLevel::Minimum
+								  : (compressionLevel < 100
+											? CompressionLevel::Default
+											: CompressionLevel::Maximum))))
 				return false;
 			compressedBuffer.reserve(compressor->maxCompressedSize(uncompressedSize), 0);
 			compressedSize = compressor->compress(compressedBuffer.data(), compressedBuffer.capacity(), uncompressedBuffer.data(), uncompressedSize);

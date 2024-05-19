@@ -7,7 +7,7 @@ on:
 jobs:
   static-analysis:
     name: Static analysis
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -17,15 +17,15 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install clang-tidy-15 cppcheck libasound2-dev libvorbis-dev ninja-build
+          sudo apt-get install cppcheck libasound2-dev libfreetype-dev libjpeg-dev libvorbis-dev ninja-build
       - name: Run clang-format
         run: |
-          clang-format-15 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
+          clang-format-18 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
           git diff --color=always --exit-code --histogram
       - name: Run CMake
         env:
-          CC: clang-15
-          CXX: clang++-15
+          CC: clang-18
+          CXX: clang++-18
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
@@ -60,4 +60,4 @@ jobs:
         run: |
           find '${{ github.workspace }}/libs' -name '*.cpp' \! \( -path '*/benchmarks/*' -o -path '*/tests/*' -o -path '*/vulkan/*' -o -path '*_wasapi.cpp' -o -path '*_windows.cpp' \) \
             -printf '[%P]\n' \
-            -exec clang-tidy-15 -p='${{ github.workspace }}/build' --quiet '{}' \;
+            -exec clang-tidy-18 -p='${{ github.workspace }}/build' --quiet '{}' \;

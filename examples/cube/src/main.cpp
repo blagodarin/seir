@@ -99,8 +99,7 @@ namespace
 		20, 21, 22, 23
 	};
 
-	const uint32_t kVertexShader[]
-	{
+	const uint32_t kVertexShader[]{
 #if SEIR_RENDERER_VULKAN
 #	include "vertex_shader.glsl.spirv.inc"
 #else
@@ -108,8 +107,7 @@ namespace
 #endif
 	};
 
-	const uint32_t kFragmentShader[]
-	{
+	const uint32_t kFragmentShader[]{
 #if SEIR_RENDERER_VULKAN
 #	include "fragment_shader.glsl.spirv.inc"
 #else

@@ -613,8 +613,8 @@ namespace seir
 			.subresourceRange{
 				.aspectMask = newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 					? (hasStencilComponent(_format)
-							? static_cast<VkImageAspectFlags>(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
-							: VK_IMAGE_ASPECT_DEPTH_BIT)
+							  ? static_cast<VkImageAspectFlags>(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
+							  : VK_IMAGE_ASPECT_DEPTH_BIT)
 					: VK_IMAGE_ASPECT_COLOR_BIT,
 				.baseMipLevel = 0,
 				.levelCount = 1,

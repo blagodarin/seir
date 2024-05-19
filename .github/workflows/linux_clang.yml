@@ -8,15 +8,15 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
-          - cc: clang-15
-            cxx: clang++-15
+          - cc: clang-18
+            cxx: clang++-18
             config: Release
-          - cc: clang-15
-            cxx: clang++-15
+          - cc: clang-18
+            cxx: clang++-18
             config: Debug
       fail-fast: false
     env:
@@ -34,7 +34,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install libasound2-dev libvorbis-dev ninja-build
+          sudo apt-get install libasound2-dev libfreetype-dev libjpeg-dev libvorbis-dev ninja-build
       - name: Run CMake
         run: |
           cmake -S . -B build -G Ninja \

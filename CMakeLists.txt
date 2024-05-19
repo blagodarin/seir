@@ -113,6 +113,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		-Wno-tautological-type-limit-compare # https://reviews.llvm.org/D41512
 		-Wno-weak-vtables
 		)
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 18)
+		add_compile_options(
+			-Wno-switch-default # Warns on exhaustive switches.
+			-Wno-unsafe-buffer-usage
+			)
+	endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

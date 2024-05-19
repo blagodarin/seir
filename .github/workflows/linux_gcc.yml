@@ -8,15 +8,15 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
-          - cc: gcc-13
-            cxx: g++-13
+          - cc: gcc-14
+            cxx: g++-14
             config: Release
-          - cc: gcc-13
-            cxx: g++-13
+          - cc: gcc-14
+            cxx: g++-14
             config: Debug
       fail-fast: false
     env:
@@ -34,7 +34,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install libasound2-dev libvorbis-dev ninja-build
+          sudo apt-get install libasound2-dev libfreetype-dev libjpeg-dev libvorbis-dev ninja-build
       - name: Run CMake
         run: |
           cmake -S . -B build -G Ninja \
@@ -77,11 +77,11 @@ jobs:
           cmake --build build.cmake_package
   coverage:
     name: Coverage
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
-      CC: gcc-13
+      CC: gcc-14
       CFLAGS: --coverage
-      CXX: g++-13
+      CXX: g++-14
       CXXFLAGS: --coverage
       LDFLAGS: --coverage
     steps:
@@ -93,7 +93,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install libasound2-dev libvorbis-dev ninja-build
+          sudo apt-get install libasound2-dev libfreetype-dev libjpeg-dev libvorbis-dev ninja-build
       - name: Run CMake
         run: |
           cmake -S . -B build -G Ninja \

@@ -43,7 +43,7 @@ namespace
 			reinterpret_cast<LONG_PTR>(&iconResource));
 		return iconResource
 			? seir::Hicon{ ::CreateIconFromResourceEx(static_cast<BYTE*>(::LockResource(::LoadResource(instance, iconResource))),
-				::SizeofResource(instance, iconResource), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR) }
+				  ::SizeofResource(instance, iconResource), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR) }
 			: seir::Hicon{};
 	}
 
