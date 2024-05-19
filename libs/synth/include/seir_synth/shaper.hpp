@@ -46,7 +46,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
+		requires std::is_floating_point_v<Float>
+		static constexpr Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * normalizedX;
@@ -91,7 +92,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
+		requires std::is_floating_point_v<Float>
+		static constexpr Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -137,7 +139,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
+		requires std::is_floating_point_v<Float>
+		static constexpr Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * (offsetX < deltaX / 2 ? (shape + 2 * (1 - shape) * normalizedX) * normalizedX : (shape - 1) * (1 + 2 * normalizedX * normalizedX) + (4 - 3 * shape) * normalizedX);
@@ -187,7 +190,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
+		requires std::is_floating_point_v<Float>
+		static constexpr Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -235,7 +239,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape1, Float shape2) noexcept
+		requires std::is_floating_point_v<Float>
+		static constexpr Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape1, Float shape2) noexcept
 		{
 			assert(shape1 >= kMinShape && shape1 <= kMaxShape);
 			assert(shape2 >= kMinShape && shape2 <= kMaxShape);
@@ -294,7 +299,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static constexpr std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
+		requires std::is_floating_point_v<Float>
+		static constexpr Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float shape, Float) noexcept
 		{
 			assert(shape >= kMinShape && shape <= kMaxShape);
 			const auto normalizedX = offsetX / deltaX;
@@ -340,7 +346,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
+		requires std::is_floating_point_v<Float>
+		static Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
 		{
 			const auto normalizedX = offsetX / deltaX;
 			return firstY + deltaY * (1 - std::cos(std::numbers::pi_v<Float> * normalizedX)) / 2;
@@ -382,7 +389,8 @@ namespace seir::synth
 		}
 
 		template <typename Float>
-		static std::enable_if_t<std::is_floating_point_v<Float>, Float> value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
+		requires std::is_floating_point_v<Float>
+		static Float value(Float firstY, Float deltaY, Float deltaX, Float offsetX, Float, Float) noexcept
 		{
 			const auto cos = std::cos(std::numbers::pi_v<Float> * offsetX / deltaX);
 			return firstY + deltaY * (1 - cos * cos * cos) / 2;

@@ -60,7 +60,7 @@ namespace seir
 		virtual void setTransformation(const Mat4&) = 0;
 
 		//
-		virtual Vec2 size() const noexcept = 0;
+		[[nodiscard]] virtual Vec2 size() const noexcept = 0;
 
 		//
 		virtual void updateUniformBuffer(const Mat4&) = 0;

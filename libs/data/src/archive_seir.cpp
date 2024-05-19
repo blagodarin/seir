@@ -184,7 +184,7 @@ namespace
 
 namespace seir
 {
-	bool attachSeirArchive(Storage& storage, SharedPtr<Blob>&& blob)
+	bool attachSeirArchive(Storage& storage, const SharedPtr<Blob>& blob)
 	{
 		const auto fileHeader = blob->get<SeirFileHeader>(0);
 		if (!fileHeader

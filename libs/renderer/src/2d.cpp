@@ -128,7 +128,7 @@ namespace seir
 	{
 		if (auto& currentRange = _impl->_ranges.back(); currentRange._texture == texture)
 			return;
-		else if (!currentRange._indices)
+		else if (!currentRange._indices) // NOLINT(readability-else-after-return)
 			currentRange._texture = texture;
 		else
 			_impl->_ranges.emplace_back(Renderer2DImpl::Range{ texture, 0 });

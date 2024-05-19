@@ -113,7 +113,7 @@ namespace
 			return *this;
 		}
 
-		constexpr uint32_t value() const noexcept
+		[[nodiscard]] constexpr uint32_t value() const noexcept
 		{
 			return ~_value;
 		}
@@ -197,7 +197,7 @@ namespace seir
 		}
 
 		const auto stride = 1 + info.width() * pixelSize(uncompressedPixelFormat);
-		ImageInfo pngInfo{ info.width(), info.height(), stride, uncompressedPixelFormat, ImageAxes::XRightYDown };
+		const ImageInfo pngInfo{ info.width(), info.height(), stride, uncompressedPixelFormat, ImageAxes::XRightYDown };
 
 		const auto uncompressedSize = pngInfo.frameSize();
 		Buffer uncompressedBuffer{ uncompressedSize };
@@ -225,26 +225,37 @@ namespace seir
 				return false;
 		}
 
-		PngHeader header;
-		header.signature = kPngFileID;
-		header.ihdr.length = bigEndian(uint32_t{ sizeof header.ihdr.data });
-		header.ihdr.type = PngChunkType::IHDR;
-		header.ihdr.data.width = bigEndian(static_cast<uint32_t>(info.width()));
-		header.ihdr.data.height = bigEndian(static_cast<uint32_t>(info.height()));
-		header.ihdr.data.bitDepth = 8;
-		header.ihdr.data.colorType = pngColorType;
-		header.ihdr.data.compressionMethod = PngCompressionMethod::Zlib;
-		header.ihdr.data.filterMethod = PngFilterMethod::Standard;
-		header.ihdr.data.interlaceMethod = PngInterlaceMethod::None;
-		header.ihdr.crc = bigEndian(Crc32{}.process(&header.ihdr.type, sizeof header.ihdr.type).process(&header.ihdr.data, sizeof header.ihdr.data).value());
-		header.idat.length = bigEndian(static_cast<uint32_t>(compressedSize));
-		header.idat.type = PngChunkType::IDAT;
+		const PngHeader header{
+			.signature = kPngFileID,
+			.ihdr{
+				.length = bigEndian(uint32_t{ sizeof header.ihdr.data }),
+				.type = PngChunkType::IHDR,
+				.data{
+					.width = bigEndian(info.width()),
+					.height = bigEndian(info.height()),
+					.bitDepth = 8,
+					.colorType = pngColorType,
+					.compressionMethod = PngCompressionMethod::Zlib,
+					.filterMethod = PngFilterMethod::Standard,
+					.interlaceMethod = PngInterlaceMethod::None,
+				},
+				.crc = bigEndian(Crc32{}.process(&header.ihdr.type, sizeof header.ihdr.type).process(&header.ihdr.data, sizeof header.ihdr.data).value()) },
+			.idat{
+				.length = bigEndian(static_cast<uint32_t>(compressedSize)),
+				.type = PngChunkType::IDAT,
+			},
+		};
 
-		PngFooter footer;
-		footer.idat.crc = bigEndian(Crc32{}.process(&header.idat.type, sizeof header.idat.type).process(compressedBuffer.data(), compressedSize).value());
-		footer.iend.length = 0;
-		footer.iend.type = PngChunkType::IEND;
-		footer.iend.crc = bigEndian(Crc32{}.process(&footer.iend.type, sizeof footer.iend.type).value());
+		const PngFooter footer{
+			.idat{
+				.crc = bigEndian(Crc32{}.process(&header.idat.type, sizeof header.idat.type).process(compressedBuffer.data(), compressedSize).value()),
+			},
+			.iend{
+				.length = 0,
+				.type = PngChunkType::IEND,
+				.crc = bigEndian(Crc32{}.process(&footer.iend.type, sizeof footer.iend.type).value()),
+			},
+		};
 
 		return writer.reserve(sizeof header + compressedSize + sizeof footer)
 			&& writer.write(header)

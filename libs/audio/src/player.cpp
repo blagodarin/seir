@@ -38,7 +38,7 @@ namespace
 		void play(const seir::SharedPtr<seir::AudioDecoder>& decoder) override
 		{
 			assert(decoder);
-			std::scoped_lock lock{ _mutex };
+			const std::scoped_lock lock{ _mutex };
 			if (const auto i = std::find_if(_decoders.begin(), _decoders.end(), [&decoder](const auto& item) { return item.first == decoder; }); i != _decoders.end())
 				i->second = false;
 			else
@@ -47,7 +47,7 @@ namespace
 
 		void stop(const seir::SharedPtr<const seir::AudioDecoder>& decoder) noexcept override
 		{
-			std::scoped_lock lock{ _mutex };
+			const std::scoped_lock lock{ _mutex };
 			if (const auto i = std::find_if(_decoders.begin(), _decoders.end(), [&decoder](const auto& item) { return item.first == decoder; }); i != _decoders.end())
 			{
 				if (const auto last = std::prev(_decoders.end()); i != last)
@@ -58,7 +58,7 @@ namespace
 
 		void stopAll() noexcept override
 		{
-			std::scoped_lock lock{ _mutex };
+			const std::scoped_lock lock{ _mutex };
 			_decoders.clear();
 		}
 
@@ -87,7 +87,7 @@ namespace
 			const auto wasEmpty = _activeDecoders.empty();
 			_activeDecoders.clear();
 			{
-				std::scoped_lock lock{ _mutex };
+				const std::scoped_lock lock{ _mutex };
 				_decoders.erase(
 					std::remove_if(_decoders.begin(), _decoders.end(),
 						[this](auto& element) {

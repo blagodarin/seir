@@ -16,7 +16,7 @@ namespace seir
 #endif
 
 #if SEIR_AUDIO_SYNTH
-	UniquePtr<AudioDecoder> createSynthDecoder(SharedPtr<Blob>&&, const AudioDecoderPreferences&);
+	UniquePtr<AudioDecoder> createSynthDecoder(const SharedPtr<Blob>&, const AudioDecoderPreferences&);
 #endif
 
 	constexpr uint32_t kWavFileID = seir::makeCC('R', 'I', 'F', 'F');

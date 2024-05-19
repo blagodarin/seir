@@ -29,7 +29,7 @@ namespace seir
 #endif
 				default:
 #if SEIR_AUDIO_SYNTH
-					return createSynthDecoder(std::move(blob), preferences);
+					return createSynthDecoder(blob, preferences);
 #else
 					break;
 #endif

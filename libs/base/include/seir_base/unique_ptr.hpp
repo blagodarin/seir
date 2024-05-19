@@ -19,7 +19,7 @@ namespace seir
 		constexpr UniquePtr(UniquePtr&& other) noexcept
 			: _pointer{ other._pointer } { other._pointer = nullptr; }
 		template <class U>
-		constexpr explicit UniquePtr(UniquePtr<U>&&) noexcept;
+		constexpr explicit UniquePtr(UniquePtr<U>&&) noexcept; // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
 		~UniquePtr() noexcept { delete _pointer; }
 		UniquePtr& operator=(UniquePtr&&) noexcept;
 		template <class U>

@@ -39,7 +39,13 @@ namespace seir
 		snd_pcm_uframes_t bufferFrames = 0;
 		CPtr<snd_pcm_t, ::snd_pcm_close> pcm;
 		if (const auto status = ::snd_pcm_open(pcm.out(), "default", SND_PCM_STREAM_PLAYBACK, 0); status < 0)
-			return status == -ENOENT ? callbacks.onBackendError(AudioError::NoDevice) : callbacks.onBackendError("snd_pcm_open", status, ::snd_strerror(status));
+		{
+			if (status == -ENOENT)
+				callbacks.onBackendError(AudioError::NoDevice);
+			else
+				callbacks.onBackendError("snd_pcm_open", status, ::snd_strerror(status));
+			return;
+		}
 		{
 			CPtr<snd_pcm_hw_params_t, ::snd_pcm_hw_params_free> hw;
 			CHECK_ALSA(::snd_pcm_hw_params_malloc(hw.out()));

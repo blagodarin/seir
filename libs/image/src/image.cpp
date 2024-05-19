@@ -109,13 +109,13 @@ namespace seir
 	bool Image::saveAsScreenshot(ImageFormat format, int compressionLevel) const
 	{
 		const auto time = std::time(nullptr);
-		::tm tm;
+		::tm tm; // NOLINT(cppcoreguidelines-pro-type-member-init)
 #ifdef _MSC_VER
 		::localtime_s(&tm, &time);
 #else
 		::localtime_r(&time, &tm);
 #endif
-		std::array<char, 24> buffer;
+		std::array<char, 24> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init)
 		const auto offset = std::strftime(buffer.data(), buffer.size(), "%Y-%m-%d_%H-%M-%S", &tm);
 		std::snprintf(buffer.data() + offset, buffer.size() - offset, "%s", [format] {
 			switch (format)

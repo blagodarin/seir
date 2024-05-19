@@ -60,7 +60,7 @@ namespace seir
 				switch (*id)
 				{
 				case kSeirFileID:
-					return attachSeirArchive(*this, std::move(blob));
+					return attachSeirArchive(*this, blob);
 				}
 		return {};
 	}

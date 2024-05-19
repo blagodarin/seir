@@ -71,7 +71,7 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createSynthDecoder(SharedPtr<Blob>&& blob, const AudioDecoderPreferences& preferences)
+	UniquePtr<AudioDecoder> createSynthDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences& preferences)
 	{
 		const std::string buffer{ static_cast<const char*>(blob->data()), blob->size() }; // TODO: Remove when synth will support non-null-terminated input.
 		if (auto composition = synth::Composition::create(buffer.c_str()))
