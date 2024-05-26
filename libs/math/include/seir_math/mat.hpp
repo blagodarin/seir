@@ -16,7 +16,7 @@ namespace seir
 	public:
 		Vec4 x, y, z, t;
 
-		Mat4() noexcept = default;
+		constexpr Mat4() noexcept = default;
 		constexpr Mat4(float xx, float yx, float zx, float tx, float xy, float yy, float zy, float ty, float xz, float yz, float zz, float tz, float xw, float yw, float zw, float tw) noexcept
 			: x{ xx, xy, xz, xw }, y{ yx, yy, yz, yw }, z{ zx, zy, zz, zw }, t{ tx, ty, tz, tw } {}
 		explicit Mat4(const Euler&) noexcept;

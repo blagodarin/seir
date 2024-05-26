@@ -10,9 +10,10 @@ namespace seir
 	class Vec2
 	{
 	public:
-		float x, y;
+		float x = 0;
+		float y = 0;
 
-		Vec2() noexcept = default;
+		constexpr Vec2() noexcept = default;
 		constexpr Vec2(float vx, float vy) noexcept
 			: x{ vx }, y{ vy } {}
 
@@ -32,9 +33,11 @@ namespace seir
 	class Vec3
 	{
 	public:
-		float x, y, z;
+		float x = 0;
+		float y = 0;
+		float z = 0;
 
-		Vec3() noexcept = default;
+		constexpr Vec3() noexcept = default;
 		constexpr Vec3(float vx, float vy, float vz) noexcept
 			: x{ vx }, y{ vy }, z{ vz } {}
 
@@ -54,9 +57,12 @@ namespace seir
 	class Vec4
 	{
 	public:
-		float x, y, z, w;
+		float x = 0;
+		float y = 0;
+		float z = 0;
+		float w = 0;
 
-		Vec4() noexcept = default;
+		constexpr Vec4() noexcept = default;
 		constexpr Vec4(float vx, float vy, float vz, float vw) noexcept
 			: x{ vx }, y{ vy }, z{ vz }, w{ vw } {}
 

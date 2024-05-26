@@ -25,7 +25,7 @@ namespace
 				::jpeg_destroy(common);
 				std::longjmp(reinterpret_cast<JpegErrorManager*>(common->client_data)->_jmpBuf, 1); // NOLINT(cert-err52-cpp)
 			};
-			_errorMgr.output_message = [](jpeg_common_struct*) noexcept {};
+			_errorMgr.output_message = [](jpeg_common_struct*) noexcept {}; // cppcheck-suppress cstyleCast
 		}
 
 	protected:

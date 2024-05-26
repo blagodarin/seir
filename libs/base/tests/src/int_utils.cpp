@@ -12,6 +12,7 @@
 
 TEST_CASE("clampToU8")
 {
+	// cppcheck-suppress-begin knownConditionTrueFalse
 	using seir::clampToU8;
 	CHECK(clampToU8(std::numeric_limits<int>::min()) == 0);
 	CHECK(clampToU8(-1) == 0);
@@ -21,6 +22,7 @@ TEST_CASE("clampToU8")
 	CHECK(clampToU8(255) == 255);
 	CHECK(clampToU8(256) == 255);
 	CHECK(clampToU8(std::numeric_limits<int>::max()) == 255);
+	// cppcheck-suppress-end knownConditionTrueFalse
 }
 
 TEST_CASE("isPowerOf2")

@@ -12,7 +12,7 @@ namespace seir
 {
 	// std::vector-like container with preallocated storage (like std::array).
 	template <typename T, size_t kCapacity, size_t kAlignment = alignof(T)>
-	class StaticVector
+	class StaticVector // NOLINT(cppcoreguidelines-pro-type-member-init)
 	{
 	public:
 		constexpr StaticVector() noexcept = default;
@@ -25,7 +25,7 @@ namespace seir
 			std::uninitialized_copy_n(other.data(), _size, reinterpret_cast<T*>(_data));
 		}
 
-		StaticVector(std::initializer_list<T> initializers) noexcept(std::is_nothrow_copy_constructible_v<T>) // cppcheck-suppress[noExplicitConstructor]
+		StaticVector(std::initializer_list<T> initializers) noexcept(std::is_nothrow_copy_constructible_v<T>) // cppcheck-suppress noExplicitConstructor
 			: _size{ initializers.size() <= kCapacity ? initializers.size() : kCapacity }
 		{
 			std::uninitialized_copy_n(initializers.begin(), _size, reinterpret_cast<T*>(_data));
@@ -64,7 +64,7 @@ namespace seir
 		T& emplace_back(Args&&... args)
 		{
 			assert(_size < kCapacity);
-			T* item = new (_data + _size * sizeof(T)) T{ std::forward<Args>(args)... }; // cppcheck-suppress[unreadVariable] // NOLINT(bugprone-sizeof-expression, cppcoreguidelines-init-variables)
+			T* item = new (_data + _size * sizeof(T)) T{ std::forward<Args>(args)... }; // cppcheck-suppress unreadVariable // NOLINT(bugprone-sizeof-expression, cppcoreguidelines-init-variables)
 			++_size;
 			return *item;
 		}
@@ -79,7 +79,7 @@ namespace seir
 		T& push_back(const T& value)
 		{
 			assert(_size < kCapacity);
-			T* item = new (_data + _size * sizeof(T)) T{ value }; // cppcheck-suppress[unreadVariable] // NOLINT(bugprone-sizeof-expression, cppcoreguidelines-init-variables)
+			T* item = new (_data + _size * sizeof(T)) T{ value }; // cppcheck-suppress unreadVariable // NOLINT(bugprone-sizeof-expression, cppcoreguidelines-init-variables)
 			++_size;
 			return *item;
 		}

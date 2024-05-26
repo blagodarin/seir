@@ -76,7 +76,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_addSamples1D(benchmark::State& state) // cppcheck-suppress[constParameter]
+	void benchmark_addSamples1D(benchmark::State& state) // cppcheck-suppress constParameterReference
 	{
 		Buffers<float, T> buffers{ state };
 		for (auto _ : state)
@@ -114,7 +114,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_addSamples2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
+	void benchmark_addSamples2x1D(benchmark::State& state) // cppcheck-suppress constParameterReference
 	{
 		Buffers<float, T> buffers{ state, 2 };
 		for (auto _ : state)
@@ -142,7 +142,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_convertSamples1D(benchmark::State& state) // cppcheck-suppress[constParameter]
+	void benchmark_convertSamples1D(benchmark::State& state) // cppcheck-suppress constParameterReference
 	{
 		Buffers<float, T> buffers{ state };
 		for (auto _ : state)
@@ -170,7 +170,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_convertSamples2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
+	void benchmark_convertSamples2x1D(benchmark::State& state) // cppcheck-suppress constParameterReference
 	{
 		Buffers<float, T> buffers{ state, 2 };
 		for (auto _ : state)
@@ -207,7 +207,7 @@ namespace
 	}
 
 	template <typename T, auto function>
-	void benchmark_duplicate1D(benchmark::State& state) // cppcheck-suppress[constParameter]
+	void benchmark_duplicate1D(benchmark::State& state) // cppcheck-suppress constParameterReference
 	{
 		Buffers<T, T> buffers{ state, 2 };
 		for (auto _ : state)
@@ -237,7 +237,7 @@ namespace
 	}
 
 	template <auto function>
-	void benchmark_resampleAdd2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
+	void benchmark_resampleAdd2x1D(benchmark::State& state) // cppcheck-suppress constParameterReference
 	{
 		Buffers<float, float> buffers{ state };
 		for (auto _ : state)
@@ -263,7 +263,7 @@ namespace
 	}
 
 	template <auto function>
-	void benchmark_resampleCopy2x1D(benchmark::State& state) // cppcheck-suppress[constParameter]
+	void benchmark_resampleCopy2x1D(benchmark::State& state) // cppcheck-suppress constParameterReference
 	{
 		Buffers<float, float> buffers{ state };
 		for (auto _ : state)

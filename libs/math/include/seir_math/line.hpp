@@ -24,7 +24,7 @@ namespace seir
 		[[nodiscard]] constexpr Vec3 second() const noexcept { return _origin + _vector; }
 
 	private:
-		Vec3 _origin{ 0, 0, 0 };
-		Vec3 _vector{ 0, 0, 0 };
+		Vec3 _origin;
+		Vec3 _vector;
 	};
 }

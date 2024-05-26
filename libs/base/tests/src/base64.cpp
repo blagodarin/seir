@@ -12,6 +12,7 @@
 
 TEST_CASE("base64EncodedSize")
 {
+	// cppcheck-suppress-begin knownConditionTrueFalse
 	SUBCASE("0 blocks")
 	{
 		CHECK(seir::base64EncodedSize(0) == 0);
@@ -32,6 +33,7 @@ TEST_CASE("base64EncodedSize")
 	{
 		CHECK(seir::base64EncodedSize(7) == 10);
 	}
+	// cppcheck-suppress-end knownConditionTrueFalse
 }
 
 TEST_CASE("encodeBase64Url")
@@ -100,6 +102,7 @@ TEST_CASE("encodeBase64Url")
 
 TEST_CASE("base64DecodedSize")
 {
+	// cppcheck-suppress-begin knownConditionTrueFalse
 	SUBCASE("0 blocks")
 	{
 		CHECK(seir::base64DecodedSize(0) == 0);
@@ -120,6 +123,7 @@ TEST_CASE("base64DecodedSize")
 	{
 		CHECK(seir::base64DecodedSize(10) == 7);
 	}
+	// cppcheck-suppress-end knownConditionTrueFalse
 }
 
 TEST_CASE("decodeBase64")

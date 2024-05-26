@@ -13,6 +13,7 @@
 
 TEST_CASE("base85EncodedSize")
 {
+	// cppcheck-suppress-begin knownConditionTrueFalse
 	SUBCASE("0 blocks")
 	{
 		CHECK(seir::base85EncodedSize(0) == 0);
@@ -35,6 +36,7 @@ TEST_CASE("base85EncodedSize")
 	{
 		CHECK(seir::base85EncodedSize(9) == 12);
 	}
+	// cppcheck-suppress-end knownConditionTrueFalse
 }
 
 TEST_CASE("encodeZ85")
@@ -85,6 +87,7 @@ TEST_CASE("encodeZ85")
 
 TEST_CASE("base85DecodedSize")
 {
+	// cppcheck-suppress-begin knownConditionTrueFalse
 	SUBCASE("0 blocks")
 	{
 		CHECK(seir::base85DecodedSize(0) == 0);
@@ -107,6 +110,7 @@ TEST_CASE("base85DecodedSize")
 	{
 		CHECK(seir::base85DecodedSize(12) == 9);
 	}
+	// cppcheck-suppress-end knownConditionTrueFalse
 }
 
 TEST_CASE("decodeZ85")

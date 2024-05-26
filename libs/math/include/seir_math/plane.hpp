@@ -19,7 +19,7 @@ namespace seir
 		[[nodiscard]] constexpr const Vec3& normal() const noexcept { return _normal; }
 
 	private:
-		Vec3 _normal{ 0, 0, 0 };
+		Vec3 _normal;
 		float _offset = 0; // Distance from the origin to the plane (along the normal).
 	};
 }

@@ -164,7 +164,7 @@ namespace seir
 
 		if (srcFormat == dstFormat)
 		{
-			::copyImage_x8_x8(width * pixelSize(dstFormat), height, src, srcStride, dst, dstStride);
+			::copyImage_x8_x8(size_t{ width } * pixelSize(dstFormat), height, src, srcStride, dst, dstStride);
 			return true;
 		}
 

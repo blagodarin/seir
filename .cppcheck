@@ -1,7 +1,6 @@
 missingIncludeSystem
 moduloofone:libs/audio/src/processing.cpp
-passedByValue:libs/base/tests/src/base64.cpp
-passedByValue:libs/base/tests/src/base85.cpp
+unusedFunction
 unusedStructMember:libs/audio/src/decoder_wav.cpp
 unusedStructMember:libs/image/src/format_ico.cpp
 unusedStructMember:libs/image/src/format_tga.cpp

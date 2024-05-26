@@ -48,7 +48,7 @@ int main(int, char**)
 	return ::callMain();
 }
 
-int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int) // cppcheck-suppress[unusedFunction]
+int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	return ::callMain();
 }
