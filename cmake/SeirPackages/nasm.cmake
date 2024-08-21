@@ -2,14 +2,15 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
+# https://www.nasm.us/
 function(seir_provide_nasm result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED" "" ${ARGN})
 	_seir_provide_begin("nasm")
-	set(version "2.16.01")
+	set(version "2.16.03")
 	set(package "nasm-${version}")
 	if(WIN32)
 		seir_download("https://www.nasm.us/pub/nasm/releasebuilds/${version}/win64/${package}-win64.zip"
-			SHA256 "029eed31faf0d2c5f95783294432cbea6c15bf633430f254bb3c1f195c67ca3a"
+			SHA256 "3ee4782247bcb874378d02f7eab4e294a84d3d15f3f6ee2de2f47a46aa7226e6"
 			NAME "${package}.zip"
 			EXTRACT_DIR "${package}"
 			RESULT downloaded

@@ -4,6 +4,7 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/ogg.cmake)
 
+# https://xiph.org/downloads/
 function(seir_provide_vorbis result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("vorbis")

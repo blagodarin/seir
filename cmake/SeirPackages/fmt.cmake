@@ -2,14 +2,15 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
+# https://github.com/fmtlib/fmt/releases
 function(seir_provide_fmt result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("fmt")
-	set(version "10.2.1")
+	set(version "11.0.2")
 	set(package "fmt-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/fmt.patch)
 	seir_download("https://github.com/fmtlib/fmt/releases/download/${version}/${package}.zip"
-		SHA256 "312151a2d13c8327f5c9c586ac6cf7cddc1658e8f53edae0ec56509c8fa516c9"
+		SHA256 "40fc58bebcf38c759e11a7bd8fdc163507d2423ef5058bba7f26280c5b9c5465"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded

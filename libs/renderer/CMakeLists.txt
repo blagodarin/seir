@@ -35,6 +35,7 @@ elseif(SEIR_RENDERER STREQUAL "Vulkan")
 		src/vulkan/renderer.hpp
 		src/vulkan/utils.cpp
 		src/vulkan/utils.hpp
+		src/vulkan/vma.cpp
 		src/vulkan/vulkan.hpp
 		)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -58,7 +59,7 @@ target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURREN
 target_link_libraries(seir_renderer PUBLIC Seir::math PRIVATE Seir::app Seir::graphics Seir::image)
 if(SEIR_RENDERER STREQUAL "Vulkan")
 	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
-	target_link_libraries(seir_renderer PRIVATE Vulkan::Vulkan VulkanMemoryAllocator::VulkanMemoryAllocator $<$<CONFIG:Debug>:fmt::fmt>)
+	target_link_libraries(seir_renderer PRIVATE GPUOpen::VulkanMemoryAllocator Vulkan::Vulkan $<$<CONFIG:Debug>:fmt::fmt>)
 	seir_embed_spirv(seir_renderer
 		VERTEX src/vulkan/2d_vertex.glsl
 		FRAGMENT src/vulkan/2d_fragment.glsl

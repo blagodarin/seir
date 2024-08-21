@@ -2,12 +2,13 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
+# https://github.com/mattreecebentley/plf_colony
 function(seir_provide_plf_colony result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED" "" ${ARGN})
 	_seir_provide_begin("plf_colony")
-	set(version "abb0aa6525a3dae56aacf50899517f47e7036016") # 7.41
+	set(version "54df6ac3f500f4ec737c14636f7f908e6905081d") # 7.4.4
 	seir_download("https://raw.githubusercontent.com/mattreecebentley/plf_colony/${version}/plf_colony.h"
-		SHA256 "f584b8e47e851f68a08326a23246b0078a5596d96b69da4b1a61fbf1affb05c2"
+		SHA256 "d7511995f8d7c07933138d9a0b1cc9ad764b6d4493ae010e309b886f8edd5e11"
 		RESULT downloaded
 		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/plf_colony)

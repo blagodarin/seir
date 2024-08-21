@@ -2,15 +2,16 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
+# https://github.com/google/benchmark/releases
 function(seir_provide_benchmark result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("benchmark")
-	set(version "1.8.3")
+	set(version "1.9.0")
 	set(package "benchmark-${version}")
 	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/benchmark.patch)
 	seir_download("https://github.com/google/benchmark/archive/refs/tags/v${version}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA256 "6bc180a57d23d4d9515519f92b0c83d61b05b5bab188961f36ac7b06b0d9e9ce"
+		SHA256 "35a77f46cc782b16fac8d3b107fbfbb37dcd645f7c28eee19f3b8e0758b48994"
 		EXTRACT_DIR "${package}"
 		PATCH ${patch}
 		RESULT downloaded

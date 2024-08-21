@@ -2,13 +2,14 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
+# https://github.com/facebook/zstd/releases
 function(seir_provide_zstd result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("zstd")
-	set(version "1.5.5")
+	set(version "1.5.6")
 	set(package "zstd-${version}")
 	seir_download("https://github.com/facebook/zstd/releases/download/v${version}/${package}.tar.zst"
-		SHA256 "ce264bca60eb2f0e99e4508cffd0d4d19dd362e84244d7fc941e79fa69ccf673"
+		SHA256 "4aa8dd1c1115c0fd6b6b66c35c7f6ce7bd58cc1dfd3e4f175b45b39e84b14352"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)
