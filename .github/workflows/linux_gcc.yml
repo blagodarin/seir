@@ -20,7 +20,7 @@ jobs:
             config: Debug
       fail-fast: false
     env:
-      CC: ${{ matrix.cxx }}
+      CC: ${{ matrix.cc }}
       CFLAGS: -fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute
       CXX: ${{ matrix.cxx }}
       CXXFLAGS: -fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute
@@ -52,6 +52,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \
             -DSEIR_IMAGE_TGA=ON \
+            -DSEIR_IMAGE_WEBP=ON \
             -DSEIR_RENDERER=Dummy \
             -DSEIR_SERIALIZATION=ON \
             -DSEIR_SYNTH=ON \
@@ -107,6 +108,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \
             -DSEIR_IMAGE_TGA=ON \
+            -DSEIR_IMAGE_WEBP=ON \
             -DSEIR_RENDERER=Dummy \
             -DSEIR_SERIALIZATION=ON \
             -DSEIR_SYNTH=ON \

@@ -48,6 +48,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON `
             -DSEIR_IMAGE_JPEG=ON `
             -DSEIR_IMAGE_TGA=ON `
+            -DSEIR_IMAGE_WEBP=ON `
             -DSEIR_RENDERER=Vulkan `
             -DSEIR_SERIALIZATION=ON `
             -DSEIR_STATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }} `
@@ -100,6 +101,7 @@ jobs:
             -DSEIR_IMAGE_ICO=ON `
             -DSEIR_IMAGE_JPEG=ON `
             -DSEIR_IMAGE_TGA=ON `
+            -DSEIR_IMAGE_WEBP=ON `
             -DSEIR_RENDERER=Dummy `
             -DSEIR_SERIALIZATION=ON `
             -DSEIR_SYNTH=ON `

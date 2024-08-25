@@ -271,3 +271,11 @@ TEST_CASE("TGA")
 	}
 }
 #endif
+
+#if SEIR_IMAGE_WEBP
+TEST_CASE("WebP")
+{
+	const auto image = ::loadImage("bgra32_rd.webp");
+	CHECK(image == ::makeColorImage(true, seir::ImageAxes::XRightYDown));
+}
+#endif

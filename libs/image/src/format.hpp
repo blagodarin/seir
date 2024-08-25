@@ -39,4 +39,8 @@ namespace seir
 	const void* loadTgaImage(Reader&, ImageInfo&) noexcept;
 	bool saveTgaImage(Writer&, const ImageInfo&, const void* data) noexcept;
 #endif
+
+#if SEIR_IMAGE_WEBP
+	const void* loadWebpImage(Reader&, ImageInfo&, Buffer&) noexcept;
+#endif
 }

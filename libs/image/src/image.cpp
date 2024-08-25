@@ -46,6 +46,11 @@ namespace seir
 				break;
 			case first16(kPngFileID):
 				break;
+			case makeCC('R', 'I'): // WebP images start with "RIFF" followed by 4-byte size followed by "WEBP".
+#if SEIR_IMAGE_WEBP
+				result._data = loadWebpImage(reader, result._info, result._buffer);
+#endif
+				break;
 			default:
 				// ICO files start with [00 00] (reserved, must be zero) followed by [01 00] (file type, 1 is ICO).
 				// Supported TGA files start with [xx 00 02 00] or [xx 00 03 00] (xx is usually zero).

@@ -40,6 +40,9 @@ endif()
 if(SEIR_IMAGE_TGA)
 	list(APPEND SOURCES src/format_tga.cpp)
 endif()
+if(SEIR_IMAGE_WEBP)
+	list(APPEND SOURCES src/format_webp.cpp)
+endif()
 source_group("include" FILES ${HEADERS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(seir_image STATIC ${HEADERS} ${SOURCES})
@@ -51,9 +54,13 @@ target_compile_definitions(seir_image PUBLIC
 	SEIR_IMAGE_JPEG=$<BOOL:${SEIR_IMAGE_JPEG}>
 	SEIR_IMAGE_PNG=$<BOOL:${SEIR_IMAGE_PNG}>
 	SEIR_IMAGE_TGA=$<BOOL:${SEIR_IMAGE_TGA}>
+	SEIR_IMAGE_WEBP=$<BOOL:${SEIR_IMAGE_WEBP}>
 	)
 target_include_directories(seir_image PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_image PUBLIC Seir::base PRIVATE Seir::data $<$<BOOL:${SEIR_IMAGE_JPEG}>:JPEG::JPEG>)
+target_link_libraries(seir_image PUBLIC Seir::base PRIVATE Seir::data
+	$<$<BOOL:${SEIR_IMAGE_JPEG}>:JPEG::JPEG>
+	$<$<BOOL:${SEIR_IMAGE_WEBP}>:WebP::webpdecoder>
+	)
 seir_target(seir_image FOLDER libs/image STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_image EXPORT SeirTargets)
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_image)
