@@ -11,11 +11,9 @@ function(seir_provide_vorbis result)
 	seir_provide_ogg(ogg_flag FLAG STATIC_RUNTIME ${arg_STATIC_RUNTIME} SET_UPDATED ogg_updated)
 	set(version "1.3.7")
 	set(package "libvorbis-${version}")
-	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/vorbis.patch)
 	seir_download("http://downloads.xiph.org/releases/vorbis/${package}.tar.xz"
 		SHA256 "b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b"
 		EXTRACT_DIR ${package}
-		PATCH ${patch}
 		RESULT downloaded
 		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/vorbis)
@@ -23,10 +21,12 @@ function(seir_provide_vorbis result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building Vorbis from ${source_dir}")
+		seir_select(static_runtime_option ${arg_STATIC_RUNTIME} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>)
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} OPTIONS
-			${ogg_flag}
 			-DCMAKE_POLICY_DEFAULT_CMP0074=NEW # find_package() uses <PackageName>_ROOT variables.
 			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
+			${ogg_flag}
+			${static_runtime_option}
 			MSVC_WARNINGS 4244 4267 4305
 			)
 		message(STATUS "[SEIR] Provided Vorbis at ${install_dir}")

@@ -21,6 +21,7 @@ function(seir_provide_zstd result)
 		_seir_cmake(${source_dir}/build/cmake ${build_dir} ${install_dir} OPTIONS
 			-DZSTD_BUILD_PROGRAMS=OFF
 			-DZSTD_BUILD_SHARED=OFF
+			-DZSTD_LEGACY_SUPPORT=OFF
 			-DZSTD_USE_STATIC_RUNTIME=${arg_STATIC_RUNTIME}
 			)
 		message(STATUS "[SEIR] Provided zstd at ${install_dir}")

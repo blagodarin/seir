@@ -8,11 +8,9 @@ function(seir_provide_zlib result)
 	_seir_provide_begin("zlib")
 	set(version "1.3.1")
 	set(package "zlib-${version}")
-	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/zlib.patch)
 	seir_download("https://zlib.net/${package}.tar.xz"
 		SHA256 "38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32"
 		EXTRACT_DIR "${package}"
-		PATCH ${patch}
 		RESULT downloaded
 		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/zlib)
@@ -20,7 +18,10 @@ function(seir_provide_zlib result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building ZLIB from ${source_dir}")
-		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET zlibstatic)
+		seir_select(static_runtime_option ${arg_STATIC_RUNTIME} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>)
+		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET zlibstatic OPTIONS
+			-DZLIB_BUILD_EXAMPLES=OFF
+			${static_runtime_option})
 		file(INSTALL
 			${build_dir}/zconf.h
 			${source_dir}/zlib.h

@@ -11,11 +11,9 @@ function(seir_provide_jpeg result)
 	seir_provide_nasm(nasm_flag FLAG SET_UPDATED nasm_updated)
 	set(version "3.0.3")
 	set(package "libjpeg-turbo-${version}")
-	seir_select(patch ${arg_STATIC_RUNTIME} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/jpeg.patch)
 	seir_download("https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/${version}/${package}.tar.gz"
 		SHA256 "343e789069fc7afbcdfe44dbba7dbbf45afa98a15150e079a38e60e44578865d"
 		EXTRACT_DIR "${package}"
-		PATCH ${patch}
 		RESULT downloaded
 		)
 	set(install_dir ${SEIR_3RDPARTY_DIR}/jpeg)
@@ -23,15 +21,14 @@ function(seir_provide_jpeg result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building JPEG from ${source_dir}")
-		seir_select(extra_options "${WIN32}" -DWITH_CRT_DLL=ON) # Doesn't work, set to ON to prevent manual flag manipulation.
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET jpeg-static OPTIONS
-			${nasm_flag}
 			-DENABLE_SHARED=OFF
 			-DREQUIRE_SIMD=ON
 			-DWITH_ARITH_DEC=OFF
 			-DWITH_ARITH_ENC=OFF
+			-DWITH_CRT_DLL=OFF
 			-DWITH_TURBOJPEG=OFF
-			${extra_options}
+			${nasm_flag}
 			)
 		file(INSTALL
 			${build_dir}/jconfig.h
