@@ -19,14 +19,12 @@ function(seir_provide_benchmark result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building benchmark from ${source_dir}")
-		seir_select(static_runtime_option ${arg_STATIC_RUNTIME} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>)
-		_seir_cmake(${source_dir} ${build_dir} ${install_dir} OPTIONS
+		_seir_cmake(${source_dir} ${build_dir} ${install_dir} STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
 			-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
 			-DBENCHMARK_ENABLE_GTEST_TESTS=OFF
 			-DBENCHMARK_ENABLE_TESTING=OFF
 			-DBENCHMARK_ENABLE_WERROR=OFF
 			-DBENCHMARK_INSTALL_DOCS=OFF
-			${static_runtime_option}
 			)
 		message(STATUS "[SEIR] Provided benchmark at ${install_dir}")
 		if(arg_SET_UPDATED)

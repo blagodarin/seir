@@ -18,10 +18,8 @@ function(seir_provide_zlib result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building ZLIB from ${source_dir}")
-		seir_select(static_runtime_option ${arg_STATIC_RUNTIME} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>)
-		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET zlibstatic OPTIONS
-			-DZLIB_BUILD_EXAMPLES=OFF
-			${static_runtime_option})
+		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET zlibstatic STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
+			-DZLIB_BUILD_EXAMPLES=OFF)
 		file(INSTALL
 			${build_dir}/zconf.h
 			${source_dir}/zlib.h

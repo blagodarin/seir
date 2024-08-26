@@ -18,15 +18,13 @@ function(seir_provide_freetype result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building Freetype from ${source_dir}")
-		seir_select(static_runtime_option ${arg_STATIC_RUNTIME} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>)
-		_seir_cmake(${source_dir} ${build_dir} ${install_dir} OPTIONS
+		_seir_cmake(${source_dir} ${build_dir} ${install_dir} STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
 			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
 			-DFT_DISABLE_BROTLI=ON
 			-DFT_DISABLE_BZIP2=ON
 			-DFT_DISABLE_HARFBUZZ=ON
 			-DFT_DISABLE_PNG=ON
 			-DFT_DISABLE_ZLIB=ON
-			${static_runtime_option}
 			MSVC_WARNINGS 4244 4267
 			)
 		message(STATUS "[SEIR] Provided Freetype at ${install_dir}")
