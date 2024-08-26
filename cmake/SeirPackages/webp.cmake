@@ -21,6 +21,7 @@ function(seir_provide_webp result)
 		seir_select(static_runtime_option ${arg_STATIC_RUNTIME} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>)
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} OPTIONS
 			-DBUILD_SHARED_LIBS=OFF
+			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
 			-DWEBP_BUILD_ANIM_UTILS=OFF
 			-DWEBP_BUILD_CWEBP=OFF
 			-DWEBP_BUILD_DWEBP=OFF
@@ -31,8 +32,6 @@ function(seir_provide_webp result)
 			-DWEBP_BUILD_LIBWEBPMUX=OFF
 			-DWEBP_BUILD_WEBPMUX=OFF
 			-DWEBP_BUILD_EXTRAS=OFF
-			-DWEBP_LINK_STATIC=ON
-			-DWEBP_USE_THREAD=OFF
 			${static_runtime_option}
 			)
 		message(STATUS "[SEIR] Provided WebP at ${install_dir}")
