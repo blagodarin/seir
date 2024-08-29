@@ -21,12 +21,13 @@ function(seir_provide_jpeg result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building JPEG from ${source_dir}")
+		seir_select(with_crt_dll ${arg_STATIC_RUNTIME} OFF ON)
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET jpeg-static OPTIONS
 			-DENABLE_SHARED=OFF
 			-DREQUIRE_SIMD=ON
 			-DWITH_ARITH_DEC=OFF
 			-DWITH_ARITH_ENC=OFF
-			-DWITH_CRT_DLL=OFF
+			-DWITH_CRT_DLL=${with_crt_dll}
 			-DWITH_TURBOJPEG=OFF
 			${nasm_flag}
 			)
