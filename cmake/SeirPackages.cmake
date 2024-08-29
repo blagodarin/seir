@@ -54,7 +54,11 @@ function(_seir_cmake _source_dir _build_dir _install_dir)
 		endforeach()
 		set(_env "CFLAGS=$ENV{CFLAGS}${_msvc_warnings}")
 	endif()
-	execute_process(COMMAND ${CMAKE_COMMAND} -E env RCFLAGS=/nologo ${_env} ${CMAKE_COMMAND} ${_options} ${_arg_OPTIONS} WORKING_DIRECTORY ${_build_dir} COMMAND_ERROR_IS_FATAL ANY)
+	execute_process(COMMAND ${CMAKE_COMMAND} -E env RCFLAGS=/nologo ${_env} ${CMAKE_COMMAND} ${_options} ${_arg_OPTIONS}
+		COMMAND_ECHO STDOUT
+		COMMAND_ERROR_IS_FATAL ANY
+		WORKING_DIRECTORY ${_build_dir}
+		)
 	if(CMAKE_GENERATOR MATCHES "^Visual Studio")
 		set(_build_options -- /nologo)
 	else()
