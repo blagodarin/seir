@@ -24,9 +24,8 @@ namespace seir
 	const void* loadIcoImage(Reader&, ImageInfo&) noexcept;
 #endif
 
-	constexpr auto kJpegFileID = makeCC('\xff', '\xd8'); // SOI marker.
 #if SEIR_IMAGE_JPEG
-	const void* loadJpegImage(Reader&, ImageInfo&, Buffer&) noexcept;
+	const void* loadJpegImage(const Reader&, ImageInfo&, Buffer&) noexcept;
 	bool saveJpegImage(Writer&, const ImageInfo&, const void* data, int compressionLevel) noexcept;
 #endif
 
@@ -41,6 +40,6 @@ namespace seir
 #endif
 
 #if SEIR_IMAGE_WEBP
-	const void* loadWebpImage(Reader&, ImageInfo&, Buffer&) noexcept;
+	const void* loadWebpImage(const Reader&, ImageInfo&, Buffer&) noexcept;
 #endif
 }

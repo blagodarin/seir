@@ -93,7 +93,7 @@ namespace
 				case Key::LControl: key = Key::RControl; break;
 				case Key::LShift: key = Key::RShift; break;
 				case Key::LAlt: key = Key::RAlt; break;
-				case Key::LGui: break;
+				case Key::LGui: break; // NOLINT(bugprone-branch-clone)
 				case Key::RGui: break;
 				default: return Key::None;
 #pragma warning(suppress : 4061) // enumerator '...' in switch of enum '...' is not explicitly handled by a case label

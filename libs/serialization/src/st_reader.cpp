@@ -69,11 +69,11 @@ namespace
 
 	constexpr CharClass classOf(char c) noexcept
 	{
-		return ::kCharClasses[static_cast<unsigned char>(c)];
+		return ::kCharClasses[static_cast<unsigned char>(c)]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 	}
 
 	template <typename I, typename P>
-	constexpr I skipWhile(I iterator, P&& predicate) noexcept
+	constexpr I skipWhile(I iterator, const P& predicate) noexcept
 	{
 		do
 			++iterator;

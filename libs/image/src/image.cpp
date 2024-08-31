@@ -39,7 +39,7 @@ namespace seir
 				result._data = loadDdsImage(reader, result._info);
 #endif
 				break;
-			case kJpegFileID:
+			case makeCC('\xff', '\xd8'): // JFIF SOI marker.
 #if SEIR_IMAGE_JPEG
 				result._data = loadJpegImage(reader, result._info, result._buffer);
 #endif

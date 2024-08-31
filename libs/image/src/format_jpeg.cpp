@@ -159,7 +159,7 @@ namespace
 
 namespace seir
 {
-	const void* loadJpegImage(Reader& reader, ImageInfo& info, Buffer& buffer) noexcept
+	const void* loadJpegImage(const Reader& reader, ImageInfo& info, Buffer& buffer) noexcept
 	{
 		return JpegDecompressor{ reader }.decompress(info, buffer) ? buffer.data() : nullptr;
 	}

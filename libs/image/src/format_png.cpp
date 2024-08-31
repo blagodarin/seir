@@ -109,7 +109,7 @@ namespace
 		constexpr Crc32& process(const void* data, size_t size) noexcept
 		{
 			for (size_t i = 0; i < size; ++i)
-				_value = _table[static_cast<const uint8_t*>(data)[i] ^ (_value & 0xff)] ^ (_value >> 8);
+				_value = _table[static_cast<const uint8_t*>(data)[i] ^ (_value & 0xff)] ^ (_value >> 8); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 			return *this;
 		}
 

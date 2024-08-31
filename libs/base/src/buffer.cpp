@@ -37,13 +37,13 @@ namespace seir
 	{
 		if (totalCapacity <= _capacity)
 			return true;
-		const auto data = BufferAllocator::tryAllocate(totalCapacity);
-		if (!data) [[unlikely]]
+		const auto newData = BufferAllocator::tryAllocate(totalCapacity);
+		if (!newData) [[unlikely]]
 			return false;
 		if (preservedCapacity > 0)
-			std::memcpy(data, _data, (preservedCapacity < _capacity ? preservedCapacity : _capacity));
+			std::memcpy(newData, _data, (preservedCapacity < _capacity ? preservedCapacity : _capacity));
 		BufferAllocator::deallocate(_data);
-		_data = static_cast<std::byte*>(data);
+		_data = static_cast<std::byte*>(newData);
 		_capacity = totalCapacity;
 		return true;
 	}

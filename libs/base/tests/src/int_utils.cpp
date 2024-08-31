@@ -40,7 +40,7 @@ TEST_CASE("isPowerOf2")
 	using seir::isPowerOf2;
 	for (int8_t i = std::numeric_limits<int8_t>::min(); i < 0; ++i)
 	{
-		INFO("i = " << i);
+		INFO("i = " << i); // cppcheck-suppress[shiftNegative]
 		CHECK(!isPowerOf2(i));
 	}
 	for (uint8_t i = 0; i <= std::numeric_limits<int8_t>::max(); ++i)

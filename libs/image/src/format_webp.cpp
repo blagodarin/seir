@@ -10,7 +10,7 @@
 
 namespace seir
 {
-	const void* loadWebpImage(Reader& reader, ImageInfo& info, Buffer& buffer) noexcept
+	const void* loadWebpImage(const Reader& reader, ImageInfo& info, Buffer& buffer) noexcept
 	{
 		::WebPDecoderConfig config;
 		if (::WebPInitDecoderConfig(&config))

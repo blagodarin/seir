@@ -77,39 +77,39 @@ template <class T>
 [[nodiscard]] constexpr std::span<const T> seir::Reader::readArray(size_t maxElements) noexcept
 {
 	const auto data = reinterpret_cast<const T*>(static_cast<const std::byte*>(_blob.data()) + _offset);
-	auto size = (_blob.size() - _offset) / sizeof(T);
-	if (size > maxElements)
-		size = maxElements;
-	_offset += size * sizeof(T);
-	return { data, size };
+	auto count = (_blob.size() - _offset) / sizeof(T);
+	if (count > maxElements)
+		count = maxElements;
+	_offset += count * sizeof(T);
+	return { data, count };
 }
 
 [[nodiscard]] constexpr std::pair<const void*, size_t> seir::Reader::readBlocks(size_t maxBlocks, size_t blockSize) noexcept
 {
 	const auto data = static_cast<const std::byte*>(_blob.data()) + _offset;
-	auto size = (_blob.size() - _offset) / blockSize;
-	if (size > maxBlocks)
-		size = maxBlocks;
-	_offset += size * blockSize;
-	return { data, size };
+	auto count = (_blob.size() - _offset) / blockSize;
+	if (count > maxBlocks)
+		count = maxBlocks;
+	_offset += count * blockSize;
+	return { data, count };
 }
 
 constexpr std::string_view seir::Reader::readLine() noexcept
 {
 	const auto data = static_cast<const char*>(_blob.data()) + _offset;
-	const auto size = _blob.size() - _offset;
-	size_t i = 0;
-	while (i < size)
-		if (const auto next = data[i++]; next == '\r')
+	const auto maxLength = _blob.size() - _offset;
+	size_t length = 0;
+	while (length < maxLength)
+		if (const auto next = data[length++]; next == '\r')
 		{
-			if (i < size && data[i] == '\n')
-				++i;
+			if (length < maxLength && data[length] == '\n')
+				++length;
 			break;
 		}
 		else if (next == '\n')
 			break;
-	_offset += i;
-	return { data, i };
+	_offset += length;
+	return { data, length };
 }
 
 constexpr bool seir::Reader::seek(size_t offset) noexcept
