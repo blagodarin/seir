@@ -33,7 +33,7 @@ int u8main(int, char**)
 	std::string fps2;
 	while (app.processEvents(gui.eventCallbacks()))
 	{
-		seir::GuiFrame frame{ gui };
+		seir::GuiFrame frame{ gui, renderer2d };
 		if (frame.takeKeyPress(seir::Key::Escape))
 			window.close();
 		renderer.render([&](seir::RenderPass& pass) {
@@ -41,8 +41,8 @@ int u8main(int, char**)
 			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 10);
 			layout.setItemSize({ 200, 20 });
 			layout.setItemSpacing(5);
-			font->renderLine(renderer2d, layout.addItem(), fps1);
-			font->renderLine(renderer2d, layout.addItem(), fps2);
+			frame.addLabel(*font, fps1);
+			frame.addLabel(*font, fps2);
 			renderer2d.draw(pass);
 		});
 		if (const auto period = clock.advance())

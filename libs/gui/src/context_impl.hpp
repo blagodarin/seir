@@ -15,6 +15,7 @@ namespace seir
 	class GuiContext;
 	class GuiFrame;
 	class GuiLayout;
+	class RectF;
 
 	class GuiContextImpl final : public EventCallbacks
 	{
@@ -27,6 +28,7 @@ namespace seir
 
 		explicit GuiContextImpl(Window&) noexcept;
 
+		RectF addItem() const noexcept;
 		KeyCapture captureClick(Key key, bool repeated, bool release = false) noexcept;
 
 	private:

@@ -4,6 +4,8 @@
 
 #include "context_impl.hpp"
 
+#include <seir_gui/layout.hpp>
+
 #include <cassert>
 #include <algorithm>
 
@@ -24,6 +26,11 @@ namespace seir
 	GuiContextImpl::GuiContextImpl(Window& window) noexcept
 		: _window{ window }
 	{
+	}
+
+	RectF GuiContextImpl::addItem() const noexcept
+	{
+		return _layout ? _layout->addItem() : RectF{};
 	}
 
 	GuiContextImpl::KeyCapture GuiContextImpl::captureClick(Key key, bool repeated, bool release) noexcept
