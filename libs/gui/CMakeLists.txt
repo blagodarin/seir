@@ -6,6 +6,7 @@ set(HEADERS
 	include/seir_gui/context.hpp
 	include/seir_gui/font.hpp
 	include/seir_gui/frame.hpp
+	include/seir_gui/layout.hpp
 	)
 set(SOURCES
 	src/context.cpp
@@ -13,7 +14,13 @@ set(SOURCES
 	src/context_impl.hpp
 	src/font.cpp
 	src/frame.cpp
+	src/layout.cpp
 	)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	set_property(SOURCE src/layout.cpp APPEND PROPERTY COMPILE_OPTIONS
+		/wd4355 # 'this': used in base member initializer list
+		)
+endif()
 source_group("include" FILES ${HEADERS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(seir_gui STATIC ${HEADERS} ${SOURCES})

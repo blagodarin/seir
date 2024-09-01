@@ -14,6 +14,7 @@ namespace seir
 	class Font;
 	class GuiContext;
 	class GuiFrame;
+	class GuiLayout;
 
 	class GuiContextImpl final : public EventCallbacks
 	{
@@ -35,7 +36,9 @@ namespace seir
 	private:
 		Window& _window;
 		std::vector<uint16_t> _inputEvents;
+		GuiLayout* _layout = nullptr;
 		friend GuiContext;
 		friend GuiFrame;
+		friend GuiLayout;
 	};
 }

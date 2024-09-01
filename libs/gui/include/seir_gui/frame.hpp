@@ -5,6 +5,7 @@
 #pragma once
 
 #include <seir_app/key.hpp>
+#include <seir_graphics/sizef.hpp>
 
 namespace seir
 {
@@ -21,5 +22,7 @@ namespace seir
 
 	private:
 		class GuiContextImpl& _context;
+		const SizeF _size;
+		friend class GuiLayout;
 	};
 }

@@ -11,6 +11,7 @@
 #include <seir_gui/context.hpp>
 #include <seir_gui/font.hpp>
 #include <seir_gui/frame.hpp>
+#include <seir_gui/layout.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>
@@ -36,8 +37,12 @@ int u8main(int, char**)
 		if (frame.takeKeyPress(seir::Key::Escape))
 			window.close();
 		renderer.render([&](seir::RenderPass& pass) {
-			font->renderLine(renderer2d, { { 5, 5 }, seir::SizeF{ 200, 20 } }, fps1);
-			font->renderLine(renderer2d, { { 5, 25 }, seir::SizeF{ 200, 20 } }, fps2);
+			seir::GuiLayout layout{ frame };
+			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 10);
+			layout.setItemSize({ 200, 20 });
+			layout.setItemSpacing(5);
+			font->renderLine(renderer2d, layout.addItem(), fps1);
+			font->renderLine(renderer2d, layout.addItem(), fps2);
 			renderer2d.draw(pass);
 		});
 		if (const auto period = clock.advance())

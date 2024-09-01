@@ -4,6 +4,7 @@
 
 #include <seir_gui/frame.hpp>
 
+#include <seir_app/window.hpp>
 #include <seir_gui/context.hpp>
 #include "context_impl.hpp"
 
@@ -11,6 +12,7 @@ namespace seir
 {
 	GuiFrame::GuiFrame(GuiContext& context)
 		: _context{ *context._impl }
+		, _size{ context._impl->_window.size() }
 	{
 	}
 
