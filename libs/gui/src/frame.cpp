@@ -19,6 +19,7 @@ namespace seir
 		, _renderer{ renderer }
 		, _size{ context._impl->_window.size() }
 	{
+		setLabelStyle({});
 	}
 
 	GuiFrame::~GuiFrame() noexcept
@@ -26,13 +27,14 @@ namespace seir
 		_context._inputEvents.clear();
 	}
 
-	void GuiFrame::addLabel(const Font& font, std::string_view text, GuiAlignment alignment)
+	void GuiFrame::addLabel(std::string_view text, GuiAlignment alignment)
 	{
+		if (!_context._labelStyle._font)
+			return;
 		auto textRect = _context.addItem();
 		if (textRect.top() >= textRect.bottom())
 			return;
-		constexpr float relativeTextSize = 1.f;
-		const auto verticalPadding = textRect.height() * (1 - relativeTextSize) / 2;
+		const auto verticalPadding = textRect.height() * (1 - _context._labelStyle._fontSize) / 2;
 		textRect._top += verticalPadding;
 		textRect._bottom -= verticalPadding;
 		if (textRect.left() == textRect.right())
@@ -42,7 +44,7 @@ namespace seir
 			if (alignment == GuiAlignment::Center || alignment == GuiAlignment::Right)
 				textRect._left = 0;
 		}
-		if (const auto textWidth = font.textWidth(text, textRect.height()); textWidth < textRect.width())
+		if (const auto textWidth = _context._labelStyle._font->textWidth(text, textRect.height()); textWidth < textRect.width())
 		{
 			if (alignment == GuiAlignment::Center)
 			{
@@ -53,9 +55,16 @@ namespace seir
 			else if (alignment == GuiAlignment::Right)
 				textRect._left = textRect._right - textWidth;
 		}
-		_renderer.setColor(Rgba32::yellow());
-		font.renderLine(_renderer, textRect, text);
+		_renderer.setColor(_context._labelStyle._textColor);
+		_context._labelStyle._font->renderLine(_renderer, textRect, text);
 		// TODO: Update white texture.
+	}
+
+	void GuiFrame::setLabelStyle(const GuiLabelStyle& style) noexcept
+	{
+		_context._labelStyle = style;
+		if (!_context._labelStyle._font)
+			_context._labelStyle._font = _context._defaultFont;
 	}
 
 	bool GuiFrame::takeAnyKeyPress() noexcept

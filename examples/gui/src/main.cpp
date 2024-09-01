@@ -26,7 +26,7 @@ int u8main(int, char**)
 	seir::Renderer renderer{ window };
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window };
-	const auto font = seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20);
+	gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20));
 	window.show();
 	seir::VariableRate clock;
 	std::string fps1;
@@ -38,11 +38,10 @@ int u8main(int, char**)
 			window.close();
 		renderer.render([&](seir::RenderPass& pass) {
 			seir::GuiLayout layout{ frame };
-			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 10);
-			layout.setItemSize({ 200, 20 });
-			layout.setItemSpacing(5);
-			frame.addLabel(*font, fps1);
-			frame.addLabel(*font, fps2);
+			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 5);
+			layout.setItemSize({ 0, 20 });
+			frame.addLabel(fps1);
+			frame.addLabel(fps2);
 			renderer2d.draw(pass);
 		});
 		if (const auto period = clock.advance())

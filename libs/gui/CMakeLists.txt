@@ -7,6 +7,7 @@ set(HEADERS
 	include/seir_gui/font.hpp
 	include/seir_gui/frame.hpp
 	include/seir_gui/layout.hpp
+	include/seir_gui/style.hpp
 	)
 set(SOURCES
 	src/context.cpp
@@ -15,6 +16,7 @@ set(SOURCES
 	src/font.cpp
 	src/frame.cpp
 	src/layout.cpp
+	src/style.cpp
 	)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	set_property(SOURCE src/layout.cpp APPEND PROPERTY COMPILE_OPTIONS

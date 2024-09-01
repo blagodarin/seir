@@ -4,6 +4,7 @@
 
 #include <seir_gui/context.hpp>
 
+#include <seir_gui/font.hpp>
 #include "context_impl.hpp"
 
 namespace seir
@@ -18,5 +19,10 @@ namespace seir
 	EventCallbacks& GuiContext::eventCallbacks() noexcept
 	{
 		return *_impl;
+	}
+
+	void GuiContext::setDefaultFont(const SharedPtr<Font>& font) noexcept
+	{
+		_impl->_defaultFont = font;
 	}
 }

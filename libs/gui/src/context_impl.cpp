@@ -4,6 +4,7 @@
 
 #include "context_impl.hpp"
 
+#include <seir_gui/font.hpp>
 #include <seir_gui/layout.hpp>
 
 #include <cassert>

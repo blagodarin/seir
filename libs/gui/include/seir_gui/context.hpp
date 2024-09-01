@@ -9,6 +9,9 @@
 namespace seir
 {
 	class EventCallbacks;
+	class Font;
+	template <class>
+	class SharedPtr;
 	class Window;
 
 	class GuiContext
@@ -18,6 +21,7 @@ namespace seir
 		~GuiContext() noexcept;
 
 		EventCallbacks& eventCallbacks() noexcept;
+		void setDefaultFont(const SharedPtr<Font>&) noexcept;
 
 	private:
 		const std::unique_ptr<class GuiContextImpl> _impl;
