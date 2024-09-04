@@ -6,6 +6,7 @@
 
 #include <seir_gui/font.hpp>
 #include <seir_gui/layout.hpp>
+#include <seir_renderer/renderer.hpp>
 
 #include <cassert>
 #include <algorithm>
@@ -28,6 +29,8 @@ namespace seir
 		: _window{ window }
 	{
 	}
+
+	GuiContextImpl::~GuiContextImpl() = default;
 
 	RectF GuiContextImpl::addItem() const noexcept
 	{
@@ -64,6 +67,25 @@ namespace seir
 			}
 		}
 		return { count, false };
+	}
+
+	std::optional<Vec2> GuiContextImpl::takeMouseHover(const RectF& rect) noexcept
+	{
+		if (_mouseHoverTaken || !rect.contains(_mouseCursor))
+			return {};
+		_mouseHoverTaken = true;
+		return _mouseCursor;
+	}
+
+	void GuiContextImpl::updateWhiteTexture(const SharedPtr<Font>& font) noexcept
+	{
+		if (font)
+		{
+			_whiteTexture = font->bitmapTexture();
+			_whiteTextureRect = font->whiteRect();
+		}
+		else
+			_whiteTexture = {};
 	}
 
 	void GuiContextImpl::onKeyEvent([[maybe_unused]] Window& window, const KeyEvent& event)

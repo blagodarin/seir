@@ -42,6 +42,10 @@ int u8main(int, char**)
 			layout.setItemSize({ 0, 20 });
 			frame.addLabel(fps1);
 			frame.addLabel(fps2);
+			layout.fromTopRight(seir::GuiLayout::Axis::X, 5);
+			layout.setItemSize({ 100, 25 });
+			if (frame.addButton("quit", "Quit"))
+				window.close();
 			renderer2d.draw(pass);
 		});
 		if (const auto period = clock.advance())

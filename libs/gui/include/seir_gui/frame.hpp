@@ -12,6 +12,7 @@
 namespace seir
 {
 	class Font;
+	class GuiButtonStyle;
 	class GuiContext;
 	class GuiLabelStyle;
 	class Renderer2D;
@@ -29,7 +30,10 @@ namespace seir
 		explicit GuiFrame(GuiContext&, Renderer2D&);
 		~GuiFrame() noexcept;
 
+		bool addButton(std::string_view id, std::string_view text);
 		void addLabel(std::string_view text, GuiAlignment = GuiAlignment::Left);
+		void selectWhiteTexture();
+		void setButtonStyle(const GuiButtonStyle&) noexcept;
 		void setLabelStyle(const GuiLabelStyle&) noexcept;
 		bool takeAnyKeyPress() noexcept;
 		bool takeKeyPress(Key) noexcept;
