@@ -185,4 +185,9 @@ namespace seir
 	{
 		return _context.captureClick(key, false).pressed > 0;
 	}
+
+	std::optional<Vec2> GuiFrame::takeMouseCursor() noexcept
+	{
+		return _context.takeMouseCursor(RectF{ _size });
+	}
 }

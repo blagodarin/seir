@@ -69,6 +69,15 @@ namespace seir
 		return { count, false };
 	}
 
+	std::optional<Vec2> GuiContextImpl::takeMouseCursor(const RectF& rect) noexcept
+	{
+		if (_mouseCursorTaken || !rect.contains(_mouseCursor))
+			return {};
+		_mouseCursorTaken = true;
+		_mouseHoverTaken = true;
+		return _mouseCursor;
+	}
+
 	std::optional<Vec2> GuiContextImpl::takeMouseHover(const RectF& rect) noexcept
 	{
 		if (_mouseHoverTaken || !rect.contains(_mouseCursor))

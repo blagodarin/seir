@@ -7,6 +7,7 @@
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
 #include <seir_data/blob.hpp>
+#include <seir_graphics/color.hpp>
 #include <seir_graphics/rectf.hpp>
 #include <seir_gui/context.hpp>
 #include <seir_gui/font.hpp>
@@ -44,8 +45,16 @@ int u8main(int, char**)
 			frame.addLabel(fps2);
 			layout.fromTopRight(seir::GuiLayout::Axis::X, 5);
 			layout.setItemSize({ 100, 25 });
+			layout.setItemSpacing(5);
 			if (frame.addButton("quit", "Quit"))
 				window.close();
+			frame.addButton("noop", "Nope");
+			if (const auto cursor = frame.takeMouseCursor())
+			{
+				frame.selectWhiteTexture();
+				renderer2d.setColor(seir::Rgba32::red());
+				renderer2d.addRect({ *cursor, seir::SizeF{ 5, 5 } });
+			}
 			renderer2d.draw(pass);
 		});
 		if (const auto period = clock.advance())

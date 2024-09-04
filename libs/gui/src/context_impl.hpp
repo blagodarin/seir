@@ -36,6 +36,7 @@ namespace seir
 
 		RectF addItem() const noexcept;
 		KeyCapture captureClick(Key key, bool repeated, bool release = false) noexcept;
+		std::optional<Vec2> takeMouseCursor(const RectF&) noexcept;
 		std::optional<Vec2> takeMouseHover(const RectF&) noexcept;
 		void updateWhiteTexture(const SharedPtr<Font>&) noexcept;
 

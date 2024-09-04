@@ -7,6 +7,7 @@
 #include <seir_app/key.hpp>
 #include <seir_graphics/sizef.hpp>
 
+#include <optional>
 #include <string_view>
 
 namespace seir
@@ -16,6 +17,7 @@ namespace seir
 	class GuiContext;
 	class GuiLabelStyle;
 	class Renderer2D;
+	class Vec2;
 
 	enum class GuiAlignment
 	{
@@ -37,6 +39,7 @@ namespace seir
 		void setLabelStyle(const GuiLabelStyle&) noexcept;
 		bool takeAnyKeyPress() noexcept;
 		bool takeKeyPress(Key) noexcept;
+		std::optional<Vec2> takeMouseCursor() noexcept;
 
 	private:
 		class GuiContextImpl& _context;
