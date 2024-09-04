@@ -27,11 +27,12 @@ int u8main(int, char**)
 	seir::Renderer renderer{ window };
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window };
-	gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 20));
+	gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 24));
 	window.show();
 	seir::VariableRate clock;
 	std::string fps1;
 	std::string fps2;
+	bool showFps = true;
 	while (app.processEvents(gui.eventCallbacks()))
 	{
 		seir::GuiFrame frame{ gui, renderer2d };
@@ -39,21 +40,25 @@ int u8main(int, char**)
 			window.close();
 		renderer.render([&](seir::RenderPass& pass) {
 			seir::GuiLayout layout{ frame };
-			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 5);
-			layout.setItemSize({ 0, 20 });
-			frame.addLabel(fps1);
-			frame.addLabel(fps2);
-			layout.fromTopRight(seir::GuiLayout::Axis::X, 5);
-			layout.setItemSize({ 100, 25 });
+			layout.fromTopRight(seir::GuiLayout::Axis::X, 4);
+			layout.setItemSize({ 128, 32 });
 			layout.setItemSpacing(5);
 			if (frame.addButton("quit", "Quit"))
 				window.close();
-			frame.addButton("noop", "Nope");
+			if (frame.addButton("fps", showFps ? "Hide FPS" : "Show FPS"))
+				showFps = !showFps;
 			if (const auto cursor = frame.takeMouseCursor())
 			{
 				frame.selectWhiteTexture();
 				renderer2d.setColor(seir::Rgba32::red());
 				renderer2d.addRect({ *cursor, seir::SizeF{ 5, 5 } });
+			}
+			if (showFps)
+			{
+				layout.fromTopLeft(seir::GuiLayout::Axis::Y, 4);
+				layout.setItemSize({ 0, 24 });
+				frame.addLabel(fps1);
+				frame.addLabel(fps2);
 			}
 			renderer2d.draw(pass);
 		});
