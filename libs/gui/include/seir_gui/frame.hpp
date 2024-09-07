@@ -8,13 +8,14 @@
 #include <seir_graphics/sizef.hpp>
 
 #include <optional>
-#include <string_view>
+#include <string>
 
 namespace seir
 {
 	class Font;
 	class GuiButtonStyle;
 	class GuiContext;
+	class GuiEditStyle;
 	class GuiLabelStyle;
 	class Renderer2D;
 	class Vec2;
@@ -34,8 +35,10 @@ namespace seir
 
 		bool addButton(std::string_view id, std::string_view text);
 		void addLabel(std::string_view text, GuiAlignment = GuiAlignment::Left);
+		bool addStringEdit(std::string_view id, std::string& text);
 		void selectWhiteTexture();
 		void setButtonStyle(const GuiButtonStyle&) noexcept;
+		void setEditStyle(const GuiEditStyle&) noexcept;
 		void setLabelStyle(const GuiLabelStyle&) noexcept;
 		bool takeAnyKeyPress() noexcept;
 		bool takeKeyPress(Key) noexcept;

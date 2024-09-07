@@ -15,7 +15,7 @@ namespace
 {
 	// Input event flags and masks.
 	constexpr uint16_t kPayloadMask = 0x00ff;
-	// TODO: Add modifier flags.
+	constexpr uint16_t kShiftFlag = 0x0100;
 	constexpr uint16_t kPressedFlag = 0x1000;
 	constexpr uint16_t kRepeatedFlag = 0x2000;
 	constexpr uint16_t kTextFlag = 0x4000;
@@ -30,7 +30,7 @@ namespace seir
 	{
 	}
 
-	GuiContextImpl::~GuiContextImpl() = default;
+	GuiContextImpl::~GuiContextImpl() noexcept = default;
 
 	RectF GuiContextImpl::addItem() const noexcept
 	{
@@ -67,6 +67,21 @@ namespace seir
 			}
 		}
 		return { count, false };
+	}
+
+	void GuiContextImpl::captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback)
+	{
+		assert(!_keyboardItem._id.empty());
+		for (auto& event : _inputEvents)
+		{
+			if (event & kProcessedFlag)
+				continue;
+			event |= kProcessedFlag;
+			if (event & kTextFlag)
+				textCallback(_textInputs[event & size_t{ kPayloadMask }]);
+			else if ((event & kPressedFlag) && !keyCallback(static_cast<Key>(event & kPayloadMask), event & kShiftFlag))
+				break;
+		}
 	}
 
 	std::optional<Vec2> GuiContextImpl::takeMouseCursor(const RectF& rect) noexcept
@@ -111,8 +126,14 @@ namespace seir
 		_inputEvents.emplace_back(encodedEvent);
 	}
 
-	void GuiContextImpl::onTextEvent([[maybe_unused]] Window& window, std::string_view)
+	void GuiContextImpl::onTextEvent([[maybe_unused]] Window& window, std::string_view text)
 	{
 		assert(&window == &_window);
+		const auto index = _textInputs.size();
+		if (index >= kPayloadMask)
+			return;
+		_inputEvents.reserve(_inputEvents.size() + 1);
+		_textInputs.emplace_back(text);
+		_inputEvents.emplace_back(static_cast<uint16_t>(kTextFlag | index));
 	}
 }

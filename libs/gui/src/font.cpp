@@ -111,13 +111,34 @@ namespace
 			return _size;
 		}
 
-		float textWidth(std::string_view text, float fontSize) const noexcept override
+		float textWidth(std::string_view text, float fontSize, TextCapture* capture) const noexcept override
 		{
 			const auto scale = fontSize / _size;
 			int x = 0;
+			std::optional<float> selectionX;
+			const auto updateCapture = [&](size_t offset) {
+				if (!capture)
+					return;
+				if (capture->_cursorOffset == offset)
+					capture->_cursorPosition.emplace(static_cast<float>(x) * scale);
+				if (capture->_selectionBegin < capture->_selectionEnd)
+				{
+					if (selectionX)
+					{
+						if (offset == capture->_selectionEnd)
+						{
+							capture->_selectionRange.emplace(*selectionX, static_cast<float>(x) * scale);
+							selectionX.reset();
+						}
+					}
+					else if (offset == capture->_selectionBegin)
+						selectionX = static_cast<float>(x) * scale;
+				}
+			};
 			auto previous = _bitmapGlyphs.end();
 			for (size_t i = 0; i < text.size();)
 			{
+				const auto offset = i;
 				const auto current = _bitmapGlyphs.find(seir::readUtf8(text, i));
 				if (current == _bitmapGlyphs.end())
 					continue;
@@ -127,9 +148,11 @@ namespace
 					if (!::FT_Get_Kerning(_face, previous->second._id, current->second._id, FT_KERNING_DEFAULT, &kerning))
 						x += static_cast<int>(kerning.x >> 6);
 				}
+				updateCapture(offset);
 				x += current->second._advance;
 				previous = current;
 			}
+			updateCapture(text.size());
 			return static_cast<float>(x) * scale;
 		}
 

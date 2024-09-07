@@ -15,10 +15,19 @@ set(SOURCES
 	src/context_impl.hpp
 	src/font.cpp
 	src/frame.cpp
+	src/keyboard_item.cpp
+	src/keyboard_item.hpp
 	src/layout.cpp
 	src/style.cpp
 	)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	set_property(SOURCE src/frame.cpp APPEND PROPERTY COMPILE_OPTIONS
+		-Wno-switch-enum
+		)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	set_property(SOURCE src/frame.cpp APPEND PROPERTY COMPILE_OPTIONS
+		/wd4061 # enumerator '___' in switch of enum 'seir::Key' is not explicitly handled by a case label
+		)
 	set_property(SOURCE src/layout.cpp APPEND PROPERTY COMPILE_OPTIONS
 		/wd4355 # 'this': used in base member initializer list
 		)

@@ -8,9 +8,10 @@
 #include <seir_base/shared_ptr.hpp>
 #include <seir_graphics/rectf.hpp>
 #include <seir_gui/style.hpp>
+#include "keyboard_item.hpp"
 
+#include <functional>
 #include <optional>
-#include <string>
 #include <vector>
 
 namespace seir
@@ -36,6 +37,7 @@ namespace seir
 
 		RectF addItem() const noexcept;
 		KeyCapture captureClick(Key key, bool repeated, bool release = false) noexcept;
+		void captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback);
 		std::optional<Vec2> takeMouseCursor(const RectF&) noexcept;
 		std::optional<Vec2> takeMouseHover(const RectF&) noexcept;
 		void updateWhiteTexture(const SharedPtr<Font>&) noexcept;
@@ -46,19 +48,23 @@ namespace seir
 
 	private:
 		Window& _window;
-		SharedPtr<Font> _defaultFont;
-		SharedPtr<Texture2D> _whiteTexture;
-		RectF _whiteTextureRect;
 		std::vector<uint16_t> _inputEvents;
+		std::vector<std::string> _textInputs;
 		Vec2 _mouseCursor;
 		bool _mouseCursorTaken = false;
 		bool _mouseHoverTaken = false;
 		std::string _mouseItem;
 		bool _mouseItemPresent = false;
 		Key _mouseItemKey = Key::None;
-		GuiLayout* _layout = nullptr;
+		GuiKeyboardItem _keyboardItem;
 		GuiButtonStyle _buttonStyle;
+		GuiEditStyle _editStyle;
 		GuiLabelStyle _labelStyle;
+		SharedPtr<Font> _defaultFont;
+		SharedPtr<Texture2D> _whiteTexture;
+		RectF _whiteTextureRect;
+		GuiLayout* _layout = nullptr;
+		bool _focusExpected = false;
 		friend GuiContext;
 		friend GuiFrame;
 		friend GuiLayout;

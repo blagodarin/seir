@@ -33,6 +33,7 @@ int u8main(int, char**)
 	std::string fps1;
 	std::string fps2;
 	bool showFps = true;
+	std::string input;
 	while (app.processEvents(gui.eventCallbacks()))
 	{
 		seir::GuiFrame frame{ gui, renderer2d };
@@ -47,6 +48,8 @@ int u8main(int, char**)
 				window.close();
 			if (frame.addButton("fps", showFps ? "Hide FPS" : "Show FPS"))
 				showFps = !showFps;
+			if (frame.addStringEdit("input", input))
+				input.clear();
 			if (const auto cursor = frame.takeMouseCursor())
 			{
 				frame.selectWhiteTexture();
