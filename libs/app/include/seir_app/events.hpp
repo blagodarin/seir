@@ -18,6 +18,7 @@ namespace seir
 		Key _key = Key::None;
 		bool _pressed = false;
 		bool _repeated = false;
+		bool _shiftPressed = false;
 	};
 
 	//

@@ -163,7 +163,7 @@ namespace seir
 	{
 		const auto onKeyEvent = [this, hwnd](Key key, bool pressed, bool repeated) {
 			if (const auto i = _windows.find(hwnd); i != _windows.end())
-				_callbacks->onKeyEvent(i->second->window(), { key, pressed, repeated });
+				_callbacks->onKeyEvent(i->second->window(), { key, pressed, repeated, static_cast<bool>(::GetKeyState(VK_SHIFT) & 0x8000) });
 		};
 
 		const auto onTextEvent = [this, hwnd](char32_t codepoint) {

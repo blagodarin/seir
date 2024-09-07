@@ -121,7 +121,8 @@ namespace seir
 			encodedEvent |= kPressedFlag;
 			if (event._repeated)
 				encodedEvent |= kRepeatedFlag;
-			// TODO: Support shift modifier.
+			if (event._shiftPressed)
+				encodedEvent |= kShiftFlag;
 		}
 		_inputEvents.emplace_back(encodedEvent);
 	}
