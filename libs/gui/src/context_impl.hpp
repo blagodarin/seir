@@ -53,9 +53,11 @@ namespace seir
 		Vec2 _mouseCursor;
 		bool _mouseCursorTaken = false;
 		bool _mouseHoverTaken = false;
-		std::string _mouseItem;
+		std::string _mouseItemId;
 		bool _mouseItemPresent = false;
 		Key _mouseItemKey = Key::None;
+		std::string _keyboardItemId;
+		bool _keyboardItemPresent = false;
 		GuiKeyboardItem _keyboardItem;
 		GuiButtonStyle _buttonStyle;
 		GuiEditStyle _editStyle;

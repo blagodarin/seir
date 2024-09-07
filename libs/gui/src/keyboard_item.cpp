@@ -4,10 +4,59 @@
 
 #include "keyboard_item.hpp"
 
-#include <utility>
+#include <seir_base/utf8.hpp>
+#include <seir_gui/font.hpp>
+
+#include <cassert>
+
+namespace
+{
+	constexpr size_t leftStep(std::string_view text, size_t cursor) noexcept
+	{
+		assert(cursor > 0);
+		auto offset = cursor;
+		do
+			--offset;
+		while (offset > 0 && seir::isUtf8Continuation(text[offset]));
+		return cursor - offset;
+	}
+
+	constexpr size_t rightStep(std::string_view text, size_t cursor) noexcept
+	{
+		assert(cursor < text.size());
+		auto offset = cursor;
+		do
+			++offset;
+		while (offset < text.size() && seir::isUtf8Continuation(text[offset]));
+		return offset - cursor;
+	}
+}
 
 namespace seir
 {
+	void GuiKeyboardItem::adjustToText(std::string_view text) noexcept
+	{
+		if (_cursor > text.size())
+			_cursor = text.size();
+		else if (_cursor < text.size())
+			while (_cursor > 0 && seir::isUtf8Continuation(text[_cursor]))
+				--_cursor;
+		if (_selectionOffset > _cursor)
+			_selectionOffset = _cursor;
+		if (const auto maxSelectionSize = text.size() - _selectionOffset; maxSelectionSize < _selectionSize)
+			_selectionSize = maxSelectionSize;
+	}
+
+	FontCapture GuiKeyboardItem::fontCapture() const noexcept
+	{
+		return { _cursor, _selectionOffset, _selectionSize };
+	}
+
+	bool GuiKeyboardItem::isCursorPhaseVisible() const noexcept
+	{
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _cursorMark).count() % 1000 < 500;
+	}
+
 	void GuiKeyboardItem::onBackspace(std::string& text) noexcept
 	{
 		assert(_cursor <= text.size());
@@ -21,7 +70,7 @@ namespace seir
 		}
 		else if (_cursor > 0)
 		{
-			count = leftStep(text);
+			count = ::leftStep(text, _cursor);
 			_cursor -= count;
 		}
 		else
@@ -42,7 +91,7 @@ namespace seir
 			_cursor = _selectionOffset;
 		}
 		else if (_cursor < text.size())
-			count = rightStep(text);
+			count = ::rightStep(text, _cursor);
 		else
 			return;
 		text.erase(_cursor, count);
@@ -91,7 +140,7 @@ namespace seir
 	{
 		if (_cursor > 0)
 		{
-			const auto step = leftStep(text);
+			const auto step = ::leftStep(text, _cursor);
 			assert(step > 0 && step <= _cursor);
 			_cursor -= step;
 			_cursorMark = std::chrono::steady_clock::now();
@@ -127,7 +176,7 @@ namespace seir
 	{
 		if (_cursor < text.size())
 		{
-			const auto step = rightStep(text);
+			const auto step = ::rightStep(text, _cursor);
 			assert(step > 0 && step <= text.size() - _cursor);
 			if (shift)
 			{
@@ -149,10 +198,8 @@ namespace seir
 			_selectionSize = 0;
 	}
 
-	void GuiKeyboardItem::setFocus(std::string_view id)
+	void GuiKeyboardItem::setFocus() noexcept
 	{
-		_id = id;
-		_present = false;
 		_cursor = std::numeric_limits<size_t>::max();
 		_cursorMark = std::chrono::steady_clock::now();
 		_selectionOffset = 0;

@@ -4,8 +4,6 @@
 
 #include <seir_gui/style.hpp>
 
-#include <seir_gui/font.hpp>
-
 namespace seir
 {
 	GuiButtonStyle::GuiButtonStyle() noexcept
@@ -27,7 +25,7 @@ namespace seir
 	}
 
 	GuiLabelStyle::GuiLabelStyle() noexcept
-		: _fontSize{ 1.f }
+		: _fontSize{ .75f }
 		, _textColor{ Rgba32::white() }
 	{
 	}

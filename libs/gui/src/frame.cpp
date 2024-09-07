@@ -42,7 +42,7 @@ namespace seir
 		_context._mouseCursorTaken = false;
 		_context._mouseHoverTaken = false;
 		_context._mouseItemPresent = false;
-		_context._keyboardItem._present = false;
+		_context._keyboardItemPresent = false;
 		_context._focusExpected = false;
 		_context.updateWhiteTexture(_context._defaultFont);
 		setButtonStyle({});
@@ -54,16 +54,16 @@ namespace seir
 	{
 		if (_context._mouseItemKey != Key::None && _context.captureClick(_context._mouseItemKey, false, true).released)
 		{
-			_context._mouseItem.clear();
+			_context._mouseItemId.clear();
 			_context._mouseItemKey = Key::None;
 		}
 		if (!_context._mouseItemPresent)
 		{
-			_context._mouseItem.clear();
+			_context._mouseItemId.clear();
 			_context._mouseItemKey = Key::None;
 		}
-		if (!_context._keyboardItem._present)
-			_context._keyboardItem._id.clear();
+		if (!_context._keyboardItemPresent)
+			_context._keyboardItemId.clear();
 		_context._inputEvents.clear();
 		_context._textInputs.clear();
 	}
@@ -76,16 +76,16 @@ namespace seir
 			return false;
 		bool clicked = false;
 		const auto* styleState = &_context._buttonStyle._normal;
-		if (_context._mouseItem == id)
+		if (_context._mouseItemId == id)
 		{
 			assert(!_context._mouseHoverTaken);
 			assert(!_context._mouseItemPresent);
-			assert(_context._keyboardItem._id.empty());
+			assert(_context._keyboardItemId.empty());
 			const auto hovered = rect.contains(_context._mouseCursor);
 			const auto released = _context.captureClick(_context._mouseItemKey, false, true).released;
 			if (released)
 			{
-				_context._mouseItem.clear();
+				_context._mouseItemId.clear();
 				_context._mouseItemKey = Key::None;
 				if (hovered)
 				{
@@ -101,7 +101,7 @@ namespace seir
 				_context._mouseItemPresent = true;
 			}
 		}
-		else if (_context._mouseItem.empty() && _context.takeMouseHover(rect))
+		else if (_context._mouseItemId.empty() && _context.takeMouseHover(rect))
 		{
 			assert(!_context._mouseItemPresent);
 			styleState = &_context._buttonStyle._hovered;
@@ -109,14 +109,14 @@ namespace seir
 			{
 				if (!released)
 				{
-					_context._mouseItem = id;
+					_context._mouseItemId = id;
 					_context._mouseItemPresent = true;
 					_context._mouseItemKey = Key::Mouse1;
 					styleState = &_context._buttonStyle._pressed;
 				}
 				else
 					clicked = true;
-				_context._keyboardItem._id.clear();
+				_context._keyboardItemId.clear();
 			}
 		}
 		_context.updateWhiteTexture(_context._buttonStyle._font);
@@ -175,14 +175,14 @@ namespace seir
 		bool entered = false;
 		const auto* styleState = &_context._editStyle._normal;
 		bool active = false;
-		if (_context._mouseItem == id)
+		if (_context._mouseItemId == id)
 		{
 			assert(!_context._mouseHoverTaken);
 			assert(!_context._mouseItemPresent);
-			assert(_context._keyboardItem._id == id);
+			assert(_context._keyboardItemId == id);
 			if (_context.captureClick(_context._mouseItemKey, false, true).released)
 			{
-				_context._mouseItem.clear();
+				_context._mouseItemId.clear();
 				_context._mouseItemKey = Key::None;
 				if (itemRect.contains(_context._mouseCursor))
 					_context._mouseHoverTaken = true;
@@ -193,27 +193,33 @@ namespace seir
 				_context._mouseHoverTaken = true;
 			}
 		}
-		else if (_context._mouseItem.empty() && _context.takeMouseHover(itemRect))
+		else if (_context._mouseItemId.empty() && _context.takeMouseHover(itemRect))
 		{
 			styleState = &_context._editStyle._hovered;
 			if (const auto [pressed, released] = _context.captureClick(Key::Mouse1, false); pressed)
 			{
 				if (!released)
 				{
-					_context._mouseItem = id;
+					_context._mouseItemId = id;
 					_context._mouseItemPresent = true;
 					_context._mouseItemKey = Key::Mouse1;
 				}
-				_context._keyboardItem.setFocus(id);
+				_context._keyboardItemId = id;
+				_context._keyboardItemPresent = false;
+				_context._keyboardItem.setFocus();
 			}
 		}
 		if (std::exchange(_context._focusExpected, false))
-			if (_context._keyboardItem._id.empty())
-				_context._keyboardItem.setFocus(id);
-		if (_context._keyboardItem._id == id)
+			if (_context._keyboardItemId.empty())
+			{
+				_context._keyboardItemId = id;
+				_context._keyboardItemPresent = false;
+				_context._keyboardItem.setFocus();
+			}
+		if (_context._keyboardItemId == id)
 		{
-			assert(!_context._keyboardItem._present);
-			_context._keyboardItem._present = true;
+			assert(!_context._keyboardItemPresent);
+			_context._keyboardItemPresent = true;
 			styleState = &_context._editStyle._active;
 			active = true;
 			_context._keyboardItem.adjustToText(text);
@@ -226,7 +232,7 @@ namespace seir
 						entered = true;
 						[[fallthrough]];
 					case Key::Escape:
-						_context._keyboardItem._id.clear();
+						_context._keyboardItemId.clear();
 						active = false;
 						return false;
 					case Key::Left:
@@ -263,7 +269,7 @@ namespace seir
 		if (_context._editStyle._font)
 		{
 			const auto textRect = ::relativeHeightInRect(itemRect, _context._editStyle._fontSize);
-			Font::TextCapture capture{ _context._keyboardItem._cursor, _context._keyboardItem._selectionOffset, _context._keyboardItem._selectionSize };
+			auto capture = _context._keyboardItem.fontCapture();
 			_context._editStyle._font->textWidth(text, textRect.height(), &capture);
 			if (active && capture._selectionRange)
 			{
@@ -280,7 +286,7 @@ namespace seir
 			if (active && capture._cursorPosition)
 			{
 				const auto cursorX = textRect.left() + *capture._cursorPosition;
-				if (cursorX < textRect.right() && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _context._keyboardItem._cursorMark).count() % 1000 < 500)
+				if (cursorX < textRect.right() && _context._keyboardItem.isCursorPhaseVisible())
 				{
 					_renderer.setTextureRect(_context._editStyle._font->whiteRect());
 					_renderer.setColor(_context._editStyle._cursorColor);

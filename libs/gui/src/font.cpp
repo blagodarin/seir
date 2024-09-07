@@ -111,7 +111,7 @@ namespace
 			return _size;
 		}
 
-		float textWidth(std::string_view text, float fontSize, TextCapture* capture) const noexcept override
+		float textWidth(std::string_view text, float fontSize, seir::FontCapture* capture) const noexcept override
 		{
 			const auto scale = fontSize / _size;
 			int x = 0;

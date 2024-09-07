@@ -4,13 +4,11 @@
 
 #pragma once
 
-#include <seir_base/shared_ptr.hpp>
 #include <seir_graphics/color.hpp>
+#include <seir_gui/font.hpp>
 
 namespace seir
 {
-	class Font;
-
 	class GuiButtonStyle
 	{
 	public:
@@ -26,6 +24,7 @@ namespace seir
 		State _normal;
 		State _hovered;
 		State _pressed;
+
 		GuiButtonStyle() noexcept;
 	};
 
@@ -46,6 +45,7 @@ namespace seir
 		State _active;
 		Rgba32 _cursorColor;
 		Rgba32 _selectionColor;
+
 		GuiEditStyle() noexcept;
 	};
 
@@ -55,6 +55,9 @@ namespace seir
 		SharedPtr<Font> _font;
 		float _fontSize = 0;
 		Rgba32 _textColor;
+
 		GuiLabelStyle() noexcept;
+		constexpr GuiLabelStyle(Rgba32 textColor, float fontSize) noexcept
+			: _fontSize{ fontSize }, _textColor{ textColor } {}
 	};
 }

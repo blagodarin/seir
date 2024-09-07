@@ -71,7 +71,7 @@ namespace seir
 
 	void GuiContextImpl::captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback)
 	{
-		assert(!_keyboardItem._id.empty());
+		assert(!_keyboardItemId.empty());
 		for (auto& event : _inputEvents)
 		{
 			if (event & kProcessedFlag)

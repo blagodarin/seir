@@ -13,6 +13,7 @@
 #include <seir_gui/font.hpp>
 #include <seir_gui/frame.hpp>
 #include <seir_gui/layout.hpp>
+#include <seir_gui/style.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>
@@ -34,6 +35,7 @@ int u8main(int, char**)
 	std::string fps2;
 	bool showFps = true;
 	std::string input;
+	std::string output;
 	while (app.processEvents(gui.eventCallbacks()))
 	{
 		seir::GuiFrame frame{ gui, renderer2d };
@@ -43,13 +45,17 @@ int u8main(int, char**)
 			seir::GuiLayout layout{ frame };
 			layout.fromTopRight(seir::GuiLayout::Axis::X, 4);
 			layout.setItemSize({ 128, 32 });
-			layout.setItemSpacing(5);
+			layout.setItemSpacing(4);
 			if (frame.addButton("quit", "Quit"))
 				window.close();
 			if (frame.addButton("fps", showFps ? "Hide FPS" : "Show FPS"))
 				showFps = !showFps;
 			if (frame.addStringEdit("input", input))
+			{
+				output = std::move(input);
 				input.clear();
+			}
+			frame.addLabel(output);
 			if (const auto cursor = frame.takeMouseCursor())
 			{
 				frame.selectWhiteTexture();
@@ -58,8 +64,10 @@ int u8main(int, char**)
 			}
 			if (showFps)
 			{
-				layout.fromTopLeft(seir::GuiLayout::Axis::Y, 4);
+				layout.fromTopLeft(seir::GuiLayout::Axis::Y, 2);
 				layout.setItemSize({ 0, 24 });
+				layout.setItemSpacing(0);
+				frame.setLabelStyle({ seir::Rgba32::white(), 1 });
 				frame.addLabel(fps1);
 				frame.addLabel(fps2);
 			}
