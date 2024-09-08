@@ -30,12 +30,13 @@ namespace seir
 	class GuiFrame
 	{
 	public:
-		explicit GuiFrame(GuiContext&, Renderer2D&);
+		GuiFrame(GuiContext&, Renderer2D&);
 		~GuiFrame() noexcept;
 
 		bool addButton(std::string_view id, std::string_view text);
 		void addLabel(std::string_view text, GuiAlignment = GuiAlignment::Left);
 		bool addStringEdit(std::string_view id, std::string& text);
+		Renderer2D& renderer() noexcept { return _renderer; }
 		void selectWhiteTexture();
 		void setButtonStyle(const GuiButtonStyle&) noexcept;
 		void setEditStyle(const GuiEditStyle&) noexcept;
