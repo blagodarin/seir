@@ -43,6 +43,7 @@ namespace seir
 
 		RectF addItem(const SizeF&) noexcept;
 		RectF addItem() noexcept { return addItem(_defaultSize); }
+		void advance() noexcept;
 		void fromBottomCenter(float padding = 0) noexcept { fromPoint({ _size._width / 2, _size._height }, { 0, -1 }, Axis::Y, padding); }
 		void fromBottomLeft(Axis axis, float padding = 0) noexcept { fromPoint({ 0, _size._height }, { 1, -1 }, axis, padding); }
 		void fromBottomRight(Axis axis, float padding = 0) noexcept { fromPoint({ _size._width, _size._height }, { -1, -1 }, axis, padding); }
@@ -51,7 +52,6 @@ namespace seir
 		void fromTopLeft(Axis axis, float padding = 0) noexcept { fromPoint({ 0, 0 }, { 1, 1 }, axis, padding); }
 		void fromTopRight(Axis axis, float padding = 0) noexcept { fromPoint({ _size._width, 0 }, { -1, 1 }, axis, padding); }
 		[[nodiscard]] RectF map(const RectF&) const noexcept;
-		constexpr void setAxis(Axis axis) noexcept { _axis = axis; }
 		constexpr void setItemSize(const SizeF& size) noexcept { _defaultSize = size; }
 		constexpr void setItemSpacing(float spacing) noexcept { _spacing = spacing; }
 		void skip(float distance) noexcept;
@@ -67,5 +67,7 @@ namespace seir
 		Axis _axis = Axis::X;
 		float _spacing = 0;
 		SizeF _defaultSize;
+		float _origin = 0;
+		float _advance = 0;
 	};
 }

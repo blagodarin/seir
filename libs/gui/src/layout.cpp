@@ -63,10 +63,33 @@ namespace seir
 		const auto y1 = _position.y + size._height * (_direction.y - 1) / 2;
 		const auto y2 = _position.y + size._height * (_direction.y + 1) / 2;
 		if (_axis == Axis::X)
+		{
 			_position.x = _direction.x > 0 ? x2 + _spacing : x1 - _spacing;
+			if (size._height > _advance)
+				_advance = size._height;
+		}
 		else
+		{
 			_position.y = _direction.y > 0 ? y2 + _spacing : y1 - _spacing;
+			if (size._width > _advance)
+				_advance = size._width;
+		}
 		return RectF{ { x1, y1 }, Vec2{ x2, y2 } } * _scaling + _offset;
+	}
+
+	void GuiLayout::advance() noexcept
+	{
+		if (_axis == Axis::X)
+		{
+			_position.x = _origin;
+			_position.y += _direction.y * (_advance + _spacing);
+		}
+		else
+		{
+			_position.x += _direction.x * (_advance + _spacing);
+			_position.y = _origin;
+		}
+		_advance = 0;
 	}
 
 	void GuiLayout::fromPoint(const Vec2& point, const Vec2& direction, Axis axis, float padding) noexcept
@@ -74,6 +97,8 @@ namespace seir
 		_direction = direction;
 		_position = point + padding * _direction;
 		_axis = axis;
+		_origin = _axis == Axis::X ? _position.x : _position.y;
+		_advance = 0;
 	}
 
 	RectF GuiLayout::map(const RectF& rect) const noexcept

@@ -39,6 +39,7 @@ public:
 			frame.close();
 		if (frame.addButton("fps", _showFps ? "Hide FPS" : "Show FPS"))
 			_showFps = !_showFps;
+		layout.advance();
 		if (std::exchange(_isFirstFrame, false))
 			frame.putKeyboardFocus();
 		if (frame.addStringEdit("input", _input))
