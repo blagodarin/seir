@@ -29,19 +29,18 @@ public:
 		gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 24));
 	}
 
-	bool presentGui(seir::GuiFrame&& frame)
+	void presentGui(seir::GuiFrame&& frame)
 	{
-		bool quit = false;
-		if (frame.takeKeyPress(seir::Key::Escape))
-			quit = true;
 		seir::GuiLayout layout{ frame };
 		layout.fromTopRight(seir::GuiLayout::Axis::X, 4);
 		layout.setItemSize({ 128, 32 });
 		layout.setItemSpacing(4);
 		if (frame.addButton("quit", "Quit"))
-			quit = true;
+			frame.close();
 		if (frame.addButton("fps", _showFps ? "Hide FPS" : "Show FPS"))
 			_showFps = !_showFps;
+		if (std::exchange(_isFirstFrame, false))
+			frame.putKeyboardFocus();
 		if (frame.addStringEdit("input", _input))
 		{
 			_output = std::move(_input);
@@ -63,7 +62,8 @@ public:
 			frame.addLabel(_fps1);
 			frame.addLabel(_fps2);
 		}
-		return !quit; // TODO: Consider signaling this through frame object.
+		if (frame.takeKeyPress(seir::Key::Escape))
+			frame.close();
 	}
 
 	void setFps(const seir::VariablePeriod& period)
@@ -75,6 +75,7 @@ public:
 	}
 
 private:
+	bool _isFirstFrame = true;
 	bool _showFps = true;
 	std::string _fps1;
 	std::string _fps2;
@@ -93,8 +94,7 @@ int u8main(int, char**)
 	window.show();
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{
-		if (!example.presentGui({ gui, renderer2d }))
-			window.close();
+		example.presentGui({ gui, renderer2d });
 		renderer.render([&](seir::RenderPass& pass) {
 			renderer2d.draw(pass);
 		});

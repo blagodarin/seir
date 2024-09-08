@@ -52,6 +52,7 @@ namespace seir
 
 	GuiFrame::~GuiFrame() noexcept
 	{
+		// TODO: Release keyboard item focus on mouse click outside of the item.
 		if (_context._mouseItemKey != Key::None && _context.captureClick(_context._mouseItemKey, false, true).released)
 		{
 			_context._mouseItemId.clear();
@@ -210,7 +211,7 @@ namespace seir
 			}
 		}
 		if (std::exchange(_context._focusExpected, false))
-			if (_context._keyboardItemId.empty())
+			if (_context._keyboardItemId.empty() && _context._mouseItemId.empty())
 			{
 				_context._keyboardItemId = id;
 				_context._keyboardItemPresent = false;
@@ -295,6 +296,17 @@ namespace seir
 			}
 		}
 		return entered;
+	}
+
+	void GuiFrame::close() noexcept
+	{
+		_context._window.close();
+	}
+
+	void GuiFrame::putKeyboardFocus() noexcept
+	{
+		if (_context._keyboardItemId.empty())
+			_context._focusExpected = true;
 	}
 
 	void GuiFrame::selectWhiteTexture()
