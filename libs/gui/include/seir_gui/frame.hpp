@@ -34,6 +34,8 @@ namespace seir
 		~GuiFrame() noexcept;
 
 		bool addButton(std::string_view id, std::string_view text);
+		std::optional<Vec2> addDragArea(std::string_view id, const SizeF&, Key);
+		std::optional<Vec2> addHoverArea(const SizeF&) noexcept;
 		void addLabel(std::string_view text, GuiAlignment = GuiAlignment::Left);
 		bool addStringEdit(std::string_view id, std::string& text);
 		void close() noexcept;

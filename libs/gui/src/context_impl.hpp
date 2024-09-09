@@ -36,6 +36,7 @@ namespace seir
 		~GuiContextImpl() noexcept override;
 
 		RectF addItem() const noexcept;
+		RectF addItem(const SizeF&) const noexcept;
 		KeyCapture captureClick(Key key, bool repeated, bool release = false) noexcept;
 		void captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback);
 		std::optional<Vec2> takeMouseCursor(const RectF&) noexcept;

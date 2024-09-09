@@ -37,6 +37,11 @@ namespace seir
 		return _layout ? _layout->addItem() : RectF{};
 	}
 
+	RectF GuiContextImpl::addItem(const SizeF& size) const noexcept
+	{
+		return _layout ? _layout->addItem(size) : RectF{};
+	}
+
 	GuiContextImpl::KeyCapture GuiContextImpl::captureClick(Key key, bool repeated, bool release) noexcept
 	{
 		const auto i = std::find_if(_inputEvents.begin(), _inputEvents.end(), [key](const auto event) {

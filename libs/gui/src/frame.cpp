@@ -134,6 +134,45 @@ namespace seir
 		return clicked;
 	}
 
+	std::optional<Vec2> GuiFrame::addDragArea(std::string_view id, const SizeF& size, Key key)
+	{
+		assert(!id.empty());
+		const auto rect = _context.addItem(size);
+		if (rect.isEmpty())
+			return {};
+		if (_context._mouseItemId == id)
+		{
+			assert(!_context._mouseHoverTaken);
+			assert(!_context._mouseItemPresent);
+			auto captured = rect.bound(_context._mouseCursor);
+			_context._mouseHoverTaken = true;
+			_context._mouseItemPresent = true;
+			return captured;
+		}
+		if (_context._mouseItemId.empty())
+		{
+			assert(!_context._mouseItemPresent);
+			if (auto maybeHover = _context.takeMouseHover(rect))
+				if (const auto [pressed, released] = _context.captureClick(key, false); pressed)
+				{
+					if (!released)
+					{
+						_context._mouseItemId = id;
+						_context._mouseItemPresent = true;
+						_context._mouseItemKey = key;
+					}
+					_context._keyboardItemId.clear();
+					return maybeHover;
+				}
+		}
+		return {};
+	}
+
+	std::optional<Vec2> GuiFrame::addHoverArea(const SizeF& size) noexcept
+	{
+		return _context.takeMouseHover(_context.addItem(size));
+	}
+
 	void GuiFrame::addLabel(std::string_view text, GuiAlignment alignment)
 	{
 		if (!_context._labelStyle._font)
