@@ -10,6 +10,7 @@
 #include <seir_gui/style.hpp>
 #include "keyboard_item.hpp"
 
+#include <array>
 #include <functional>
 #include <optional>
 #include <vector>
@@ -48,6 +49,35 @@ namespace seir
 		void onTextEvent(Window&, std::string_view) override;
 
 	private:
+		class KeyStates
+		{
+		public:
+			void clear() noexcept
+			{
+				for (auto& state : _states)
+					state &= static_cast<uint8_t>(~kTaken);
+			}
+
+			std::optional<bool> take(Key key) noexcept
+			{
+				auto& state = _states[static_cast<uint8_t>(key)];
+				if (state & kTaken)
+					return {};
+				state |= kTaken;
+				return static_cast<bool>(state & kPressed);
+			}
+
+			void update(const KeyEvent& event) noexcept
+			{
+				_states[static_cast<uint8_t>(event._key)] = event._pressed ? kPressed : uint8_t{};
+			}
+
+		private:
+			std::array<uint8_t, 256> _states{};
+			static constexpr uint8_t kTaken = 0x80;
+			static constexpr uint8_t kPressed = 0x01;
+		};
+
 		Window& _window;
 		std::vector<uint16_t> _inputEvents;
 		std::vector<std::string> _textInputs;
@@ -68,6 +98,7 @@ namespace seir
 		RectF _whiteTextureRect;
 		GuiLayout* _layout = nullptr;
 		bool _focusExpected = false;
+		KeyStates _keyStates;
 		friend GuiContext;
 		friend GuiFrame;
 		friend GuiLayout;

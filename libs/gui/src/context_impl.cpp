@@ -130,6 +130,7 @@ namespace seir
 				encodedEvent |= kShiftFlag;
 		}
 		_inputEvents.emplace_back(encodedEvent);
+		_keyStates.update(event);
 	}
 
 	void GuiContextImpl::onTextEvent([[maybe_unused]] Window& window, std::string_view text)

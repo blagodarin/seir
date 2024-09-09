@@ -67,6 +67,7 @@ namespace seir
 			_context._keyboardItemId.clear();
 		_context._inputEvents.clear();
 		_context._textInputs.clear();
+		_context._keyStates.clear();
 	}
 
 	bool GuiFrame::addButton(std::string_view id, std::string_view text)
@@ -384,6 +385,11 @@ namespace seir
 	bool GuiFrame::takeKeyPress(Key key) noexcept
 	{
 		return _context.captureClick(key, false).pressed > 0;
+	}
+
+	std::optional<bool> GuiFrame::takeKeyState(Key key) noexcept
+	{
+		return _context._keyStates.take(key);
 	}
 
 	std::optional<Vec2> GuiFrame::takeMouseCursor() noexcept

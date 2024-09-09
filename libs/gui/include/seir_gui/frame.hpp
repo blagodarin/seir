@@ -47,6 +47,7 @@ namespace seir
 		void setLabelStyle(const GuiLabelStyle&) noexcept;
 		bool takeAnyKeyPress() noexcept;
 		bool takeKeyPress(Key) noexcept;
+		std::optional<bool> takeKeyState(Key) noexcept;
 		std::optional<Vec2> takeMouseCursor() noexcept;
 
 	private:
