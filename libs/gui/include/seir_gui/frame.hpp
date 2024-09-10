@@ -45,6 +45,7 @@ namespace seir
 		void setButtonStyle(const GuiButtonStyle&) noexcept;
 		void setEditStyle(const GuiEditStyle&) noexcept;
 		void setLabelStyle(const GuiLabelStyle&) noexcept;
+		[[nodiscard]] SizeF size() const noexcept { return _size; }
 		bool takeAnyKeyPress() noexcept;
 		bool takeKeyPress(Key) noexcept;
 		std::optional<bool> takeKeyState(Key) noexcept;

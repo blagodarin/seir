@@ -136,8 +136,8 @@ constexpr seir::RectF seir::operator*(const RectF& a, float b) noexcept
 constexpr seir::RectF seir::operator*(const RectF& a, const SizeF& b) noexcept
 {
 	return {
-		{ a.left() * b._width, a.top() * b._width },
-		Vec2{ a.right() * b._width, a.bottom() * b._width }
+		{ a.left() * b._width, a.top() * b._height },
+		Vec2{ a.right() * b._width, a.bottom() * b._height }
 	};
 }
 
@@ -149,7 +149,7 @@ constexpr seir::RectF seir::operator/(const RectF& a, float b) noexcept
 constexpr seir::RectF seir::operator/(const RectF& a, const SizeF& b) noexcept
 {
 	return {
-		{ a.left() / b._width, a.top() / b._width },
-		Vec2{ a.right() / b._width, a.bottom() / b._width }
+		{ a.left() / b._width, a.top() / b._height },
+		Vec2{ a.right() / b._width, a.bottom() / b._height }
 	};
 }
