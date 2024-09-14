@@ -36,7 +36,8 @@ cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO;NOT SE
 cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_GRAPHICS" ON)
 option(SEIR_SERIALIZATION "Build serialization library")
 option(SEIR_SYNTH "Build synth library")
-option(SEIR_U8MAIN "Build u8main library")
+option(SEIR_UTILS "Build utils" ON)
+cmake_dependent_option(SEIR_U8MAIN "Build u8main library" OFF "NOT SEIR_UTILS" ON)
 
 # Options.
 option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime")
@@ -204,6 +205,10 @@ if(SEIR_U8MAIN)
 	add_subdirectory(libs/u8main)
 endif()
 
+if(SEIR_UTILS)
+	add_subdirectory(utils/embed)
+endif()
+
 if(SEIR_TESTS)
 	seir_provide_doctest(doctest_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 	find_package(doctest REQUIRED)
@@ -240,6 +245,9 @@ if(SEIR_TESTS)
 	endif()
 	if(SEIR_U8MAIN)
 		add_subdirectory(libs/u8main/tests)
+	endif()
+	if(SEIR_UTILS)
+		add_subdirectory(utils/embed/tests)
 	endif()
 endif()
 
