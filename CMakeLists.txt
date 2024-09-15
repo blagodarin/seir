@@ -28,15 +28,15 @@ set_property(CACHE SEIR_RENDERER PROPERTY STRINGS "" "Dummy" "Vulkan")
 
 # Components.
 option(SEIR_GUI "Build GUI library")
+option(SEIR_SYNTH "Build synth library")
+option(SEIR_UTILS "Build utils" ON)
 cmake_dependent_option(SEIR_APP "Build app library" OFF "NOT SEIR_RENDERER" ON)
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_GRAPHICS "Build graphics library" OFF "NOT SEIR_APP" ON)
 cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_APP;NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_DDS;NOT SEIR_IMAGE_ICO;NOT SEIR_IMAGE_JPEG;NOT SEIR_IMAGE_PNG;NOT SEIR_IMAGE_TGA;NOT SEIR_IMAGE_WEBP;NOT SEIR_GUI" ON)
-cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO;NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD;NOT SEIR_IMAGE" ON)
+cmake_dependent_option(SEIR_SERIALIZATION "Build serialization library" OFF "NOT SEIR_UTILS" ON)
+cmake_dependent_option(SEIR_DATA "Build data library" OFF "NOT SEIR_AUDIO;NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD;NOT SEIR_IMAGE;NOT SEIR_SERIALIZATION;NOT SEIR_UTILS" ON)
 cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_GRAPHICS" ON)
-option(SEIR_SERIALIZATION "Build serialization library")
-option(SEIR_SYNTH "Build synth library")
-option(SEIR_UTILS "Build utils" ON)
 cmake_dependent_option(SEIR_U8MAIN "Build u8main library" OFF "NOT SEIR_UTILS" ON)
 
 # Options.
@@ -207,6 +207,7 @@ endif()
 
 if(SEIR_UTILS)
 	add_subdirectory(utils/embed)
+	add_subdirectory(utils/pack)
 endif()
 
 if(SEIR_TESTS)

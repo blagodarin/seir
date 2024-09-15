@@ -21,7 +21,7 @@ if(NOT APPLE) # TODO: Fix Shaper tests for ARM64.
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_synth_tests ${SOURCES})
-target_link_libraries(seir_synth_tests PRIVATE Seir::synth Seir::base doctest::doctest_with_main)
+target_link_libraries(seir_synth_tests PRIVATE Seir::base Seir::synth doctest::doctest_with_main)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	target_compile_options(seir_synth_tests PRIVATE -Wno-double-promotion -Wno-float-equal)
 endif()
