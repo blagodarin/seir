@@ -4,7 +4,7 @@
 
 #include "format.hpp"
 
-#include <seir_data/writer.hpp>
+#include <seir_io/writer.hpp>
 
 #include <cassert>
 #include <csetjmp>

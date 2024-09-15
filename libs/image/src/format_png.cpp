@@ -6,8 +6,8 @@
 
 #include <seir_base/int_utils.hpp>
 #include <seir_data/compression.hpp>
-#include <seir_data/writer.hpp>
 #include <seir_image/utils.hpp>
+#include <seir_io/writer.hpp>
 
 #include <array>
 
@@ -168,33 +168,23 @@ namespace seir
 		if (!info.height() || info.height() > std::numeric_limits<uint32_t>::max())
 			return false;
 
-		PixelFormat uncompressedPixelFormat;
-		PngColorType pngColorType;
-		switch (info.pixelFormat())
-		{
-		case PixelFormat::Gray8:
-			uncompressedPixelFormat = PixelFormat::Gray8;
-			pngColorType = PngColorType::Grayscale;
-			break;
-		case PixelFormat::Intensity8:
-			return false;
-		case PixelFormat::GrayAlpha16:
-			uncompressedPixelFormat = PixelFormat::GrayAlpha16;
-			pngColorType = PngColorType::GrayscaleAlpha;
-			break;
-		case PixelFormat::Rgb24:
-		case PixelFormat::Bgr24:
-			uncompressedPixelFormat = PixelFormat::Rgb24;
-			pngColorType = PngColorType::Truecolor;
-			break;
-		case PixelFormat::Rgba32:
-		case PixelFormat::Bgra32:
-			uncompressedPixelFormat = PixelFormat::Rgba32;
-			pngColorType = PngColorType::TruecolorAlpha;
-			break;
-		default:
-			return false;
-		}
+		const auto [uncompressedPixelFormat, pngColorType] = [&info]() -> std::pair<PixelFormat, PngColorType> {
+			switch (info.pixelFormat())
+			{
+			case PixelFormat::Gray8:
+				return { PixelFormat::Gray8, PngColorType::Grayscale };
+			case PixelFormat::Intensity8:
+			case PixelFormat::GrayAlpha16:
+				return { PixelFormat::GrayAlpha16, PngColorType::GrayscaleAlpha };
+			case PixelFormat::Rgb24:
+			case PixelFormat::Bgr24:
+				return { PixelFormat::Rgb24, PngColorType::Truecolor };
+			case PixelFormat::Rgba32:
+			case PixelFormat::Bgra32:
+				return { PixelFormat::Rgba32, PngColorType::TruecolorAlpha };
+			}
+			std::unreachable();
+		}();
 
 		const auto stride = 1 + info.width() * pixelSize(uncompressedPixelFormat);
 		const ImageInfo pngInfo{ info.width(), info.height(), stride, uncompressedPixelFormat, ImageAxes::XRightYDown };

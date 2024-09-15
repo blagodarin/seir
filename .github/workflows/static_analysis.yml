@@ -37,17 +37,15 @@ jobs:
             -DSEIR_COMPRESSION_ZLIB=ON \
             -DSEIR_COMPRESSION_ZSTD=OFF \
             -DSEIR_EXAMPLES=ON \
-            -DSEIR_GUI=ON \
             -DSEIR_IMAGE_BMP=ON \
+            -DSEIR_IMAGE_DDS=ON \
             -DSEIR_IMAGE_ICO=ON \
             -DSEIR_IMAGE_JPEG=ON \
+            -DSEIR_IMAGE_PNG=ON \
             -DSEIR_IMAGE_TGA=ON \
             -DSEIR_IMAGE_WEBP=ON \
             -DSEIR_RENDERER=Dummy \
-            -DSEIR_SERIALIZATION=ON \
-            -DSEIR_SYNTH=ON \
-            -DSEIR_TESTS=ON \
-            -DSEIR_U8MAIN=ON
+            -DSEIR_TESTS=ON
       - name: Run cppcheck
         continue-on-error: true
         run: |

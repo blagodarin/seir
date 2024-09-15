@@ -8,7 +8,7 @@ set(SOURCES
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(cube ${SOURCES})
 target_compile_definitions(cube PRIVATE SEIR_DATA_DIR="${SEIR_DATA_DIR}/")
-target_link_libraries(cube PRIVATE Seir::app Seir::image Seir::renderer Seir::u8main fmt::fmt)
+target_link_libraries(cube PRIVATE Seir::app Seir::image Seir::math Seir::renderer Seir::u8main fmt::fmt)
 set_target_properties(cube PROPERTIES WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	target_compile_options(cube PRIVATE

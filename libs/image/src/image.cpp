@@ -5,8 +5,8 @@
 #include <seir_image/image.hpp>
 
 #include <seir_base/endian.hpp>
-#include <seir_data/paths.hpp>
-#include <seir_data/writer.hpp>
+#include <seir_io/paths.hpp>
+#include <seir_io/writer.hpp>
 #include "format.hpp"
 
 #include <algorithm>

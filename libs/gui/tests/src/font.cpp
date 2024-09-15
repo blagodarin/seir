@@ -6,7 +6,7 @@
 
 #include <seir_app/app.hpp>
 #include <seir_app/window.hpp>
-#include <seir_data/blob.hpp>
+#include <seir_io/blob.hpp>
 #include <seir_renderer/renderer.hpp>
 
 #include <doctest/doctest.h>

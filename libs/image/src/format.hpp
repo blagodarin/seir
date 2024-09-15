@@ -5,8 +5,8 @@
 #pragma once
 
 #include <seir_base/endian.hpp>
-#include <seir_data/reader.hpp>
 #include <seir_image/image.hpp>
+#include <seir_io/reader.hpp>
 
 namespace seir
 {

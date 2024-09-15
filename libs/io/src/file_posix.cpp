@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_base/scope.hpp>
-#include <seir_data/blob.hpp>
-#include <seir_data/paths.hpp>
-#include <seir_data/save_file.hpp>
-#include <seir_data/temporary.hpp>
+#include <seir_io/blob.hpp>
+#include <seir_io/paths.hpp>
+#include <seir_io/save_file.hpp>
+#include <seir_io/temporary.hpp>
 
 #include <cstdio>     // perror, rename
 #include <fcntl.h>    // open

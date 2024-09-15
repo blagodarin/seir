@@ -57,7 +57,7 @@ target_compile_definitions(seir_image PUBLIC
 	SEIR_IMAGE_WEBP=$<BOOL:${SEIR_IMAGE_WEBP}>
 	)
 target_include_directories(seir_image PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_image PUBLIC Seir::base PRIVATE Seir::data
+target_link_libraries(seir_image PUBLIC Seir::base PRIVATE Seir::data Seir::io
 	$<$<BOOL:${SEIR_IMAGE_JPEG}>:JPEG::JPEG>
 	$<$<BOOL:${SEIR_IMAGE_WEBP}>:WebP::webpdecoder>
 	)

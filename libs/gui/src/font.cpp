@@ -5,10 +5,10 @@
 #include <seir_gui/font.hpp>
 
 #include <seir_base/utf8.hpp>
-#include <seir_data/blob.hpp>
 #include <seir_graphics/rectf.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
+#include <seir_io/blob.hpp>
 #include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>
 

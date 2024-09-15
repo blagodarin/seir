@@ -7,5 +7,5 @@ set(SOURCES
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(audio_player ${SOURCES})
-target_link_libraries(audio_player PRIVATE Seir::audio)
+target_link_libraries(audio_player PRIVATE Seir::audio Seir::io)
 seir_target(audio_player FOLDER examples STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})

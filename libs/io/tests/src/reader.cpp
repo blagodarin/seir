@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_data/reader.hpp>
+#include <seir_io/reader.hpp>
 
 #include <array>
 #include <cstdint>

@@ -5,7 +5,7 @@
 #include "decoder.hpp"
 
 #include <seir_audio/format.hpp>
-#include <seir_data/reader.hpp>
+#include <seir_io/reader.hpp>
 #include <seir_synth/composition.hpp>
 #include <seir_synth/format.hpp>
 #include <seir_synth/renderer.hpp>

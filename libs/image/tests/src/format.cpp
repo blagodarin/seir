@@ -4,9 +4,9 @@
 
 #include "image.hpp"
 
-#include <seir_data/blob.hpp>
-#include <seir_data/writer.hpp>
-#include <seir_data/buffer_writer.hpp>
+#include <seir_io/blob.hpp>
+#include <seir_io/writer.hpp>
+#include <seir_io/buffer_writer.hpp>
 
 #include <doctest/doctest.h>
 

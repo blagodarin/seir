@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_data/blob.hpp>
+#include <seir_io/blob.hpp>
 
 #include <array>
 #include <cstring>

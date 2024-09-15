@@ -43,18 +43,16 @@ jobs:
             -DSEIR_COMPRESSION_ZLIB=ON `
             -DSEIR_COMPRESSION_ZSTD=ON `
             -DSEIR_EXAMPLES=ON `
-            -DSEIR_GUI=ON `
             -DSEIR_IMAGE_BMP=ON `
+            -DSEIR_IMAGE_DDS=ON `
             -DSEIR_IMAGE_ICO=ON `
             -DSEIR_IMAGE_JPEG=ON `
+            -DSEIR_IMAGE_PNG=ON `
             -DSEIR_IMAGE_TGA=ON `
             -DSEIR_IMAGE_WEBP=ON `
             -DSEIR_RENDERER=Vulkan `
-            -DSEIR_SERIALIZATION=ON `
             -DSEIR_STATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }} `
-            -DSEIR_SYNTH=ON `
-            -DSEIR_TESTS=ON `
-            -DSEIR_U8MAIN=ON
+            -DSEIR_TESTS=ON
       - name: Build
         run: |
           cmake --build build
@@ -96,15 +94,14 @@ jobs:
             -DSEIR_AUDIO_WAV=ON `
             -DSEIR_COMPRESSION_ZLIB=ON `
             -DSEIR_COMPRESSION_ZSTD=ON `
-            -DSEIR_GUI=ON `
             -DSEIR_IMAGE_BMP=ON `
+            -DSEIR_IMAGE_DDS=ON `
             -DSEIR_IMAGE_ICO=ON `
             -DSEIR_IMAGE_JPEG=ON `
+            -DSEIR_IMAGE_PNG=ON `
             -DSEIR_IMAGE_TGA=ON `
             -DSEIR_IMAGE_WEBP=ON `
             -DSEIR_RENDERER=Dummy `
-            -DSEIR_SERIALIZATION=ON `
-            -DSEIR_SYNTH=ON `
             -DSEIR_TESTS=ON
       - name: Build Debug
         run: |

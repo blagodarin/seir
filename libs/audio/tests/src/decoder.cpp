@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_audio/decoder.hpp>
-#include <seir_data/blob.hpp>
+#include <seir_io/blob.hpp>
 
 #include <doctest/doctest.h>
 

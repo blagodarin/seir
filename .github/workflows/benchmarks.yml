@@ -24,10 +24,17 @@ jobs:
         run: |
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DSEIR_AUDIO=ON `
             -DSEIR_BENCHMARKS=ON `
-            -DSEIR_IMAGE=ON `
             -DSEIR_STATIC_RUNTIME=ON `
+            -DSEIR_APP=OFF `
+            -DSEIR_DATA=OFF `
+            -DSEIR_GRAPHICS=OFF `
+            -DSEIR_GUI=OFF `
+            -DSEIR_IMAGE=OFF `
+            -DSEIR_MATH=OFF `
+            -DSEIR_SERIALIZATION=OFF `
+            -DSEIR_SYNTH=OFF `
+            -DSEIR_U8MAIN=OFF `
             -DSEIR_UTILS=OFF
       - name: Build
         run: |
@@ -59,9 +66,17 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DSEIR_AUDIO=ON \
             -DSEIR_BENCHMARKS=ON \
-            -DSEIR_IMAGE=ON \
+            -DSEIR_STATIC_RUNTIME=ON \
+            -DSEIR_APP=OFF \
+            -DSEIR_DATA=OFF \
+            -DSEIR_GRAPHICS=OFF \
+            -DSEIR_GUI=OFF \
+            -DSEIR_IMAGE=OFF \
+            -DSEIR_MATH=OFF \
+            -DSEIR_SERIALIZATION=OFF \
+            -DSEIR_SYNTH=OFF \
+            -DSEIR_U8MAIN=OFF \
             -DSEIR_UTILS=OFF
       - name: Build
         run: |

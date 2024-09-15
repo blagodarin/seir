@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_data/save_file.hpp>
+#include <seir_io/save_file.hpp>
 
 #include <filesystem>
 #include <fstream>

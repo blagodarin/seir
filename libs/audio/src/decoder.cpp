@@ -5,7 +5,7 @@
 #include "decoder.hpp"
 
 #include <seir_audio/format.hpp>
-#include <seir_data/blob.hpp>
+#include <seir_io/blob.hpp>
 
 namespace seir
 {

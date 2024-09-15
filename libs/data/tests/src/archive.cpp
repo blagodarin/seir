@@ -5,11 +5,11 @@
 #include <seir_data/archive.hpp>
 
 #include <seir_base/buffer.hpp>
-#include <seir_data/blob.hpp>
-#include <seir_data/buffer_writer.hpp>
+#include <seir_io/blob.hpp>
+#include <seir_io/buffer_writer.hpp>
 #include <seir_data/compression.hpp>
 #include <seir_data/storage.hpp>
-#include <seir_data/writer.hpp>
+#include <seir_io/writer.hpp>
 
 #include <algorithm>
 #include <cstring>

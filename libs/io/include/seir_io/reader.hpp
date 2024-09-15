@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <seir_data/blob.hpp>
+#include <seir_io/blob.hpp>
 
 #include <span>
 #include <string_view>

@@ -7,7 +7,7 @@
 #include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_base/endian.hpp>
-#include <seir_data/reader.hpp>
+#include <seir_io/reader.hpp>
 
 #include <cstring>
 

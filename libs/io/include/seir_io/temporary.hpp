@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <seir_data/writer.hpp>
+#include <seir_io/writer.hpp>
 
 namespace seir
 {

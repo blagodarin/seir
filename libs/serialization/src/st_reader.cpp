@@ -5,7 +5,7 @@
 #include <seir_serialization/st_reader.hpp>
 
 #include <seir_base/buffer.hpp>
-#include <seir_data/blob.hpp>
+#include <seir_io/blob.hpp>
 
 #include <array>
 #include <cstring>
