@@ -54,7 +54,7 @@ jobs:
             -DSEIR_IMAGE_PNG=ON \
             -DSEIR_IMAGE_TGA=ON \
             -DSEIR_IMAGE_WEBP=ON \
-            -DSEIR_RENDERER=Dummy \
+            -DSEIR_RENDERER_BACKEND= \
             -DSEIR_TESTS=ON
       - name: Build
         run: |

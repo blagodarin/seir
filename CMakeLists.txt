@@ -26,8 +26,7 @@ option(SEIR_COMPRESSION_ZSTD "Enable zstd compression support" OFF)
 # Components.
 option(SEIR_GUI "Build GUI library" ON)
 # 5
-set(SEIR_RENDERER "" CACHE STRING "Renderer backend") # Used by SEIR_GUI.
-set_property(CACHE SEIR_RENDERER PROPERTY STRINGS "" "Dummy" "Vulkan")
+cmake_dependent_option(SEIR_RENDERER "Build renderer library" ON "NOT SEIR_GUI" ON)
 # 4
 cmake_dependent_option(SEIR_APP "Build app library" ON "NOT SEIR_RENDERER" ON)
 # 3
@@ -45,6 +44,9 @@ cmake_dependent_option(SEIR_U8MAIN "Build u8main library" ON "NOT SEIR_UTILS" ON
 # 0
 cmake_dependent_option(SEIR_BASE "Build base library" ON "NOT SEIR_IO;NOT SEIR_SYNTH;NOT SEIR_U8MAIN" ON)
 cmake_dependent_option(SEIR_MATH "Build math library" ON "NOT SEIR_GRAPHICS" ON)
+
+set(SEIR_RENDERER_BACKEND "Vulkan" CACHE STRING "Renderer backend")
+set_property(CACHE SEIR_RENDERER_BACKEND PROPERTY STRINGS "" "Vulkan")
 
 # Options.
 option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime" OFF)
@@ -103,7 +105,7 @@ if(SEIR_IMAGE_WEBP)
 	seir_provide_webp(WebP_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 	find_package(WebP REQUIRED)
 endif()
-if(SEIR_RENDERER STREQUAL "Vulkan")
+if(SEIR_RENDERER AND SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 	find_package(Vulkan REQUIRED)
 	if(NOT TARGET Vulkan::glslc)
 		message(SEND_ERROR "Could not find glslc, please install Vulkan SDK")

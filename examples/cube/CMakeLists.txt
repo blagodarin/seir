@@ -25,7 +25,7 @@ if(WIN32)
 	target_sources(cube PRIVATE ${SEIR_DATA_DIR}/icon.rc)
 	source_group("" FILES ${SEIR_DATA_DIR}/icon.rc)
 endif()
-if(SEIR_RENDERER STREQUAL "Vulkan")
+if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 	seir_embed_spirv(cube
 		VERTEX src/vertex_shader.glsl
 		FRAGMENT src/fragment_shader.glsl

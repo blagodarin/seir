@@ -13,11 +13,7 @@ set(SOURCES
 	src/pass.hpp
 	src/renderer.cpp
 	)
-if(SEIR_RENDERER STREQUAL "Dummy")
-	list(APPEND SOURCES
-		src/dummy/renderer.cpp
-		)
-elseif(SEIR_RENDERER STREQUAL "Vulkan")
+if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 	list(APPEND SOURCES
 		src/vulkan/2d.cpp
 		src/vulkan/2d.hpp
@@ -46,18 +42,21 @@ elseif(SEIR_RENDERER STREQUAL "Vulkan")
 			/wd5246 # the initialization of a subobject should be wrapped in braces
 			)
 	endif()
+else()
+	list(APPEND SOURCES
+		src/dummy/renderer.cpp
+		)
 endif()
 source_group("include" FILES ${HEADERS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(seir_renderer STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::renderer ALIAS seir_renderer)
 target_compile_definitions(seir_renderer PUBLIC
-	SEIR_RENDERER_DUMMY=$<STREQUAL:${SEIR_RENDERER},Dummy>
-	SEIR_RENDERER_VULKAN=$<STREQUAL:${SEIR_RENDERER},Vulkan>
+	SEIR_RENDERER_VULKAN=$<STREQUAL:${SEIR_RENDERER_BACKEND},Vulkan>
 	)
 target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_renderer PUBLIC Seir::base PRIVATE Seir::app Seir::graphics Seir::image)
-if(SEIR_RENDERER STREQUAL "Vulkan")
+if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
 	target_link_libraries(seir_renderer PRIVATE GPUOpen::VulkanMemoryAllocator Vulkan::Vulkan $<$<CONFIG:Debug>:fmt::fmt>)
 	seir_embed_spirv(seir_renderer

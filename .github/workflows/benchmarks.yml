@@ -32,6 +32,7 @@ jobs:
             -DSEIR_GUI=OFF `
             -DSEIR_IMAGE=OFF `
             -DSEIR_MATH=OFF `
+            -DSEIR_RENDERER=OFF `
             -DSEIR_SERIALIZATION=OFF `
             -DSEIR_SYNTH=OFF `
             -DSEIR_U8MAIN=OFF `
@@ -74,6 +75,7 @@ jobs:
             -DSEIR_GUI=OFF \
             -DSEIR_IMAGE=OFF \
             -DSEIR_MATH=OFF \
+            -DSEIR_RENDERER=OFF \
             -DSEIR_SERIALIZATION=OFF \
             -DSEIR_SYNTH=OFF \
             -DSEIR_U8MAIN=OFF \
