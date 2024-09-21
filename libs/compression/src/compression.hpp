@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <seir_data/compression.hpp>
+#include <seir_compression/compression.hpp>
 
 namespace seir
 {

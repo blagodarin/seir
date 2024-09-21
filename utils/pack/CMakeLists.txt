@@ -7,6 +7,6 @@ set(SOURCES
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_pack ${SOURCES})
-target_link_libraries(seir_pack PRIVATE Seir::data Seir::io Seir::serialization Seir::u8main)
+target_link_libraries(seir_pack PRIVATE Seir::compression Seir::data Seir::io Seir::serialization Seir::u8main)
 seir_target(seir_pack FOLDER utils/pack STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_pack)

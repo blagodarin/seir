@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_data/compression.hpp>
+#include <seir_compression/compression.hpp>
 
 #include <algorithm>
 #include <cstdint>

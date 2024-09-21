@@ -5,7 +5,7 @@
 #include "format.hpp"
 
 #include <seir_base/int_utils.hpp>
-#include <seir_data/compression.hpp>
+#include <seir_compression/compression.hpp>
 #include <seir_image/utils.hpp>
 #include <seir_io/writer.hpp>
 

@@ -4,7 +4,7 @@
 
 #include <seir_data/storage.hpp>
 
-#include <seir_data/compression.hpp>
+#include <seir_compression/compression.hpp>
 #include <seir_io/buffer_blob.hpp>
 #include "archive.hpp"
 
