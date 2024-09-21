@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <seir_data/archive.hpp>
+#include <seir_package/archive.hpp>
 
 #include <seir_base/endian.hpp>
 

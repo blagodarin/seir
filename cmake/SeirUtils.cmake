@@ -311,13 +311,15 @@ function(seir_target_pack _target)
 	file(REAL_PATH ${_arg_OUTPUT} _absolute_output BASE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 	file(RELATIVE_PATH _relative_output ${CMAKE_CURRENT_BINARY_DIR} ${_absolute_output})
 	string(MAKE_C_IDENTIFIER ${_relative_output} _output_identifier)
-	add_custom_target(seir_pack_${_output_identifier}
+	add_custom_target(seir_pack__${_output_identifier}
 		COMMAND seir_pack --touch ${_relative_index}
 		COMMENT "Checking ${_relative_output} dependencies"
 		DEPENDS ${_arg_DEPENDS}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		VERBATIM)
-	add_dependencies(${_target} seir_pack_${_output_identifier})
+	add_dependencies(${_target} seir_pack__${_output_identifier})
+	get_target_property(_folder seir_pack FOLDER)
+	set_target_properties(seir_pack__${_output_identifier} PROPERTIES FOLDER "${_folder}")
 	if(_arg_EMBED)
 		add_custom_command(OUTPUT ${_absolute_output}.inc
 			COMMAND seir_pack ${_relative_index} ${_absolute_output}
