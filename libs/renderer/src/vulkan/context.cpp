@@ -17,7 +17,7 @@
 #define DEBUG_RENDERER 0 // TODO: Redesign debug info collection.
 
 #if !defined(NDEBUG) && DEBUG_RENDERER
-#	include <fmt/core.h>
+#	include <fmt/base.h>
 #endif
 
 namespace

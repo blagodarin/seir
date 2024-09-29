@@ -19,7 +19,7 @@
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
-#include <fmt/core.h>
+#include <fmt/base.h>
 
 class Example
 {

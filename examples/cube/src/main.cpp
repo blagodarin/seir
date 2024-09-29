@@ -15,7 +15,7 @@
 
 #include <array>
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 namespace
 {

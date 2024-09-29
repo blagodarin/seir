@@ -6,6 +6,7 @@ set(SOURCES
 	src/blob.cpp
 	src/buffer_blob.cpp
 	src/buffer_writer.cpp
+	src/paths.cpp
 	src/reader.cpp
 	src/save_file.cpp
 	src/temporary.cpp

@@ -9,8 +9,10 @@
 #include <seir_io/writer.hpp>
 #include "format.hpp"
 
-#include <algorithm>
 #include <array>
+#include <cassert>
+
+#include <fmt/base.h>
 
 // TODO: Add support for:
 // - writing image data at aligned offsets (for more efficient copying of memory-mapped data);
@@ -121,8 +123,7 @@ namespace seir
 		::localtime_r(&time, &tm);
 #endif
 		std::array<char, 24> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init)
-		const auto offset = std::strftime(buffer.data(), buffer.size(), "%Y-%m-%d_%H-%M-%S", &tm);
-		std::snprintf(buffer.data() + offset, buffer.size() - offset, "%s", [format] {
+		const auto result = fmt::format_to_n(buffer.data(), buffer.size(), "{:04}-{:02}-{:02}_{:02}-{:02}-{:02}{}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, [format] {
 			switch (format)
 			{
 			case ImageFormat::Tga: return ".tga";
@@ -131,8 +132,11 @@ namespace seir
 			}
 			return "";
 		}());
-		if (const auto writer = Writer::create(screenshotPath() / buffer.data()))
-			return save(format, *writer, compressionLevel);
+		assert(result.size < buffer.size());
+		buffer[result.size] = '\0';
+		if (const auto screenshotPath = makeScreenshotPath(buffer.data()))
+			if (const auto writer = Writer::create(*screenshotPath))
+				return save(format, *writer, compressionLevel);
 		return false;
 	}
 }

@@ -4,7 +4,6 @@
 
 #include <seir_base/scope.hpp>
 #include <seir_io/blob.hpp>
-#include <seir_io/paths.hpp>
 #include <seir_io/save_file.hpp>
 #include <seir_io/temporary.hpp>
 
@@ -141,13 +140,6 @@ namespace
 				::perror("unlink");
 		}
 	};
-
-	std::filesystem::path homeDirectoryPath()
-	{
-		if (const char* home = std::getenv("HOME"))
-			return home;
-		return std::filesystem::current_path(); // TODO: Get directory from getpwuid(getuid()).
-	}
 }
 
 namespace seir
@@ -232,10 +224,5 @@ namespace seir
 	UniquePtr<Writer> Writer::create(const std::string& path)
 	{
 		return ::createFileWriter(path.c_str());
-	}
-
-	std::filesystem::path screenshotPath()
-	{
-		return ::homeDirectoryPath();
 	}
 }

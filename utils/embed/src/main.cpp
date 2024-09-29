@@ -10,7 +10,7 @@
 #include <iostream>
 #include <span>
 
-#include <fmt/core.h> // std::format_to isn't available on current macOS CI.
+#include <fmt/base.h> // std::format_to isn't available on current macOS CI.
 
 namespace
 {

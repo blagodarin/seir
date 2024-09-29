@@ -2,22 +2,11 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_base/int_utils.hpp>
-#include <seir_base/pointer.hpp>
 #include <seir_base/scope.hpp>
 #include <seir_io/blob.hpp>
-#include <seir_io/paths.hpp>
 #include <seir_io/save_file.hpp>
 #include <seir_io/temporary.hpp>
-
-#include <array>
-
-#define NOGDI
-#define WIN32_LEAN_AND_MEAN
-#include <seir_base/windows_utils.hpp>
-
-#include <shlobj.h>
-#include <versionhelpers.h>
+#include "utils.hpp"
 
 namespace
 {
@@ -138,43 +127,14 @@ namespace
 			: TemporaryFile{ std::move(path) }, _handle{ std::move(handle) }, _size{ size } {}
 		~TemporaryFileImpl() noexcept override = default;
 	};
-
-	struct WPath
-	{
-		size_t _size = 0;
-		std::array<wchar_t, MAX_PATH + 1> _buffer;
-		explicit WPath(std::string_view path) noexcept
-		{
-			if (!path.empty())
-			{
-				const auto length = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.data(), static_cast<int>(path.size()), _buffer.data(), static_cast<int>(_buffer.size() - 1));
-				if (!length)
-					seir::windows::reportError("MultiByteToWideChar");
-				_size = static_cast<size_t>(length);
-			}
-			_buffer[_size] = L'\0';
-		}
-		constexpr explicit operator bool() const noexcept { return _size > 0; }
-	};
-
-	std::filesystem::path knownFolderPath(const KNOWNFOLDERID& id)
-	{
-		seir::CPtr<wchar_t, ::CoTaskMemFree> path;
-		if (const auto hr = ::SHGetKnownFolderPath(id, KF_FLAG_CREATE, nullptr, path.out()); FAILED(hr))
-		{
-			seir::windows::reportError("SHGetKnownFolderPath", seir::toUnsigned(hr));
-			return std::filesystem::current_path();
-		}
-		return path.get();
-	}
 }
 
 namespace seir
 {
 	SharedPtr<Blob> Blob::from(const std::string& path)
 	{
-		if (const WPath wpath{ path })
-			return ::createFileBlob(wpath._buffer.data());
+		if (const windows::WString wpath{ path })
+			return ::createFileBlob(wpath.c_str());
 		return {};
 	}
 
@@ -201,9 +161,9 @@ namespace seir
 
 	UniquePtr<SaveFile> SaveFile::create(std::string&& path)
 	{
-		if (const WPath wide{ path })
+		if (const windows::WString wide{ path })
 		{
-			std::wstring wpath{ wide._buffer.data(), wide._size };
+			std::wstring wpath{ wide.c_str(), wide.size() };
 			std::wstring directory;
 			if (const auto separator = wpath.find_last_of(L"/\\"); separator == std::string::npos)
 				directory = L".";
@@ -249,21 +209,15 @@ namespace seir
 			windows::reportError("GetTempPathW");
 		else
 		{
-			std::array<wchar_t, MAX_PATH> path;
-			if (const auto status = ::GetTempFileNameW(pathPrefix.data(), L"Sei", 0, path.data()); !status)
+			std::array<wchar_t, MAX_PATH> wpath;
+			if (const auto status = ::GetTempFileNameW(pathPrefix.data(), L"Sei", 0, wpath.data()); !status)
 				windows::reportError("GetTempFileNameW");
 			else if (status == ERROR_BUFFER_OVERFLOW)
 				windows::reportError("GetTempFileNameW", status);
-			else
-			{
-				std::array<char, MAX_PATH> utf8Path;
-				if (const auto utf8Size = ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, path.data(), -1, utf8Path.data(), static_cast<int>(utf8Path.size()), nullptr, nullptr); !utf8Size)
-					windows::reportError("WideCharToMultiByte");
-				else if (windows::Handle file{ ::CreateFileW(path.data(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr) }; file == INVALID_HANDLE_VALUE)
-					windows::reportError("CreateFileW");
-				else
-					return makeUnique<TemporaryWriter, TemporaryWriterImpl>(std::move(file), std::string{ utf8Path.data(), static_cast<size_t>(utf8Size) });
-			}
+			else if (windows::Handle file{ ::CreateFileW(wpath.data(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr) }; file == INVALID_HANDLE_VALUE)
+				windows::reportError("CreateFileW");
+			else if (const windows::U8String path{ wpath.data() })
+				return makeUnique<TemporaryWriter, TemporaryWriterImpl>(std::move(file), path.toString());
 		}
 		return {};
 	}
@@ -283,13 +237,8 @@ namespace seir
 
 	UniquePtr<Writer> Writer::create(const std::string& path)
 	{
-		if (const WPath wpath{ path })
-			return ::createFileWriter(wpath._buffer.data(), FILE_ATTRIBUTE_NORMAL);
+		if (const windows::WString wpath{ path })
+			return ::createFileWriter(wpath.c_str(), FILE_ATTRIBUTE_NORMAL);
 		return {};
-	}
-
-	std::filesystem::path screenshotPath()
-	{
-		return ::knownFolderPath(::IsWindows8OrGreater() ? FOLDERID_Screenshots : FOLDERID_Pictures);
 	}
 }

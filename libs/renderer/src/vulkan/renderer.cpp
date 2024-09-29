@@ -15,7 +15,7 @@
 #include "utils.hpp"
 
 #ifndef NDEBUG
-#	include <fmt/core.h>
+#	include <fmt/base.h>
 #endif
 
 namespace
