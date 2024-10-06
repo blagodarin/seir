@@ -6,6 +6,7 @@
 
 #include <seir_serialization/st_reader.hpp>
 
+#include <optional>
 #include <stdexcept>
 
 namespace seir
@@ -40,6 +41,7 @@ namespace seir
 		[[nodiscard]] bool tryEndList() { return tryNext(StToken::Type::ListEnd); }
 		[[nodiscard]] bool tryEndObject() { return tryNext(StToken::Type::ObjectEnd); }
 		[[nodiscard]] bool tryKey(std::string_view expected) { return tryNextText(StToken::Type::Key, expected); }
+		[[nodiscard]] std::optional<std::string_view> tryValue() { return tryNextText(StToken::Type::Value); }
 		void value(std::string_view expected) { nextText(StToken::Type::Value, expected); }
 		[[nodiscard]] std::string_view value() { return nextText(StToken::Type::Value); }
 
@@ -49,6 +51,7 @@ namespace seir
 		std::string_view nextText(StToken::Type);
 		bool tryNext(StToken::Type);
 		bool tryNextText(StToken::Type, std::string_view);
+		std::optional<std::string_view> tryNextText(StToken::Type);
 
 	private:
 		StReader& _reader;

@@ -51,4 +51,13 @@ namespace seir
 		_token = _reader.read();
 		return true;
 	}
+
+	std::optional<std::string_view> StStream::tryNextText(StToken::Type type)
+	{
+		if (_token.type() != type)
+			return {};
+		auto result = _token.text();
+		_token = _reader.read();
+		return result;
+	}
 }
