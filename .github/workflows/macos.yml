@@ -26,7 +26,7 @@ jobs:
           key: macos-${{ hashFiles('cmake/SeirPackages/*.cmake') }}
       - name: Install prerequisites
         run: |
-          brew install ninja webp
+          brew install webp
       - name: Run CMake
         run: |
           export CC=$(brew --prefix llvm@15)/bin/clang
