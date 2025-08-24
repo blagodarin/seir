@@ -6,11 +6,11 @@
 function(seir_provide_doctest result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("doctest")
-	set(version "2.4.11")
+	set(version "2.4.12")
 	set(package "doctest-${version}")
 	seir_download("https://github.com/doctest/doctest/archive/refs/tags/v${version}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA256 "632ed2c05a7f53fa961381497bf8069093f0d6628c5f26286161fbd32a560186"
+		SHA256 "73381c7aa4dee704bd935609668cf41880ea7f19fa0504a200e13b74999c2d70"
 		EXTRACT_DIR "${package}"
 		PATCH ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest.patch
 		RESULT downloaded
@@ -22,7 +22,6 @@ function(seir_provide_doctest result)
 		message(STATUS "[SEIR] Building doctest from ${source_dir}")
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
 			-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-			-DCMAKE_POLICY_DEFAULT_CMP0054=NEW # Only interpret if() arguments as variables or keywords when unquoted.
 			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
 			-DDOCTEST_WITH_TESTS=OFF
 			)
