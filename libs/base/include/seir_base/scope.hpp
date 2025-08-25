@@ -6,6 +6,7 @@
 
 #include <seir_base/macros.hpp>
 
+#include <type_traits>
 #include <utility>
 
 namespace seir

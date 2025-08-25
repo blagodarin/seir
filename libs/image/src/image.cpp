@@ -9,6 +9,7 @@
 #include <seir_io/writer.hpp>
 #include "format.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 

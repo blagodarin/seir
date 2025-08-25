@@ -8,6 +8,7 @@
 #include <seir_synth/format.hpp>
 #include <seir_synth/renderer.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>

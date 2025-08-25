@@ -5,6 +5,8 @@
 #include <seir_io/paths.hpp>
 
 #include <cassert>
+#include <cerrno>
+#include <cstdlib>
 
 #include <cstdio>     // perror
 #include <sys/stat.h> // mkdir
