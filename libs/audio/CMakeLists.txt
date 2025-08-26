@@ -27,7 +27,9 @@ endif()
 if(SEIR_AUDIO_WAV)
 	list(APPEND SOURCES src/decoder_wav.cpp)
 endif()
-if(WIN32)
+if(APPLE)
+	list(APPEND SOURCES src/backend_coreaudio.mm)
+elseif(WIN32)
 	list(APPEND SOURCES src/backend_wasapi.cpp)
 	set_property(SOURCE src/player.cpp APPEND PROPERTY COMPILE_OPTIONS
 		/wd4355 # 'this': used in base member initializer list
@@ -46,10 +48,16 @@ target_compile_definitions(seir_audio PUBLIC
 	)
 target_include_directories(seir_audio PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_audio PUBLIC Seir::base PRIVATE Seir::io fmt::fmt Threads::Threads
-	$<$<NOT:$<BOOL:${WIN32}>>:ALSA::ALSA>
+	$<$<NOT:$<OR:$<BOOL:${APPLE}>,$<BOOL:${WIN32}>>>:ALSA::ALSA>
 	$<$<BOOL:${SEIR_AUDIO_OGGVORBIS}>:Vorbis::vorbisfile>
 	$<$<BOOL:${SEIR_SYNTH}>:Seir::synth>
 	)
+if(APPLE)
+	target_link_options(seir_audio PUBLIC
+		"SHELL:-framework AudioToolbox"
+		"SHELL:-framework Foundation"
+		)
+endif()
 seir_target(seir_audio FOLDER libs/audio STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_audio EXPORT SeirTargets)
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_audio)
