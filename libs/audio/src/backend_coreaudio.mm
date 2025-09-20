@@ -21,8 +21,16 @@ namespace seir
 	void runAudioBackend(AudioBackendCallbacks& callbacks, unsigned preferredSamplingRate)
 	{
 		const auto error = [&callbacks](const char* function, OSStatus status) {
-			callbacks.onBackendError(function, static_cast<int>(status),
-				[NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil].description.UTF8String);
+			const auto audioFileResultCode = [status]() -> const char* {
+				switch (status)
+				{
+				case kAudioFileUnsupportedDataFormatError: return "kAudioFileUnsupportedDataFormatError";
+				}
+				return nullptr;
+			}();
+			callbacks.onBackendError(function, static_cast<int>(status), audioFileResultCode
+				? audioFileResultCode
+				: [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil].description.UTF8String);
 		};
 		const AudioStreamBasicDescription format{
 			.mSampleRate = static_cast<Float64>(preferredSamplingRate),
@@ -32,7 +40,7 @@ namespace seir
 			.mFramesPerPacket = 1,
 			.mBytesPerFrame = 8,
 			.mChannelsPerFrame = 2,
-			.mBitsPerChannel = 4,
+			.mBitsPerChannel = 32,
 			.mReserved = 0,
 		};
 		AudioQueueRef queue{};
