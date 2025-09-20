@@ -57,8 +57,7 @@ jobs:
           cmake --build build
       - name: Run tests
         run: |
-          cd build
-          ctest --verbose --label-exclude renderer
+          ctest --verbose --label-exclude renderer --test-dir build
       - name: Build usage examples
         run: |
           cmake -S examples\usage\cmake_fetchcontent -B build.cmake_fetchcontent `
@@ -112,5 +111,4 @@ jobs:
           cmake --build build --config RelWithDebInfo --target install -- /nologo
       - name: Run tests
         run: |
-          cd build
-          ctest --verbose --build-config Debug
+          ctest --verbose --build-config Debug --test-dir build

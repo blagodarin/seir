@@ -61,8 +61,7 @@ jobs:
           cmake --build build
       - name: Run tests
         run: |
-          cd build
-          ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose
+          ASAN_OPTIONS=allocator_may_return_null=1 ctest --verbose --test-dir build
       - name: Build usage examples
         run: |
           cmake -S examples/usage/cmake_fetchcontent -B build.cmake_fetchcontent -G Ninja \

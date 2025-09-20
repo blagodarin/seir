@@ -54,8 +54,7 @@ jobs:
           cmake --build build
       - name: Run tests
         run: |
-          cd build
-          ctest --verbose
+          ctest --verbose --test-dir build
       - name: Build usage examples
         run: |
           export CC=$(brew --prefix llvm@18)/bin/clang
