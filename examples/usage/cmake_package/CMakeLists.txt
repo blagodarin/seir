@@ -2,7 +2,7 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.31)
 project(Example LANGUAGES CXX)
 option(STATIC_RUNTIME "Use static MSVC runtime" OFF)
 find_package(Seir REQUIRED)

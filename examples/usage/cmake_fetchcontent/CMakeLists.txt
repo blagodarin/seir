@@ -2,7 +2,7 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.31)
 project(Example LANGUAGES CXX)
 
 # Disable unused components to minimize CI build times.

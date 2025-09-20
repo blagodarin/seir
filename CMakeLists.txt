@@ -2,7 +2,7 @@
 # Copyright (C) Sergei Blagodarin.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.31)
 
 project(Seir LANGUAGES CXX)
 

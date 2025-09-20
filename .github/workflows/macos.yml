@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       matrix:
         include:
@@ -29,8 +29,8 @@ jobs:
           brew install webp
       - name: Run CMake
         run: |
-          export CC=$(brew --prefix llvm@15)/bin/clang
-          export CXX=$(brew --prefix llvm@15)/bin/clang++
+          export CC=$(brew --prefix llvm@18)/bin/clang
+          export CXX=$(brew --prefix llvm@18)/bin/clang++
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
@@ -58,8 +58,8 @@ jobs:
           ctest --verbose
       - name: Build usage examples
         run: |
-          export CC=$(brew --prefix llvm@15)/bin/clang
-          export CXX=$(brew --prefix llvm@15)/bin/clang++
+          export CC=$(brew --prefix llvm@18)/bin/clang
+          export CXX=$(brew --prefix llvm@18)/bin/clang++
           cmake -S examples/usage/cmake_fetchcontent -B build.cmake_fetchcontent \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DREPLACE_WITH_COMMIT_HASH=${{ github.sha }}
