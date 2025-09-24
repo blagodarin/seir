@@ -9,6 +9,7 @@
 #include "common.hpp"
 
 #include <array>
+#include <mutex>
 
 #include <AudioToolbox/AudioToolbox.h>
 
@@ -22,6 +23,8 @@ namespace
 
 	struct Context
 	{
+		std::mutex _mutex;
+		std::condition_variable _condition;
 		AudioQueueRef _queue{};
 		std::array<AudioQueueBufferRef, 3> _buffers{};
 
@@ -40,8 +43,26 @@ namespace
 			}
 		}
 
-		static void outputCallback(void*, AudioQueueRef, AudioQueueBufferRef)
+		AudioQueueBufferRef nextBuffer()
 		{
+			std::unique_lock lock{ _mutex };
+			for (;;)
+			{
+				if (const auto i = std::find_if(_buffers.begin(), _buffers.end(),
+					[this](auto buffer) { return buffer->mAudioDataByteSize == 0; }); i != _buffers.end())
+					return *i;
+				_condition.wait(lock);
+			}
+		}
+
+		static void outputCallback(void* userData, AudioQueueRef, AudioQueueBufferRef buffer)
+		{
+			auto& context = *static_cast<Context*>(userData);
+			{
+				std::lock_guard lock{ context._mutex };
+				buffer->mAudioDataByteSize = 0;
+			}
+			context._condition.notify_one();
 		}
 	};
 }
@@ -79,20 +100,22 @@ namespace seir
 			return error("AudioQueueNewOutput", status);
 		constexpr auto bufferBytes = ::makeBufferBytes(0x1000);
 		for (size_t i = 0; i < context._buffers.size(); ++i)
-		{
 			if (const auto status = ::AudioQueueAllocateBuffer(context._queue, bufferBytes, &context._buffers[i]))
 				return error("AudioQueueAllocateBuffer", status);
-			context._buffers[i]->mAudioDataByteSize = bufferBytes;
-		}
+		if (const auto status = ::AudioQueueStart(context._queue, nullptr))
+			return error("AudioQueueStart", status);
 		constexpr auto bufferFrames = bufferBytes / kAudioFrameSize;
 		callbacks.onBackendAvailable(preferredSamplingRate, bufferFrames);
-		for (size_t i = 0; callbacks.onBackendIdle(); i = (i + 1) % context._buffers.size())
+		for (;;)
 		{
-			const auto writtenFrames = callbacks.onBackendRead(static_cast<float*>(context._buffers[i]->mAudioData), bufferFrames);
-			std::memset(static_cast<std::byte*>(context._buffers[i]->mAudioData) + writtenFrames * kAudioFrameSize, 0, (bufferFrames - writtenFrames) * kAudioFrameSize);
-			if (const auto status = ::AudioQueueEnqueueBuffer(context._queue, context._buffers[i], 0, nullptr))
+			const auto buffer = context.nextBuffer();
+			if (!callbacks.onBackendIdle())
+				break;
+			const auto writtenFrames = callbacks.onBackendRead(static_cast<float*>(buffer->mAudioData), bufferFrames);
+			std::memset(static_cast<std::byte*>(buffer->mAudioData) + writtenFrames * kAudioFrameSize, 0, (bufferFrames - writtenFrames) * kAudioFrameSize);
+			buffer->mAudioDataByteSize = bufferBytes;
+			if (const auto status = ::AudioQueueEnqueueBuffer(context._queue, buffer, 0, nullptr))
 				return error("AudioQueueEnqueueBuffer", status);
-			break; // TODO: Implement.
 		}
 	}
 }
