@@ -49,7 +49,8 @@ namespace
 			for (;;)
 			{
 				if (const auto i = std::find_if(_buffers.begin(), _buffers.end(),
-					[this](auto buffer) { return buffer->mAudioDataByteSize == 0; }); i != _buffers.end())
+						[this](auto buffer) { return buffer->mAudioDataByteSize == 0; });
+					i != _buffers.end())
 					return *i;
 				_condition.wait(lock);
 			}
@@ -80,9 +81,8 @@ namespace seir
 				}
 				return nullptr;
 			}();
-			callbacks.onBackendError(function, static_cast<int>(status), audioFileResultCode
-				? audioFileResultCode
-				: [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil].description.UTF8String);
+			callbacks.onBackendError(function, static_cast<int>(status),
+				audioFileResultCode ? audioFileResultCode : [NSError errorWithDomain:NSOSStatusErrorDomain code:status userInfo:nil].description.UTF8String);
 		};
 		const AudioStreamBasicDescription format{
 			.mSampleRate = static_cast<Float64>(preferredSamplingRate),
