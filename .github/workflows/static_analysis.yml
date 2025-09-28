@@ -20,7 +20,7 @@ jobs:
           sudo apt-get install cppcheck libasound2-dev libfreetype-dev libjpeg-dev libvorbis-dev ninja-build
       - name: Run clang-format
         run: |
-          clang-format-18 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' \) -printf ' %p')
+          clang-format-18 -i $(find . -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.mm' \) -printf ' %p')
           git diff --color=always --exit-code --histogram
       - name: Run CMake
         env:
