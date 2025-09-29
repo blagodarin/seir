@@ -59,7 +59,7 @@ namespace seir
 			snd_pcm_uframes_t minPeriod = 0;
 			int dir = 0;
 			CHECK_ALSA(::snd_pcm_hw_params_get_period_size_min(hw, &minPeriod, &dir));
-			periodFrames = (minPeriod + kAudioBlockAlignment - 1) / kAudioBlockAlignment * kAudioBlockAlignment;
+			periodFrames = (minPeriod + kAudioBlockSize - 1) / kAudioBlockSize * kAudioBlockSize;
 			CHECK_ALSA(::snd_pcm_hw_params_set_period_size(pcm, hw, periodFrames, periodFrames == minPeriod ? dir : 0));
 			CHECK_ALSA(::snd_pcm_hw_params(pcm, hw));
 			CHECK_ALSA(::snd_pcm_hw_params_get_period_size(hw, &periodFrames, nullptr));

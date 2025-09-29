@@ -20,21 +20,25 @@ namespace
 	template <typename T, size_t N>
 	constexpr bool checkSize(const std::array<T, N>&) noexcept
 	{
-		return N * sizeof(T) > 2 * seir::kAudioBlockAlignment           // To be able to check every possible remainder length.
-			&& N * sizeof(T) % seir::kAudioBlockAlignment == sizeof(T); // To check we're not triggering ASAN.
+		return N * sizeof(T) > 2 * seir::kAudioBlockAlignment // To be able to check every possible remainder length.
+			&& (seir::kAudioBlockAlignment < sizeof(T)
+				|| N * sizeof(T) % seir::kAudioBlockAlignment == sizeof(T)); // To check we're not triggering ASAN.
 	}
+
+	template <typename T>
+	constexpr size_t alignOf = std::max(seir::kAudioBlockAlignment, alignof(T));
 }
 
 TEST_CASE("addSamples1D")
 {
 	SUBCASE("float")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<float, 17> src{
+		alignas(::alignOf<float>) const std::array<float, 17> src{
 			-1.f, -.875f, -.75f, -.625f, -.5f, -.375f, -.25f, -.125f,
 			0.f, .125f, .25f, .375f, .5f, .625f, .75f, .875f, 1.f
 		};
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<float, src.size()> dst{};
+		alignas(::alignOf<float>) std::array<float, src.size()> dst{};
 		const std::array<float, dst.size()> expected{
 			-1.875f, -1.625f, -1.375f, -1.125f, -.875f, -.625f, -.375f, -.125f,
 			.125f, .375f, .625f, .875f, 1.125f, 1.375f, 1.625f, 1.875f, 2.125f
@@ -59,12 +63,12 @@ TEST_CASE("addSamples1D")
 	}
 	SUBCASE("int16_t")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<int16_t, 17> src{
+		alignas(::alignOf<int16_t>) const std::array<int16_t, 17> src{
 			-32768, -28672, -24576, -20480, -16384, -12288, -8192, -4096,
 			0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 30720
 		};
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<float, src.size()> dst{};
+		alignas(::alignOf<float>) std::array<float, src.size()> dst{};
 		const std::array<float, dst.size()> expected{
 			-1.875f, -1.625f, -1.375f, -1.125f, -.875f, -.625f, -.375f, -.125f,
 			.125f, .375f, .625f, .875f, 1.125f, 1.375f, 1.625f, 1.875f, 2.0625f
@@ -93,12 +97,12 @@ TEST_CASE("addSamples2x1D")
 {
 	SUBCASE("float")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<float, 17> src{
+		alignas(::alignOf<float>) const std::array<float, 17> src{
 			-1.f, -.875f, -.75f, -.625f, -.5f, -.375f, -.25f, -.125f,
 			0.f, .125f, .25f, .375f, .5f, .625f, .75f, .875f, 1.f
 		};
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<float, src.size() * 2> dst{};
+		alignas(::alignOf<float>) std::array<float, src.size() * 2> dst{};
 		const std::array<float, dst.size()> expected{
 			-1.875f, -1.875f, -1.625f, -1.625f, -1.375f, -1.375f, -1.125f, -1.125f,
 			-.875f, -.875f, -.625f, -.625f, -.375f, -.375f, -.125f, -.125f,
@@ -131,12 +135,12 @@ TEST_CASE("addSamples2x1D")
 	}
 	SUBCASE("int16_t")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<int16_t, 17> src{
+		alignas(::alignOf<int16_t>) const std::array<int16_t, 17> src{
 			-32768, -28672, -24576, -20480, -16384, -12288, -8192, -4096,
 			0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 30720
 		};
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<float, src.size() * 2> dst{};
+		alignas(::alignOf<float>) std::array<float, src.size() * 2> dst{};
 		const std::array<float, dst.size()> expected{
 			-1.875f, -1.875f, -1.625f, -1.625f, -1.375f, -1.375f, -1.125f, -1.125f,
 			-.875f, -.875f, -.625f, -.625f, -.375f, -.375f, -.125f, -.125f,
@@ -173,12 +177,12 @@ TEST_CASE("convertSamples1D")
 {
 	SUBCASE("int16_t")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<int16_t, 17> src{
+		alignas(::alignOf<int16_t>) const std::array<int16_t, 17> src{
 			-32768, -28672, -24576, -20480, -16384, -12288, -8192, -4096,
 			0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 30720
 		};
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<float, src.size()> dst{};
+		alignas(::alignOf<float>) std::array<float, src.size()> dst{};
 		const std::array<float, dst.size()> expected{
 			-1.f, -.875f, -.75f, -.625f, -.5f, -.375f, -.25f, -.125f,
 			0.f, .125f, .25f, .375f, .5f, .625f, .75f, .875f, .9375f
@@ -207,12 +211,12 @@ TEST_CASE("convertSamples2x1D")
 {
 	SUBCASE("int16_t")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<int16_t, 17> src{
+		alignas(::alignOf<int16_t>) const std::array<int16_t, 17> src{
 			-32768, -28672, -24576, -20480, -16384, -12288, -8192, -4096,
 			0, 4096, 8192, 12288, 16384, 20480, 24576, 28672, 30720
 		};
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<float, src.size() * 2> dst{};
+		alignas(::alignOf<float>) std::array<float, src.size() * 2> dst{};
 		const std::array<float, dst.size()> expected{
 			-1.f, -1.f, -.875f, -.875f, -.75f, -.75f, -.625f, -.625f,
 			-.5f, -.5f, -.375f, -.375f, -.25f, -.25f, -.125f, -.125f,
@@ -249,9 +253,9 @@ TEST_CASE("duplicate1D")
 {
 	SUBCASE("16")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<int16_t, 17> src{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+		alignas(::alignOf<int16_t>) const std::array<int16_t, 17> src{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<int16_t, src.size() * 2> dst{};
+		alignas(::alignOf<int16_t>) std::array<int16_t, src.size() * 2> dst{};
 		for (auto size = src.size(); size >= src.size() - seir::kAudioBlockAlignment / sizeof src[0]; --size)
 		{
 			INFO("size = " << size);
@@ -271,9 +275,9 @@ TEST_CASE("duplicate1D")
 	}
 	SUBCASE("32")
 	{
-		alignas(seir::kAudioBlockAlignment) const std::array<int32_t, 9> src{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+		alignas(::alignOf<int32_t>) const std::array<int32_t, 9> src{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 		static_assert(::checkSize(src));
-		alignas(seir::kAudioBlockAlignment) std::array<int32_t, src.size() * 2> dst{};
+		alignas(::alignOf<int32_t>) std::array<int32_t, src.size() * 2> dst{};
 		for (auto size = src.size(); size >= src.size() - seir::kAudioBlockAlignment / sizeof src[0]; --size)
 		{
 			INFO("size = " << size);
@@ -299,7 +303,7 @@ TEST_CASE("resample*2x1D")
 	{
 		constexpr size_t srcFrames = 5;
 		constexpr size_t dstFrames = 13;
-		alignas(seir::kAudioBlockAlignment) const std::array<float, 2 * srcFrames> src{
+		alignas(::alignOf<float>) const std::array<float, 2 * srcFrames> src{
 			0.f, 1.f,
 			2.f, 3.f,
 			4.f, 5.f,
@@ -330,7 +334,7 @@ TEST_CASE("resample*2x1D")
 				8.f, 9.f, 8.f, 9.f            // 4 + { 3/13, 8/13 }
 			});
 		}
-		alignas(seir::kAudioBlockAlignment) std::array<float, expected.size()> dst{};
+		alignas(::alignOf<float>) std::array<float, expected.size()> dst{};
 		constexpr auto step = (srcFrames << seir::kAudioResamplingFractionBits) / dstFrames;
 		for (auto frames = dstFrames; frames > 0; --frames)
 		{
@@ -357,7 +361,7 @@ TEST_CASE("resample*2x1D")
 	{
 		constexpr size_t srcFrames = 13;
 		constexpr size_t dstFrames = 5;
-		alignas(seir::kAudioBlockAlignment) const std::array<float, 2 * srcFrames> src{
+		alignas(::alignOf<float>) const std::array<float, 2 * srcFrames> src{
 			0.f, 1.f,
 			2.f, 3.f,
 			4.f, 5.f,
@@ -396,7 +400,7 @@ TEST_CASE("resample*2x1D")
 				20.f, 21.f  // 52/5 = 10.4
 			});
 		}
-		alignas(seir::kAudioBlockAlignment) std::array<float, expected.size()> dst{};
+		alignas(::alignOf<float>) std::array<float, expected.size()> dst{};
 		constexpr auto step = (srcFrames << seir::kAudioResamplingFractionBits) / dstFrames;
 		for (auto frames = dstFrames; frames > 0; --frames)
 		{
