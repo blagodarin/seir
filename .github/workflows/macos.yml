@@ -38,7 +38,7 @@ jobs:
             -DSEIR_AUDIO_WAV=ON \
             -DSEIR_BENCHMARKS=ON \
             -DSEIR_COMPRESSION_ZLIB=ON \
-            -DSEIR_COMPRESSION_ZSTD=OFF \
+            -DSEIR_COMPRESSION_ZSTD=ON \
             -DSEIR_EXAMPLES=ON \
             -DSEIR_IMAGE_BMP=ON \
             -DSEIR_IMAGE_DDS=ON \
