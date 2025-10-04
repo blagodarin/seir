@@ -10,7 +10,12 @@ set(HEADERS
 	)
 set(SOURCES
 	)
-if(WIN32)
+if(APPLE)
+	list(APPEND SOURCES
+		src/cocoa/app.mm
+		src/cocoa/window.mm
+		)
+elseif(WIN32)
 	list(APPEND SOURCES
 		src/windows/app.cpp
 		src/windows/app.hpp
@@ -37,6 +42,11 @@ add_library(seir_app STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::app ALIAS seir_app)
 target_include_directories(seir_app PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_app PUBLIC Seir::base PRIVATE Seir::graphics Seir::image)
+if(APPLE)
+	target_link_options(seir_app PUBLIC
+		"SHELL:-framework AppKit"
+		)
+endif()
 seir_target(seir_app FOLDER libs/app STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_install(seir_app EXPORT SeirTargets)
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/seir_app)
