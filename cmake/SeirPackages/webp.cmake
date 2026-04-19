@@ -6,10 +6,10 @@
 function(seir_provide_webp result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("webp")
-	set(version "1.4.0")
+	set(version "1.6.0")
 	set(package "libwebp-${version}")
 	seir_download("https://storage.googleapis.com/downloads.webmproject.org/releases/webp/${package}.tar.gz"
-		SHA256 "61f873ec69e3be1b99535634340d5bde750b2e4447caa1db9f61be3fd49ab1e5"
+		SHA256 "e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)
@@ -20,7 +20,6 @@ function(seir_provide_webp result)
 		message(STATUS "[SEIR] Building WebP from ${source_dir}")
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
 			-DBUILD_SHARED_LIBS=OFF
-			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
 			-DWEBP_BUILD_ANIM_UTILS=OFF
 			-DWEBP_BUILD_CWEBP=OFF
 			-DWEBP_BUILD_DWEBP=OFF
