@@ -6,10 +6,10 @@
 function(seir_provide_fmt result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("fmt")
-	set(version "12.0.0")
+	set(version "12.1.0")
 	set(package "fmt-${version}")
 	seir_download("https://github.com/fmtlib/fmt/releases/download/${version}/${package}.zip"
-		SHA256 "1c32293203449792bf8e94c7f6699c643887e826f2d66a80869b4f279fb07d25"
+		SHA256 "695fd197fa5aff8fc67b5f2bbc110490a875cdf7a41686ac8512fb480fa8ada7"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)
