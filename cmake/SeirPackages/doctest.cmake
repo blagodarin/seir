@@ -6,12 +6,13 @@
 function(seir_provide_doctest result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("doctest")
-	set(version "2.4.12")
-	set(package "doctest-${version}")
-	seir_download("https://github.com/doctest/doctest/archive/refs/tags/v${version}.tar.gz"
+	set(version "2.5.2")
+	set(package "doctest-v${version}")
+	seir_download("https://github.com/doctest/doctest/releases/download/v${version}/${package}.tar.gz"
 		NAME "${package}.tar.gz"
-		SHA256 "73381c7aa4dee704bd935609668cf41880ea7f19fa0504a200e13b74999c2d70"
+		SHA256 "03635c39d59844f1550b9ffa56e3cbc79bddfed557e8465cd3692628aadba70a"
 		EXTRACT_DIR "${package}"
+		EXTRACT_INSIDE
 		PATCH ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/doctest.patch
 		RESULT downloaded
 		)
