@@ -26,8 +26,8 @@ jobs:
       CXXFLAGS: -fsanitize=address -fsanitize=undefined -fno-sanitize=nonnull-attribute
       LDFLAGS: -fsanitize=address -fsanitize=undefined
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v6
+      - uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/build/_SeirDownloads
           key: linux-${{ hashFiles('cmake/SeirPackages/*.cmake') }}
@@ -83,8 +83,8 @@ jobs:
       CXXFLAGS: --coverage
       LDFLAGS: --coverage
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v6
+      - uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/build/_SeirDownloads
           key: linux-${{ hashFiles('cmake/SeirPackages/*.cmake') }}

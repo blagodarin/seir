@@ -13,8 +13,8 @@ jobs:
     env:
       CMAKE_GENERATOR: Ninja
     steps:
-      - uses: actions/checkout@v4
-      - uses: seanmiddleditch/gha-setup-vsdevenv@master
+      - uses: actions/checkout@v6
+      - uses: seanmiddleditch/gha-setup-vsdevenv@v5
         with:
           arch: ${{ matrix.arch }}
       - name: Install prerequisites
@@ -58,7 +58,7 @@ jobs:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install prerequisites
         run: |
           sudo apt-get update
