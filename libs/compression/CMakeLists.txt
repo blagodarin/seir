@@ -26,7 +26,7 @@ target_compile_definitions(seir_compression PUBLIC
 	)
 target_include_directories(seir_compression PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_compression PUBLIC Seir::base PRIVATE
-	$<$<BOOL:${SEIR_COMPRESSION_ZLIB}>:ZLIB::ZLIB>
+	$<$<BOOL:${SEIR_COMPRESSION_ZLIB}>:ZLIB::ZLIBSTATIC>
 	$<$<BOOL:${SEIR_COMPRESSION_ZSTD}>:zstd::libzstd_static>
 	)
 seir_target(seir_compression FOLDER libs/compression STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})

@@ -6,10 +6,10 @@
 function(seir_provide_zlib result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("zlib")
-	set(version "1.3.1")
+	set(version "1.3.2")
 	set(package "zlib-${version}")
 	seir_download("https://zlib.net/${package}.tar.xz"
-		SHA256 "38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32"
+		SHA256 "d7a0654783a4da529d1bb793b7ad9c3318020af77667bcae35f95d0e42a792f3"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)
@@ -18,12 +18,9 @@ function(seir_provide_zlib result)
 		set(source_dir ${CMAKE_BINARY_DIR}/${package})
 		set(build_dir ${source_dir}-build)
 		message(STATUS "[SEIR] Building ZLIB from ${source_dir}")
-		_seir_cmake(${source_dir} ${build_dir} ${install_dir} TARGET zlibstatic STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
-			-DZLIB_BUILD_EXAMPLES=OFF)
-		file(INSTALL
-			${build_dir}/zconf.h
-			${source_dir}/zlib.h
-			DESTINATION ${install_dir}/include
+		_seir_cmake(${source_dir} ${build_dir} ${install_dir} STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
+			-DZLIB_BUILD_SHARED=OFF
+			-DZLIB_BUILD_TESTING=OFF
 			)
 		message(STATUS "[SEIR] Provided ZLIB at ${install_dir}")
 		if(arg_SET_UPDATED)
