@@ -8,8 +8,11 @@
 #include <seir_base/pointer.hpp>
 #include "utils.hpp"
 
+#pragma warning(push)
+#pragma warning(disable : 4865) // the underlying type will change from 'int' to 'unsigned int' when '/Zc:enumTypes' is specified on the command line
 #include <shlobj.h>
 #include <versionhelpers.h>
+#pragma warning(pop)
 
 namespace
 {

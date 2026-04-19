@@ -179,8 +179,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		/wd5027 # move assignment operator was implicitly defined as deleted
 		/wd5045 # Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 		/wd5246 # the initialization of a subobject should be wrapped in braces
-		# Warnings from the standard library headers:
-		/wd4668 # https://developercommunity.visualstudio.com/t/Including-limitsh-triggers-error-__STDC/10514743
 		)
 endif()
 

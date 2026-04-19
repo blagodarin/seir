@@ -24,6 +24,7 @@ function(seir_provide_vorbis result)
 		_seir_cmake(${source_dir} ${build_dir} ${install_dir} STATIC_RUNTIME ${arg_STATIC_RUNTIME} OPTIONS
 			-DCMAKE_POLICY_DEFAULT_CMP0074=NEW # find_package() uses <PackageName>_ROOT variables.
 			-DCMAKE_POLICY_DEFAULT_CMP0091=NEW # MSVC runtime library flags are selected by an abstraction.
+			-DCMAKE_POLICY_VERSION_MINIMUM=3.5
 			${ogg_flag}
 			MSVC_WARNINGS 4244 4267 4305
 			)

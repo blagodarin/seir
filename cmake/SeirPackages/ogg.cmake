@@ -6,10 +6,10 @@
 function(seir_provide_ogg result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("ogg")
-	set(version "1.3.5")
+	set(version "1.3.6")
 	set(package "libogg-${version}")
 	seir_download("http://downloads.xiph.org/releases/ogg/${package}.tar.xz"
-		SHA256 "c4d91be36fc8e54deae7575241e03f4211eb102afb3fc0775fbbc1b740016705"
+		SHA256 "5c8253428e181840cd20d41f3ca16557a9cc04bad4a3d04cce84808677fa1061"
 		EXTRACT_DIR ${package}
 		RESULT downloaded
 		)
