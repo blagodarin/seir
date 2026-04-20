@@ -6,11 +6,11 @@
 function(seir_provide_vma result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED" "" ${ARGN})
 	_seir_provide_begin("vma")
-	set(version "3.1.0")
+	set(version "3.3.0")
 	set(package "VulkanMemoryAllocator-${version}")
 	seir_download("https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/archive/refs/tags/v${version}.tar.gz"
-		NAME "${package}.zip"
-		SHA256 "ae134ecc37c55634f108e926f85d5d887b670360e77cd107affaf3a9539595f2"
+		NAME "${package}.tar.gz"
+		SHA256 "c4f6bbe6b5a45c2eb610ca9d231158e313086d5b1a40c9922cb42b597419b14e"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)
