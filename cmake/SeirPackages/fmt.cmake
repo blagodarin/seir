@@ -23,6 +23,7 @@ function(seir_provide_fmt result)
 			-DFMT_DOC=OFF
 			-DFMT_OS=OFF
 			-DFMT_TEST=OFF
+			MSVC_WARNINGS 4834
 			)
 		message(STATUS "[SEIR] Provided fmt at ${install_dir}")
 		if(arg_SET_UPDATED)
