@@ -6,10 +6,10 @@
 function(seir_provide_freetype result)
 	cmake_parse_arguments(arg "FLAG" "SET_UPDATED;STATIC_RUNTIME" "" ${ARGN})
 	_seir_provide_begin("freetype")
-	set(version "2.13.3")
+	set(version "2.14.3")
 	set(package "freetype-${version}")
 	seir_download("https://downloads.sourceforge.net/project/freetype/freetype2/${version}/${package}.tar.xz"
-		SHA256 "0550350666d427c74daeb85d5ac7bb353acba5f76956395995311a9c6f063289"
+		SHA256 "36bc4f1cc413335368ee656c42afca65c5a3987e8768cc28cf11ba775e785a5f"
 		EXTRACT_DIR "${package}"
 		RESULT downloaded
 		)
@@ -25,7 +25,6 @@ function(seir_provide_freetype result)
 			-DFT_DISABLE_HARFBUZZ=ON
 			-DFT_DISABLE_PNG=ON
 			-DFT_DISABLE_ZLIB=ON
-			MSVC_WARNINGS 4244 4267
 			)
 		message(STATUS "[SEIR] Provided Freetype at ${install_dir}")
 		if(arg_SET_UPDATED)
