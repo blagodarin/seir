@@ -14,7 +14,7 @@ namespace
 	class StreamTester
 	{
 	public:
-		StreamTester(std::string_view text)
+		explicit StreamTester(std::string_view text)
 			: _reader{ seir::Blob::from(text.data(), text.size()) } {}
 		seir::StStream* operator->() noexcept { return &_stream; }
 

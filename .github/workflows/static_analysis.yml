@@ -55,6 +55,9 @@ jobs:
             --relative-paths='${{ github.workspace }}' \
             --suppressions-list='${{ github.workspace }}/.cppcheck' \
             --template='({file}:{line}) ({severity}/{id}) {message}'
+      - name: Build # clang-tidy requires modmap files which might not exist until a build is performed.
+        run: |
+          cmake --build build
       - name: Run clang-tidy
         run: |
           find '${{ github.workspace }}/libs' -name '*.cpp' \! \( -path '*/benchmarks/*' -o -path '*/tests/*' -o -path '*/vulkan/*' -o -path '*_wasapi.cpp' -o -path '*_windows.cpp' \) \
