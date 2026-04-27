@@ -53,7 +53,7 @@ namespace seir
 		_impl->_attachments.insert_or_assign(std::string{ name }, Attachment{ std::move(blob), offset, size, compressedSize, compression });
 	}
 
-	bool Storage::attachArchive(SharedPtr<Blob>&& blob)
+	bool Storage::attachArchive(const SharedPtr<Blob>& blob)
 	{
 		if (blob)
 			if (const auto id = blob->get<uint32_t>(0))

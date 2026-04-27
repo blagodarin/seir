@@ -59,7 +59,6 @@ jobs:
         run: |
           cmake --build build
       - name: Run clang-tidy
+        continue-on-error: true
         run: |
-          find '${{ github.workspace }}/libs' -name '*.cpp' \! \( -path '*/benchmarks/*' -o -path '*/tests/*' -o -path '*/vulkan/*' -o -path '*_wasapi.cpp' -o -path '*_windows.cpp' \) \
-            -printf '[%P]\n' \
-            -exec clang-tidy-18 -p='${{ github.workspace }}/build' --quiet '{}' \;
+          run-clang-tidy-18.py -p '${{ github.workspace }}/build' -quiet

@@ -35,7 +35,7 @@ namespace seir
 		void attach(std::string_view name, SharedPtr<Blob>&&, size_t offset, size_t size, Compression, size_t compressedSize);
 
 		//
-		bool attachArchive(SharedPtr<Blob>&&);
+		bool attachArchive(const SharedPtr<Blob>&);
 
 		//
 		[[nodiscard]] SharedPtr<Blob> open(const std::string& name) const;
