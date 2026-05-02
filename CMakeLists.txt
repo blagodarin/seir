@@ -10,7 +10,7 @@ include(CMakeDependentOption)
 include(FetchContent)
 include(cmake/SeirPackages.cmake)
 
-# Features.
+# Data formats.
 option(SEIR_AUDIO_OGGVORBIS "Enable Ogg Vorbis audio support" OFF)
 option(SEIR_AUDIO_WAV "Enable Waveform audio support" OFF)
 option(SEIR_IMAGE_BMP "Enable BMP image support" OFF)
@@ -23,32 +23,34 @@ option(SEIR_IMAGE_WEBP "Enable WebP image support" OFF)
 cmake_dependent_option(SEIR_COMPRESSION_ZLIB "Enable zlib compression support" OFF "NOT SEIR_IMAGE_PNG" ON)
 option(SEIR_COMPRESSION_ZSTD "Enable zstd compression support" OFF)
 
-# Components.
-option(SEIR_GUI "Build GUI library" ON)
+# Libraries and utilities.
+option(SEIR_ALL "Build all libraries and utilities" OFF)
+# 5
+cmake_dependent_option(SEIR_GUI "Build GUI library" OFF "NOT SEIR_ALL" ON)
 # 4
-cmake_dependent_option(SEIR_RENDERER "Build renderer library" ON "NOT SEIR_GUI" ON)
+cmake_dependent_option(SEIR_RENDERER "Build renderer library" OFF "NOT SEIR_GUI" ON)
 # 3
-cmake_dependent_option(SEIR_APP "Build app library" ON "NOT SEIR_RENDERER" ON)
-option(SEIR_UTILS "Build utils" ON)
+cmake_dependent_option(SEIR_APP "Build app library" OFF "NOT SEIR_RENDERER" ON)
+cmake_dependent_option(SEIR_UTILS "Build utils" OFF "NOT SEIR_ALL" ON)
 # 2
-cmake_dependent_option(SEIR_AUDIO "Build audio library" ON "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
-cmake_dependent_option(SEIR_PACKAGE "Build package library" ON "NOT SEIR_UTILS" ON)
-cmake_dependent_option(SEIR_IMAGE "Build image library" ON "NOT SEIR_APP;NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_DDS;NOT SEIR_IMAGE_ICO;NOT SEIR_IMAGE_JPEG;NOT SEIR_IMAGE_PNG;NOT SEIR_IMAGE_TGA;NOT SEIR_IMAGE_WEBP;NOT SEIR_GUI" ON)
-cmake_dependent_option(SEIR_SERIALIZATION "Build serialization library" ON "NOT SEIR_UTILS" ON)
+cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
+cmake_dependent_option(SEIR_PACKAGE "Build package library" OFF "NOT SEIR_UTILS" ON)
+cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_APP;NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_DDS;NOT SEIR_IMAGE_ICO;NOT SEIR_IMAGE_JPEG;NOT SEIR_IMAGE_PNG;NOT SEIR_IMAGE_TGA;NOT SEIR_IMAGE_WEBP;NOT SEIR_GUI" ON)
+cmake_dependent_option(SEIR_SERIALIZATION "Build serialization library" OFF "NOT SEIR_UTILS" ON)
 # 1
-cmake_dependent_option(SEIR_COMPRESSION "Build compression library" ON "NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD;NOT SEIR_IMAGE;NOT SEIR_PACKAGE" ON)
-cmake_dependent_option(SEIR_IO "Build IO library" ON "NOT SEIR_AUDIO;NOT SEIR_IMAGE;NOT SEIR_PACKAGE;NOT SEIR_SERIALIZATION" ON)
-cmake_dependent_option(SEIR_GRAPHICS "Build graphics library" ON "NOT SEIR_APP" ON)
-option(SEIR_SYNTH "Build synth library" ON)
-cmake_dependent_option(SEIR_U8MAIN "Build u8main library" ON "NOT SEIR_UTILS" ON)
+cmake_dependent_option(SEIR_COMPRESSION "Build compression library" OFF "NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD;NOT SEIR_IMAGE;NOT SEIR_PACKAGE" ON)
+cmake_dependent_option(SEIR_IO "Build IO library" OFF "NOT SEIR_AUDIO;NOT SEIR_IMAGE;NOT SEIR_PACKAGE;NOT SEIR_SERIALIZATION" ON)
+cmake_dependent_option(SEIR_GRAPHICS "Build graphics library" OFF "NOT SEIR_APP" ON)
+cmake_dependent_option(SEIR_SYNTH "Build synth library" OFF "NOT SEIR_ALL" ON)
+cmake_dependent_option(SEIR_U8MAIN "Build u8main library" OFF "NOT SEIR_UTILS" ON)
 # 0
-cmake_dependent_option(SEIR_BASE "Build base library" ON "NOT SEIR_COMPRESSION;NOT SEIR_IO;NOT SEIR_SYNTH;NOT SEIR_U8MAIN" ON)
-cmake_dependent_option(SEIR_MATH "Build math library" ON "NOT SEIR_GRAPHICS" ON)
+cmake_dependent_option(SEIR_BASE "Build base library" OFF "NOT SEIR_COMPRESSION;NOT SEIR_IO;NOT SEIR_SYNTH;NOT SEIR_U8MAIN" ON)
+cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_GRAPHICS" ON)
 
 set(SEIR_RENDERER_BACKEND "Vulkan" CACHE STRING "Renderer backend")
 set_property(CACHE SEIR_RENDERER_BACKEND PROPERTY STRINGS "" "Vulkan")
 
-# Options.
+# Other options.
 option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime" OFF)
 if(PROJECT_IS_TOP_LEVEL)
 	option(SEIR_BENCHMARKS "Build Seir benchmarks" OFF)

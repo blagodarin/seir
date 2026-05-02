@@ -36,6 +36,7 @@ jobs:
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}\install" `
+            -DSEIR_ALL=ON `
             -DSEIR_AUDIO_OGGVORBIS=ON `
             -DSEIR_AUDIO_WAV=ON `
             -DSEIR_BENCHMARKS=ON `

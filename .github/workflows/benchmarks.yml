@@ -17,26 +17,13 @@ jobs:
       - uses: seanmiddleditch/gha-setup-vsdevenv@v5
         with:
           arch: ${{ matrix.arch }}
-      - name: Install prerequisites
-        run: |
-          cinst --no-progress ninja
       - name: Run CMake
         run: |
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
+            -DSEIR_AUDIO=ON `
             -DSEIR_BENCHMARKS=ON `
-            -DSEIR_STATIC_RUNTIME=ON `
-            -DSEIR_APP=OFF `
-            -DSEIR_DATA=OFF `
-            -DSEIR_GRAPHICS=OFF `
-            -DSEIR_GUI=OFF `
-            -DSEIR_IMAGE=OFF `
-            -DSEIR_MATH=OFF `
-            -DSEIR_RENDERER=OFF `
-            -DSEIR_SERIALIZATION=OFF `
-            -DSEIR_SYNTH=OFF `
-            -DSEIR_U8MAIN=OFF `
-            -DSEIR_UTILS=OFF
+            -DSEIR_STATIC_RUNTIME=ON
       - name: Build
         run: |
           cmake --build build
@@ -67,19 +54,8 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DSEIR_BENCHMARKS=ON \
-            -DSEIR_STATIC_RUNTIME=ON \
-            -DSEIR_APP=OFF \
-            -DSEIR_DATA=OFF \
-            -DSEIR_GRAPHICS=OFF \
-            -DSEIR_GUI=OFF \
-            -DSEIR_IMAGE=OFF \
-            -DSEIR_MATH=OFF \
-            -DSEIR_RENDERER=OFF \
-            -DSEIR_SERIALIZATION=OFF \
-            -DSEIR_SYNTH=OFF \
-            -DSEIR_U8MAIN=OFF \
-            -DSEIR_UTILS=OFF
+            -DSEIR_AUDIO=ON \
+            -DSEIR_BENCHMARKS=ON
       - name: Build
         run: |
           cmake --build build
