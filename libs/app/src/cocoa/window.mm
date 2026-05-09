@@ -19,6 +19,16 @@ namespace
 		return true;
 	}
 
+	NSRect mainScreenCenterRect(CGFloat width, CGFloat height)
+	{
+		const auto mainScreenRect = [[NSScreen mainScreen] frame];
+		return NSMakeRect(
+			mainScreenRect.origin.x + (mainScreenRect.size.width - width) / 2,
+			mainScreenRect.origin.y + (mainScreenRect.size.height - height) / 2,
+			width,
+			height);
+	}
+
 	void setWindowTitle(id window, const std::string& title) noexcept
 	{
 		[window setTitle:[[NSString alloc] initWithBytes:title.data()
@@ -76,8 +86,8 @@ namespace seir
 		{
 			const auto delegate = [[SeirWindowDelegate alloc] init];
 			const auto cocoaWindow = [[SeirWindow alloc]
-				initWithContentRect:NSMakeRect(100, 100, 800, 600)
-						  styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable)
+				initWithContentRect:(::mainScreenCenterRect(800, 600))
+						  styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable)
 							backing:NSBackingStoreBuffered
 							  defer:NO];
 			[cocoaWindow setDelegate:delegate];
@@ -104,7 +114,12 @@ namespace seir
 
 	std::optional<Point> Window::cursor() const noexcept
 	{
-		return {};
+		@autoreleasepool
+		{
+			const auto mousePoint = [_impl->_delegate.window mouseLocationOutsideOfEventStream];
+			const auto windowRect = [_impl->_delegate.window contentRectForFrameRect:[_impl->_delegate.window frame]];
+			return std::make_optional<Point>(mousePoint.x, windowRect.size.height - mousePoint.y);
+		}
 	}
 
 	WindowDescriptor Window::descriptor() const noexcept
@@ -134,6 +149,10 @@ namespace seir
 
 	Size Window::size() const noexcept
 	{
-		return {};
+		@autoreleasepool
+		{
+			const auto rect = [_impl->_delegate.window contentRectForFrameRect:[_impl->_delegate.window frame]];
+			return { static_cast<int>(rect.size.width), static_cast<int>(rect.size.height) };
+		}
 	}
 }

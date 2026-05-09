@@ -6,6 +6,7 @@
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
+#include <seir_graphics/size.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
@@ -148,7 +149,11 @@ int u8main(int, char**)
 			pass.drawMesh(*mesh);
 		});
 		if (const auto period = clock.advance())
-			window.setTitle(fmt::format("Cube [{:.1f} fps]", period->_averageFrameRate));
+		{
+			const auto windowSize = window.size();
+			window.setTitle(fmt::format("Cube [{}x{} @ {:.1f} fps]",
+				windowSize._width, windowSize._height, period->_averageFrameRate));
+		}
 	}
 	return 0;
 }
