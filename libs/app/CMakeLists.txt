@@ -12,7 +12,9 @@ set(SOURCES
 	)
 if(APPLE)
 	list(APPEND SOURCES
+		src/cocoa/app.hpp
 		src/cocoa/app.mm
+		src/cocoa/window.hpp
 		src/cocoa/window.mm
 		)
 elseif(WIN32)
