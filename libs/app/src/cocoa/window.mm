@@ -90,9 +90,14 @@ namespace seir
 						  styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable)
 							backing:NSBackingStoreBuffered
 							  defer:NO];
-			[cocoaWindow setDelegate:delegate];
+			cocoaWindow.delegate = delegate;
 			::setWindowTitle(cocoaWindow, title);
-			[delegate setWindow:cocoaWindow];
+			const auto metalLayer = [CAMetalLayer layer];
+			const auto view = [cocoaWindow contentView];
+			view.wantsLayer = YES;
+			view.layer = metalLayer;
+			delegate.window = cocoaWindow;
+			delegate.metalLayer = metalLayer;
 			return std::make_unique<WindowImpl>(app, window, delegate);
 		}
 	}
@@ -124,7 +129,7 @@ namespace seir
 
 	WindowDescriptor Window::descriptor() const noexcept
 	{
-		return { nullptr, 0 };
+		return { _impl->_delegate.metalLayer, 0 };
 	}
 
 	void Window::setIcon(const Image&) noexcept

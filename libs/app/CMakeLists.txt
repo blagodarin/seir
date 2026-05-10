@@ -47,6 +47,7 @@ target_link_libraries(seir_app PUBLIC Seir::base PRIVATE Seir::graphics Seir::im
 if(APPLE)
 	target_link_options(seir_app PUBLIC
 		"SHELL:-framework AppKit"
+		"SHELL:-framework QuartzCore"
 		)
 endif()
 seir_target(seir_app FOLDER libs/app STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})

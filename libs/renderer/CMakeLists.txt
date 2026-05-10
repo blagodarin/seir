@@ -57,7 +57,10 @@ target_compile_definitions(seir_renderer PUBLIC
 target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(seir_renderer PUBLIC Seir::base PRIVATE Seir::app Seir::graphics Seir::image)
 if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
-	target_compile_definitions(seir_renderer PRIVATE $<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>)
+	target_compile_definitions(seir_renderer PRIVATE
+		$<$<BOOL:${APPLE}>:VK_USE_PLATFORM_METAL_EXT>
+		$<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>
+		)
 	target_link_libraries(seir_renderer PRIVATE GPUOpen::VulkanMemoryAllocator Vulkan::Vulkan $<$<CONFIG:Debug>:fmt::fmt>)
 	seir_embed_spirv(seir_renderer
 		VERTEX src/vulkan/2d_vertex.glsl

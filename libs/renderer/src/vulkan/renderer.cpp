@@ -95,7 +95,7 @@ namespace seir
 		{
 		}
 
-		void begin2DRendering(const MeshFormat& format)
+		void begin2DRendering(const MeshFormat& format) override
 		{
 			selectPipeline(format, false);
 			const auto extent = _renderer._renderTarget.extent();

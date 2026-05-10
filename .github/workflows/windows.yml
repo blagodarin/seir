@@ -24,7 +24,7 @@ jobs:
           path: ${{ github.workspace }}\build\_SeirDownloads
           key: windows-${{ hashFiles('cmake/SeirPackages/*.cmake') }}
       - uses: seanmiddleditch/gha-setup-vsdevenv@v5
-      - name: Install prerequisites
+      - name: Install Vulkan SDK
         run: |
           Invoke-WebRequest `
             -Uri https://sdk.lunarg.com/sdk/download/1.4.341.1/windows/vulkansdk-windows-X64-1.4.341.1.exe `

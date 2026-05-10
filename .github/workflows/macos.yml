@@ -12,8 +12,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - config: Release
-          - config: Debug
+          - renderer: Vulkan
+            config: Release
+          - renderer: Vulkan
+            config: Debug
+          - renderer:
+            config: Debug
       fail-fast: false
     env:
       CMAKE_GENERATOR: Ninja
@@ -27,8 +31,22 @@ jobs:
       - name: Install prerequisites
         run: |
           brew install webp
+      - name: Install Vulkan SDK
+        if: matrix.renderer == 'Vulkan'
+        run: |
+          curl https://sdk.lunarg.com/sdk/download/1.4.341.1/mac/vulkansdk-macos-1.4.341.1.zip \
+            --location \
+            --output vulkansdk-macos-1.4.341.1.zip
+          unzip vulkansdk-macos-1.4.341.1.zip
+          ./vulkansdk-macOS-1.4.341.1.app/Contents/MacOS/vulkansdk-macOS-1.4.341.1 install \
+            --accept-licenses \
+            --confirm-command \
+            --root "${{ github.workspace }}/VulkanSDK"
       - name: Run CMake
         run: |
+          if [[ "${{ matrix.renderer }}" == "Vulkan" ]]; then
+            . "${{ github.workspace }}/VulkanSDK/setup-env.sh"
+          fi
           export CC=clang
           export CXX=clang++
           cmake -S . -B build \
@@ -48,13 +66,16 @@ jobs:
             -DSEIR_IMAGE_PNG=ON \
             -DSEIR_IMAGE_TGA=ON \
             -DSEIR_IMAGE_WEBP=ON \
-            -DSEIR_RENDERER_BACKEND= \
+            -DSEIR_RENDERER_BACKEND=${{ matrix.renderer }} \
             -DSEIR_TESTS=ON
       - name: Build
         run: |
           cmake --build build
       - name: Run tests
         run: |
+          if [[ "${{ matrix.renderer }}" == "Vulkan" ]]; then
+            . "${{ github.workspace }}/VulkanSDK/setup-env.sh"
+          fi
           ctest --verbose --test-dir build
       - name: Build usage examples
         run: |

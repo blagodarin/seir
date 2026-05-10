@@ -12,6 +12,7 @@
 #include "pipeline.hpp"
 #include "utils.hpp"
 
+#include <algorithm>
 #include <unordered_set>
 
 #define DEBUG_RENDERER 0 // TODO: Redesign debug info collection.
@@ -883,16 +884,23 @@ namespace seir
 			"", // Extra value for std::array type deduction.
 		};
 		static const std::array extensions{
+			VK_KHR_SURFACE_EXTENSION_NAME,
 #ifndef NDEBUG
 			VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 #endif
-			VK_KHR_SURFACE_EXTENSION_NAME,
+#ifdef VK_USE_PLATFORM_METAL_EXT
+			VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+			VK_EXT_METAL_SURFACE_EXTENSION_NAME,
+#endif
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 #endif
 		};
 		VkInstanceCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+#ifdef VK_USE_PLATFORM_METAL_EXT
+			.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+#endif
 			.pApplicationInfo = &applicationInfo,
 			.enabledLayerCount = static_cast<uint32_t>(layers.size() - 1),
 			.ppEnabledLayerNames = layers.data(),
@@ -920,6 +928,13 @@ namespace seir
 
 	void VulkanContext::createSurface(const WindowDescriptor& windowDescriptor)
 	{
+#ifdef VK_USE_PLATFORM_METAL_EXT
+		const VkMetalSurfaceCreateInfoEXT createInfo{
+			.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+			.pLayer = windowDescriptor._app,
+		};
+		SEIR_VK(vkCreateMetalSurfaceEXT(_instance, &createInfo, nullptr, &_surface));
+#endif
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 		const VkWin32SurfaceCreateInfoKHR createInfo{
 			.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,

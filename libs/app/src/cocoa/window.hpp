@@ -7,6 +7,7 @@
 #include <seir_app/window.hpp>
 
 #include <AppKit/AppKit.h>
+#include <QuartzCore/CAMetalLayer.h>
 
 @interface SeirWindow : NSWindow
 @end
@@ -15,6 +16,7 @@
 // after being closed, leading to dangling window pointer.
 @interface SeirWindowDelegate : NSObject <NSWindowDelegate>
 @property(strong) SeirWindow* window;
+@property(strong) CAMetalLayer* metalLayer;
 - (BOOL)windowShouldClose:(NSWindow*)window;
 - (void)windowWillClose:(NSNotification*)notification;
 @end
