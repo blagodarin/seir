@@ -200,6 +200,11 @@ namespace seir
 					{ key, pressed, repeated });
 		};
 
+		const auto onTextEvent = [this](NSWindow* nsWindow, std::string_view text) {
+			if (const auto i = _windows.find(nsWindow); i != _windows.end())
+				_callbacks->onTextEvent(i->second->window(), text);
+		};
+
 		assert(_callbacks);
 		switch (const auto eventType = [event type])
 		{
@@ -220,6 +225,8 @@ namespace seir
 		case NSEventTypeKeyDown:
 			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
 				onKeyEvent([event window], key, true, [event isARepeat] == YES);
+			if (const auto characters = [event characters];[characters length] > 0)
+				onTextEvent([event window], [characters UTF8String]);
 			break;
 
 		case NSEventTypeKeyUp:
