@@ -6,6 +6,8 @@
 
 #include <seir_app/app.hpp>
 
+#include <unordered_map>
+
 #include <AppKit/AppKit.h>
 
 @interface SeirApplicationDelegate : NSObject <NSApplicationDelegate>
@@ -16,13 +18,21 @@
 
 namespace seir
 {
+	class WindowImpl;
+
 	class AppImpl
 	{
+	public:
+		void addWindow(const NSWindow*, WindowImpl*);
+		bool processEvent(const NSEvent*);
+
 	public:
 		bool _quit = false;
 
 	private:
 		SeirApplicationDelegate* _delegate = nullptr;
+		EventCallbacks* _callbacks = nullptr;
+		std::unordered_map<const NSWindow*, WindowImpl*> _windows;
 		friend App;
 	};
 }

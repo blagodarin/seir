@@ -4,6 +4,167 @@
 
 #include "app.hpp"
 
+#include <seir_app/events.hpp>
+#include <seir_app/key.hpp>
+#include <seir_base/scope.hpp>
+#include "window.hpp"
+
+#include <array>
+
+namespace
+{
+	seir::Key mapKey(uint16_t keyCode)
+	{
+		using seir::Key;
+		constexpr auto _ = Key::None;
+		static constexpr std::array kScanCodeTable{
+			/*   0 */ Key::A,
+			/*   1 */ Key::S,
+			/*   2 */ Key::D,
+			/*   3 */ Key::F,
+			/*   4 */ Key::H,
+			/*   5 */ Key::G,
+			/*   6 */ Key::Z,
+			/*   7 */ Key::X,
+			/*   8 */ Key::C,
+			/*   9 */ Key::V,
+			/*  10 */ Key::Grave,
+			/*  11 */ Key::B,
+			/*  12 */ Key::Q,
+			/*  13 */ Key::W,
+			/*  14 */ Key::E,
+			/*  15 */ Key::R,
+			/*  16 */ Key::Y,
+			/*  17 */ Key::T,
+			/*  18 */ Key::_1,
+			/*  19 */ Key::_2,
+			/*  20 */ Key::_3,
+			/*  21 */ Key::_4,
+			/*  22 */ Key::_6,
+			/*  23 */ Key::_5,
+			/*  24 */ Key::Equals,
+			/*  25 */ Key::_9,
+			/*  26 */ Key::_7,
+			/*  27 */ Key::Minus,
+			/*  28 */ Key::_8,
+			/*  29 */ Key::_0,
+			/*  30 */ Key::RBracket,
+			/*  31 */ Key::O,
+			/*  32 */ Key::U,
+			/*  33 */ Key::LBracket,
+			/*  34 */ Key::I,
+			/*  35 */ Key::P,
+			/*  36 */ Key::Enter,
+			/*  37 */ Key::L,
+			/*  38 */ Key::J,
+			/*  39 */ Key::Apostrophe,
+			/*  40 */ Key::K,
+			/*  41 */ Key::Semicolon,
+			/*  42 */ Key::Backslash,
+			/*  43 */ Key::Comma,
+			/*  44 */ Key::Slash,
+			/*  45 */ Key::N,
+			/*  46 */ Key::M,
+			/*  47 */ Key::Period,
+			/*  48 */ Key::Tab,
+			/*  49 */ Key::Space,
+			/*  50 */ Key::NonUsBackslash,
+			/*  51 */ Key::Backspace,
+			/*  52 */ _,
+			/*  53 */ Key::Escape,
+			/*  54 */ _,
+			/*  55 */ _,
+			/*  56 */ _,
+			/*  57 */ _,
+			/*  58 */ _,
+			/*  59 */ _,
+			/*  60 */ _,
+			/*  61 */ _,
+			/*  62 */ _,
+			/*  63 */ _,
+			/*  64 */ _,
+			/*  65 */ _,
+			/*  66 */ _,
+			/*  67 */ _,
+			/*  68 */ _,
+			/*  69 */ _,
+			/*  70 */ _,
+			/*  71 */ _,
+			/*  72 */ _,
+			/*  73 */ _,
+			/*  74 */ _,
+			/*  75 */ _,
+			/*  76 */ _,
+			/*  77 */ _,
+			/*  78 */ _,
+			/*  79 */ _,
+			/*  80 */ _,
+			/*  81 */ _,
+			/*  82 */ _,
+			/*  83 */ _,
+			/*  84 */ _,
+			/*  85 */ _,
+			/*  86 */ _,
+			/*  87 */ _,
+			/*  88 */ _,
+			/*  89 */ _,
+			/*  90 */ _,
+			/*  91 */ _,
+			/*  92 */ _,
+			/*  93 */ _,
+			/*  94 */ _,
+			/*  95 */ _,
+			/*  96 */ Key::F5,
+			/*  97 */ Key::F6,
+			/*  98 */ Key::F7,
+			/*  99 */ Key::F3,
+			/* 100 */ Key::F8,
+			/* 101 */ Key::F9,
+			/* 102 */ _,
+			/* 103 */ _,
+			/* 104 */ _,
+			/* 105 */ _,
+			/* 106 */ _,
+			/* 107 */ _,
+			/* 108 */ _,
+			/* 109 */ Key::F10,
+			/* 110 */ _,
+			/* 111 */ Key::F12,
+			/* 112 */ _,
+			/* 113 */ _,
+			/* 114 */ _,
+			/* 115 */ _,
+			/* 116 */ _,
+			/* 117 */ _,
+			/* 118 */ Key::F4,
+			/* 119 */ _,
+			/* 120 */ Key::F2,
+			/* 121 */ _,
+			/* 122 */ Key::F1,
+			/* 123 */ Key::Left,
+			/* 124 */ Key::Right,
+			/* 125 */ Key::Down,
+			/* 126 */ Key::Up,
+			/* 127 */ _,
+		};
+		return keyCode < kScanCodeTable.size() ? kScanCodeTable[keyCode] : _;
+	}
+}
+
+@interface SeirApplication : NSApplication
+- (void)sendEvent:(NSEvent*)event;
+@end
+
+@implementation SeirApplication
+
+- (void)sendEvent:(NSEvent*)event
+{
+	if (!static_cast<SeirApplicationDelegate*>(self.delegate).app->processEvent(event))
+		[super sendEvent:event];
+}
+
+@end
+
 @implementation SeirApplicationDelegate
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender
@@ -26,6 +187,38 @@
 
 namespace seir
 {
+	void AppImpl::addWindow(const NSWindow* nsWindow, WindowImpl* window)
+	{
+		_windows.emplace(nsWindow, window); // TODO: Remove closed windows.
+	}
+
+	bool AppImpl::processEvent(const NSEvent* event)
+	{
+		assert(_callbacks);
+		switch (const auto eventType = [event type])
+		{
+		case NSEventTypeKeyDown:
+		case NSEventTypeKeyUp:
+			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
+				if (const auto i = _windows.find([event window]); i != _windows.end())
+				{
+					const bool pressed = eventType == NSEventTypeKeyDown;
+					const bool repeated = pressed && [event isARepeat] == YES;
+					_callbacks->onKeyEvent(i->second->window(),
+						{
+							._key = key,
+							._pressed = pressed,
+							._repeated = repeated,
+						});
+				}
+			break;
+
+		default:
+			return false;
+		}
+		return true;
+	}
+
 	App::App()
 		: _impl{ std::make_unique<AppImpl>() }
 	{
@@ -34,7 +227,7 @@ namespace seir
 		// TODO: Report some runtime warning if NSApp isn't null.
 		@autoreleasepool
 		{
-			[NSApplication sharedApplication];
+			[SeirApplication sharedApplication];
 			assert(NSApp);
 			_impl->_delegate = [[SeirApplicationDelegate alloc] init];
 			[_impl->_delegate setApp:_impl.get()];
@@ -53,8 +246,11 @@ namespace seir
 		[_impl->_delegate dealloc]; // Trying to do this in @autoreleasepool results in SIGSEGV.
 	}
 
-	bool App::processEvents(EventCallbacks&)
+	bool App::processEvents(EventCallbacks& callbacks)
 	{
+		assert(!_impl->_callbacks);
+		_impl->_callbacks = &callbacks;
+		SEIR_FINALLY{ [this]() noexcept { _impl->_callbacks = nullptr; } };
 		while (!_impl->_quit)
 		{
 			@autoreleasepool

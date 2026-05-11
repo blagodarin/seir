@@ -9,13 +9,10 @@
 #include <AppKit/AppKit.h>
 #include <QuartzCore/CAMetalLayer.h>
 
-@interface SeirWindow : NSWindow
-@end
-
 // The delegate holds the window to prevent it from being destroyed
 // after being closed, leading to dangling window pointer.
 @interface SeirWindowDelegate : NSObject <NSWindowDelegate>
-@property(strong) SeirWindow* window;
+@property(strong) NSWindow* window;
 @property(strong) CAMetalLayer* metalLayer;
 - (BOOL)windowShouldClose:(NSWindow*)window;
 - (void)windowWillClose:(NSNotification*)notification;
@@ -28,9 +25,10 @@ namespace seir
 	class WindowImpl
 	{
 	public:
-		WindowImpl(AppImpl& app, Window& window, SeirWindowDelegate* delegate) noexcept
-			: _app{ app }, _window{ window }, _delegate{ delegate } {}
+		WindowImpl(AppImpl&, Window&, SeirWindowDelegate*) noexcept;
 		~WindowImpl() noexcept;
+
+		Window& window() noexcept { return _window; }
 
 	private:
 		static std::unique_ptr<WindowImpl> create(AppImpl&, Window&, const std::string&);
