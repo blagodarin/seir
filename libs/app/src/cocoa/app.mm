@@ -194,23 +194,37 @@ namespace seir
 
 	bool AppImpl::processEvent(const NSEvent* event)
 	{
+		const auto onKeyEvent = [this](NSWindow* nsWindow, Key key, bool pressed, bool repeated) {
+			if (const auto i = _windows.find(nsWindow); i != _windows.end())
+				_callbacks->onKeyEvent(i->second->window(),
+					{ key, pressed, repeated });
+		};
+
 		assert(_callbacks);
 		switch (const auto eventType = [event type])
 		{
+		case NSEventTypeLeftMouseDown:
+		case NSEventTypeLeftMouseUp:
+			if (const auto window = [event window])
+				if (NSMouseInRect([event locationInWindow], [[window contentView] frame], NO))
+					onKeyEvent(window, Key::Mouse1, eventType == NSEventTypeLeftMouseDown, false);
+			break;
+
+		case NSEventTypeRightMouseDown:
+		case NSEventTypeRightMouseUp:
+			if (const auto window = [event window])
+				if (NSMouseInRect([event locationInWindow], [[window contentView] frame], NO))
+					onKeyEvent(window, Key::Mouse2, eventType == NSEventTypeRightMouseDown, false);
+			break;
+
 		case NSEventTypeKeyDown:
+			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
+				onKeyEvent([event window], key, true, [event isARepeat] == YES);
+			break;
+
 		case NSEventTypeKeyUp:
 			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
-				if (const auto i = _windows.find([event window]); i != _windows.end())
-				{
-					const bool pressed = eventType == NSEventTypeKeyDown;
-					const bool repeated = pressed && [event isARepeat] == YES;
-					_callbacks->onKeyEvent(i->second->window(),
-						{
-							._key = key,
-							._pressed = pressed,
-							._repeated = repeated,
-						});
-				}
+				onKeyEvent([event window], key, false, false);
 			break;
 
 		default:
