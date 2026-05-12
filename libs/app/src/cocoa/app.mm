@@ -189,7 +189,7 @@ namespace seir
 {
 	void AppImpl::addWindow(const NSWindow* nsWindow, WindowImpl* window)
 	{
-		_windows.emplace(nsWindow, window); // TODO: Remove closed windows.
+		_windows.emplace(nsWindow, window);
 	}
 
 	bool AppImpl::processEvent(const NSEvent* event)
@@ -238,6 +238,11 @@ namespace seir
 			return false;
 		}
 		return true;
+	}
+
+	void AppImpl::removeWindow(const NSWindow* nsWindow)
+	{
+		_windows.erase(nsWindow);
 	}
 
 	App::App()

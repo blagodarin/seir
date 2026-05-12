@@ -45,7 +45,9 @@ namespace
 
 - (void)windowWillClose:(NSNotification*)notification
 {
-	id window = [notification object];
+	const NSWindow* const window = [notification object];
+	const SeirWindowDelegate* const delegate = [window delegate];
+	delegate.appImpl->removeWindow(window);
 	[window setDelegate:nil];
 	if (::isLastVisibleWindow(window))
 		[NSApp terminate:window];
@@ -58,7 +60,8 @@ namespace seir
 	WindowImpl::WindowImpl(AppImpl& app, Window& window, SeirWindowDelegate* delegate) noexcept
 		: _app{ app }, _window{ window }, _delegate{ delegate }
 	{
-		app.addWindow(delegate.window, this);
+		[_delegate setAppImpl:&app];
+		app.addWindow(_delegate.window, this);
 	}
 
 	WindowImpl::~WindowImpl() noexcept

@@ -9,9 +9,15 @@
 #include <AppKit/AppKit.h>
 #include <QuartzCore/CAMetalLayer.h>
 
+namespace seir
+{
+	class AppImpl;
+}
+
 // The delegate holds the window to prevent it from being destroyed
 // after being closed, leading to dangling window pointer.
 @interface SeirWindowDelegate : NSObject <NSWindowDelegate>
+@property seir::AppImpl* appImpl;
 @property(strong) NSWindow* window;
 @property(strong) CAMetalLayer* metalLayer;
 - (BOOL)windowShouldClose:(NSWindow*)window;
@@ -20,8 +26,6 @@
 
 namespace seir
 {
-	class AppImpl;
-
 	class WindowImpl
 	{
 	public:

@@ -25,6 +25,7 @@ namespace seir
 	public:
 		void addWindow(const NSWindow*, WindowImpl*);
 		bool processEvent(const NSEvent*);
+		void removeWindow(const NSWindow*);
 
 	public:
 		bool _quit = false;
