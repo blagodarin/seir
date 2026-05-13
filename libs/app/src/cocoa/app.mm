@@ -13,6 +13,16 @@
 
 namespace
 {
+	bool isModifierKeyPressed(NSUInteger flags, NSUInteger keyMask, NSUInteger otherSideMask, NSUInteger anySideMask)
+	{
+		// Old keyboards use a single event for both physical keys with non-side-specific mask only,
+		// so we prefer non-side-specific value if it differs from the side-specific one.
+		const bool anySideKeyPressed = static_cast<bool>(flags & anySideMask);
+		return anySideKeyPressed != static_cast<bool>(flags & (keyMask | otherSideMask))
+			? anySideKeyPressed
+			: static_cast<bool>(flags & keyMask);
+	}
+
 	seir::Key mapKey(uint16_t keyCode)
 	{
 		using seir::Key;
@@ -232,6 +242,22 @@ namespace seir
 		case NSEventTypeKeyUp:
 			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
 				onKeyEvent([event window], key, false, false);
+			break;
+
+		case NSEventTypeFlagsChanged:
+			if (const auto i = _windows.find([event window]); i != _windows.end())
+			{
+				auto& window = i->second->window();
+				const auto flags = [event modifierFlags];
+				_callbacks->onKeyEvent(window, { Key::LControl, ::isModifierKeyPressed(flags, NX_DEVICELCTLKEYMASK, NX_DEVICERCTLKEYMASK, NX_CONTROLMASK) });
+				_callbacks->onKeyEvent(window, { Key::LShift, ::isModifierKeyPressed(flags, NX_DEVICELSHIFTKEYMASK, NX_DEVICERSHIFTKEYMASK, NX_SHIFTMASK) });
+				_callbacks->onKeyEvent(window, { Key::LAlt, ::isModifierKeyPressed(flags, NX_DEVICELALTKEYMASK, NX_DEVICERALTKEYMASK, NX_ALTERNATEMASK) });
+				_callbacks->onKeyEvent(window, { Key::LGui, ::isModifierKeyPressed(flags, NX_DEVICELCMDKEYMASK, NX_DEVICERCMDKEYMASK, NX_COMMANDMASK) });
+				_callbacks->onKeyEvent(window, { Key::RControl, ::isModifierKeyPressed(flags, NX_DEVICERCTLKEYMASK, NX_DEVICELCTLKEYMASK, NX_CONTROLMASK) });
+				_callbacks->onKeyEvent(window, { Key::RShift, ::isModifierKeyPressed(flags, NX_DEVICERSHIFTKEYMASK, NX_DEVICELSHIFTKEYMASK, NX_SHIFTMASK) });
+				_callbacks->onKeyEvent(window, { Key::RAlt, ::isModifierKeyPressed(flags, NX_DEVICERALTKEYMASK, NX_DEVICELALTKEYMASK, NX_ALTERNATEMASK) });
+				_callbacks->onKeyEvent(window, { Key::RGui, ::isModifierKeyPressed(flags, NX_DEVICERCMDKEYMASK, NX_DEVICELCMDKEYMASK, NX_COMMANDMASK) });
+			}
 			break;
 
 		default:
