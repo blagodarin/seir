@@ -121,7 +121,7 @@ namespace seir
 
 	WindowDescriptor Window::descriptor() const noexcept
 	{
-		return { _impl->_delegate.metalLayer, 0 };
+		return { ._pointer = _impl->_delegate.metalLayer };
 	}
 
 	void Window::setIcon(const Image&) noexcept

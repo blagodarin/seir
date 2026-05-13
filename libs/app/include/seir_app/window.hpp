@@ -18,10 +18,8 @@ namespace seir
 	//
 	struct WindowDescriptor
 	{
-		void* _app = nullptr;
-		intptr_t _window = 0;
-		constexpr WindowDescriptor(void* app, intptr_t window) noexcept
-			: _app{ app }, _window{ window } {}
+		void* _pointer = nullptr;
+		intptr_t _index = 0;
 	};
 
 	//

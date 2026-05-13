@@ -86,7 +86,10 @@ namespace seir
 
 	WindowDescriptor Window::descriptor() const noexcept
 	{
-		return { _impl->_app.instance(), reinterpret_cast<intptr_t>(_impl->_hwnd.get()) };
+		return {
+			._pointer = _impl->_app.instance(),
+			._index = reinterpret_cast<intptr_t>(_impl->_hwnd.get()),
+		};
 	}
 
 	void Window::setIcon(const Image& image) noexcept

@@ -931,15 +931,15 @@ namespace seir
 #ifdef VK_USE_PLATFORM_METAL_EXT
 		const VkMetalSurfaceCreateInfoEXT createInfo{
 			.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
-			.pLayer = windowDescriptor._app,
+			.pLayer = windowDescriptor._pointer,
 		};
 		SEIR_VK(vkCreateMetalSurfaceEXT(_instance, &createInfo, nullptr, &_surface));
 #endif
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 		const VkWin32SurfaceCreateInfoKHR createInfo{
 			.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-			.hinstance = static_cast<HINSTANCE>(windowDescriptor._app),
-			.hwnd = reinterpret_cast<HWND>(windowDescriptor._window),
+			.hinstance = static_cast<HINSTANCE>(windowDescriptor._pointer),
+			.hwnd = reinterpret_cast<HWND>(windowDescriptor._index),
 		};
 		SEIR_VK(vkCreateWin32SurfaceKHR(_instance, &createInfo, nullptr, &_surface));
 #endif
