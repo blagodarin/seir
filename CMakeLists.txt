@@ -226,6 +226,9 @@ endif()
 
 if(SEIR_UTILS)
 	add_subdirectory(utils/embed)
+	if(SEIR_GUI)
+		add_subdirectory(utils/key_tester)
+	endif()
 	add_subdirectory(utils/pack)
 endif()
 
