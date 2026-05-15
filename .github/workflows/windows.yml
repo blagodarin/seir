@@ -3,6 +3,7 @@ on:
   push:
     paths-ignore:
       - '.clang-tidy'
+      - 'docs'
       - 'LICENSE'
       - 'README.md'
 jobs:
