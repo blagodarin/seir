@@ -13,16 +13,6 @@
 
 namespace
 {
-	bool isModifierKeyPressed(NSUInteger flags, NSUInteger keyMask, NSUInteger otherSideMask, NSUInteger anySideMask)
-	{
-		// Old keyboards use a single event for both physical keys with non-side-specific mask only,
-		// so we prefer non-side-specific value if it differs from the side-specific one.
-		const bool anySideKeyPressed = static_cast<bool>(flags & anySideMask);
-		return anySideKeyPressed != static_cast<bool>(flags & (keyMask | otherSideMask))
-			? anySideKeyPressed
-			: static_cast<bool>(flags & keyMask);
-	}
-
 	seir::Key mapKey(uint16_t keyCode)
 	{
 		using seir::Key;
@@ -204,10 +194,10 @@ namespace seir
 
 	bool AppImpl::processEvent(const NSEvent* event)
 	{
-		const auto onKeyEvent = [this](NSWindow* nsWindow, Key key, bool pressed, bool repeated) {
+		const auto onKeyEvent = [this](NSWindow* nsWindow, Key key, bool pressed, bool repeated, bool shiftPressed) {
 			if (const auto i = _windows.find(nsWindow); i != _windows.end())
 				_callbacks->onKeyEvent(i->second->window(),
-					{ key, pressed, repeated });
+					{ key, pressed, repeated, shiftPressed });
 		};
 
 		const auto onTextEvent = [this](NSWindow* nsWindow, std::string_view text) {
@@ -222,43 +212,50 @@ namespace seir
 		case NSEventTypeLeftMouseUp:
 			if (const auto window = [event window])
 				if (NSMouseInRect([event locationInWindow], [[window contentView] frame], NO))
-					onKeyEvent(window, Key::Mouse1, eventType == NSEventTypeLeftMouseDown, false);
+					onKeyEvent(window, Key::Mouse1, eventType == NSEventTypeLeftMouseDown, false, false);
 			break;
 
 		case NSEventTypeRightMouseDown:
 		case NSEventTypeRightMouseUp:
 			if (const auto window = [event window])
 				if (NSMouseInRect([event locationInWindow], [[window contentView] frame], NO))
-					onKeyEvent(window, Key::Mouse2, eventType == NSEventTypeRightMouseDown, false);
+					onKeyEvent(window, Key::Mouse2, eventType == NSEventTypeRightMouseDown, false, false);
 			break;
 
 		case NSEventTypeKeyDown:
 			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
-				onKeyEvent([event window], key, true, [event isARepeat] == YES);
+				onKeyEvent([event window], key, true,
+					[event isARepeat] == YES,
+					static_cast<bool>([event modifierFlags] & NX_SHIFTMASK));
 			if (const auto characters = [event characters];[characters length] > 0)
 				onTextEvent([event window], [characters UTF8String]);
 			break;
 
 		case NSEventTypeKeyUp:
 			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
-				onKeyEvent([event window], key, false, false);
+				onKeyEvent([event window], key, false, false, false);
 			break;
 
-		case NSEventTypeFlagsChanged:
-			if (const auto i = _windows.find([event window]); i != _windows.end())
-			{
-				auto& window = i->second->window();
-				const auto flags = [event modifierFlags];
-				_callbacks->onKeyEvent(window, { Key::LControl, ::isModifierKeyPressed(flags, NX_DEVICELCTLKEYMASK, NX_DEVICERCTLKEYMASK, NX_CONTROLMASK) });
-				_callbacks->onKeyEvent(window, { Key::LShift, ::isModifierKeyPressed(flags, NX_DEVICELSHIFTKEYMASK, NX_DEVICERSHIFTKEYMASK, NX_SHIFTMASK) });
-				_callbacks->onKeyEvent(window, { Key::LAlt, ::isModifierKeyPressed(flags, NX_DEVICELALTKEYMASK, NX_DEVICERALTKEYMASK, NX_ALTERNATEMASK) });
-				_callbacks->onKeyEvent(window, { Key::LGui, ::isModifierKeyPressed(flags, NX_DEVICELCMDKEYMASK, NX_DEVICERCMDKEYMASK, NX_COMMANDMASK) });
-				_callbacks->onKeyEvent(window, { Key::RControl, ::isModifierKeyPressed(flags, NX_DEVICERCTLKEYMASK, NX_DEVICELCTLKEYMASK, NX_CONTROLMASK) });
-				_callbacks->onKeyEvent(window, { Key::RShift, ::isModifierKeyPressed(flags, NX_DEVICERSHIFTKEYMASK, NX_DEVICELSHIFTKEYMASK, NX_SHIFTMASK) });
-				_callbacks->onKeyEvent(window, { Key::RAlt, ::isModifierKeyPressed(flags, NX_DEVICERALTKEYMASK, NX_DEVICELALTKEYMASK, NX_ALTERNATEMASK) });
-				_callbacks->onKeyEvent(window, { Key::RGui, ::isModifierKeyPressed(flags, NX_DEVICERCMDKEYMASK, NX_DEVICELCMDKEYMASK, NX_COMMANDMASK) });
-			}
+		case NSEventTypeFlagsChanged: {
+			const auto key = ::mapKey([event keyCode]);
+			const auto mask = [key] {
+				switch (key)
+				{
+				case Key::LControl: return NX_DEVICELCTLKEYMASK;
+				case Key::LShift: return NX_DEVICELSHIFTKEYMASK;
+				case Key::LAlt: return NX_DEVICELALTKEYMASK;
+				case Key::LGui: return NX_DEVICELCMDKEYMASK;
+				case Key::RControl: return NX_DEVICERCTLKEYMASK;
+				case Key::RShift: return NX_DEVICERSHIFTKEYMASK;
+				case Key::RAlt: return NX_DEVICERALTKEYMASK;
+				case Key::RGui: return NX_DEVICERCMDKEYMASK;
+				default: return 0;
+				}
+			}();
+			if (mask)
+				onKeyEvent([event window], key, static_cast<bool>([event modifierFlags] & mask), false, false);
 			break;
+		}
 
 		default:
 			return false;

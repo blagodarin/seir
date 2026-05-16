@@ -16,6 +16,7 @@
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
+#include <cassert>
 #include <deque>
 #include <format>
 
@@ -149,7 +150,16 @@ namespace
 		{
 			if (_events.size() == 100)
 				_events.pop_back();
-			_events.emplace_front(std::format("{} {}", event._pressed ? "+" : "-", ::keyToString(event._key)));
+			_events.emplace_front(std::format("{} {}{}",
+				event._pressed ? "+" : "-",
+				event._shiftPressed ? "Shift+" : "",
+				::keyToString(event._key)));
+		}
+
+		void onTextEvent(seir::Window&, std::string_view text) override
+		{
+			assert(!_events.empty());
+			_events.front() += std::format(" \"{}\"", text);
 		}
 
 		const auto& events() const { return _events; }
