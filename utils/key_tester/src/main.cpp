@@ -159,7 +159,14 @@ namespace
 		void onTextEvent(seir::Window&, std::string_view text) override
 		{
 			assert(!_events.empty());
-			_events.front() += std::format(" \"{}\"", text);
+			std::string textBytes;
+			for (const auto c : text)
+			{
+				if (!textBytes.empty())
+					textBytes += ' ';
+				std::format_to(std::back_inserter(textBytes), "{:02x}", c);
+			}
+			_events.front() += std::format(" \"{}\" ({})", text, textBytes);
 		}
 
 		const auto& events() const { return _events; }
