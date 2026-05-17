@@ -223,12 +223,21 @@ namespace seir
 			break;
 
 		case NSEventTypeKeyDown:
+			// TODO: Implement proper text input handling with NSTextInputClient.
 			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
+			{
 				onKeyEvent([event window], key, true,
 					[event isARepeat] == YES,
 					static_cast<bool>([event modifierFlags] & NX_SHIFTMASK));
-			if (const auto characters = [event characters];[characters length] > 0)
-				onTextEvent([event window], [characters UTF8String]);
+				// Cocoa sends artificial characters for non-text keys.
+				// Proper text input implementation handles them, but we're not there yet.
+				if ((key >= Key::A && key <= Key::_0)
+					|| (key >= Key::Space && key <= Key::Slash)
+					|| (key >= Key::Divide && key <= Key::Add)
+					|| (key >= Key::Num1 && key <= Key::NonUsBackslash))
+					if (const auto characters = [event characters];[characters length] > 0)
+						onTextEvent([event window], [characters UTF8String]);
+			}
 			break;
 
 		case NSEventTypeKeyUp:
