@@ -18,7 +18,7 @@ TEST_CASE("Font")
 	seir::Renderer renderer{ window };
 	SUBCASE("ttf file")
 	{
-		const auto blob = seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf");
+		const auto blob = seir::Blob::from(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf");
 		REQUIRE(blob);
 		const auto font = seir::Font::load(renderer, blob, 16);
 		REQUIRE(font);

@@ -26,7 +26,7 @@ class Example
 public:
 	Example(seir::GuiContext& gui, seir::Renderer& renderer) // TODO: Replace renderer with some asset manager.
 	{
-		gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "source_sans_pro.ttf"), 24));
+		gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24));
 	}
 
 	void presentGui(seir::GuiFrame&& frame)
