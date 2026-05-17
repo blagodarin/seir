@@ -213,7 +213,7 @@ namespace seir
 			if (const auto window = [event window])
 				if (NSMouseInRect([event locationInWindow], [[window contentView] frame], NO))
 					onKeyEvent(window, Key::Mouse1, eventType == NSEventTypeLeftMouseDown, false, false);
-			break;
+			break; // Let AppKit handle clicking standard buttons (e. g. close window button).
 
 		case NSEventTypeRightMouseDown:
 		case NSEventTypeRightMouseUp:
@@ -238,7 +238,7 @@ namespace seir
 					if (const auto characters = [event characters];[characters length] > 0)
 						onTextEvent([event window], [characters UTF8String]);
 			}
-			break;
+			return true; // Prevent AppKit from producing a clicking sound.
 
 		case NSEventTypeKeyUp:
 			if (const auto key = ::mapKey([event keyCode]); key != Key::None)
@@ -267,9 +267,9 @@ namespace seir
 		}
 
 		default:
-			return false;
+			break;
 		}
-		return true;
+		return false;
 	}
 
 	void AppImpl::removeWindow(const NSWindow* nsWindow)
