@@ -72,7 +72,7 @@ namespace
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 
-	bool checkDeviceExtensions(VkPhysicalDevice device, std::vector<VkExtensionProperties>& extensions)
+	bool checkDeviceExtensions(VkPhysicalDevice device, std::vector<VkExtensionProperties>& extensions, bool& hasPortabilitySubset)
 	{
 		uint32_t extensionCount = 0;
 		SEIR_VK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr));
@@ -85,6 +85,7 @@ namespace
 		for (const auto requiredExtension : kRequiredDeviceExtensions)
 			if (!extensionMap.contains(requiredExtension))
 				return false;
+		hasPortabilitySubset = extensionMap.contains(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 		return true;
 	}
 
@@ -965,7 +966,7 @@ namespace seir
 				|| (_options.sampleShading && !features.sampleRateShading)) // TODO: Use the best device even if it doesn't have all supported features.
 				continue;
 
-			if (!::checkDeviceExtensions(device, extensions))
+			if (!::checkDeviceExtensions(device, extensions, _hasPortabilitySubset))
 				continue;
 
 			const auto surfaceFormat = ::selectSurfaceFormat(device, _surface, surfaceFormats);
@@ -1085,14 +1086,23 @@ namespace seir
 			.sampleRateShading = static_cast<VkBool32>(_options.sampleShading),
 			.samplerAnisotropy = static_cast<VkBool32>(_options.anisotropicFiltering),
 		};
+		std::vector<const char*> extensions{ kRequiredDeviceExtensions.begin(), kRequiredDeviceExtensions.end() };
+		if (_hasPortabilitySubset)
+		{
+			// There is a warning for not enabling VK_KHR_portability_subset when the selected physical device supports it,
+			// and another warning when VK_KHR_portability_subset is enabled without VK_KHR_get_physical_device_properties2,
+			// but enabling the latter produces an error on some under-conforming implementations.
+			//extensions.emplace_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+			extensions.emplace_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+		}
 		const VkDeviceCreateInfo createInfo{
 			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 			.queueCreateInfoCount = static_cast<uint32_t>(queues.size()),
 			.pQueueCreateInfos = queues.data(),
 			.enabledLayerCount = static_cast<uint32_t>(layers.size() - 1),
 			.ppEnabledLayerNames = layers.data(),
-			.enabledExtensionCount = static_cast<uint32_t>(kRequiredDeviceExtensions.size()),
-			.ppEnabledExtensionNames = kRequiredDeviceExtensions.data(),
+			.enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+			.ppEnabledExtensionNames = extensions.data(),
 			.pEnabledFeatures = &features,
 		};
 		SEIR_VK(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device));

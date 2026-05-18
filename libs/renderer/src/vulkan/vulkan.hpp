@@ -13,4 +13,5 @@
 #	include <seir_base/windows_utils.hpp>
 #endif
 
+#define VK_ENABLE_BETA_EXTENSIONS // For VK_KHR_portability_subset extension.
 #include <vulkan/vulkan.h>

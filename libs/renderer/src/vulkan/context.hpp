@@ -202,6 +202,7 @@ namespace seir
 		VkSurfaceKHR _surface = VK_NULL_HANDLE;
 		VkPhysicalDevice _physicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDeviceProperties _physicalDeviceProperties{};
+		bool _hasPortabilitySubset = false;
 		VkSurfaceFormatKHR _surfaceFormat{};
 		VkPresentModeKHR _presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		uint32_t _graphicsQueueFamily = 0;
