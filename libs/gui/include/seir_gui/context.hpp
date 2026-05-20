@@ -18,6 +18,7 @@ namespace seir
 	{
 	public:
 		explicit GuiContext(Window&);
+		GuiContext(Window&, const SharedPtr<Font>&);
 		~GuiContext() noexcept;
 
 		EventCallbacks& eventCallbacks() noexcept;

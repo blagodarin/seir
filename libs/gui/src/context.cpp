@@ -10,9 +10,10 @@
 namespace seir
 {
 	GuiContext::GuiContext(Window& window)
-		: _impl{ std::make_unique<GuiContextImpl>(window) }
-	{
-	}
+		: GuiContext{ window, {} } {}
+
+	GuiContext::GuiContext(Window& window, const SharedPtr<Font>& defaultFont)
+		: _impl{ std::make_unique<GuiContextImpl>(window, defaultFont) } {}
 
 	GuiContext::~GuiContext() noexcept = default;
 

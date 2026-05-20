@@ -33,7 +33,7 @@ namespace seir
 			bool released = false;
 		};
 
-		explicit GuiContextImpl(Window&) noexcept;
+		GuiContextImpl(Window&, const SharedPtr<Font>&) noexcept;
 		~GuiContextImpl() noexcept override;
 
 		RectF addItem() const noexcept;

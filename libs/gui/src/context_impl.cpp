@@ -25,8 +25,9 @@ namespace
 
 namespace seir
 {
-	GuiContextImpl::GuiContextImpl(Window& window) noexcept
+	GuiContextImpl::GuiContextImpl(Window& window, const SharedPtr<Font>& defaultFont) noexcept
 		: _window{ window }
+		, _defaultFont{ defaultFont }
 	{
 	}
 

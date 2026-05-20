@@ -182,8 +182,7 @@ int u8main(int, char**)
 	seir::Window window{ app, "Key Tester" };
 	seir::Renderer renderer{ window };
 	seir::Renderer2D renderer2d;
-	seir::GuiContext gui{ window };
-	gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 24));
+	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 24) };
 	window.show();
 	for (KeyHandler handler; app.processEvents(handler);)
 	{

@@ -24,11 +24,6 @@
 class Example
 {
 public:
-	Example(seir::GuiContext& gui, seir::Renderer& renderer) // TODO: Replace renderer with some asset manager.
-	{
-		gui.setDefaultFont(seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24));
-	}
-
 	void presentGui(seir::GuiFrame&& frame)
 	{
 		seir::GuiLayout layout{ frame };
@@ -90,9 +85,9 @@ int u8main(int, char**)
 	seir::Window window{ app, "GUI" };
 	seir::Renderer renderer{ window };
 	seir::Renderer2D renderer2d;
-	seir::GuiContext gui{ window };
-	Example example{ gui, renderer };
+	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24) };
 	window.show();
+	Example example;
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{
 		example.presentGui({ gui, renderer2d });
