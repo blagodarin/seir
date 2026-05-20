@@ -32,6 +32,7 @@ namespace seir
 		WindowImpl(AppImpl&, Window&, SeirWindowDelegate*) noexcept;
 		~WindowImpl() noexcept;
 
+		bool shown() const noexcept { return _shown; }
 		Window& window() noexcept { return _window; }
 
 	private:
@@ -41,6 +42,7 @@ namespace seir
 		const AppImpl& _app;
 		Window& _window;
 		SeirWindowDelegate* _delegate;
+		bool _shown = false;
 		friend Window;
 	};
 }

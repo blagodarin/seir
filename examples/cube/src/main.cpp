@@ -135,7 +135,6 @@ int u8main(int, char**)
 	const auto texture = renderer.createTexture2D({ 4, 4, seir::PixelFormat::Bgra32 }, kTextureData.data());
 	const auto mesh = renderer.createMesh(kMeshFormat, kVertexData.data(), kVertexData.size(), kIndexData.data(), kIndexData.size());
 	const auto shaders = renderer.createShaders(kVertexShader, kFragmentShader);
-	window.show();
 	seir::VariableRate clock;
 	for (EventCallbacks callbacks; app.processEvents(callbacks);)
 	{

@@ -138,6 +138,7 @@ namespace seir
 
 	void Window::show() noexcept
 	{
+		_impl->_shown = true;
 		@autoreleasepool
 		{
 			[_impl->_delegate.window makeKeyAndOrderFront:nil];

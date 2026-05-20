@@ -306,6 +306,9 @@ namespace seir
 
 	bool App::processEvents(EventCallbacks& callbacks)
 	{
+		for (const auto& window : _impl->_windows)
+			if (!window.second->shown())
+				window.second->window().show();
 		assert(!_impl->_callbacks);
 		_impl->_callbacks = &callbacks;
 		SEIR_FINALLY{ [this]() noexcept { _impl->_callbacks = nullptr; } };

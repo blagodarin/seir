@@ -18,6 +18,7 @@ namespace seir
 		WindowImpl(AppImpl&, Window&, Hwnd&&) noexcept;
 
 		void reset() noexcept;
+		bool shown() const noexcept { return _shown; }
 		Window& window() noexcept { return _window; }
 
 	private:
@@ -28,6 +29,7 @@ namespace seir
 		Window& _window;
 		Hicon _icon;
 		Hwnd _hwnd;
+		bool _shown = false;
 		friend Window;
 	};
 }
