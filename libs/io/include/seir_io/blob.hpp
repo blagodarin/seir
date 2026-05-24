@@ -48,6 +48,12 @@ namespace seir
 		constexpr Blob(const void* data, size_t size) noexcept
 			: _data{ data }, _size{ size } {}
 	};
+
+	// Convenience short-hand for loading from files.
+	[[nodiscard]] inline SharedPtr<Blob> load(const std::string& path)
+	{
+		return Blob::from(path);
+	}
 }
 
 inline seir::SharedPtr<seir::Blob> seir::Blob::from(const void* data, size_t size)

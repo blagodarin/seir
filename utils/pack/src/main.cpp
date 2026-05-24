@@ -45,7 +45,7 @@ namespace
 
 	Index readIndex(const std::string& path)
 	{
-		const auto blob = seir::Blob::from(path);
+		const auto blob = seir::load(path);
 		check(static_cast<bool>(blob), "Bad index file");
 		Index result;
 		seir::StReader reader{ blob };
@@ -121,7 +121,7 @@ int u8main(int argc, char** argv)
 			std::cerr << "Writing " << packagePath << "...\n";
 			for (const auto& group : index._groups)
 				for (const auto& file : group._files)
-					if (const auto blob = seir::Blob::from(file); blob)
+					if (const auto blob = seir::load(file); blob)
 					{
 						std::cerr << " >> " << file << '\n';
 						packageWriter->add(file, *blob, group._compressionLevel);

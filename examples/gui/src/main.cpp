@@ -85,7 +85,7 @@ int u8main(int, char**)
 	seir::Window window{ app, "GUI" };
 	seir::Renderer renderer{ window };
 	seir::Renderer2D renderer2d;
-	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::Blob::from(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24) };
+	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::load(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24) };
 	Example example;
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{

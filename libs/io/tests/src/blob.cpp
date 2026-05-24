@@ -74,3 +74,12 @@ TEST_CASE("Blob::from(...)")
 		}
 	}
 }
+
+TEST_CASE("load")
+{
+	const auto blob = seir::load(SEIR_TEST_DIR "file.txt");
+	REQUIRE(blob);
+	const std::string_view expected{ "contents" };
+	CHECK(blob->size() == expected.size());
+	CHECK_FALSE(std::memcmp(blob->data(), expected.data(), expected.size()));
+}
