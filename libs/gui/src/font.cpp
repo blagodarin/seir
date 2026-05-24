@@ -54,7 +54,7 @@ namespace
 			::FT_Done_FreeType(_library); // TODO: Handle error code.
 		}
 
-		bool isLoaded() noexcept
+		bool isValid() const noexcept
 		{
 			return static_cast<bool>(_bitmapTexture);
 		}
@@ -245,12 +245,12 @@ namespace
 
 namespace seir
 {
-	SharedPtr<Font> Font::load(Renderer& renderer, const SharedPtr<Blob>& blob, unsigned lineHeight)
+	SharedPtr<Font> Font::create(Renderer& renderer, const SharedPtr<Blob>& blob, unsigned lineHeight)
 	{
 		if (!blob || !lineHeight)
 			return {};
 		const auto font = makeShared<FreeTypeFont>(renderer, blob, lineHeight);
-		return font->isLoaded()
+		return font->isValid()
 			? staticCast<Font>(font)
 			: nullptr;
 	}

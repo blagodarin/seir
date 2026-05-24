@@ -76,7 +76,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static std::optional<Image> load(const SharedPtr<Blob>&);
+		[[nodiscard]] static std::optional<Image> create(const SharedPtr<Blob>&);
 
 		Image() noexcept;
 		Image(const Image&) = delete;

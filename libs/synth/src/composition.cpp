@@ -35,7 +35,7 @@ namespace
 
 namespace seir::synth
 {
-	void CompositionImpl::load(const char* source)
+	void CompositionImpl::create(const char* source)
 	{
 		enum class Section
 		{
@@ -558,7 +558,7 @@ namespace seir::synth
 	std::unique_ptr<Composition> Composition::create(const char* textData)
 	{
 		auto composition = std::make_unique<CompositionImpl>();
-		composition->load(textData);
+		composition->create(textData);
 		return composition;
 	}
 }

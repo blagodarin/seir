@@ -24,7 +24,7 @@ namespace
 	{
 		auto blob = seir::load(SEIR_TEST_DIR + name);
 		REQUIRE(blob);
-		auto image = seir::Image::load(blob);
+		auto image = seir::Image::create(blob);
 		REQUIRE(image);
 		return std::move(*image);
 	}
@@ -206,7 +206,7 @@ TEST_CASE("PNG")
 	{
 		auto blob = seir::load(SEIR_TEST_DIR "rgb24.png");
 		REQUIRE(blob);
-		CHECK_FALSE(static_cast<bool>(seir::Image::load(blob)));
+		CHECK_FALSE(static_cast<bool>(seir::Image::create(blob)));
 	}
 	SUBCASE("save")
 	{
