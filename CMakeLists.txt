@@ -301,6 +301,7 @@ if(SEIR_EXAMPLES)
 	if(SEIR_GUI AND SEIR_U8MAIN)
 		add_subdirectory(examples/flatfield)
 		add_subdirectory(examples/gui)
+		add_subdirectory(examples/minimal_gui)
 	endif()
 endif()
 
