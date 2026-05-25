@@ -64,9 +64,7 @@ endif()
 
 seir_defaults()
 
-seir_provide_fmt(fmt_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 seir_provide_plf_colony(plf_colony_ROOT)
-find_package(fmt REQUIRED)
 find_package(plf_colony REQUIRED)
 find_package(Threads REQUIRED)
 if(SEIR_AUDIO AND LINUX)

@@ -9,13 +9,12 @@
 
 #include <cassert>
 #include <charconv>
+#include <format>
 #include <limits>
 #include <numeric>
 #include <optional>
 #include <stdexcept>
 #include <string>
-
-#include <fmt/format.h>
 
 namespace
 {
@@ -29,7 +28,7 @@ namespace
 	{
 	public:
 		CompositionError(const Location& location, const std::string& message)
-			: std::runtime_error{ fmt::format("({}:{}) {}", location._line, location._offset + 1, message) } {}
+			: std::runtime_error{ std::format("({}:{}) {}", location._line, location._offset + 1, message) } {}
 	};
 }
 

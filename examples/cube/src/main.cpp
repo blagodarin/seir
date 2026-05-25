@@ -15,8 +15,7 @@
 #include <seir_u8main/u8main.hpp>
 
 #include <array>
-
-#include <fmt/format.h>
+#include <format>
 
 namespace
 {
@@ -150,7 +149,7 @@ int u8main(int, char**)
 		if (const auto period = clock.advance())
 		{
 			const auto windowSize = window.size();
-			window.setTitle(fmt::format("Cube [{}x{} @ {:.1f} fps]",
+			window.setTitle(std::format("Cube [{}x{} @ {:.1f} fps]",
 				windowSize._width, windowSize._height, period->_averageFrameRate));
 		}
 	}

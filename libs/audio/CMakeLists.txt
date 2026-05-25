@@ -47,7 +47,7 @@ target_compile_definitions(seir_audio PUBLIC
 	SEIR_AUDIO_WAV=$<BOOL:${SEIR_AUDIO_WAV}>
 	)
 target_include_directories(seir_audio PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_audio PUBLIC Seir::base PRIVATE Seir::io fmt::fmt Threads::Threads
+target_link_libraries(seir_audio PUBLIC Seir::base PRIVATE Seir::io Threads::Threads
 	$<$<NOT:$<OR:$<BOOL:${APPLE}>,$<BOOL:${WIN32}>>>:ALSA::ALSA>
 	$<$<BOOL:${SEIR_AUDIO_OGGVORBIS}>:Vorbis::vorbisfile>
 	$<$<BOOL:${SEIR_SYNTH}>:Seir::synth>

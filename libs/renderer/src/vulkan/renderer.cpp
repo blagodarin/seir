@@ -15,7 +15,7 @@
 #include "utils.hpp"
 
 #ifndef NDEBUG
-#	include <fmt/base.h>
+#	include <print>
 #endif
 
 namespace
@@ -315,7 +315,7 @@ namespace seir
 		catch ([[maybe_unused]] const VulkanError& e)
 		{
 #ifndef NDEBUG
-			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
+			std::println(stderr, "[{}] {}", e._function, e._message);
 #endif
 			return false;
 		}
@@ -427,7 +427,7 @@ namespace seir
 		catch ([[maybe_unused]] const VulkanError& e)
 		{
 #ifndef NDEBUG
-			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
+			std::println(stderr, "[{}] {}", e._function, e._message);
 #endif
 			return {};
 		}
@@ -454,7 +454,7 @@ namespace seir
 		catch ([[maybe_unused]] const VulkanError& e)
 		{
 #ifndef NDEBUG
-			fmt::print(stderr, "[{}] {}\n", e._function, e._message);
+			std::println(stderr, "[{}] {}", e._function, e._message);
 #endif
 			return {};
 		}

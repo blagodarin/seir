@@ -61,7 +61,7 @@ if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 		$<$<BOOL:${APPLE}>:VK_USE_PLATFORM_METAL_EXT>
 		$<$<BOOL:${WIN32}>:VK_USE_PLATFORM_WIN32_KHR>
 		)
-	target_link_libraries(seir_renderer PRIVATE GPUOpen::VulkanMemoryAllocator Vulkan::Vulkan $<$<CONFIG:Debug>:fmt::fmt>)
+	target_link_libraries(seir_renderer PRIVATE GPUOpen::VulkanMemoryAllocator Vulkan::Vulkan)
 	seir_embed_spirv(seir_renderer
 		VERTEX src/vulkan/2d_vertex.glsl
 		FRAGMENT src/vulkan/2d_fragment.glsl

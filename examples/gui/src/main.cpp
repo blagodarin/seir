@@ -19,7 +19,7 @@
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
-#include <fmt/base.h>
+#include <format>
 
 class Example
 {
@@ -65,9 +65,9 @@ public:
 	void setFps(const seir::VariablePeriod& period)
 	{
 		_fps1.clear();
-		fmt::format_to(std::back_inserter(_fps1), "{:.1f} fps", period._averageFrameRate);
+		std::format_to(std::back_inserter(_fps1), "{:.1f} fps", period._averageFrameRate);
 		_fps2.clear();
-		fmt::format_to(std::back_inserter(_fps2), "{:.1f} < {} ms/frame", 1000 / period._averageFrameRate, period._maxFrameDuration);
+		std::format_to(std::back_inserter(_fps2), "{:.1f} < {} ms/frame", 1000 / period._averageFrameRate, period._maxFrameDuration);
 	}
 
 private:

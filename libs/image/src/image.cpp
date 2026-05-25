@@ -12,8 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-
-#include <fmt/base.h>
+#include <format>
 
 // TODO: Add support for:
 // - writing image data at aligned offsets (for more efficient copying of memory-mapped data);
@@ -124,17 +123,21 @@ namespace seir
 		::localtime_r(&time, &tm);
 #endif
 		std::array<char, 24> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init)
-		const auto result = fmt::format_to_n(buffer.data(), buffer.size(), "{:04}-{:02}-{:02}_{:02}-{:02}-{:02}{}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, [format] {
-			switch (format)
-			{
-			case ImageFormat::Tga: return ".tga";
-			case ImageFormat::Jpeg: return ".jpg";
-			case ImageFormat::Png: return ".png";
-			}
-			return "";
-		}());
-		assert(result.size < buffer.size());
-		buffer[result.size] = '\0';
+		const auto result = std::format_to_n(buffer.data(), ptrdiff_t{ buffer.size() },
+			"{:04}-{:02}-{:02}_{:02}-{:02}-{:02}{}",
+			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
+			[format] {
+				switch (format)
+				{
+				case ImageFormat::Tga: return ".tga";
+				case ImageFormat::Jpeg: return ".jpg";
+				case ImageFormat::Png: return ".png";
+				}
+				return "";
+			}());
+		assert(result.size >= 0);
+		assert(static_cast<size_t>(result.size) < buffer.size());
+		buffer[static_cast<size_t>(result.size)] = '\0';
 		if (const auto screenshotPath = makeScreenshotPath(buffer.data()))
 			if (const auto writer = Writer::create(*screenshotPath))
 				return save(format, *writer, compressionLevel);

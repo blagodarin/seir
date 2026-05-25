@@ -7,10 +7,9 @@
 #include <seir_u8main/u8main.hpp>
 
 #include <cstring>
+#include <format>
 #include <iostream>
 #include <span>
-
-#include <fmt/base.h> // std::format_to isn't available on current macOS CI.
 
 namespace
 {
@@ -53,7 +52,7 @@ namespace
 			default:
 				if (static_cast<unsigned char>(c) < 0x20)
 				{
-					fmt::format_to(std::back_inserter(output), "\\x{:02x}", c);
+					std::format_to(std::back_inserter(output), "\\x{:02x}", c);
 					hex = true;
 					continue;
 				}
@@ -80,7 +79,7 @@ namespace
 				output += '\n';
 				lineStart = currentOffset;
 			}
-			fmt::format_to(std::back_inserter(output), "{:d},", static_cast<unsigned char>(c));
+			std::format_to(std::back_inserter(output), "{:d},", static_cast<unsigned char>(c));
 		}
 		output += '\n';
 	}

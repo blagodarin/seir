@@ -10,11 +10,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <format>
 #include <mutex>
 #include <thread>
 #include <vector>
-
-#include <fmt/format.h>
 
 namespace
 {
@@ -76,8 +75,8 @@ namespace
 		void onBackendError(const char* function, int code, const std::string& description) override
 		{
 			_callbacks.onPlaybackError(description.empty()
-					? fmt::format("[{}] Error 0x{:08X}", function, code)
-					: fmt::format("[{}] Error 0x{:08X}: {}", function, code, description));
+					? std::format("[{}] Error 0x{:08X}", function, code)
+					: std::format("[{}] Error 0x{:08X}: {}", function, code, description));
 		}
 
 		bool onBackendIdle() override
