@@ -92,7 +92,6 @@ endmacro()
 
 include(${CMAKE_CURRENT_LIST_DIR}/SeirPackages/benchmark.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/SeirPackages/doctest.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/SeirPackages/fmt.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/SeirPackages/freetype.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/SeirPackages/jpeg.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/SeirPackages/nasm.cmake)
