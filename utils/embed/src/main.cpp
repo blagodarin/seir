@@ -8,17 +8,16 @@
 
 #include <cstring>
 #include <format>
-#include <iostream>
+#include <print>
 #include <span>
 
 namespace
 {
 	int usage()
 	{
-		std::cerr
-			<< "Usage:\n"
-			<< "  seir_embed --string INPUT OUTPUT\n"
-			<< "  seir_embed --uint8 INPUT OUTPUT\n";
+		std::println(stderr, "Usage:");
+		std::println(stderr, "  seir_embed --string INPUT OUTPUT");
+		std::println(stderr, "  seir_embed --uint8 INPUT OUTPUT");
 		return 1;
 	}
 
@@ -97,12 +96,12 @@ int u8main(int argc, char** argv)
 	const auto input = seir::load(argv[2]);
 	if (!input)
 	{
-		std::cerr << "ERROR: Unable to open " << argv[2] << '\n';
+		std::println(stderr, "ERROR: Unable to open {}", argv[2]);
 		return 1;
 	}
 	if (const auto writer = seir::Writer::create(std::string{ argv[3] }); !writer)
 	{
-		std::cerr << "ERROR: Unable to open " << argv[3] << '\n';
+		std::println(stderr, "ERROR: Unable to open {}", argv[3]);
 		return 1;
 	}
 	else

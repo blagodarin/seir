@@ -10,9 +10,9 @@
 #include <cassert>
 #include <condition_variable>
 #include <filesystem>
-#include <iostream>
 #include <mutex>
 #include <optional>
+#include <print>
 
 namespace
 {
@@ -52,13 +52,14 @@ int main(int argc, char** argv)
 {
 	if (argc != 2)
 	{
-		std::cerr << "Usage:\n\t" << std::filesystem::path{ argv[0] }.filename().string() << " FILE\n";
+		std::println(stderr, "Usage:");
+		std::println(stderr, "\t{} FILE", std::filesystem::path{ argv[0] }.filename().string());
 		return 1;
 	}
 	auto decoder = seir::AudioDecoder::create(seir::load(argv[1]));
 	if (!decoder)
 	{
-		std::cerr << "Unable to play " << argv[1] << '\n';
+		std::println(stderr, "Unable to play {}", argv[1]);
 		return 1;
 	}
 	AudioCallbacks callbacks;

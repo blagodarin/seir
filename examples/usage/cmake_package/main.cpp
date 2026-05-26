@@ -5,7 +5,7 @@
 #include <seir_base/string_utils.hpp>
 #include <seir_u8main/u8main.hpp>
 
-#include <iostream>
+#include <print>
 
 #include <plf_colony.h>
 
@@ -13,6 +13,6 @@ int u8main(int, char**)
 {
 	std::string helloWorld = "Hello world!";
 	seir::normalizeWhitespace(helloWorld, seir::TrailingSpace::Remove);
-	std::cerr << helloWorld << '\n';
+	std::println("{}", helloWorld);
 	return 0;
 }

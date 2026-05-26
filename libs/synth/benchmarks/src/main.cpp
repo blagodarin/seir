@@ -17,8 +17,8 @@
 #include <filesystem>
 #include <functional>
 #include <fstream>
-#include <iostream>
 #include <limits>
+#include <print>
 #include <string>
 
 namespace
@@ -28,7 +28,7 @@ namespace
 		std::ifstream stream{ path, std::ios::binary };
 		if (!stream)
 		{
-			std::cerr << "Failed to open input file\n";
+			std::println(stderr, "Failed to open input file");
 			return {};
 		}
 		stream.seekg(0, std::ios::end);
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 		path = argv[i];
 	else
 	{
-		std::cerr << "No input file specified\n";
+		std::println(stderr, "No input file specified");
 		return 1;
 	}
 
@@ -164,12 +164,13 @@ int main(int argc, char** argv)
 		[&renderer] { renderer->restart(); },
 		std::chrono::seconds{ 5 });
 
-	std::cout << "ParseTime: " << ::printTime(parsing.average()) << " [N=" << parsing._iterations << ", min=" << ::printTime(parsing._minDuration) << ", max=" << ::printTime(parsing._maxDuration) << "]\n";
-	std::cout << "PrepareTime: " << ::printTime(preparation.average()) << " [N=" << preparation._iterations << ", min=" << ::printTime(preparation._minDuration) << ", max=" << ::printTime(preparation._maxDuration) << "]\n";
-	std::cout << "RenderTime: " << ::printTime(rendering.average()) << " [N=" << rendering._iterations << ", min=" << ::printTime(rendering._minDuration) << ", max=" << ::printTime(rendering._maxDuration) << "]\n";
-	std::cout << "RenderSpeed: " << compositionDuration / static_cast<double>(rendering.average().count()) << "x ("
-			  << std::to_string(static_cast<double>(compositionFrames * 2 * sizeof(float)) * std::ldexp(1'000'000'000, -20) / static_cast<double>(rendering.average().count())) << " MiB/s, "
-			  << std::to_string(static_cast<double>(compositionFrames * 2 * sizeof(float)) * 8. / static_cast<double>(rendering.average().count())) << " Gbit/s, "
-			  << std::to_string(static_cast<double>(rendering.average().count()) / static_cast<double>(baseline.average().count())) << " memsets)\n";
+	std::println("ParseTime: {} [N={}, min={}, max={}]", ::printTime(parsing.average()), parsing._iterations, ::printTime(parsing._minDuration), ::printTime(parsing._maxDuration));
+	std::println("PrepareTime: {} [N={}, min={}, max={}]", ::printTime(preparation.average()), preparation._iterations, ::printTime(preparation._minDuration), ::printTime(preparation._maxDuration));
+	std::println("RenderTime: {} [N={}, min={}, max={}]", ::printTime(rendering.average()), rendering._iterations, ::printTime(rendering._minDuration), ::printTime(rendering._maxDuration));
+	std::println("RenderSpeed: {}x ({} MiB/s, {} Gbit/s, {} memsets)",
+		compositionDuration / static_cast<double>(rendering.average().count()),
+		std::to_string(static_cast<double>(compositionFrames * 2 * sizeof(float)) * std::ldexp(1'000'000'000, -20) / static_cast<double>(rendering.average().count())),
+		std::to_string(static_cast<double>(compositionFrames * 2 * sizeof(float)) * 8. / static_cast<double>(rendering.average().count())),
+		std::to_string(static_cast<double>(rendering.average().count()) / static_cast<double>(baseline.average().count())));
 	return 0;
 }

@@ -10,7 +10,7 @@
 #include <seir_u8main/u8main.hpp>
 
 #include <cstring>
-#include <iostream>
+#include <iostream> // TODO: Replace with <print> when printing std::filesystem::path becomes available.
 #include <string>
 #include <vector>
 
