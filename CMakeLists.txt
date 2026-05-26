@@ -25,25 +25,26 @@ option(SEIR_COMPRESSION_ZSTD "Enable zstd compression support" OFF)
 
 # Libraries and utilities.
 option(SEIR_ALL "Build all libraries and utilities" OFF)
-# 5
+# >>
 cmake_dependent_option(SEIR_GUI "Build GUI library" OFF "NOT SEIR_ALL" ON)
-# 4
+# >>
 cmake_dependent_option(SEIR_RENDERER "Build renderer library" OFF "NOT SEIR_GUI" ON)
-# 3
+# >>
 cmake_dependent_option(SEIR_APP "Build app library" OFF "NOT SEIR_RENDERER" ON)
 cmake_dependent_option(SEIR_UTILS "Build utils" OFF "NOT SEIR_ALL" ON)
-# 2
+# >>
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_PACKAGE "Build package library" OFF "NOT SEIR_UTILS" ON)
 cmake_dependent_option(SEIR_IMAGE "Build image library" OFF "NOT SEIR_APP;NOT SEIR_IMAGE_BMP;NOT SEIR_IMAGE_DDS;NOT SEIR_IMAGE_ICO;NOT SEIR_IMAGE_JPEG;NOT SEIR_IMAGE_PNG;NOT SEIR_IMAGE_TGA;NOT SEIR_IMAGE_WEBP;NOT SEIR_GUI" ON)
+cmake_dependent_option(SEIR_MODEL "Build model library" OFF "NOT SEIR_RENDERER" ON)
 cmake_dependent_option(SEIR_SERIALIZATION "Build serialization library" OFF "NOT SEIR_UTILS" ON)
-# 1
+# >>
 cmake_dependent_option(SEIR_COMPRESSION "Build compression library" OFF "NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD;NOT SEIR_IMAGE;NOT SEIR_PACKAGE" ON)
-cmake_dependent_option(SEIR_IO "Build IO library" OFF "NOT SEIR_AUDIO;NOT SEIR_IMAGE;NOT SEIR_PACKAGE;NOT SEIR_SERIALIZATION" ON)
 cmake_dependent_option(SEIR_GRAPHICS "Build graphics library" OFF "NOT SEIR_APP" ON)
+cmake_dependent_option(SEIR_IO "Build IO library" OFF "NOT SEIR_AUDIO;NOT SEIR_IMAGE;NOT SEIR_MODEL;NOT SEIR_PACKAGE;NOT SEIR_SERIALIZATION" ON)
 cmake_dependent_option(SEIR_SYNTH "Build synth library" OFF "NOT SEIR_ALL" ON)
 cmake_dependent_option(SEIR_U8MAIN "Build u8main library" OFF "NOT SEIR_UTILS" ON)
-# 0
+# >>
 cmake_dependent_option(SEIR_BASE "Build base library" OFF "NOT SEIR_COMPRESSION;NOT SEIR_IO;NOT SEIR_SYNTH;NOT SEIR_U8MAIN" ON)
 cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_GRAPHICS" ON)
 
@@ -206,6 +207,9 @@ endif()
 if(SEIR_MATH)
 	add_subdirectory(libs/math)
 endif()
+if(SEIR_MODEL)
+	add_subdirectory(libs/model)
+endif()
 if(SEIR_PACKAGE)
 	add_subdirectory(libs/package)
 endif()
@@ -260,6 +264,9 @@ if(SEIR_TESTS)
 	endif()
 	if(SEIR_MATH)
 		add_subdirectory(libs/math/tests)
+	endif()
+	if(SEIR_MODEL)
+		add_subdirectory(libs/model/tests)
 	endif()
 	if(SEIR_PACKAGE)
 		add_subdirectory(libs/package/tests)
