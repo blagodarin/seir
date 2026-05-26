@@ -122,7 +122,7 @@ int u8main(int, char**)
 	};
 
 	seir::App app;
-	seir::Window window{ app, "Flatfield" };
+	seir::Window window{ app, "Board" };
 	seir::Renderer renderer{ window };
 	const auto boardTexture = ::makeBgra32(renderer, 128, 128, [](size_t x, size_t y) {
 		return ((x ^ y) & 1) ? seir::Rgba32::grayscale(0xdd) : seir::Rgba32::black();
