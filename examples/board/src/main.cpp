@@ -15,6 +15,7 @@
 #include <seir_io/blob.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
+#include <seir_model/mesh_format.hpp>
 #include <seir_renderer/2d.hpp>
 #include <seir_renderer/mesh.hpp>
 #include <seir_renderer/renderer.hpp>

@@ -4,7 +4,7 @@
 
 #include "pipeline.hpp"
 
-#include <seir_renderer/mesh.hpp>
+#include <seir_model/mesh_format.hpp>
 #include "error.hpp"
 
 namespace seir

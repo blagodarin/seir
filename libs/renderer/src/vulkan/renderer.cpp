@@ -8,6 +8,7 @@
 #include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
+#include <seir_model/mesh_format.hpp>
 #include <seir_renderer/mesh.hpp>
 #include "../pass.hpp"
 #include "commands.hpp"

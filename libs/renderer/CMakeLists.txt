@@ -55,7 +55,7 @@ target_compile_definitions(seir_renderer PUBLIC
 	SEIR_RENDERER_VULKAN=$<STREQUAL:${SEIR_RENDERER_BACKEND},Vulkan>
 	)
 target_include_directories(seir_renderer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_renderer PUBLIC Seir::base PRIVATE Seir::app Seir::graphics Seir::image)
+target_link_libraries(seir_renderer PUBLIC Seir::base PRIVATE Seir::app Seir::graphics Seir::image Seir::model)
 if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 	target_compile_definitions(seir_renderer PRIVATE
 		$<$<BOOL:${APPLE}>:VK_USE_PLATFORM_METAL_EXT>

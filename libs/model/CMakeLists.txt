@@ -4,6 +4,7 @@
 
 set(HEADERS
 	include/seir_model/mesh_data.hpp
+	include/seir_model/mesh_format.hpp
 	)
 set(SOURCES
 	src/mesh_data.cpp

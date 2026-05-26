@@ -7,7 +7,7 @@
 #include <seir_base/scope.hpp>
 #include <seir_base/shared_ptr.hpp>
 #include <seir_graphics/rectf.hpp>
-#include <seir_renderer/mesh.hpp>
+#include <seir_model/mesh_format.hpp>
 #include <seir_renderer/renderer.hpp>
 #include "2d.hpp"
 #include "pass.hpp"

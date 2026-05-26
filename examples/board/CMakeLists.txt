@@ -8,7 +8,7 @@ set(SOURCES
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(board ${SOURCES})
 target_compile_definitions(board PRIVATE SEIR_DATA_DIR="${SEIR_DATA_DIR}/")
-target_link_libraries(board PRIVATE Seir::gui Seir::image Seir::io Seir::renderer Seir::u8main)
+target_link_libraries(board PRIVATE Seir::gui Seir::image Seir::io Seir::model Seir::renderer Seir::u8main)
 set_target_properties(board PROPERTIES WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
 seir_target(board FOLDER examples STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 if(WIN32)
