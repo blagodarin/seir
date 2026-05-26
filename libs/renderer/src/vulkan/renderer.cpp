@@ -97,6 +97,7 @@ namespace seir
 
 		void begin2DRendering(const MeshFormat& format) override
 		{
+			bindUniformBuffer(false);
 			selectPipeline(format, false);
 			const auto extent = _renderer._renderTarget.extent();
 			setTransformation(seir::Mat4::projection2D(static_cast<float>(extent.width), static_cast<float>(extent.height)));
