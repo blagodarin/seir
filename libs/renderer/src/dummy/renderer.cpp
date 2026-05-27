@@ -6,7 +6,6 @@
 
 #include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
-#include <seir_renderer/mesh.hpp>
 
 namespace
 {

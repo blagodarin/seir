@@ -4,7 +4,6 @@
 
 set(HEADERS
 	include/seir_renderer/2d.hpp
-	include/seir_renderer/mesh.hpp
 	include/seir_renderer/renderer.hpp
 	)
 set(SOURCES

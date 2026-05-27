@@ -11,7 +11,6 @@
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_model/mesh_format.hpp>
-#include <seir_renderer/mesh.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 

@@ -15,11 +15,17 @@ namespace seir
 	class Image;
 	class ImageInfo;
 	class Mat4;
-	class Mesh;
 	struct MeshFormat;
 	class SizeF;
 	class Vec2;
 	class Window;
+
+	//
+	class Mesh : public ReferenceCounter
+	{
+	public:
+		virtual ~Mesh() noexcept = default;
+	};
 
 	//
 	class ShaderSet : public ReferenceCounter
