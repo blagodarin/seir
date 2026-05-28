@@ -28,32 +28,13 @@ namespace
 	class LineParser
 	{
 	public:
-		LineParser(std::string& line)
+		LineParser(const std::string& line) noexcept
 		{
-			assert(!line.empty());
-			if (line.back() == '\n')
-			{
-				line.pop_back();
-				if (!line.empty() && line.back() == '\r')
-					line.pop_back();
-			}
 			_cursor = line.data();
 			_end = line.data() + line.size();
 		}
 
-		void advance() noexcept
-		{
-			assert(_cursor != _end);
-			++_cursor;
-		}
-
-		void skipSpaces() noexcept
-		{
-			while (*_cursor == ' ' || *_cursor == '\t')
-				++_cursor;
-		}
-
-		bool tryConsume(const char what) noexcept
+		bool consume(const char what) noexcept
 		{
 			if (*_cursor != what)
 				return false;
@@ -61,7 +42,29 @@ namespace
 			return true;
 		}
 
-		bool tryConsumeSpaces() noexcept
+		bool endOfLineOr(char lineComment) noexcept
+		{
+			while (*_cursor == ' ' || *_cursor == '\t')
+				++_cursor;
+			return _cursor == _end || *_cursor == lineComment;
+		}
+
+		bool isEnd() const noexcept
+		{
+			return _cursor == _end;
+		}
+
+		char nonSpace() noexcept
+		{
+			while (*_cursor == ' ' || *_cursor == '\t')
+				++_cursor;
+			const auto result = *_cursor;
+			if (_cursor != _end)
+				++_cursor;
+			return result;
+		}
+
+		bool space() noexcept
 		{
 			if (*_cursor != ' ' && *_cursor != '\t')
 				return false;
@@ -71,7 +74,18 @@ namespace
 			return true;
 		}
 
-		bool tryParseFloat(float& value) noexcept
+		bool value(uint32_t& value) noexcept
+		{
+			const auto begin = _cursor;
+			if (*_cursor < '0' || *_cursor > '9')
+				return false;
+			do
+				++_cursor;
+			while (*_cursor >= '0' && *_cursor <= '9');
+			return std::from_chars(begin, _cursor, value).ec == std::errc{};
+		}
+
+		bool value(float& value) noexcept
 		{
 			const auto begin = _cursor;
 			if (*_cursor == '-')
@@ -93,22 +107,6 @@ namespace
 			return ::fromChars(begin, _cursor, value);
 		}
 
-		bool tryParseUint32(uint32_t& value) noexcept
-		{
-			const auto begin = _cursor;
-			if (*_cursor < '0' || *_cursor > '9')
-				return false;
-			do
-				++_cursor;
-			while (*_cursor >= '0' && *_cursor <= '9');
-			return std::from_chars(begin, _cursor, value).ec == std::errc{};
-		}
-
-		char current() const noexcept
-		{
-			return *_cursor;
-		}
-
 	private:
 		const char* _cursor = nullptr;
 		const char* _end = nullptr;
@@ -117,85 +115,61 @@ namespace
 	class ObjParser
 	{
 	public:
-		bool parseLine(std::string_view line)
+		bool parseLine(const std::string& line)
 		{
-			_currentLine = line;
-			LineParser parser{ _currentLine };
-			parser.skipSpaces();
-			switch (parser.current())
+			switch (LineParser p{ line }; p.nonSpace())
 			{
 			case '\0':
+				return p.isEnd();
+
 			case '#':
-				break;
+				return true;
 
 			case 'v':
-				parser.advance();
-				if (parser.tryConsumeSpaces())
+				if (p.space())
 				{
 					seir::Vec3 v;
-					if (!parser.tryParseFloat(v.x)
-						|| !parser.tryConsumeSpaces()
-						|| !parser.tryParseFloat(v.y)
-						|| !parser.tryConsumeSpaces()
-						|| !parser.tryParseFloat(v.z))
-						return false;
-					parser.skipSpaces();
-					if (const auto current = parser.current(); current != '\0' && current != '#')
-						return false;
-					_vertices.emplace_back(v);
+					if (p.value(v.x)
+						&& p.space() && p.value(v.y)
+						&& p.space() && p.value(v.z)
+						&& p.endOfLineOr('#'))
+					{
+						_vertices.emplace_back(v);
+						return true;
+					}
 				}
-				else if (parser.tryConsume('t'))
+				else if (p.consume('t'))
 				{
-					if (!parser.tryConsumeSpaces())
-						return false;
 					seir::Vec2 v;
-					if (!parser.tryParseFloat(v.x)
-						|| !parser.tryConsumeSpaces()
-						|| !parser.tryParseFloat(v.y))
-						return false;
-					parser.skipSpaces();
-					if (const auto current = parser.current(); current != '\0' && current != '#')
-						return false;
-					_texCoords.emplace_back(v);
+					if (p.space() && p.value(v.x)
+						&& p.space() && p.value(v.y)
+						&& p.endOfLineOr('#'))
+					{
+						_texCoords.emplace_back(v);
+						return true;
+					}
 				}
-				else if (parser.tryConsume('n'))
+				else if (p.consume('n'))
 				{
-					if (!parser.tryConsumeSpaces())
-						return false;
 					seir::Vec3 v;
-					if (!parser.tryParseFloat(v.x)
-						|| !parser.tryConsumeSpaces()
-						|| !parser.tryParseFloat(v.y)
-						|| !parser.tryConsumeSpaces()
-						|| !parser.tryParseFloat(v.z))
-						return false;
-					parser.skipSpaces();
-					if (const auto current = parser.current(); current != '\0' && current != '#')
-						return false;
-					_normals.emplace_back(v);
+					if (p.space() && p.value(v.x)
+						&& p.space() && p.value(v.y)
+						&& p.space() && p.value(v.z)
+						&& p.endOfLineOr('#'))
+					{
+						_normals.emplace_back(v);
+						return true;
+					}
 				}
-				else
-					return false;
 				break;
 
 			case 'f':
-				parser.advance();
-				if (!parser.tryConsumeSpaces()
-					|| !parseReference(parser)
-					|| !parser.tryConsumeSpaces()
-					|| !parseReference(parser)
-					|| !parser.tryConsumeSpaces()
-					|| !parseReference(parser))
-					return false;
-				parser.skipSpaces();
-				if (const auto current = parser.current(); current != '\0' && current != '#')
-					return false;
-				break;
-
-			default:
-				return false;
+				return p.space() && parseReference(p)
+					&& p.space() && parseReference(p)
+					&& p.space() && parseReference(p)
+					&& p.endOfLineOr('#');
 			}
-			return true;
+			return false;
 		}
 
 		seir::MeshData finish()
@@ -228,14 +202,14 @@ namespace
 			uint32_t vertexIndex = 0;
 			uint32_t texCoordIndex = 0;
 			uint32_t normalIndex = 0;
-			if (!parser.tryParseUint32(vertexIndex) || vertexIndex == 0 || vertexIndex > _vertices.size())
+			if (!parser.value(vertexIndex) || vertexIndex == 0 || vertexIndex > _vertices.size())
 				return false;
-			if (parser.tryConsume('/'))
+			if (parser.consume('/'))
 			{
-				if (parser.tryParseUint32(texCoordIndex) && (texCoordIndex == 0 || texCoordIndex > _texCoords.size()))
+				if (parser.value(texCoordIndex) && (texCoordIndex == 0 || texCoordIndex > _texCoords.size()))
 					return false;
-				if (parser.tryConsume('/')
-					&& (!parser.tryParseUint32(normalIndex) || normalIndex == 0 || normalIndex > _normals.size()))
+				if (parser.consume('/')
+					&& (!parser.value(normalIndex) || normalIndex == 0 || normalIndex > _normals.size()))
 					return false;
 			}
 			const std::tuple reference{ vertexIndex, texCoordIndex, normalIndex };
@@ -256,7 +230,6 @@ namespace
 		}
 
 	private:
-		std::string _currentLine;
 		std::vector<seir::Vec3> _vertices;
 		std::vector<seir::Vec2> _texCoords;
 		std::vector<seir::Vec3> _normals;
@@ -272,12 +245,19 @@ namespace seir
 {
 	std::optional<MeshData> MeshData::create(const SharedPtr<Blob>& blob)
 	{
+		Reader reader{ *blob };
 		ObjParser parser;
-		for (Reader reader{ *blob };;)
+		for (std::string line;;)
 		{
-			auto line = reader.readLine();
+			line = reader.readLine();
 			if (line.empty())
 				break;
+			if (line.back() == '\n')
+			{
+				line.pop_back();
+				if (!line.empty() && line.back() == '\r')
+					line.pop_back();
+			}
 			if (!parser.parseLine(line))
 				return std::nullopt;
 		}
