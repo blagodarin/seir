@@ -44,17 +44,33 @@ namespace
 		return renderer.createTexture2D(imageInfo, imageData.data());
 	}
 
-	const uint32_t kBoardVertexShader[]{
+	const uint32_t kVertexShaderV3N3[]{
 #if SEIR_RENDERER_VULKAN
-#	include "board_vs.glsl.spirv.inc"
+#	include "vertex_v3n3.glsl.spirv.inc"
 #else
 		0
 #endif
 	};
 
-	const uint32_t kBoardFragmentShader[]{
+	const uint32_t kVertexShaderV3N3T2[]{
 #if SEIR_RENDERER_VULKAN
-#	include "board_fs.glsl.spirv.inc"
+#	include "vertex_v3n3t2.glsl.spirv.inc"
+#else
+		0
+#endif
+	};
+
+	const uint32_t kFragmentShaderV3N3[]{
+#if SEIR_RENDERER_VULKAN
+#	include "fragment_v3n3.glsl.spirv.inc"
+#else
+		0
+#endif
+	};
+
+	const uint32_t kFragmentShaderV3N3T2[]{
+#if SEIR_RENDERER_VULKAN
+#	include "fragment_v3n3t2.glsl.spirv.inc"
 #else
 		0
 #endif
@@ -94,10 +110,13 @@ int u8main(int, char**)
 		return ((x ^ y) & 1) ? seir::Rgba32::grayscale(0xdd) : seir::Rgba32::black();
 	});
 	const auto boardMeshData = seir::MeshData::create(seir::load(LOCAL_DATA_DIR "board.obj"));
-	if (!boardMeshData)
+	const auto cubeMeshData = seir::MeshData::create(seir::load(LOCAL_DATA_DIR "cube.obj"));
+	if (!boardMeshData || !cubeMeshData)
 		return 1;
 	const auto boardMesh = renderer.createMesh(boardMeshData->format(), boardMeshData->vertexData(), boardMeshData->vertexCount(), boardMeshData->indexData(), boardMeshData->indexCount());
-	const auto boardShaders = renderer.createShaders(kBoardVertexShader, kBoardFragmentShader);
+	const auto boardShaders = renderer.createShaders(kVertexShaderV3N3T2, kFragmentShaderV3N3T2);
+	const auto cubeMesh = renderer.createMesh(cubeMeshData->format(), cubeMeshData->vertexData(), cubeMeshData->vertexCount(), cubeMeshData->indexData(), cubeMeshData->indexCount());
+	const auto cubeShaders = renderer.createShaders(kVertexShaderV3N3, kFragmentShaderV3N3);
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window, seir::Font::create(renderer, seir::load(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
@@ -112,6 +131,9 @@ int u8main(int, char**)
 			pass.bindUniformBuffer(true);
 			pass.setTransformation(seir::Mat4::identity());
 			pass.drawMesh(*boardMesh);
+			pass.bindShaders(cubeShaders);
+			pass.setTransformation(seir::Mat4::translation({ 1.5, 1.5, .5 }));
+			pass.drawMesh(*cubeMesh);
 			renderer2d.draw(pass);
 		});
 		if (const auto period = clock.advance())

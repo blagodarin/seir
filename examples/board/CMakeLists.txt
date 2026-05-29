@@ -20,7 +20,11 @@ if(WIN32)
 endif()
 if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 	seir_embed_spirv(board
-		VERTEX src/board_vs.glsl
-		FRAGMENT src/board_fs.glsl
+		VERTEX
+			data/vertex_v3n3.glsl
+			data/vertex_v3n3t2.glsl
+		FRAGMENT
+			data/fragment_v3n3.glsl
+			data/fragment_v3n3t2.glsl
 		)
 endif()

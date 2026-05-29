@@ -1,0 +1,23 @@
+#version 450
+
+layout(set = 1, binding = 0) uniform UniformBufferObject {
+	mat4 matrix;
+} ubo;
+
+layout(push_constant) uniform PushConstants {
+	mat4 matrix;
+} push;
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
+
+layout(location = 0) out vec3 outPosition;
+layout(location = 1) out vec3 outNormal;
+
+void main()
+{
+	vec4 position = push.matrix * vec4(inPosition, 1.0);
+	gl_Position = ubo.matrix * position;
+	outPosition = vec3(position);
+	outNormal = normalize(transpose(inverse(mat3(push.matrix))) * vec3(inNormal));
+}
