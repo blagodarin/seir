@@ -117,6 +117,17 @@ namespace
 		std::string _fps;
 		std::string _debugText;
 	};
+
+	seir::Ray3D pixelRay(const seir::Vec2& point, const seir::Vec2& viewportSize, const seir::Mat4& viewMatrix, const seir::Vec3& cameraPosition)
+	{
+		// Point coordinates should be in [0, D) range (where D is width or height).
+		// We shift coordinates to the center of the pixel (by adding 0.5),
+		// then normalize them from [0, D] to [-1, 1].
+		const auto x = (2 * point.x + 1) / viewportSize.x - 1;
+		const auto y = (2 * point.y + 1) / viewportSize.y - 1;
+		const auto m = inverse(viewMatrix);
+		return seir::Ray3D::fromPoints(cameraPosition, m * seir::Vec3{ x, y, 1 });
+	}
 }
 
 int u8main(int, char**)
@@ -155,10 +166,7 @@ int u8main(int, char**)
 			pass.drawMesh(*boardMesh);
 			if (const auto cursor = example.cursor())
 			{
-				const auto xn = (2 * cursor->x + 1) / viewportSize.x - 1;
-				const auto yn = (2 * cursor->y + 1) / viewportSize.y - 1;
-				const auto m = inverse(viewMatrix);
-				const auto cursorRay = seir::Ray3D::fromPoints(cameraPosition, m * seir::Vec3{ xn, yn, 1 });
+				const auto cursorRay = ::pixelRay(*cursor, viewportSize, viewMatrix, cameraPosition);
 				if (const auto boardPoint = cursorRay.intersection(kBoardPlane);
 					boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)
 				{
