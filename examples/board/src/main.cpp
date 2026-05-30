@@ -14,9 +14,9 @@
 #include <seir_image/image.hpp>
 #include <seir_io/blob.hpp>
 #include <seir_math/euler.hpp>
-#include <seir_math/line.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_math/plane.hpp>
+#include <seir_math/ray.hpp>
 #include <seir_model/mesh_data.hpp>
 #include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>
@@ -145,7 +145,8 @@ int u8main(int, char**)
 		example.presentGui({ gui, renderer2d });
 		renderer.render([&](seir::RenderPass& pass) {
 			const auto viewportSize = pass.size();
-			const auto viewMatrix = seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 35, .5) * seir::Mat4::camera({ 0, -8.5, 16 }, { 0, -60, 0 });
+			const seir::Vec3 cameraPosition{ 0, -8.5, 16 };
+			const auto viewMatrix = seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 35, .5) * seir::Mat4::camera(cameraPosition, { 0, -60, 0 });
 			pass.updateUniformBuffer(viewMatrix);
 			pass.bindShaders(boardShaders);
 			pass.bindTexture(boardTexture);
@@ -157,8 +158,7 @@ int u8main(int, char**)
 				const auto xn = (2 * cursor->x + 1) / viewportSize.x - 1;
 				const auto yn = (2 * cursor->y + 1) / viewportSize.y - 1;
 				const auto m = inverse(viewMatrix);
-				constexpr float rayLength = 1024;
-				const seir::Line3 cursorRay{ m * seir::Vec3{ xn, yn, 1 }, m * seir::Vec3{ xn, yn, .5f / rayLength } };
+				const auto cursorRay = seir::Ray3D::fromPoints(cameraPosition, m * seir::Vec3{ xn, yn, 1 });
 				if (const auto boardPoint = cursorRay.intersection(kBoardPlane);
 					boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)
 				{

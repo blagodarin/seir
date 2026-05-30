@@ -4,14 +4,14 @@
 
 set(HEADERS
 	include/seir_math/euler.hpp
-	include/seir_math/line.hpp
 	include/seir_math/mat.hpp
 	include/seir_math/plane.hpp
+	include/seir_math/ray.hpp
 	include/seir_math/vec.hpp
 	)
 set(SOURCES
-	src/line.cpp
 	src/mat.cpp
+	src/ray.cpp
 	src/vec.cpp
 	)
 source_group("include" FILES ${HEADERS})
