@@ -5,25 +5,19 @@
 #pragma once
 
 #include <seir_base/buffer.hpp>
+#include <seir_base/shared_ptr.hpp>
 #include <seir_model/mesh_format.hpp>
-
-#include <optional>
 
 namespace seir
 {
 	class Blob;
-	template <class>
-	class SharedPtr;
 
-	class MeshData
+	class MeshData : public ReferenceCounter
 	{
 	public:
-		[[nodiscard]] static std::optional<MeshData> load(const SharedPtr<Blob>&);
+		[[nodiscard]] static SharedPtr<MeshData> load(const SharedPtr<Blob>&);
 
 		MeshData() noexcept;
-		MeshData(const MeshData&) = delete;
-		MeshData(MeshData&&) noexcept;
-		MeshData& operator=(const MeshData&) = delete;
 		~MeshData() noexcept;
 
 		MeshData(const MeshFormat& format, Buffer&& vertices, size_t vertexCount, Buffer&& indices, size_t indexCount) noexcept

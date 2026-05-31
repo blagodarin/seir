@@ -15,6 +15,7 @@ namespace seir
 	class Image;
 	class ImageInfo;
 	class Mat4;
+	class MeshData;
 	struct MeshFormat;
 	class SizeF;
 	class Vec2;
@@ -83,6 +84,7 @@ namespace seir
 
 		//
 		[[nodiscard]] SharedPtr<Mesh> createMesh(const MeshFormat&, const void* vertexData, size_t vertexCount, const void* indexData, size_t indexCount);
+		[[nodiscard]] SharedPtr<Mesh> createMesh(const SharedPtr<MeshData>&);
 
 		//
 		[[nodiscard]] SharedPtr<ShaderSet> createShaders(std::span<const uint32_t> vertexShader, std::span<const uint32_t> fragmentShader);

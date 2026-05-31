@@ -172,7 +172,7 @@ namespace
 			return false;
 		}
 
-		seir::MeshData finish()
+		seir::SharedPtr<seir::MeshData> finish()
 		{
 			const auto indexType = _indices.size() < std::numeric_limits<uint16_t>::max() // Max value may have special meaning.
 				? seir::MeshIndexType::u16
@@ -193,7 +193,7 @@ namespace
 			}
 			else
 				std::memcpy(indexBuffer.data(), _indices.data(), indexBufferSize);
-			return { format, std::move(_vertexBuffer), _vertexCount, std::move(indexBuffer), _indices.size() };
+			return seir::makeShared<seir::MeshData>(format, std::move(_vertexBuffer), _vertexCount, std::move(indexBuffer), _indices.size());
 		}
 
 	private:
@@ -243,7 +243,7 @@ namespace
 
 namespace seir
 {
-	std::optional<MeshData> MeshData::load(const SharedPtr<Blob>& blob)
+	SharedPtr<MeshData> MeshData::load(const SharedPtr<Blob>& blob)
 	{
 		Reader reader{ *blob };
 		ObjParser parser;
@@ -259,7 +259,7 @@ namespace seir
 					line.pop_back();
 			}
 			if (!parser.parseLine(line))
-				return std::nullopt;
+				return {};
 		}
 		return parser.finish();
 	}

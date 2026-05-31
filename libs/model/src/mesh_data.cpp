@@ -7,6 +7,5 @@
 namespace seir
 {
 	MeshData::MeshData() noexcept = default;
-	MeshData::MeshData(MeshData&&) noexcept = default;
 	MeshData::~MeshData() noexcept = default;
 }

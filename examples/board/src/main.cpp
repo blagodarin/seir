@@ -141,13 +141,9 @@ int u8main(int, char**)
 	const auto boardTexture = ::makeBgra32(renderer, 128, 128, [](size_t x, size_t y) {
 		return ((x ^ y) & 1) ? seir::Rgba32::grayscale(0xdd) : seir::Rgba32::black();
 	});
-	const auto boardMeshData = seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "board.obj"));
-	const auto cubeMeshData = seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "cube.obj"));
-	if (!boardMeshData || !cubeMeshData)
-		return 1;
-	const auto boardMesh = renderer.createMesh(boardMeshData->format(), boardMeshData->vertexData(), boardMeshData->vertexCount(), boardMeshData->indexData(), boardMeshData->indexCount());
+	const auto boardMesh = renderer.createMesh(seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "board.obj")));
 	const auto boardShaders = renderer.createShaders(kVertexShaderV3N3T2, kFragmentShaderV3N3T2);
-	const auto cubeMesh = renderer.createMesh(cubeMeshData->format(), cubeMeshData->vertexData(), cubeMeshData->vertexCount(), cubeMeshData->indexData(), cubeMeshData->indexCount());
+	const auto cubeMesh = renderer.createMesh(seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "cube.obj")));
 	const auto cubeShaders = renderer.createShaders(kVertexShaderV3N3, kFragmentShaderV3N3);
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
