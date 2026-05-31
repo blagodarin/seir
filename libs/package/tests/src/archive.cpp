@@ -6,8 +6,8 @@
 
 #include <seir_base/buffer.hpp>
 #include <seir_compression/compression.hpp>
-#include <seir_io/blob.hpp>
 #include <seir_io/buffer_writer.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/writer.hpp>
 #include <seir_package/storage.hpp>
 
@@ -47,20 +47,20 @@ TEST_CASE("Archiver")
 #endif
 		REQUIRE(archiver);
 		for (const auto& [name, contents] : entries)
-			REQUIRE(archiver->add(name, *seir::Blob::from(contents.data(), contents.size()), seir::CompressionLevel::Maximum));
+			REQUIRE(archiver->add(name, *seir::Inlet::from(contents.data(), contents.size()), seir::CompressionLevel::Maximum));
 		CHECK(archiver->finish());
 	}
 	seir::Storage storage{ seir::Storage::UseFileSystem::Never };
 	{
-		auto blob = seir::Blob::from(buffer.data(), static_cast<size_t>(bufferSize));
-		REQUIRE(blob);
-		REQUIRE(storage.attachArchive(std::move(blob)));
+		auto inlet = seir::Inlet::from(buffer.data(), static_cast<size_t>(bufferSize));
+		REQUIRE(inlet);
+		REQUIRE(storage.attachArchive(std::move(inlet)));
 	}
 	for (const auto& [name, contents] : entries)
 	{
-		const auto blob = storage.open(name);
-		REQUIRE(blob);
-		REQUIRE(blob->size() == contents.size());
-		CHECK_FALSE(std::memcmp(blob->data(), contents.data(), contents.size()));
+		const auto inlet = storage.open(name);
+		REQUIRE(inlet);
+		REQUIRE(inlet->size() == contents.size());
+		CHECK_FALSE(std::memcmp(inlet->data(), contents.data(), contents.size()));
 	}
 }

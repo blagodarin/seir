@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_audio/decoder.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 
 #include <doctest/doctest.h>
 
@@ -12,9 +12,9 @@ TEST_CASE("AudioDecoder")
 #if SEIR_AUDIO_OGGVORBIS
 	SUBCASE("44100_mono.ogg")
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR "44100_mono.ogg");
-		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(std::move(blob));
+		auto inlet = seir::fromFile(SEIR_TEST_DIR "44100_mono.ogg");
+		REQUIRE(inlet);
+		const auto decoder = seir::AudioDecoder::create(std::move(inlet));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -36,9 +36,9 @@ TEST_CASE("AudioDecoder")
 	}
 	SUBCASE("48000_stereo.ogg")
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR "48000_stereo.ogg");
-		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(std::move(blob));
+		auto inlet = seir::fromFile(SEIR_TEST_DIR "48000_stereo.ogg");
+		REQUIRE(inlet);
+		const auto decoder = seir::AudioDecoder::create(std::move(inlet));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -62,9 +62,9 @@ TEST_CASE("AudioDecoder")
 #if SEIR_AUDIO_WAV
 	SUBCASE("8000_mono_i16.wav")
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR "8000_mono_i16.wav");
-		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(std::move(blob));
+		auto inlet = seir::fromFile(SEIR_TEST_DIR "8000_mono_i16.wav");
+		REQUIRE(inlet);
+		const auto decoder = seir::AudioDecoder::create(std::move(inlet));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -86,9 +86,9 @@ TEST_CASE("AudioDecoder")
 	}
 	SUBCASE("22050_stereo_i16.wav")
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR "22050_stereo_i16.wav");
-		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(std::move(blob));
+		auto inlet = seir::fromFile(SEIR_TEST_DIR "22050_stereo_i16.wav");
+		REQUIRE(inlet);
+		const auto decoder = seir::AudioDecoder::create(std::move(inlet));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -110,9 +110,9 @@ TEST_CASE("AudioDecoder")
 	}
 	SUBCASE("44100_mono_f32.wav")
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR "44100_mono_f32.wav");
-		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(std::move(blob));
+		auto inlet = seir::fromFile(SEIR_TEST_DIR "44100_mono_f32.wav");
+		REQUIRE(inlet);
+		const auto decoder = seir::AudioDecoder::create(std::move(inlet));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{
@@ -134,9 +134,9 @@ TEST_CASE("AudioDecoder")
 	}
 	SUBCASE("48000_stereo_f32.wav")
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR "48000_stereo_f32.wav");
-		REQUIRE(blob);
-		const auto decoder = seir::AudioDecoder::create(std::move(blob));
+		auto inlet = seir::fromFile(SEIR_TEST_DIR "48000_stereo_f32.wav");
+		REQUIRE(inlet);
+		const auto decoder = seir::AudioDecoder::create(std::move(inlet));
 		REQUIRE(decoder);
 		SUBCASE("read()")
 		{

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_base/scope.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/save_file.hpp>
 #include <seir_io/temporary.hpp>
 
@@ -30,16 +30,21 @@ namespace
 
 	const auto kMapFailed = MAP_FAILED; // NOLINT(cppcoreguidelines-pro-type-cstyle-cast, performance-no-int-to-ptr)
 
-	struct FileBlob final : seir::Blob
+	struct FileInlet final : seir::Inlet
 	{
-		FileBlob(void*& data, size_t size) noexcept
-			: Blob{ data, size } { data = kMapFailed; }
-		~FileBlob() noexcept override
+		FileInlet(void*& data, size_t size) noexcept
+			: Inlet{ data, size }
+		{
+			data = kMapFailed;
+		}
+
+		~FileInlet() noexcept override
 		{
 			if (_data != kMapFailed && ::munmap(const_cast<void*>(_data), _size) == -1)
 				::perror("munmap");
 		}
-		static seir::SharedPtr<seir::Blob> create(int descriptor, size_t size)
+
+		static seir::SharedPtr<seir::Inlet> create(int descriptor, size_t size)
 		{
 			if (auto data = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, descriptor, 0); data == kMapFailed)
 				::perror("mmap");
@@ -49,7 +54,7 @@ namespace
 					if (data != kMapFailed && ::munmap(data, size) == -1)
 						::perror("munmap");
 				} };
-				return seir::makeShared<seir::Blob, FileBlob>(data, size);
+				return seir::makeShared<seir::Inlet, FileInlet>(data, size);
 			}
 			return {};
 		}
@@ -144,7 +149,7 @@ namespace
 
 namespace seir
 {
-	SharedPtr<Blob> Blob::from(const std::string& path)
+	SharedPtr<Inlet> Inlet::from(const std::string& path)
 	{
 		constexpr int flags = O_RDONLY | O_CLOEXEC
 #ifdef __linux__
@@ -156,14 +161,14 @@ namespace seir
 		else if (const auto size = ::lseek(file._descriptor, 0, SEEK_END); size == -1)
 			::perror("lseek");
 		else
-			return FileBlob::create(file._descriptor, static_cast<uint64_t>(size));
+			return FileInlet::create(file._descriptor, static_cast<uint64_t>(size));
 		return {};
 	}
 
-	SharedPtr<Blob> Blob::from(TemporaryFile& file)
+	SharedPtr<Inlet> Inlet::from(TemporaryFile& file)
 	{
 		const auto& impl = static_cast<const TemporaryFileImpl&>(file);
-		return FileBlob::create(impl._file._descriptor, impl._size);
+		return FileInlet::create(impl._file._descriptor, impl._size);
 	}
 
 	UniquePtr<SaveFile> SaveFile::create(std::string&& path)

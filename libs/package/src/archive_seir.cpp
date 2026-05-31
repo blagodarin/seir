@@ -6,8 +6,8 @@
 
 #include <seir_base/buffer.hpp>
 #include <seir_compression/compression.hpp>
-#include <seir_io/blob.hpp>
 #include <seir_io/buffer_writer.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/writer.hpp>
 #include <seir_package/storage.hpp>
 
@@ -68,7 +68,7 @@ namespace
 			}
 		}
 
-		bool add(std::string_view name, const seir::Blob& blob, seir::CompressionLevel compressionLevel) override
+		bool add(std::string_view name, const seir::Inlet& inlet, seir::CompressionLevel compressionLevel) override
 		{
 			if (name.size() > std::numeric_limits<uint8_t>::max())
 				return false;
@@ -76,7 +76,7 @@ namespace
 				if (_files.size() == std::numeric_limits<uint32_t>::max())
 					return false;
 			SeirBlockInfo blockInfo;
-			if (!writeBlock(blockInfo, blob.data(), blob.size(), compressionLevel))
+			if (!writeBlock(blockInfo, inlet.data(), inlet.size(), compressionLevel))
 				return false;
 			_files.emplace_back(name, blockInfo);
 			return true;
@@ -184,9 +184,9 @@ namespace
 
 namespace seir
 {
-	bool attachSeirArchive(Storage& storage, const SharedPtr<Blob>& blob)
+	bool attachSeirArchive(Storage& storage, const SharedPtr<Inlet>& inlet)
 	{
-		const auto fileHeader = blob->get<SeirFileHeader>(0);
+		const auto fileHeader = inlet->get<SeirFileHeader>(0);
 		if (!fileHeader
 			|| fileHeader->_id != seir::kSeirFileID
 			|| fileHeader->_reserved8 || fileHeader->_reserved16 || fileHeader->_reserved32)
@@ -196,7 +196,7 @@ namespace seir
 		if (fileHeader->_metaBlock._archivedSize > fileHeader->_metaBlock._originalSize
 			|| fileHeader->_metaBlock._flags)
 			return false;
-		auto metaBlock = blob->get<std::byte>(static_cast<size_t>(fileHeader->_metaBlock.offset()), fileHeader->_metaBlock._archivedSize);
+		auto metaBlock = inlet->get<std::byte>(static_cast<size_t>(fileHeader->_metaBlock.offset()), fileHeader->_metaBlock._archivedSize);
 		if (!metaBlock)
 			return false;
 		auto compression = Compression::None; // Invalid compression also maps to None, which may be OK if nothing is actually compressed and correctly fails otherwise.
@@ -226,7 +226,7 @@ namespace seir
 			const auto nameSize = std::to_integer<uint8_t>(metaBlock[nameOffset++]);
 			if (nameOffset + nameSize > fileHeader->_metaBlock._originalSize)
 				break;
-			storage.attach(std::string{ reinterpret_cast<const char*>(metaBlock + nameOffset), nameSize }, SharedPtr{ blob }, static_cast<size_t>(i->offset()), i->_originalSize, compression, i->_archivedSize);
+			storage.attach(std::string{ reinterpret_cast<const char*>(metaBlock + nameOffset), nameSize }, SharedPtr{ inlet }, static_cast<size_t>(i->offset()), i->_originalSize, compression, i->_archivedSize);
 			nameOffset += nameSize;
 		}
 		return true;

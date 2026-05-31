@@ -11,7 +11,7 @@
 
 namespace seir
 {
-	class Blob;
+	class Inlet;
 
 	// NOTE: Making it a member of AudioDecoder results in GCC/Clang compilation error,
 	// see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88165.
@@ -26,7 +26,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static UniquePtr<AudioDecoder> create(SharedPtr<Blob>&&, const AudioDecoderPreferences& = {});
+		[[nodiscard]] static UniquePtr<AudioDecoder> create(SharedPtr<Inlet>&&, const AudioDecoderPreferences& = {});
 
 		virtual ~AudioDecoder() noexcept = default;
 

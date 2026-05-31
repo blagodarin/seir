@@ -11,7 +11,7 @@
 
 namespace seir
 {
-	class Blob;
+	class Inlet;
 	class RectF;
 	class Renderer;
 	class Renderer2D;
@@ -36,7 +36,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static SharedPtr<Font> load(Renderer&, const SharedPtr<Blob>&, unsigned lineHeight);
+		[[nodiscard]] static SharedPtr<Font> load(Renderer&, const SharedPtr<Inlet>&, unsigned lineHeight);
 
 		virtual ~Font() noexcept = default;
 

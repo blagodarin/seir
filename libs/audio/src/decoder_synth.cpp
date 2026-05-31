@@ -71,9 +71,9 @@ namespace
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createSynthDecoder(const SharedPtr<Blob>& blob, const AudioDecoderPreferences& preferences)
+	UniquePtr<AudioDecoder> createSynthDecoder(const SharedPtr<Inlet>& inlet, const AudioDecoderPreferences& preferences)
 	{
-		const std::string buffer{ static_cast<const char*>(blob->data()), blob->size() }; // TODO: Remove when synth will support non-null-terminated input.
+		const std::string buffer{ static_cast<const char*>(inlet->data()), inlet->size() }; // TODO: Remove when synth will support non-null-terminated input.
 		if (auto composition = synth::Composition::load(buffer.c_str()))
 			if (auto renderer = synth::Renderer::create(*composition, ::convertFormat(preferences.format), preferences.loop))
 				return makeUnique<AudioDecoder, SynthAudioDecoder>(std::move(composition), std::move(renderer));

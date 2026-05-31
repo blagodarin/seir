@@ -4,7 +4,7 @@
 
 #include <seir_io/writer.hpp>
 
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 
 #include <cstring>
 #include <filesystem>
@@ -76,11 +76,11 @@ TEST_CASE("Writer::create(const std::string&)")
 	REQUIRE(std::filesystem::exists(path));
 	CHECK(std::filesystem::file_size(path) == 2 * data.size());
 	{
-		const auto blob = seir::fromFile(path.string());
-		REQUIRE(blob);
-		REQUIRE(blob->size() == 2 * data.size());
-		CHECK_FALSE(std::memcmp(blob->data(), data.data(), data.size()));
-		CHECK_FALSE(std::memcmp(static_cast<const std::byte*>(blob->data()) + data.size(), data.data(), data.size()));
+		const auto inlet = seir::fromFile(path.string());
+		REQUIRE(inlet);
+		REQUIRE(inlet->size() == 2 * data.size());
+		CHECK_FALSE(std::memcmp(inlet->data(), data.data(), data.size()));
+		CHECK_FALSE(std::memcmp(static_cast<const std::byte*>(inlet->data()) + data.size(), data.data(), data.size()));
 	}
 	std::filesystem::remove(path);
 }

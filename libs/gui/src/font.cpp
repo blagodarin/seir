@@ -8,7 +8,7 @@
 #include <seir_graphics/rectf.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>
 
@@ -35,14 +35,14 @@ namespace
 	class FreeTypeFont final : public seir::Font
 	{
 	public:
-		FreeTypeFont(seir::Renderer& renderer, const seir::SharedPtr<seir::Blob>& blob, unsigned lineHeight)
+		FreeTypeFont(seir::Renderer& renderer, const seir::SharedPtr<seir::Inlet>& inlet, unsigned lineHeight)
 		{
 			if (::FT_Init_FreeType(&_library))
 				return;
-			if (blob->size() > static_cast<size_t>(std::numeric_limits<FT_Long>::max())
-				|| ::FT_New_Memory_Face(_library, static_cast<const FT_Byte*>(blob->data()), static_cast<FT_Long>(blob->size()), 0, &_face))
+			if (inlet->size() > static_cast<size_t>(std::numeric_limits<FT_Long>::max())
+				|| ::FT_New_Memory_Face(_library, static_cast<const FT_Byte*>(inlet->data()), static_cast<FT_Long>(inlet->size()), 0, &_face))
 				return;
-			_blob = blob;
+			_inlet = inlet;
 			_hasKerning = FT_HAS_KERNING(_face);
 			buildBitmap(renderer, lineHeight);
 		}
@@ -234,7 +234,7 @@ namespace
 		};
 
 		FT_Library _library = nullptr;
-		seir::SharedPtr<seir::Blob> _blob;
+		seir::SharedPtr<seir::Inlet> _inlet;
 		FT_Face _face = nullptr;
 		bool _hasKerning = false;
 		float _size = 0;
@@ -245,11 +245,11 @@ namespace
 
 namespace seir
 {
-	SharedPtr<Font> Font::load(Renderer& renderer, const SharedPtr<Blob>& blob, unsigned lineHeight)
+	SharedPtr<Font> Font::load(Renderer& renderer, const SharedPtr<Inlet>& inlet, unsigned lineHeight)
 	{
-		if (!blob || !lineHeight)
+		if (!inlet || !lineHeight)
 			return {};
-		const auto font = makeShared<FreeTypeFont>(renderer, blob, lineHeight);
+		const auto font = makeShared<FreeTypeFont>(renderer, inlet, lineHeight);
 		return font->isLoaded()
 			? staticCast<Font>(font)
 			: nullptr;

@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(HEADERS
-	include/seir_io/blob.hpp
-	include/seir_io/buffer_blob.hpp
+	include/seir_io/buffer_inlet.hpp
 	include/seir_io/buffer_writer.hpp
+	include/seir_io/inlet.hpp
 	include/seir_io/paths.hpp
 	include/seir_io/reader.hpp
 	include/seir_io/save_file.hpp

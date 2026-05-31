@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_compression/compression.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/writer.hpp>
 #include <seir_package/archive.hpp>
 #include <seir_serialization/st_stream.hpp>
@@ -45,10 +45,10 @@ namespace
 
 	Index readIndex(const std::string& path)
 	{
-		const auto blob = seir::fromFile(path);
-		check(static_cast<bool>(blob), "Bad index file");
+		const auto inlet = seir::fromFile(path);
+		check(static_cast<bool>(inlet), "Bad index file");
 		Index result;
-		seir::StReader reader{ blob };
+		seir::StReader reader{ inlet };
 		seir::StStream stream{ reader };
 		if (stream.tryKey("compressor"))
 		{
@@ -121,10 +121,10 @@ int u8main(int argc, char** argv)
 			std::cerr << "Writing " << packagePath << "...\n";
 			for (const auto& group : index._groups)
 				for (const auto& file : group._files)
-					if (const auto blob = seir::fromFile(file); blob)
+					if (const auto inlet = seir::fromFile(file); inlet)
 					{
 						std::cerr << " >> " << file << '\n';
-						packageWriter->add(file, *blob, group._compressionLevel);
+						packageWriter->add(file, *inlet, group._compressionLevel);
 					}
 					else
 					{

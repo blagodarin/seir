@@ -10,8 +10,8 @@
 
 namespace seir
 {
-	class Blob;
 	enum class Compression;
+	class Inlet;
 	template <class>
 	class SharedPtr;
 
@@ -29,16 +29,16 @@ namespace seir
 		~Storage() noexcept;
 
 		//
-		void attach(std::string_view name, SharedPtr<Blob>&&);
+		void attach(std::string_view name, SharedPtr<Inlet>&&);
 
 		//
-		void attach(std::string_view name, SharedPtr<Blob>&&, size_t offset, size_t size, Compression, size_t compressedSize);
+		void attach(std::string_view name, SharedPtr<Inlet>&&, size_t offset, size_t size, Compression, size_t compressedSize);
 
 		//
-		bool attachArchive(const SharedPtr<Blob>&);
+		bool attachArchive(const SharedPtr<Inlet>&);
 
 		//
-		[[nodiscard]] SharedPtr<Blob> open(const std::string& name) const;
+		[[nodiscard]] SharedPtr<Inlet> open(const std::string& name) const;
 
 	private:
 		const UniquePtr<struct StorageImpl> _impl;

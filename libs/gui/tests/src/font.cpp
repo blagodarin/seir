@@ -6,7 +6,7 @@
 
 #include <seir_app/app.hpp>
 #include <seir_app/window.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_renderer/renderer.hpp>
 
 #include <doctest/doctest.h>
@@ -18,9 +18,9 @@ TEST_CASE("Font")
 	seir::Renderer renderer{ window };
 	SUBCASE("ttf file")
 	{
-		const auto blob = seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf");
-		REQUIRE(blob);
-		const auto font = seir::Font::load(renderer, blob, 16);
+		const auto inlet = seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf");
+		REQUIRE(inlet);
+		const auto font = seir::Font::load(renderer, inlet, 16);
 		REQUIRE(font);
 		SUBCASE("Font::textWidth")
 		{
@@ -36,9 +36,9 @@ TEST_CASE("Font")
 	}
 	SUBCASE("bad file")
 	{
-		const auto blob = seir::fromFile(SEIR_DATA_DIR "icon.ico");
-		REQUIRE(blob);
-		const auto font = seir::Font::load(renderer, blob, 16);
+		const auto inlet = seir::fromFile(SEIR_DATA_DIR "icon.ico");
+		REQUIRE(inlet);
+		const auto font = seir::Font::load(renderer, inlet, 16);
 		CHECK_FALSE(font);
 	}
 }

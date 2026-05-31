@@ -10,12 +10,12 @@
 
 namespace seir
 {
-	class Blob;
+	class Inlet;
 
 	class MeshData : public ReferenceCounter
 	{
 	public:
-		[[nodiscard]] static SharedPtr<MeshData> load(const SharedPtr<Blob>&);
+		[[nodiscard]] static SharedPtr<MeshData> load(const SharedPtr<Inlet>&);
 
 		MeshData() noexcept;
 		~MeshData() noexcept;

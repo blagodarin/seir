@@ -243,9 +243,9 @@ namespace
 
 namespace seir
 {
-	SharedPtr<MeshData> MeshData::load(const SharedPtr<Blob>& blob)
+	SharedPtr<MeshData> MeshData::load(const SharedPtr<Inlet>& inlet)
 	{
-		Reader reader{ *blob };
+		Reader reader{ *inlet };
 		ObjParser parser;
 		for (std::string line;;)
 		{

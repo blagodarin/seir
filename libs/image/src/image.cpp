@@ -24,12 +24,12 @@
 
 namespace seir
 {
-	std::optional<Image> Image::load(const SharedPtr<Blob>& blob)
+	std::optional<Image> Image::load(const SharedPtr<Inlet>& inlet)
 	{
-		if (blob && blob->size() >= 4)
+		if (inlet && inlet->size() >= 4)
 		{
 			Image result;
-			switch (Reader reader{ *blob }; *static_cast<const uint16_t*>(blob->data()))
+			switch (Reader reader{ *inlet }; *static_cast<const uint16_t*>(inlet->data()))
 			{
 			case kBmpFileID:
 #if SEIR_IMAGE_BMP
@@ -56,7 +56,7 @@ namespace seir
 			default:
 				// ICO files start with [00 00] (reserved, must be zero) followed by [01 00] (file type, 1 is ICO).
 				// Supported TGA files start with [xx 00 02 00] or [xx 00 03 00] (xx is usually zero).
-				if (*static_cast<const uint32_t*>(blob->data()) == makeCC('\x00', '\x00', '\x01', '\x00'))
+				if (*static_cast<const uint32_t*>(inlet->data()) == makeCC('\x00', '\x00', '\x01', '\x00'))
 				{
 #if SEIR_IMAGE_ICO
 					result._data = loadIcoImage(reader, result._info);
@@ -72,7 +72,7 @@ namespace seir
 			if (result._data)
 			{
 				if (!result._buffer.capacity())
-					result._blob = blob;
+					result._inlet = inlet;
 				return result;
 			}
 		}

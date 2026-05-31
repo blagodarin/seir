@@ -4,7 +4,7 @@
 
 #include "image.hpp"
 
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/writer.hpp>
 #include <seir_io/buffer_writer.hpp>
 
@@ -14,17 +14,17 @@ namespace
 {
 	void checkSavedImage(const void* data, uint64_t size, const std::string& name)
 	{
-		const auto blob = seir::fromFile(SEIR_TEST_DIR + name);
-		REQUIRE(blob);
-		REQUIRE(size == blob->size());
-		CHECK(std::memcmp(data, blob->data(), blob->size()) == 0);
+		const auto inlet = seir::fromFile(SEIR_TEST_DIR + name);
+		REQUIRE(inlet);
+		REQUIRE(size == inlet->size());
+		CHECK(std::memcmp(data, inlet->data(), inlet->size()) == 0);
 	}
 
 	seir::Image loadImage(const std::string& name)
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR + name);
-		REQUIRE(blob);
-		auto image = seir::Image::load(blob);
+		auto inlet = seir::fromFile(SEIR_TEST_DIR + name);
+		REQUIRE(inlet);
+		auto image = seir::Image::load(inlet);
 		REQUIRE(image);
 		return std::move(*image);
 	}
@@ -204,9 +204,9 @@ TEST_CASE("PNG")
 {
 	SUBCASE("load")
 	{
-		auto blob = seir::fromFile(SEIR_TEST_DIR "rgb24.png");
-		REQUIRE(blob);
-		CHECK_FALSE(static_cast<bool>(seir::Image::load(blob)));
+		auto inlet = seir::fromFile(SEIR_TEST_DIR "rgb24.png");
+		REQUIRE(inlet);
+		CHECK_FALSE(static_cast<bool>(seir::Image::load(inlet)));
 	}
 	SUBCASE("save")
 	{

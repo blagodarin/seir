@@ -5,7 +5,7 @@
 #include <seir_serialization/st_reader.hpp>
 
 #include <seir_base/buffer.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 
 #include <array>
 #include <cstring>
@@ -87,11 +87,11 @@ namespace seir
 	class StReaderImpl
 	{
 	public:
-		explicit StReaderImpl(const SharedPtr<Blob>& blob)
-			: _size{ blob ? blob->size() : 0 }
+		explicit StReaderImpl(const SharedPtr<Inlet>& inlet)
+			: _size{ inlet ? inlet->size() : 0 }
 		{
-			if (blob)
-				std::memcpy(_buffer.data(), blob->data(), blob->size());
+			if (inlet)
+				std::memcpy(_buffer.data(), inlet->data(), inlet->size());
 			_buffer.data()[_size] = std::byte{}; // To simplify parsing.
 		}
 
@@ -233,8 +233,8 @@ namespace seir
 		std::vector<uint8_t> _stack{ AcceptKeys };
 	};
 
-	StReader::StReader(const SharedPtr<Blob>& blob)
-		: _impl{ std::make_unique<StReaderImpl>(blob) } {}
+	StReader::StReader(const SharedPtr<Inlet>& inlet)
+		: _impl{ std::make_unique<StReaderImpl>(inlet) } {}
 
 	StReader::~StReader() noexcept = default;
 

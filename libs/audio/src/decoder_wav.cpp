@@ -49,8 +49,8 @@ namespace
 	class RawAudioDecoder final : public seir::AudioDecoder
 	{
 	public:
-		RawAudioDecoder(seir::SharedPtr<seir::Blob>&& blob, const seir::AudioFormat& format) noexcept
-			: _blob{ std::move(blob) }, _format{ format } {}
+		RawAudioDecoder(seir::SharedPtr<seir::Inlet>&& inlet, const seir::AudioFormat& format) noexcept
+			: _inlet{ std::move(inlet) }, _format{ format } {}
 
 		seir::AudioFormat format() const override
 		{
@@ -60,7 +60,7 @@ namespace
 		size_t read(void* buffer, size_t maxFrames) override
 		{
 			// The caller just requires a memory range with subsequent samples,
-			// so we could return the pointer to the blob data without copying.
+			// so we could return the pointer to the inlet data without copying.
 			// However, this is only possible for uncompressed audio, and audio
 			// is (almost) never stored uncompressed. This also breaks alignment
 			// requirements for processing functions, complicating things further.
@@ -77,17 +77,17 @@ namespace
 		}
 
 	private:
-		const seir::SharedPtr<seir::Blob> _blob;
-		seir::Reader _reader{ *_blob };
+		const seir::SharedPtr<seir::Inlet> _inlet;
+		seir::Reader _reader{ *_inlet };
 		const seir::AudioFormat _format;
 	};
 }
 
 namespace seir
 {
-	UniquePtr<AudioDecoder> createWavDecoder(SharedPtr<Blob>&& blob, const AudioDecoderPreferences&)
+	UniquePtr<AudioDecoder> createWavDecoder(SharedPtr<Inlet>&& inlet, const AudioDecoderPreferences&)
 	{
-		Reader reader{ *blob };
+		Reader reader{ *inlet };
 		if (const auto fileHeader = reader.read<RiffFileHeader>(); !fileHeader
 			|| fileHeader->id != kWavFileID
 			|| fileHeader->type != makeCC('W', 'A', 'V', 'E'))
@@ -132,6 +132,6 @@ namespace seir
 		auto dataSize = reader.size() - reader.offset();
 		if (dataSize > dataHeader->size)
 			dataSize = dataHeader->size;
-		return makeUnique<AudioDecoder, RawAudioDecoder>(Blob::from(std::move(blob), reader.offset(), dataSize), AudioFormat{ sampleType, channelLayout, fmt->samplesPerSecond });
+		return makeUnique<AudioDecoder, RawAudioDecoder>(Inlet::from(std::move(inlet), reader.offset(), dataSize), AudioFormat{ sampleType, channelLayout, fmt->samplesPerSecond });
 	}
 }

@@ -5,7 +5,7 @@
 #include <seir_package/storage.hpp>
 
 #include <seir_compression/compression.hpp>
-#include <seir_io/buffer_blob.hpp>
+#include <seir_io/buffer_inlet.hpp>
 #include "archive.hpp"
 
 #include <cassert>
@@ -15,7 +15,7 @@ namespace
 {
 	struct Attachment
 	{
-		seir::SharedPtr<seir::Blob> _blob;
+		seir::SharedPtr<seir::Inlet> _inlet;
 		size_t _offset = 0;
 		size_t _uncompressedSize = 0;
 		size_t _compressedSize = 0;
@@ -41,56 +41,56 @@ namespace seir
 
 	Storage::~Storage() noexcept = default;
 
-	void Storage::attach(std::string_view name, SharedPtr<Blob>&& blob)
+	void Storage::attach(std::string_view name, SharedPtr<Inlet>&& inlet)
 	{
-		const auto size = blob->size();
-		_impl->_attachments.insert_or_assign(std::string{ name }, Attachment{ std::move(blob), 0, size, size, Compression::None });
+		const auto size = inlet->size();
+		_impl->_attachments.insert_or_assign(std::string{ name }, Attachment{ std::move(inlet), 0, size, size, Compression::None });
 	}
 
-	void Storage::attach(std::string_view name, SharedPtr<Blob>&& blob, size_t offset, size_t size, Compression compression, size_t compressedSize)
+	void Storage::attach(std::string_view name, SharedPtr<Inlet>&& inlet, size_t offset, size_t size, Compression compression, size_t compressedSize)
 	{
-		assert(offset <= blob->size() && compressedSize <= blob->size() - offset);
-		_impl->_attachments.insert_or_assign(std::string{ name }, Attachment{ std::move(blob), offset, size, compressedSize, compression });
+		assert(offset <= inlet->size() && compressedSize <= inlet->size() - offset);
+		_impl->_attachments.insert_or_assign(std::string{ name }, Attachment{ std::move(inlet), offset, size, compressedSize, compression });
 	}
 
-	bool Storage::attachArchive(const SharedPtr<Blob>& blob)
+	bool Storage::attachArchive(const SharedPtr<Inlet>& inlet)
 	{
-		if (blob)
-			if (const auto id = blob->get<uint32_t>(0))
+		if (inlet)
+			if (const auto id = inlet->get<uint32_t>(0))
 				switch (*id)
 				{
 				case kSeirFileID:
-					return attachSeirArchive(*this, blob);
+					return attachSeirArchive(*this, inlet);
 				default:
 					break;
 				}
 		return {};
 	}
 
-	SharedPtr<Blob> Storage::open(const std::string& name) const
+	SharedPtr<Inlet> Storage::open(const std::string& name) const
 	{
 		if (_impl->_useFileSystem == UseFileSystem::BeforeAttachments)
-			if (auto blob = Blob::from(name))
-				return blob;
+			if (auto inlet = fromFile(name))
+				return inlet;
 		if (const auto i = _impl->_attachments.find(name); i != _impl->_attachments.end())
 		{
 			if (i->second._compression == Compression::None)
 			{
-				return i->second._offset == 0 && i->second._uncompressedSize == i->second._blob->size()
-					? i->second._blob
-					: Blob::from(SharedPtr{ i->second._blob }, i->second._offset, i->second._uncompressedSize);
+				return i->second._offset == 0 && i->second._uncompressedSize == i->second._inlet->size()
+					? i->second._inlet
+					: Inlet::from(SharedPtr{ i->second._inlet }, i->second._offset, i->second._uncompressedSize);
 			}
 			if (const auto decompressor = Decompressor::create(i->second._compression))
 			{
 				Buffer buffer{ i->second._uncompressedSize };
-				if (decompressor->decompress(buffer.data(), i->second._uncompressedSize, static_cast<const std::byte*>(i->second._blob->data()) + i->second._offset, i->second._compressedSize))
-					return makeShared<Blob, BufferBlob>(std::move(buffer), i->second._uncompressedSize);
+				if (decompressor->decompress(buffer.data(), i->second._uncompressedSize, static_cast<const std::byte*>(i->second._inlet->data()) + i->second._offset, i->second._compressedSize))
+					return makeShared<Inlet, BufferInlet>(std::move(buffer), i->second._uncompressedSize);
 			}
 			return {};
 		}
 		if (_impl->_useFileSystem == UseFileSystem::AfterAttachments)
-			if (auto blob = Blob::from(name))
-				return blob;
+			if (auto inlet = fromFile(name))
+				return inlet;
 		return {};
 	} // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 }

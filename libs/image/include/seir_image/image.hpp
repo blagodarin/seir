@@ -12,7 +12,7 @@
 
 namespace seir
 {
-	class Blob;
+	class Inlet;
 	class Writer;
 
 	// Pixel format.
@@ -76,7 +76,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static std::optional<Image> load(const SharedPtr<Blob>&);
+		[[nodiscard]] static std::optional<Image> load(const SharedPtr<Inlet>&);
 
 		Image() noexcept;
 		Image(const Image&) = delete;
@@ -103,7 +103,7 @@ namespace seir
 	private:
 		ImageInfo _info;
 		const void* _data = nullptr;
-		SharedPtr<Blob> _blob; // If we managed to memory-map image contents...
-		Buffer _buffer;        // ...and if we didn't.
+		SharedPtr<Inlet> _inlet; // If we managed to memory-map image contents...
+		Buffer _buffer;          // ...and if we didn't.
 	};
 }

@@ -13,7 +13,7 @@
 #include <seir_gui/frame.hpp>
 #include <seir_gui/layout.hpp>
 #include <seir_gui/style.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/2d.hpp>
 #include <seir_renderer/renderer.hpp>

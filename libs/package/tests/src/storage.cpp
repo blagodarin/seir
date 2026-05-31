@@ -5,7 +5,7 @@
 #include <seir_package/storage.hpp>
 
 #include <seir_compression/compression.hpp>
-#include <seir_io/buffer_blob.hpp>
+#include <seir_io/buffer_inlet.hpp>
 
 #include <algorithm>
 #include <cstring>
@@ -23,7 +23,7 @@ TEST_CASE("Storage::attach")
 	CHECK_FALSE(storage.open("present"));
 	SUBCASE("Compression::None")
 	{
-		storage.attach("present", seir::Blob::from(contents.data(), contents.size()));
+		storage.attach("present", seir::Inlet::from(contents.data(), contents.size()));
 	}
 #if SEIR_COMPRESSION_ZLIB
 	SUBCASE("Compression::Zlib")
@@ -37,14 +37,14 @@ TEST_CASE("Storage::attach")
 		std::memcpy(buffer.data(), garbage.data(), garbage.size());
 		const auto compressedSize = compressor->compress(buffer.data() + garbage.size(), dataSize - 2 * garbage.size(), contents.data(), contents.size());
 		std::memcpy(buffer.data() + garbage.size() + compressedSize, garbage.data(), garbage.size());
-		storage.attach("present", seir::makeShared<seir::Blob, seir::BufferBlob>(std::move(buffer), dataSize), garbage.size(), contents.size(), seir::Compression::Zlib, compressedSize);
+		storage.attach("present", seir::makeShared<seir::Inlet, seir::BufferInlet>(std::move(buffer), dataSize), garbage.size(), contents.size(), seir::Compression::Zlib, compressedSize);
 	}
 #endif
 	CHECK_FALSE(storage.open("absent"));
-	const auto blob = storage.open("present");
-	REQUIRE(blob);
-	REQUIRE(blob->size() == contents.size());
-	CHECK_FALSE(std::memcmp(blob->data(), contents.data(), contents.size()));
+	const auto inlet = storage.open("present");
+	REQUIRE(inlet);
+	REQUIRE(inlet->size() == contents.size());
+	CHECK_FALSE(std::memcmp(inlet->data(), contents.data(), contents.size()));
 }
 
 TEST_CASE("Storage::open")
@@ -52,8 +52,8 @@ TEST_CASE("Storage::open")
 	const std::string path{ SEIR_TEST_DIR "file.txt" };
 	const auto file = seir::fromFile(path);
 	REQUIRE(file);
-	const auto dummy = seir::Blob::from(&file, sizeof file);
-	const auto checkEqual = [](const seir::SharedPtr<seir::Blob>& left, const seir::SharedPtr<seir::Blob>& right) {
+	const auto dummy = seir::Inlet::from(&file, sizeof file);
+	const auto checkEqual = [](const seir::SharedPtr<seir::Inlet>& left, const seir::SharedPtr<seir::Inlet>& right) {
 		REQUIRE(left->size() == right->size());
 		CHECK_FALSE(std::memcmp(left->data(), right->data(), left->size()));
 	};
@@ -63,17 +63,17 @@ TEST_CASE("Storage::open")
 		SUBCASE("open")
 		{
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(path);
-			REQUIRE(blob);
-			checkEqual(blob, file);
+			const auto inlet = storage.open(path);
+			REQUIRE(inlet);
+			checkEqual(inlet, file);
 		}
 		SUBCASE("attach")
 		{
 			storage.attach(path, seir::SharedPtr{ dummy });
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(path);
-			REQUIRE(blob);
-			checkEqual(blob, dummy);
+			const auto inlet = storage.open(path);
+			REQUIRE(inlet);
+			checkEqual(inlet, dummy);
 		}
 	}
 	SUBCASE("UseFileSystem::BeforeAttachments")
@@ -82,17 +82,17 @@ TEST_CASE("Storage::open")
 		SUBCASE("open")
 		{
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(path);
-			REQUIRE(blob);
-			checkEqual(blob, file);
+			const auto inlet = storage.open(path);
+			REQUIRE(inlet);
+			checkEqual(inlet, file);
 		}
 		SUBCASE("attach")
 		{
 			storage.attach(path, seir::SharedPtr{ dummy });
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(path);
-			REQUIRE(blob);
-			checkEqual(blob, file);
+			const auto inlet = storage.open(path);
+			REQUIRE(inlet);
+			checkEqual(inlet, file);
 		}
 	}
 	SUBCASE("UseFileSystem::Never")
@@ -107,9 +107,9 @@ TEST_CASE("Storage::open")
 		{
 			storage.attach(path, seir::SharedPtr{ dummy });
 			CHECK_FALSE(storage.open("does/not/exist"));
-			const auto blob = storage.open(path);
-			REQUIRE(blob);
-			checkEqual(blob, dummy);
+			const auto inlet = storage.open(path);
+			REQUIRE(inlet);
+			checkEqual(inlet, dummy);
 		}
 	}
 }

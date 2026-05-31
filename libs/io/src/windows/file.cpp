@@ -3,25 +3,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <seir_base/scope.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/save_file.hpp>
 #include <seir_io/temporary.hpp>
 #include "utils.hpp"
 
 namespace
 {
-	struct FileBlob final : seir::Blob
+	struct FileInlet final : seir::Inlet
 	{
-		FileBlob(void*& data, size_t size) noexcept
-			: Blob{ data, size } { data = nullptr; }
-		~FileBlob() noexcept override
+		FileInlet(void*& data, size_t size) noexcept
+			: Inlet{ data, size }
+		{
+			data = nullptr;
+		}
+
+		~FileInlet() noexcept override
 		{
 			if (!::UnmapViewOfFile(_data))
 				seir::windows::reportError("UnmapViewOfFile");
 		}
 	};
 
-	seir::SharedPtr<seir::Blob> createFileBlob(const wchar_t* path)
+	seir::SharedPtr<seir::Inlet> createFileInlet(const wchar_t* path)
 	{
 		if (const seir::windows::Handle file{ ::CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) }; file == INVALID_HANDLE_VALUE)
 		{
@@ -33,7 +37,7 @@ namespace
 		else
 		{
 			if (!size.QuadPart)
-				return seir::Blob::from(nullptr, 0);
+				return seir::Inlet::from(nullptr, 0);
 			if (static_cast<ULONGLONG>(size.QuadPart) <= std::numeric_limits<size_t>::max())
 				if (const seir::windows::Handle mapping{ ::CreateFileMappingW(file, nullptr, PAGE_READONLY, static_cast<DWORD>(size.HighPart), size.LowPart, nullptr) }; !mapping)
 					seir::windows::reportError("CreateFileMappingW");
@@ -45,7 +49,7 @@ namespace
 						if (data && !::UnmapViewOfFile(data))
 							seir::windows::reportError("UnmapViewOfFile");
 					} };
-					return seir::makeShared<seir::Blob, FileBlob>(data, static_cast<size_t>(size.QuadPart));
+					return seir::makeShared<seir::Inlet, FileInlet>(data, static_cast<size_t>(size.QuadPart));
 				}
 		}
 		return {};
@@ -131,18 +135,18 @@ namespace
 
 namespace seir
 {
-	SharedPtr<Blob> Blob::from(const std::string& path)
+	SharedPtr<Inlet> Inlet::from(const std::string& path)
 	{
 		if (const windows::WString wpath{ path })
-			return ::createFileBlob(wpath.c_str());
+			return ::createFileInlet(wpath.c_str());
 		return {};
 	}
 
-	SharedPtr<Blob> Blob::from(TemporaryFile& file)
+	SharedPtr<Inlet> Inlet::from(TemporaryFile& file)
 	{
 		auto& impl = static_cast<TemporaryFileImpl&>(file);
 		if (!impl._size)
-			return seir::Blob::from(nullptr, 0);
+			return seir::Inlet::from(nullptr, 0);
 		if (impl._size <= std::numeric_limits<size_t>::max())
 			if (const windows::Handle mapping{ ::CreateFileMappingW(impl._handle, nullptr, PAGE_READONLY, static_cast<DWORD>(impl._size >> 32), static_cast<DWORD>(impl._size), nullptr) }; !mapping)
 				windows::reportError("CreateFileMappingW");
@@ -154,7 +158,7 @@ namespace seir
 					if (data && !::UnmapViewOfFile(data))
 						windows::reportError("UnmapViewOfFile");
 				} };
-				return seir::makeShared<seir::Blob, FileBlob>(data, static_cast<size_t>(impl._size));
+				return seir::makeShared<seir::Inlet, FileInlet>(data, static_cast<size_t>(impl._size));
 			}
 		return {};
 	}

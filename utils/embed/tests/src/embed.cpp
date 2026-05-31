@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 
 #include <cstring>
 #include <span>
@@ -14,19 +14,19 @@ namespace
 {
 	void checkString(const std::string& name, std::string_view actual)
 	{
-		const auto blob = seir::fromFile(SEIR_TEST_DIR + name);
-		REQUIRE(blob);
-		const std::string_view expected{ static_cast<const char*>(blob->data()), blob->size() };
+		const auto inlet = seir::fromFile(SEIR_TEST_DIR + name);
+		REQUIRE(inlet);
+		const std::string_view expected{ static_cast<const char*>(inlet->data()), inlet->size() };
 		CHECK(expected == actual);
 	}
 
 	template <size_t N>
 	void checkUint8(const std::string& name, std::span<const uint8_t, N> actual)
 	{
-		const auto blob = seir::fromFile(SEIR_TEST_DIR + name);
-		REQUIRE(blob);
-		REQUIRE(blob->size() == actual.size_bytes());
-		CHECK(std::memcmp(blob->data(), actual.data(), blob->size()) == 0);
+		const auto inlet = seir::fromFile(SEIR_TEST_DIR + name);
+		REQUIRE(inlet);
+		REQUIRE(inlet->size() == actual.size_bytes());
+		CHECK(std::memcmp(inlet->data(), actual.data(), inlet->size()) == 0);
 	}
 }
 

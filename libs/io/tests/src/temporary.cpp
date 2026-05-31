@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/temporary.hpp>
 
 #include <array>
@@ -28,11 +28,11 @@ TEST_CASE("TemporaryFile")
 	const std::filesystem::path path{ file->path() };
 	CHECK(std::filesystem::exists(path));
 	{
-		const auto blob = seir::Blob::from(*file);
-		REQUIRE(blob);
-		REQUIRE(blob->size() == 2 * data.size());
-		CHECK_FALSE(std::memcmp(blob->data(), data.data(), data.size()));
-		CHECK_FALSE(std::memcmp(static_cast<const std::byte*>(blob->data()) + data.size(), data.data(), data.size()));
+		const auto inlet = seir::Inlet::from(*file);
+		REQUIRE(inlet);
+		REQUIRE(inlet->size() == 2 * data.size());
+		CHECK_FALSE(std::memcmp(inlet->data(), data.data(), data.size()));
+		CHECK_FALSE(std::memcmp(static_cast<const std::byte*>(inlet->data()) + data.size(), data.data(), data.size()));
 	}
 	file.reset();
 	CHECK_FALSE(std::filesystem::exists(path));

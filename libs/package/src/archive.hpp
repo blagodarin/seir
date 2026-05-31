@@ -15,6 +15,6 @@ namespace seir
 	class Storage;
 
 	constexpr uint32_t kSeirFileID = seir::makeCC('\xDF', 'S', 'a', '\x01');
-	bool attachSeirArchive(Storage&, const SharedPtr<Blob>&);
+	bool attachSeirArchive(Storage&, const SharedPtr<Inlet>&);
 	UniquePtr<Archiver> createSeirArchiver(UniquePtr<Writer>&&, Compression);
 }

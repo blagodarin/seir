@@ -9,7 +9,7 @@
 
 namespace seir
 {
-	class Blob;
+	class Inlet;
 	template <class>
 	class SharedPtr;
 
@@ -47,7 +47,7 @@ namespace seir
 	class StReader
 	{
 	public:
-		explicit StReader(const SharedPtr<Blob>&);
+		explicit StReader(const SharedPtr<Inlet>&);
 		~StReader() noexcept;
 
 		[[nodiscard]] StToken read();

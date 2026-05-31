@@ -4,7 +4,7 @@
 
 #include <seir_serialization/st_stream.hpp>
 
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 
 #include <ostream>
 #include <doctest/doctest.h>
@@ -15,7 +15,7 @@ namespace
 	{
 	public:
 		explicit StreamTester(std::string_view text)
-			: _reader{ seir::Blob::from(text.data(), text.size()) } {}
+			: _reader{ seir::Inlet::from(text.data(), text.size()) } {}
 		seir::StStream* operator->() noexcept { return &_stream; }
 
 	private:

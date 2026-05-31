@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(SOURCES
-	src/blob.cpp
-	src/buffer_blob.cpp
+	src/buffer_inlet.cpp
 	src/buffer_writer.cpp
+	src/inlet.cpp
 	src/paths.cpp
 	src/reader.cpp
 	src/save_file.cpp

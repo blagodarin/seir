@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_io/writer.hpp>
 #include <seir_u8main/u8main.hpp>
 
@@ -93,8 +93,8 @@ int u8main(int argc, char** argv)
 		write = writeUint8;
 	else if (std::strcmp(argv[1], "--string") != 0)
 		return usage();
-	const auto input = seir::fromFile(argv[2]);
-	if (!input)
+	const auto inlet = seir::fromFile(argv[2]);
+	if (!inlet)
 	{
 		std::println(stderr, "ERROR: Unable to open {}", argv[2]);
 		return 1;
@@ -107,8 +107,8 @@ int u8main(int argc, char** argv)
 	else
 	{
 		std::string outputBuffer;
-		outputBuffer.reserve(input->size());
-		write(outputBuffer, std::span{ static_cast<const char*>(input->data()), input->size() });
+		outputBuffer.reserve(inlet->size());
+		write(outputBuffer, std::span{ static_cast<const char*>(inlet->data()), inlet->size() });
 		writer->write(outputBuffer.data(), outputBuffer.size());
 	}
 	return 0;

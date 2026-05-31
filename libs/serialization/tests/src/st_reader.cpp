@@ -5,7 +5,7 @@
 #include <seir_serialization/st_reader.hpp>
 
 #include <seir_base/int_utils.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 
 #include <ostream>
 #include <vector>
@@ -47,7 +47,7 @@ TEST_CASE("StReader::StReader")
 TEST_CASE("StReader::read")
 {
 	const auto check = [](std::string_view data, const std::vector<seir::StToken>& tokens) {
-		seir::StReader reader{ seir::Blob::from(data.data(), data.size()) };
+		seir::StReader reader{ seir::Inlet::from(data.data(), data.size()) };
 		for (const auto& token : tokens)
 		{
 			CHECK(reader.read() == token);

@@ -12,7 +12,7 @@
 #include <seir_gui/layout.hpp>
 #include <seir_gui/style.hpp>
 #include <seir_image/image.hpp>
-#include <seir_io/blob.hpp>
+#include <seir_io/inlet.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_math/plane.hpp>

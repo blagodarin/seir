@@ -14,8 +14,8 @@ TEST_CASE("Reader")
 {
 	SUBCASE("size() == 0")
 	{
-		const auto blob = seir::Blob::from(nullptr, 0);
-		seir::Reader reader{ *blob };
+		const auto inlet = seir::Inlet::from(nullptr, 0);
+		seir::Reader reader{ *inlet };
 		CHECK(reader.offset() == 0);
 		CHECK(reader.size() == 0);
 		SUBCASE("read()") { CHECK_FALSE(reader.read<uint8_t>()); }
@@ -32,8 +32,8 @@ TEST_CASE("Reader")
 			'8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
 			'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'
 		};
-		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
-		seir::Reader reader{ *blob };
+		const auto inlet = seir::Inlet::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *inlet };
 		CHECK(reader.offset() == 0);
 		CHECK(reader.size() == buffer.size());
 		size_t expectedOffset = 0;
@@ -76,22 +76,22 @@ TEST_CASE("Reader::readArray")
 {
 	const auto check = []<class T>(T) {
 		const std::array<T, 2> buffer{ 1, 2 };
-		for (size_t blobSize = 0; blobSize <= buffer.size() * sizeof(T); ++blobSize)
+		for (size_t inletSize = 0; inletSize <= buffer.size() * sizeof(T); ++inletSize)
 		{
-			INFO("blobSize = ", blobSize);
-			const auto blob = seir::Blob::from(buffer.data(), blobSize);
-			for (size_t elementsToRead = 0; elementsToRead <= blobSize / sizeof(T) + 1; ++elementsToRead)
+			INFO("inletSize = ", inletSize);
+			const auto inlet = seir::Inlet::from(buffer.data(), inletSize);
+			for (size_t elementsToRead = 0; elementsToRead <= inletSize / sizeof(T) + 1; ++elementsToRead)
 			{
 				INFO("elementsToRead = ", elementsToRead);
-				seir::Reader reader{ *blob };
-				const auto expectedHeadSize = std::min(elementsToRead, blob->size() / sizeof(T));
+				seir::Reader reader{ *inlet };
+				const auto expectedHeadSize = std::min(elementsToRead, inlet->size() / sizeof(T));
 				const auto head = reader.readArray<T>(elementsToRead);
 				CHECK(head.data() == buffer.data());
 				CHECK(head.size() == expectedHeadSize);
 				CHECK(reader.offset() == expectedHeadSize * sizeof(T));
-				if (elementsToRead <= blobSize / sizeof(T))
+				if (elementsToRead <= inletSize / sizeof(T))
 				{
-					const auto expectedTailSize = blobSize / sizeof(T) - elementsToRead;
+					const auto expectedTailSize = inletSize / sizeof(T) - elementsToRead;
 					const auto tail = reader.readArray<T>(expectedTailSize + 1);
 					CHECK(tail.data() == buffer.data() + expectedHeadSize);
 					CHECK(tail.size() == expectedTailSize);
@@ -110,22 +110,22 @@ TEST_CASE("Reader::readBlocks")
 	for (size_t blockSize = 1; blockSize <= 2; ++blockSize)
 	{
 		INFO("blockSize = ", blockSize);
-		for (size_t blobSize = 0; blobSize <= buffer.size(); ++blobSize)
+		for (size_t inletSize = 0; inletSize <= buffer.size(); ++inletSize)
 		{
-			INFO("blobSize = ", blobSize);
-			const auto blob = seir::Blob::from(buffer.data(), blobSize);
-			for (size_t blocksToRead = 0; blocksToRead <= blobSize / blockSize + 1; ++blocksToRead)
+			INFO("inletSize = ", inletSize);
+			const auto inlet = seir::Inlet::from(buffer.data(), inletSize);
+			for (size_t blocksToRead = 0; blocksToRead <= inletSize / blockSize + 1; ++blocksToRead)
 			{
 				INFO("blocksToRead = ", blocksToRead);
-				seir::Reader reader{ *blob };
-				const auto expectedHeadSize = std::min(blocksToRead, blob->size() / blockSize);
+				seir::Reader reader{ *inlet };
+				const auto expectedHeadSize = std::min(blocksToRead, inlet->size() / blockSize);
 				const auto [headData, headSize] = reader.readBlocks(blocksToRead, blockSize);
 				CHECK(headData == buffer.data());
 				CHECK(headSize == expectedHeadSize);
 				CHECK(reader.offset() == expectedHeadSize * blockSize);
-				if (blocksToRead <= blobSize / blockSize)
+				if (blocksToRead <= inletSize / blockSize)
 				{
-					const auto expectedTailSize = blobSize / blockSize - blocksToRead;
+					const auto expectedTailSize = inletSize / blockSize - blocksToRead;
 					const auto [tailData, tailSize] = reader.readBlocks(expectedTailSize + 1, blockSize);
 					CHECK(tailData == buffer.data() + expectedHeadSize * blockSize);
 					CHECK(tailSize == expectedTailSize);
@@ -148,8 +148,8 @@ TEST_CASE("Reader::readLine")
 	SUBCASE("empty")
 	{
 		const std::string_view buffer{ "" };
-		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
-		seir::Reader reader{ *blob };
+		const auto inlet = seir::Inlet::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *inlet };
 		CHECK(reader.readLine().empty());
 	}
 	SUBCASE("newline")
@@ -158,8 +158,8 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("windows") { buffer = "\r\n"; }
 		SUBCASE("unix") { buffer = "\n"; }
 		SUBCASE("mac") { buffer = "\r"; }
-		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
-		seir::Reader reader{ *blob };
+		const auto inlet = seir::Inlet::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *inlet };
 		const auto line = reader.readLine();
 		CHECK(!line.empty());
 		CHECK(strip(line) == "");
@@ -172,8 +172,8 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("unix") { buffer = "text\n"; }
 		SUBCASE("mac") { buffer = "text\r"; }
 		SUBCASE("eof") { buffer = "text"; }
-		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
-		seir::Reader reader{ *blob };
+		const auto inlet = seir::Inlet::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *inlet };
 		CHECK(strip(reader.readLine()) == "text");
 		CHECK(reader.readLine().empty());
 	}
@@ -183,8 +183,8 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("windows") { buffer = "first\r\nsecond"; }
 		SUBCASE("unix") { buffer = "first\nsecond"; }
 		SUBCASE("mac") { buffer = "first\rsecond"; }
-		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
-		seir::Reader reader{ *blob };
+		const auto inlet = seir::Inlet::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *inlet };
 		CHECK(strip(reader.readLine()) == "first");
 		CHECK(strip(reader.readLine()) == "second");
 		CHECK(reader.readLine().empty());
@@ -200,8 +200,8 @@ TEST_CASE("Reader::readLine")
 		SUBCASE("unix-mac") { buffer = "\n\reof"; }
 		SUBCASE("mac-windows") { buffer = "\r\r\neof"; }
 		SUBCASE("mac-mac") { buffer = "\r\reof"; }
-		const auto blob = seir::Blob::from(buffer.data(), buffer.size());
-		seir::Reader reader{ *blob };
+		const auto inlet = seir::Inlet::from(buffer.data(), buffer.size());
+		seir::Reader reader{ *inlet };
 		CHECK(strip(reader.readLine()).empty());
 		CHECK(strip(reader.readLine()).empty());
 		CHECK(reader.readLine() == "eof");
