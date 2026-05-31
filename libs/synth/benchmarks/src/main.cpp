@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 
 	std::unique_ptr<seir::synth::Composition> composition;
 	const auto parsing = ::measure<10'000>(
-		[&composition, source = data.get()] { composition = seir::synth::Composition::create(source); }, // Clang 13 is unable to capture 'data' by reference.
+		[&composition, &data] { composition = seir::synth::Composition::load(data.get()); },
 		[&composition] { composition.reset(); });
 
 	static constexpr seir::synth::AudioFormat format{ 48'000, seir::synth::ChannelLayout::Stereo };

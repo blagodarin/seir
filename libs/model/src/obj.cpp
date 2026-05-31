@@ -243,7 +243,7 @@ namespace
 
 namespace seir
 {
-	std::optional<MeshData> MeshData::create(const SharedPtr<Blob>& blob)
+	std::optional<MeshData> MeshData::load(const SharedPtr<Blob>& blob)
 	{
 		Reader reader{ *blob };
 		ObjParser parser;

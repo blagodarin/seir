@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 		std::println(stderr, "\t{} FILE", std::filesystem::path{ argv[0] }.filename().string());
 		return 1;
 	}
-	auto decoder = seir::AudioDecoder::create(seir::load(argv[1]));
+	auto decoder = seir::AudioDecoder::create(seir::fromFile(argv[1]));
 	if (!decoder)
 	{
 		std::println(stderr, "Unable to play {}", argv[1]);

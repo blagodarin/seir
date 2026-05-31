@@ -14,3 +14,11 @@ Type must be one of:
 - `ci` — changes to CI configuration files and scripts.
 - `docs` — changes to documentation only.
 - `chore` — changes to other files.
+
+## Naming conventions
+
+Functions that produce immutable objects from source data are generally called `load`.
+They usually return `SharedPtr`s.
+
+Functions that produce stateful objects are generally called `create`.
+They usually return `UniquePtr`s.

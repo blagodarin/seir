@@ -50,7 +50,7 @@ namespace seir
 	};
 
 	// Convenience short-hand for loading from files.
-	[[nodiscard]] inline SharedPtr<Blob> load(const std::string& path)
+	[[nodiscard]] inline SharedPtr<Blob> fromFile(const std::string& path)
 	{
 		return Blob::from(path);
 	}

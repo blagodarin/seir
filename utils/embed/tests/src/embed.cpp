@@ -14,7 +14,7 @@ namespace
 {
 	void checkString(const std::string& name, std::string_view actual)
 	{
-		const auto blob = seir::load(SEIR_TEST_DIR + name);
+		const auto blob = seir::fromFile(SEIR_TEST_DIR + name);
 		REQUIRE(blob);
 		const std::string_view expected{ static_cast<const char*>(blob->data()), blob->size() };
 		CHECK(expected == actual);
@@ -23,7 +23,7 @@ namespace
 	template <size_t N>
 	void checkUint8(const std::string& name, std::span<const uint8_t, N> actual)
 	{
-		const auto blob = seir::load(SEIR_TEST_DIR + name);
+		const auto blob = seir::fromFile(SEIR_TEST_DIR + name);
 		REQUIRE(blob);
 		REQUIRE(blob->size() == actual.size_bytes());
 		CHECK(std::memcmp(blob->data(), actual.data(), blob->size()) == 0);

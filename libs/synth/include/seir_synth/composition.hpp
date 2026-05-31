@@ -13,7 +13,7 @@ namespace seir::synth
 	{
 	public:
 		// Loads a composition from text data.
-		[[nodiscard]] static std::unique_ptr<Composition> create(const char* textData);
+		[[nodiscard]] static std::unique_ptr<Composition> load(const char* textData);
 
 		virtual ~Composition() noexcept = default;
 	};

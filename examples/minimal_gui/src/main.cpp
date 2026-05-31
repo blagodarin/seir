@@ -53,7 +53,7 @@ int u8main(int, char**)
 	seir::Window window{ app, "Minimal GUI" };
 	seir::Renderer renderer{ window };
 	seir::Renderer2D renderer2d;
-	seir::GuiContext gui{ window, seir::Font::create(renderer, seir::load(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
+	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{

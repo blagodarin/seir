@@ -24,7 +24,7 @@
 
 namespace seir
 {
-	std::optional<Image> Image::create(const SharedPtr<Blob>& blob)
+	std::optional<Image> Image::load(const SharedPtr<Blob>& blob)
 	{
 		if (blob && blob->size() >= 4)
 		{

@@ -47,6 +47,6 @@ namespace seir::synth
 		std::string _title;
 		std::string _author;
 
-		void create(const char* source);
+		void load(const char* source);
 	};
 }

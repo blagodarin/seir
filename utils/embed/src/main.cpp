@@ -93,7 +93,7 @@ int u8main(int argc, char** argv)
 		write = writeUint8;
 	else if (std::strcmp(argv[1], "--string") != 0)
 		return usage();
-	const auto input = seir::load(argv[2]);
+	const auto input = seir::fromFile(argv[2]);
 	if (!input)
 	{
 		std::println(stderr, "ERROR: Unable to open {}", argv[2]);

@@ -75,9 +75,9 @@ TEST_CASE("Blob::from(...)")
 	}
 }
 
-TEST_CASE("load")
+TEST_CASE("fromFile")
 {
-	const auto blob = seir::load(SEIR_TEST_DIR "file.txt");
+	const auto blob = seir::fromFile(SEIR_TEST_DIR "file.txt");
 	REQUIRE(blob);
 	const std::string_view expected{ "contents" };
 	CHECK(blob->size() == expected.size());

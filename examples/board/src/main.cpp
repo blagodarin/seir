@@ -141,8 +141,8 @@ int u8main(int, char**)
 	const auto boardTexture = ::makeBgra32(renderer, 128, 128, [](size_t x, size_t y) {
 		return ((x ^ y) & 1) ? seir::Rgba32::grayscale(0xdd) : seir::Rgba32::black();
 	});
-	const auto boardMeshData = seir::MeshData::create(seir::load(LOCAL_DATA_DIR "board.obj"));
-	const auto cubeMeshData = seir::MeshData::create(seir::load(LOCAL_DATA_DIR "cube.obj"));
+	const auto boardMeshData = seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "board.obj"));
+	const auto cubeMeshData = seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "cube.obj"));
 	if (!boardMeshData || !cubeMeshData)
 		return 1;
 	const auto boardMesh = renderer.createMesh(boardMeshData->format(), boardMeshData->vertexData(), boardMeshData->vertexCount(), boardMeshData->indexData(), boardMeshData->indexCount());
@@ -150,7 +150,7 @@ int u8main(int, char**)
 	const auto cubeMesh = renderer.createMesh(cubeMeshData->format(), cubeMeshData->vertexData(), cubeMeshData->vertexCount(), cubeMeshData->indexData(), cubeMeshData->indexCount());
 	const auto cubeShaders = renderer.createShaders(kVertexShaderV3N3, kFragmentShaderV3N3);
 	seir::Renderer2D renderer2d;
-	seir::GuiContext gui{ window, seir::Font::create(renderer, seir::load(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
+	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{

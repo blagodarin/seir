@@ -76,7 +76,7 @@ TEST_CASE("Writer::create(const std::string&)")
 	REQUIRE(std::filesystem::exists(path));
 	CHECK(std::filesystem::file_size(path) == 2 * data.size());
 	{
-		const auto blob = seir::load(path.string());
+		const auto blob = seir::fromFile(path.string());
 		REQUIRE(blob);
 		REQUIRE(blob->size() == 2 * data.size());
 		CHECK_FALSE(std::memcmp(blob->data(), data.data(), data.size()));

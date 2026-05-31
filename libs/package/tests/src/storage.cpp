@@ -50,7 +50,7 @@ TEST_CASE("Storage::attach")
 TEST_CASE("Storage::open")
 {
 	const std::string path{ SEIR_TEST_DIR "file.txt" };
-	const auto file = seir::load(path);
+	const auto file = seir::fromFile(path);
 	REQUIRE(file);
 	const auto dummy = seir::Blob::from(&file, sizeof file);
 	const auto checkEqual = [](const seir::SharedPtr<seir::Blob>& left, const seir::SharedPtr<seir::Blob>& right) {

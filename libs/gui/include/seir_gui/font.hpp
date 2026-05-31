@@ -36,7 +36,7 @@ namespace seir
 	{
 	public:
 		//
-		[[nodiscard]] static SharedPtr<Font> create(Renderer&, const SharedPtr<Blob>&, unsigned lineHeight);
+		[[nodiscard]] static SharedPtr<Font> load(Renderer&, const SharedPtr<Blob>&, unsigned lineHeight);
 
 		virtual ~Font() noexcept = default;
 

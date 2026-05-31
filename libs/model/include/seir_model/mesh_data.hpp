@@ -18,7 +18,7 @@ namespace seir
 	class MeshData
 	{
 	public:
-		[[nodiscard]] static std::optional<MeshData> create(const SharedPtr<Blob>&);
+		[[nodiscard]] static std::optional<MeshData> load(const SharedPtr<Blob>&);
 
 		MeshData() noexcept;
 		MeshData(const MeshData&) = delete;
