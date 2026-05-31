@@ -96,6 +96,7 @@ namespace
 			frame.addLabel(_debugText, seir::GuiAlignment::Left);
 			layout.fromTopRight(seir::GuiLayout::Axis::Y, 4);
 			frame.addLabel(_fps, seir::GuiAlignment::Right);
+			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 0);
 			_cursor = frame.addHoverArea(frame.size());
 			if (frame.takeKeyPress(seir::Key::Escape))
 				frame.close();
