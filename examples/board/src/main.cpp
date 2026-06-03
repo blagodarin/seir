@@ -79,32 +79,106 @@ namespace
 #endif
 	};
 
+	class Camera3D
+	{
+	public:
+		Camera3D(const seir::SizeF& viewportSize, const seir::Vec3& cameraPosition) noexcept
+			: _viewportSize{ viewportSize._width, viewportSize._height }
+			, _cameraPosition{ cameraPosition }
+			, _viewMatrix{ seir::Mat4::projection3D(_viewportSize.x / _viewportSize.y, 35, .5) * seir::Mat4::camera(_cameraPosition, { 0, -60, 0 }) }
+		{
+		}
+
+		seir::Ray3D pixelRay(const seir::Vec2& point) const noexcept
+		{
+			// Point coordinates should be in [0, D) range (where D is width or height).
+			// We shift coordinates to the center of the pixel (by adding 0.5),
+			// then normalize them from [0, D] to [-1, 1].
+			const auto x = (2 * point.x + 1) / _viewportSize.x - 1;
+			const auto y = (2 * point.y + 1) / _viewportSize.y - 1;
+			return seir::Ray3D::fromPoints(_cameraPosition, _inverseViewMatrix * seir::Vec3{ x, y, 1 });
+		}
+
+		std::optional<seir::Vec3> pixelRayIntersection(const std::optional<seir::Vec2>& pixel, const seir::Plane& plane) const noexcept
+		{
+			if (pixel.has_value())
+				return pixelRay(*pixel).intersection(plane);
+			return {};
+		}
+
+		const seir::Mat4& viewMatrix() const noexcept { return _viewMatrix; }
+
+		std::optional<std::tuple<seir::Vec3, seir::Vec3, seir::Vec3, seir::Vec3>> viewportQuad(const seir::Plane& plane) const noexcept
+		{
+			if (const auto topLeft = pixelRay({}).intersection(plane)) [[likely]]
+				if (const auto topRight = pixelRay({ _viewportSize.y, 0 }).intersection(plane)) [[likely]]
+					if (const auto bottomLeft = pixelRay({ _viewportSize.y, 0 }).intersection(plane)) [[likely]]
+						if (const auto bottomRight = pixelRay(_viewportSize).intersection(plane)) [[likely]]
+							return std::tuple{ *topLeft, *topRight, *bottomLeft, *bottomRight };
+			return {};
+		}
+
+	private:
+		const seir::Vec2 _viewportSize;
+		const seir::Vec3 _cameraPosition;
+		const seir::Mat4 _viewMatrix;
+		const seir::Mat4 _inverseViewMatrix = inverse(_viewMatrix);
+	};
+
+	struct Assets
+	{
+		seir::SharedPtr<seir::Texture2D> _boardTexture;
+		seir::SharedPtr<seir::Mesh> _boardMesh;
+		seir::SharedPtr<seir::ShaderSet> _boardShaders;
+		seir::SharedPtr<seir::Mesh> _cubeMesh;
+		seir::SharedPtr<seir::ShaderSet> _cubeShaders;
+
+		explicit Assets(seir::Renderer& renderer)
+			: _boardTexture{ ::makeBgra32(renderer, 128, 128, [](size_t x, size_t y) {
+				return ((x ^ y) & 1) ? seir::Rgba32::grayscale(0xdd) : seir::Rgba32::black();
+			}) }
+			, _boardMesh{ renderer.createMesh(seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "board.obj"))) }
+			, _boardShaders{ renderer.createShaders(kVertexShaderV3N3T2, kFragmentShaderV3N3T2) }
+			, _cubeMesh{ renderer.createMesh(seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "cube.obj"))) }
+			, _cubeShaders{ renderer.createShaders(kVertexShaderV3N3, kFragmentShaderV3N3) }
+		{
+		}
+	};
+
 	class Example
 	{
 	public:
-		std::optional<seir::Vec2> cursor() const noexcept
+		void present(seir::GuiFrame&& frame)
 		{
-			return _cursor;
-		}
-
-		void presentGui(seir::GuiFrame&& frame)
-		{
-			seir::GuiLayout layout{ frame };
-			layout.setItemSize({ 0, 16 });
-			frame.setLabelStyle({ seir::Rgba32::red(), 1 });
-			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 4);
-			frame.addLabel(_debugText, seir::GuiAlignment::Left);
-			layout.fromTopRight(seir::GuiLayout::Axis::Y, 4);
-			frame.addLabel(_fps, seir::GuiAlignment::Right);
-			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 0);
-			_cursor = frame.addHoverArea(frame.size());
+			const seir::Plane kBoardPlane{ { 0, 0, 1 }, { 0, 0, 0 } };
+			// TODO: Handle position-related events.
+			const Camera3D camera{ frame.size(), _cameraPosition };
+			_viewMatrix = camera.viewMatrix();
+			std::ignore = camera.viewportQuad(kBoardPlane);
+			// TODO: Draw camera quad.
+			{
+				seir::GuiLayout layout{ frame };
+				updateBoardCell(camera, kBoardPlane, frame.addHoverArea(frame.size()));
+			}
+			addDebugGraphics(frame);
 			if (frame.takeKeyPress(seir::Key::Escape))
 				frame.close();
 		}
 
-		void setDebugText(const std::string& text)
+		void render(seir::RenderPass& pass, const Assets& assets)
 		{
-			_debugText = text;
+			pass.updateUniformBuffer(_viewMatrix);
+			pass.bindShaders(assets._boardShaders);
+			pass.bindTexture(assets._boardTexture);
+			pass.bindUniformBuffer(true);
+			pass.setTransformation(seir::Mat4::identity());
+			pass.drawMesh(*assets._boardMesh);
+			if (_boardCell)
+			{
+				pass.bindShaders(assets._cubeShaders);
+				pass.setTransformation(seir::Mat4::translation({ _boardCell->x + .5f, _boardCell->y + .5f, .5 }));
+				pass.drawMesh(*assets._cubeMesh);
+			}
 		}
 
 		void setFps(float fps)
@@ -114,67 +188,60 @@ namespace
 		}
 
 	private:
+		void addDebugGraphics(seir::GuiFrame& frame) const
+		{
+			{
+				auto& renderer = frame.renderer();
+				renderer.setColor(seir::Rgba32::black(0xaa));
+				renderer.setTexture({});
+				renderer.addRect({ { 0, 0 }, seir::SizeF{ frame.size()._width, 20 } });
+			}
+			frame.setLabelStyle({ seir::Rgba32::white(), 1 });
+			seir::GuiLayout layout{ frame };
+			layout.setItemSize({ 0, 16 });
+			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 4);
+			frame.addLabel(_debugText, seir::GuiAlignment::Left);
+			layout.fromTopRight(seir::GuiLayout::Axis::Y, 4);
+			frame.addLabel(_fps, seir::GuiAlignment::Right);
+		}
+
+		void updateBoardCell(const Camera3D& camera, const seir::Plane& boardPlane, const std::optional<seir::Vec2>& cursor)
+		{
+			if (const auto boardPoint = camera.pixelRayIntersection(cursor, boardPlane);
+				boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)
+			{
+				_boardCell.emplace(std::floor(boardPoint->x), std::floor(boardPoint->y));
+				_debugText.clear();
+				std::format_to(std::back_inserter(_debugText), "({:+},{:+})", _boardCell->x, _boardCell->y);
+			}
+			else
+				_boardCell.reset();
+		}
+
+	private:
+		const seir::Vec3 _cameraPosition{ 0, -8.5, 16 };
+		seir::Mat4 _viewMatrix;
 		std::optional<seir::Vec2> _cursor;
 		std::string _fps;
 		std::string _debugText;
+		std::optional<seir::Vec2> _boardCell;
 	};
-
-	seir::Ray3D pixelRay(const seir::Vec2& point, const seir::Vec2& viewportSize, const seir::Mat4& viewMatrix, const seir::Vec3& cameraPosition)
-	{
-		// Point coordinates should be in [0, D) range (where D is width or height).
-		// We shift coordinates to the center of the pixel (by adding 0.5),
-		// then normalize them from [0, D] to [-1, 1].
-		const auto x = (2 * point.x + 1) / viewportSize.x - 1;
-		const auto y = (2 * point.y + 1) / viewportSize.y - 1;
-		const auto m = inverse(viewMatrix);
-		return seir::Ray3D::fromPoints(cameraPosition, m * seir::Vec3{ x, y, 1 });
-	}
 }
 
 int u8main(int, char**)
 {
-	const seir::Plane kBoardPlane{ { 0, 0, 1 }, { 0, 0, 0 } };
-
 	seir::App app;
 	seir::Window window{ app, "Board" };
 	seir::Renderer renderer{ window };
-	const auto boardTexture = ::makeBgra32(renderer, 128, 128, [](size_t x, size_t y) {
-		return ((x ^ y) & 1) ? seir::Rgba32::grayscale(0xdd) : seir::Rgba32::black();
-	});
-	const auto boardMesh = renderer.createMesh(seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "board.obj")));
-	const auto boardShaders = renderer.createShaders(kVertexShaderV3N3T2, kFragmentShaderV3N3T2);
-	const auto cubeMesh = renderer.createMesh(seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "cube.obj")));
-	const auto cubeShaders = renderer.createShaders(kVertexShaderV3N3, kFragmentShaderV3N3);
+	Assets assets{ renderer };
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{
-		example.presentGui({ gui, renderer2d });
+		example.present({ gui, renderer2d });
 		renderer.render([&](seir::RenderPass& pass) {
-			const auto viewportSize = pass.size();
-			const seir::Vec3 cameraPosition{ 0, -8.5, 16 };
-			const auto viewMatrix = seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 35, .5) * seir::Mat4::camera(cameraPosition, { 0, -60, 0 });
-			pass.updateUniformBuffer(viewMatrix);
-			pass.bindShaders(boardShaders);
-			pass.bindTexture(boardTexture);
-			pass.bindUniformBuffer(true);
-			pass.setTransformation(seir::Mat4::identity());
-			pass.drawMesh(*boardMesh);
-			if (const auto cursor = example.cursor())
-			{
-				const auto cursorRay = ::pixelRay(*cursor, viewportSize, viewMatrix, cameraPosition);
-				if (const auto boardPoint = cursorRay.intersection(kBoardPlane);
-					boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)
-				{
-					const auto boardX = std::floor(boardPoint->x);
-					const auto boardY = std::floor(boardPoint->y);
-					example.setDebugText(std::format("({:+},{:+})", boardX, boardY));
-					pass.bindShaders(cubeShaders);
-					pass.setTransformation(seir::Mat4::translation({ boardX + .5f, boardY + .5f, .5 }));
-					pass.drawMesh(*cubeMesh);
-				}
-			}
+			example.render(pass, assets);
 			renderer2d.draw(pass);
 		});
 		if (const auto period = clock.advance())
