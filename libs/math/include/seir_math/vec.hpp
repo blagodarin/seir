@@ -134,6 +134,16 @@ namespace seir
 	[[nodiscard]] constexpr Vec3 operator/(float a, const Vec3& b) noexcept { return { a / b.x, a / b.y, a / b.z }; }
 	[[nodiscard]] constexpr Vec4 operator/(float a, const Vec4& b) noexcept { return { a / b.x, a / b.y, a / b.z, a / b.w }; }
 
+	[[nodiscard]] constexpr Vec3 crossProduct(const Vec3&, const Vec3&) noexcept;
 	[[nodiscard]] constexpr auto dotProduct(const Vec3& a, const Vec3& b) noexcept { return a.x * b.x + a.y * b.y + a.z * b.z; }
 	[[nodiscard]] Vec3 normalize(const Vec3&) noexcept;
+}
+
+constexpr seir::Vec3 seir::crossProduct(const Vec3& a, const Vec3& b) noexcept
+{
+	return {
+		a.y * b.z - a.z * b.y,
+		a.z * b.x - a.x * b.z,
+		a.x * b.y - a.y * b.x,
+	};
 }

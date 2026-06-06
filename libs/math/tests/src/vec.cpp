@@ -75,6 +75,37 @@ TEST_CASE("Vec4")
 	CHECK(8 / Vec4(1, 2, 4, 8) == Vec4(8, 4, 2, 1));
 }
 
+TEST_CASE("crossProduct")
+{
+	const seir::Vec3 x{ 1, 0, 0 };
+	const seir::Vec3 y{ 0, 1, 0 };
+	const seir::Vec3 z{ 0, 0, 1 };
+
+	SUBCASE("unit vectors")
+	{
+		CHECK(seir::crossProduct(x, y) == z);
+		CHECK(seir::crossProduct(y, x) == -z);
+
+		CHECK(seir::crossProduct(y, z) == x);
+		CHECK(seir::crossProduct(z, y) == -x);
+
+		CHECK(seir::crossProduct(z, x) == y);
+		CHECK(seir::crossProduct(x, z) == -y);
+	}
+
+	SUBCASE("scaled vectors")
+	{
+		CHECK(seir::crossProduct(2 * x, 3 * y) == 6 * z);
+		CHECK(seir::crossProduct(2 * y, 3 * x) == -6 * z);
+
+		CHECK(seir::crossProduct(2 * y, 3 * z) == 6 * x);
+		CHECK(seir::crossProduct(2 * z, 3 * y) == -6 * x);
+
+		CHECK(seir::crossProduct(2 * z, 3 * x) == 6 * y);
+		CHECK(seir::crossProduct(2 * x, 3 * z) == -6 * y);
+	}
+}
+
 TEST_CASE("dotProduct")
 {
 	CHECK(seir::dotProduct({ 1.f, 10.f, 100.f }, { 2.f, 3.f, 4.f }) == 432.f);
