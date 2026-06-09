@@ -11,10 +11,10 @@ namespace seir
 	class QuadF
 	{
 	public:
-		Vec2 _a;
-		Vec2 _b;
-		Vec2 _c;
-		Vec2 _d;
+		Vec2 _a; // Top left.
+		Vec2 _b; // Top right.
+		Vec2 _c; // Bottom left.
+		Vec2 _d; // Bottom right.
 
 		QuadF() noexcept = default;
 		constexpr QuadF(const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& d) noexcept

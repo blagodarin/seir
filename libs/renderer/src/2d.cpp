@@ -6,6 +6,7 @@
 
 #include <seir_base/scope.hpp>
 #include <seir_base/shared_ptr.hpp>
+#include <seir_graphics/quadf.hpp>
 #include <seir_graphics/rectf.hpp>
 #include <seir_model/mesh_format.hpp>
 #include <seir_renderer/renderer.hpp>
@@ -83,6 +84,19 @@ namespace seir
 	}
 
 	Renderer2D ::~Renderer2D() noexcept = default;
+
+	void Renderer2D::addQuad(const QuadF& quad)
+	{
+		const auto batch = _impl->prepareBatch(4, 4);
+		batch._vertices[0] = { quad._a, _impl->_textureRect.topLeft(), _impl->_color };
+		batch._vertices[1] = { quad._c, _impl->_textureRect.bottomLeft(), _impl->_color };
+		batch._vertices[2] = { quad._b, _impl->_textureRect.topRight(), _impl->_color };
+		batch._vertices[3] = { quad._d, _impl->_textureRect.bottomRight(), _impl->_color };
+		batch._indices[0] = static_cast<uint16_t>(batch._baseIndex);
+		batch._indices[1] = static_cast<uint16_t>(batch._baseIndex + 1);
+		batch._indices[2] = static_cast<uint16_t>(batch._baseIndex + 2);
+		batch._indices[3] = static_cast<uint16_t>(batch._baseIndex + 3);
+	}
 
 	void Renderer2D::addRect(const RectF& rect)
 	{

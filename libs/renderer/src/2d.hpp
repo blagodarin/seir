@@ -11,8 +11,8 @@ namespace seir
 {
 	struct Vertex2D
 	{
-		seir::Vec2 _position;
-		seir::Vec2 _texture;
-		seir::Rgba32 _color;
+		Vec2 _position;
+		Vec2 _texture;
+		Rgba32 _color;
 	};
 }

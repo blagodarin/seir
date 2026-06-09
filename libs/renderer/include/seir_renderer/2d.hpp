@@ -8,6 +8,7 @@
 
 namespace seir
 {
+	class QuadF;
 	class RectF;
 	class RenderPass;
 	class Rgba32;
@@ -21,6 +22,9 @@ namespace seir
 	public:
 		Renderer2D();
 		~Renderer2D() noexcept;
+
+		//
+		void addQuad(const QuadF&);
 
 		//
 		void addRect(const RectF&);
