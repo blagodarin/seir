@@ -6,6 +6,7 @@
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
 #include <seir_graphics/color.hpp>
+#include <seir_graphics/quadf.hpp>
 #include <seir_gui/context.hpp>
 #include <seir_gui/font.hpp>
 #include <seir_gui/frame.hpp>
@@ -108,13 +109,43 @@ namespace
 
 		const seir::Mat4& viewMatrix() const noexcept { return _viewMatrix; }
 
-		std::optional<std::tuple<seir::Vec3, seir::Vec3, seir::Vec3, seir::Vec3>> viewportQuad(const seir::Plane& plane) const noexcept
+		seir::QuadF viewportQuad(const seir::Plane& plane, const seir::Vec3& center) const noexcept
 		{
-			if (const auto topLeft = pixelRay({}).intersection(plane)) [[likely]]
-				if (const auto topRight = pixelRay({ _viewportSize.y, 0 }).intersection(plane)) [[likely]]
-					if (const auto bottomLeft = pixelRay({ _viewportSize.y, 0 }).intersection(plane)) [[likely]]
-						if (const auto bottomRight = pixelRay(_viewportSize).intersection(plane)) [[likely]]
-							return std::tuple{ *topLeft, *topRight, *bottomLeft, *bottomRight };
+			const auto planeIntersection = [this, &plane](float x, float y) {
+				return seir::Ray3D::fromPoints(_cameraPosition, _inverseViewMatrix * seir::Vec3{ x, y, 1 }).intersection(plane);
+			};
+
+			if (const auto topLeft = planeIntersection(-1, -1)) [[likely]]
+				if (const auto topRight = planeIntersection(1, -1)) [[likely]]
+					if (const auto bottomLeft = planeIntersection(-1, 1)) [[likely]]
+						if (const auto bottomRight = planeIntersection(1, 1)) [[likely]]
+						{
+							const auto origin = center - plane.distanceTo(center) * plane.normal();
+
+							const auto up = normalize(*topLeft - *bottomLeft + *topRight - *bottomRight);
+							const auto right = crossProduct(up, plane.normal());
+
+							const seir::Mat4 planeMatrix{
+								right.x, up.x, plane.normal().x, origin.x,
+								right.y, up.y, plane.normal().y, origin.y,
+								right.z, up.z, plane.normal().z, origin.z,
+								0, 0, 0, 1
+							};
+
+							const auto inversePlaneMatrix = inverse(planeMatrix);
+
+							const auto topLeft2D = inversePlaneMatrix * *topLeft;
+							const auto topRight2D = inversePlaneMatrix * *topRight;
+							const auto bottomLeft2D = inversePlaneMatrix * *bottomLeft;
+							const auto bottomRight2D = inversePlaneMatrix * *bottomRight;
+
+							return {
+								{ topLeft2D.x, topLeft2D.y },
+								{ topRight2D.x, topRight2D.y },
+								{ bottomLeft2D.x, bottomLeft2D.y },
+								{ bottomRight2D.x, bottomRight2D.y },
+							};
+						}
 			return {};
 		}
 
@@ -151,16 +182,25 @@ namespace
 		void present(seir::GuiFrame&& frame)
 		{
 			const seir::Plane kBoardPlane{ { 0, 0, 1 }, { 0, 0, 0 } };
-			// TODO: Handle position-related events.
+
+			// TODO: Framerate-independent movement.
+			if (const auto left = frame.takeKeyState(seir::Key::Left); left && *left)
+				_cameraPosition.x = std::max(_cameraPosition.x - .125f, -54.f);
+			if (const auto right = frame.takeKeyState(seir::Key::Right); right && *right)
+				_cameraPosition.x = std::min(_cameraPosition.x + .125f, 54.f);
+			if (const auto down = frame.takeKeyState(seir::Key::Down); down && *down)
+				_cameraPosition.y = std::max(_cameraPosition.y - .125f, -67.f);
+			if (const auto up = frame.takeKeyState(seir::Key::Up); up && *up)
+				_cameraPosition.y = std::min(_cameraPosition.y + .125f, 46.f);
+
 			const Camera3D camera{ frame.size(), _cameraPosition };
 			_viewMatrix = camera.viewMatrix();
-			std::ignore = camera.viewportQuad(kBoardPlane);
-			// TODO: Draw camera quad.
+			presentMinimap(frame, camera.viewportQuad(kBoardPlane, {}));
 			{
 				seir::GuiLayout layout{ frame };
 				updateBoardCell(camera, kBoardPlane, frame.addHoverArea(frame.size()));
 			}
-			addDebugGraphics(frame);
+			presentDebugGraphics(frame);
 			if (frame.takeKeyPress(seir::Key::Escape))
 				frame.close();
 		}
@@ -188,8 +228,12 @@ namespace
 		}
 
 	private:
-		void addDebugGraphics(seir::GuiFrame& frame) const
+		void presentDebugGraphics(seir::GuiFrame& frame) // TODO: Refactor out debug text and make this function const.
 		{
+			_debugText.clear();
+			std::format_to(std::back_inserter(_debugText), "cam={:+.1f},{:+.1f}", _cameraPosition.x, _cameraPosition.y);
+			if (_boardCell)
+				std::format_to(std::back_inserter(_debugText), " cur={:+},{:+}", _boardCell->x, _boardCell->y);
 			{
 				auto& renderer = frame.renderer();
 				renderer.setColor(seir::Rgba32::black(0xaa));
@@ -205,21 +249,38 @@ namespace
 			frame.addLabel(_fps, seir::GuiAlignment::Right);
 		}
 
+		void presentMinimap(seir::GuiFrame& frame, const seir::QuadF& cameraQuad) const
+		{
+			const seir::SizeF minimapSize{ 160, 160 };
+			const seir::Vec2 minimapScale{ minimapSize._width / 128, minimapSize._height / -128 };
+			seir::GuiLayout layout{ frame };
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto minimapRect = layout.addItem(minimapSize);
+			const auto minimapCenter = minimapRect.center();
+			auto& renderer = frame.renderer();
+			renderer.setTexture({});
+			renderer.setColor(seir::Rgba32::white(0x55));
+			renderer.addRect(minimapRect);
+			renderer.setColor(seir::Rgba32::red(0xaa));
+			renderer.addQuad({
+				minimapCenter + cameraQuad._a * minimapScale,
+				minimapCenter + cameraQuad._b * minimapScale,
+				minimapCenter + cameraQuad._c * minimapScale,
+				minimapCenter + cameraQuad._d * minimapScale,
+			});
+		}
+
 		void updateBoardCell(const Camera3D& camera, const seir::Plane& boardPlane, const std::optional<seir::Vec2>& cursor)
 		{
 			if (const auto boardPoint = camera.pixelRayIntersection(cursor, boardPlane);
 				boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)
-			{
 				_boardCell.emplace(std::floor(boardPoint->x), std::floor(boardPoint->y));
-				_debugText.clear();
-				std::format_to(std::back_inserter(_debugText), "({:+},{:+})", _boardCell->x, _boardCell->y);
-			}
 			else
 				_boardCell.reset();
 		}
 
 	private:
-		const seir::Vec3 _cameraPosition{ 0, -8.5, 16 };
+		seir::Vec3 _cameraPosition{ 0, -8.5, 16 };
 		seir::Mat4 _viewMatrix;
 		std::optional<seir::Vec2> _cursor;
 		std::string _fps;
