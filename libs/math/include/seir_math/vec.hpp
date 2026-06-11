@@ -41,6 +41,8 @@ namespace seir
 		constexpr Vec3(float vx, float vy, float vz) noexcept
 			: x{ vx }, y{ vy }, z{ vz } {}
 
+		[[nodiscard]] constexpr explicit operator Vec2() const noexcept { return { x, y }; }
+
 		// clang-format off
 		constexpr auto& operator+=(const Vec3& v) noexcept { x += v.x; y += v.y; z += v.z; return *this; }
 		constexpr auto& operator+=(float s) noexcept { x += s; y += s; z += s; return *this; }
@@ -65,6 +67,8 @@ namespace seir
 		constexpr Vec4() noexcept = default;
 		constexpr Vec4(float vx, float vy, float vz, float vw) noexcept
 			: x{ vx }, y{ vy }, z{ vz }, w{ vw } {}
+
+		[[nodiscard]] constexpr explicit operator Vec3() const noexcept { return { x, y, z }; }
 
 		// clang-format off
 		constexpr auto& operator+=(const Vec4& v) noexcept { x += v.x; y += v.y; z += v.z; w += v.w; return *this; }

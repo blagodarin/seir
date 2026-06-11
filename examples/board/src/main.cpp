@@ -121,29 +121,19 @@ namespace
 						if (const auto bottomRight = planeIntersection(1, 1)) [[likely]]
 						{
 							const auto origin = center - plane.distanceTo(center) * plane.normal();
-
 							const auto up = normalize(*topLeft - *bottomLeft + *topRight - *bottomRight);
 							const auto right = crossProduct(up, plane.normal());
-
-							const seir::Mat4 planeMatrix{
-								right.x, up.x, plane.normal().x, origin.x,
-								right.y, up.y, plane.normal().y, origin.y,
-								right.z, up.z, plane.normal().z, origin.z,
-								0, 0, 0, 1
-							};
-
-							const auto inversePlaneMatrix = inverse(planeMatrix);
-
-							const auto topLeft2D = inversePlaneMatrix * *topLeft;
-							const auto topRight2D = inversePlaneMatrix * *topRight;
-							const auto bottomLeft2D = inversePlaneMatrix * *bottomLeft;
-							const auto bottomRight2D = inversePlaneMatrix * *bottomRight;
-
+							const auto inversePlaneMatrix = inverse(
+								seir::Mat4{
+									right.x, up.x, plane.normal().x, origin.x,
+									right.y, up.y, plane.normal().y, origin.y,
+									right.z, up.z, plane.normal().z, origin.z,
+									0, 0, 0, 1 });
 							return {
-								{ topLeft2D.x, topLeft2D.y },
-								{ topRight2D.x, topRight2D.y },
-								{ bottomLeft2D.x, bottomLeft2D.y },
-								{ bottomRight2D.x, bottomRight2D.y },
+								seir::Vec2{ inversePlaneMatrix * *topLeft },
+								seir::Vec2{ inversePlaneMatrix * *topRight },
+								seir::Vec2{ inversePlaneMatrix * *bottomLeft },
+								seir::Vec2{ inversePlaneMatrix * *bottomRight },
 							};
 						}
 			return {};
