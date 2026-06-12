@@ -169,21 +169,11 @@ namespace
 	class Example
 	{
 	public:
-		void present(seir::GuiFrame&& frame)
+		void present(seir::GuiFrame&& frame, unsigned duration)
 		{
 			const seir::Plane kBoardPlane{ { 0, 0, 1 }, { 0, 0, 0 } };
-			constexpr seir::RectF kPositionLimits{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
 
-			// TODO: Framerate-independent movement.
-			if (frame.takeKeyDown(seir::Key::Left))
-				_cameraPosition.x = std::max(_cameraPosition.x - .125f, kPositionLimits.left());
-			if (frame.takeKeyDown(seir::Key::Right))
-				_cameraPosition.x = std::min(_cameraPosition.x + .125f, kPositionLimits.right());
-			if (frame.takeKeyDown(seir::Key::Down))
-				_cameraPosition.y = std::max(_cameraPosition.y - .125f, kPositionLimits.top());
-			if (frame.takeKeyDown(seir::Key::Up))
-				_cameraPosition.y = std::min(_cameraPosition.y + .125f, kPositionLimits.bottom());
-
+			updateCameraPosition(frame, duration);
 			const Camera3D camera{ frame.size(), _cameraPosition };
 			_viewMatrix = camera.viewMatrix();
 			presentMinimap(frame, camera.viewportQuad(kBoardPlane, {}));
@@ -270,6 +260,34 @@ namespace
 				_boardCell.reset();
 		}
 
+		void updateCameraPosition(seir::GuiFrame& frame, unsigned duration)
+		{
+			constexpr auto kCameraSpeed = 10.f;
+			constexpr seir::RectF kPositionLimits{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
+
+			const auto step = static_cast<float>(duration) / 1000.f * kCameraSpeed;
+
+			const auto left = frame.takeKeyDown(seir::Key::Left);
+			const auto right = frame.takeKeyDown(seir::Key::Right);
+			if (left != right)
+			{
+				if (left)
+					_cameraPosition.x = std::max(_cameraPosition.x - step, kPositionLimits.left());
+				else
+					_cameraPosition.x = std::min(_cameraPosition.x + step, kPositionLimits.right());
+			}
+
+			const auto down = frame.takeKeyDown(seir::Key::Down);
+			const auto up = frame.takeKeyDown(seir::Key::Up);
+			if (down != up)
+			{
+				if (down)
+					_cameraPosition.y = std::max(_cameraPosition.y - step, kPositionLimits.top());
+				else
+					_cameraPosition.y = std::min(_cameraPosition.y + step, kPositionLimits.bottom());
+			}
+		}
+
 	private:
 		seir::Vec3 _cameraPosition{ 0, -8.5, 16 };
 		seir::Mat4 _viewMatrix;
@@ -289,15 +307,17 @@ int u8main(int, char**)
 	seir::Renderer2D renderer2d;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
-	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
+	seir::ConstantRate actionClock{ std::chrono::milliseconds{ 1 } };
+	seir::VariableRate frameClock;
+	while (app.processEvents(gui.eventCallbacks()))
 	{
-		example.present({ gui, renderer2d });
+		if (const auto period = frameClock.advance())
+			example.setFps(period->_averageFrameRate);
+		example.present({ gui, renderer2d }, actionClock.advance());
 		renderer.render([&](seir::RenderPass& pass) {
 			example.render(pass, assets);
 			renderer2d.draw(pass);
 		});
-		if (const auto period = clock.advance())
-			example.setFps(period->_averageFrameRate);
 	}
 	return 0;
 }
