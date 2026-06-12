@@ -172,16 +172,17 @@ namespace
 		void present(seir::GuiFrame&& frame)
 		{
 			const seir::Plane kBoardPlane{ { 0, 0, 1 }, { 0, 0, 0 } };
+			constexpr seir::RectF kPositionLimits{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
 
 			// TODO: Framerate-independent movement.
-			if (const auto left = frame.takeKeyState(seir::Key::Left); left && *left)
-				_cameraPosition.x = std::max(_cameraPosition.x - .125f, -54.f);
-			if (const auto right = frame.takeKeyState(seir::Key::Right); right && *right)
-				_cameraPosition.x = std::min(_cameraPosition.x + .125f, 54.f);
-			if (const auto down = frame.takeKeyState(seir::Key::Down); down && *down)
-				_cameraPosition.y = std::max(_cameraPosition.y - .125f, -67.f);
-			if (const auto up = frame.takeKeyState(seir::Key::Up); up && *up)
-				_cameraPosition.y = std::min(_cameraPosition.y + .125f, 46.f);
+			if (frame.takeKeyDown(seir::Key::Left))
+				_cameraPosition.x = std::max(_cameraPosition.x - .125f, kPositionLimits.left());
+			if (frame.takeKeyDown(seir::Key::Right))
+				_cameraPosition.x = std::min(_cameraPosition.x + .125f, kPositionLimits.right());
+			if (frame.takeKeyDown(seir::Key::Down))
+				_cameraPosition.y = std::max(_cameraPosition.y - .125f, kPositionLimits.top());
+			if (frame.takeKeyDown(seir::Key::Up))
+				_cameraPosition.y = std::min(_cameraPosition.y + .125f, kPositionLimits.bottom());
 
 			const Camera3D camera{ frame.size(), _cameraPosition };
 			_viewMatrix = camera.viewMatrix();

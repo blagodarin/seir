@@ -382,6 +382,12 @@ namespace seir
 		return takeKeyPress(Key::None);
 	}
 
+	bool GuiFrame::takeKeyDown(Key key) noexcept
+	{
+		const auto state = _context._keyStates.take(key);
+		return state && *state;
+	}
+
 	bool GuiFrame::takeKeyPress(Key key) noexcept
 	{
 		return _context.captureClick(key, false).pressed > 0;
