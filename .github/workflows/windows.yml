@@ -63,12 +63,16 @@ jobs:
       - name: Run tests
         run: |
           ctest --verbose --label-exclude renderer --test-dir build
-      - name: Build usage examples
+      - name: Build CMake FetchContent usage example
         run: |
           cmake -S examples\usage\cmake_fetchcontent -B build.cmake_fetchcontent `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DREPLACE_WITH_COMMIT_HASH=${{ github.sha }}
           cmake --build build.cmake_fetchcontent
+      - name: Build CMake package usage example
+        # The second example should be in a separate step from the first one,
+        # so that the error from the first example is not consumed by Windows shell.
+        run: |
           cmake --build build --target install
           cmake -S examples\usage\cmake_package -B build.cmake_package `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
