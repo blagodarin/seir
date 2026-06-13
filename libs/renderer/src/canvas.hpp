@@ -9,7 +9,7 @@
 
 namespace seir
 {
-	struct Vertex2D
+	struct CanvasVertex
 	{
 		Vec2 _position;
 		Vec2 _texture;

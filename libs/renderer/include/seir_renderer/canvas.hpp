@@ -17,20 +17,21 @@ namespace seir
 	class Texture2D;
 
 	//
-	class Renderer2D
+	class Canvas
 	{
 	public:
-		Renderer2D();
-		~Renderer2D() noexcept;
+		Canvas();
+		~Canvas() noexcept;
 
 		//
-		void addQuad(const QuadF&);
+		void drawQuad(const QuadF&);
 
 		//
-		void addRect(const RectF&);
+		void drawRect(const RectF&);
 
-		//
-		void draw(RenderPass&);
+		// Submits the canvas for actual rendering.
+		// The canvas content is reset after submission.
+		void render(RenderPass&);
 
 		//
 		void setColor(const Rgba32&);
@@ -42,6 +43,6 @@ namespace seir
 		void setTextureRect(const RectF&);
 
 	private:
-		const std::unique_ptr<class Renderer2DImpl> _impl;
+		const std::unique_ptr<class CanvasImpl> _impl;
 	};
 }

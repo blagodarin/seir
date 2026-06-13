@@ -9,7 +9,7 @@
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
 #include <seir_io/inlet.hpp>
-#include <seir_renderer/2d.hpp>
+#include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 
 #include <cassert>
@@ -64,12 +64,12 @@ namespace
 			return _bitmapTexture;
 		}
 
-		void renderLine(seir::Renderer2D& renderer, const seir::RectF& rect, std::string_view text) const override
+		void drawLine(seir::Canvas& canvas, const seir::RectF& rect, std::string_view text) const override
 		{
 			const auto scale = rect.height() / static_cast<float>(_size);
 			int x = 0;
 			auto previous = _bitmapGlyphs.end();
-			renderer.setTexture(_bitmapTexture);
+			canvas.setTexture(_bitmapTexture);
 			for (size_t i = 0; i < text.size();)
 			{
 				const auto current = _bitmapGlyphs.find(seir::readUtf8(text, i));
@@ -97,8 +97,8 @@ namespace
 					glyphRect.setWidth(glyphRect.width() * positionRect.width() / originalWidth);
 					clipped = true;
 				}
-				renderer.setTextureRect(glyphRect);
-				renderer.addRect(positionRect);
+				canvas.setTextureRect(glyphRect);
+				canvas.drawRect(positionRect);
 				if (clipped)
 					break;
 				x += current->second._advance;

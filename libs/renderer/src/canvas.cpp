@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_renderer/2d.hpp>
+#include <seir_renderer/canvas.hpp>
 
 #include <seir_base/scope.hpp>
 #include <seir_base/shared_ptr.hpp>
@@ -10,7 +10,7 @@
 #include <seir_graphics/rectf.hpp>
 #include <seir_model/mesh_format.hpp>
 #include <seir_renderer/renderer.hpp>
-#include "2d.hpp"
+#include "canvas.hpp"
 #include "pass.hpp"
 
 #include <cassert>
@@ -19,7 +19,7 @@
 
 namespace seir
 {
-	class Renderer2DImpl
+	class CanvasImpl
 	{
 	public:
 		struct Range
@@ -28,7 +28,7 @@ namespace seir
 			uint32_t _indices = 0;
 		};
 
-		std::vector<Vertex2D> _vertexBuffer;
+		std::vector<CanvasVertex> _vertexBuffer;
 		std::vector<uint16_t> _indexBuffer;
 		std::vector<Range> _ranges{ { nullptr, 0 } };
 		RectF _textureRect{ SizeF{ 1, 1 } };
@@ -36,7 +36,7 @@ namespace seir
 
 		struct Batch
 		{
-			Vertex2D* _vertices = nullptr;
+			CanvasVertex* _vertices = nullptr;
 			uint16_t* _indices = nullptr;
 			uint32_t _baseIndex = 0;
 		};
@@ -47,7 +47,7 @@ namespace seir
 			_indexBuffer.clear();
 			_ranges.clear();
 			assert(_ranges.capacity() >= 1);
-			_ranges.emplace_back(Renderer2DImpl::Range{ nullptr, 0 });
+			_ranges.emplace_back(Range{ nullptr, 0 });
 			_textureRect = RectF{ SizeF{ 1, 1 } };
 			_color = Rgba32::white();
 		}
@@ -78,14 +78,14 @@ namespace seir
 		}
 	};
 
-	Renderer2D::Renderer2D()
-		: _impl{ std::make_unique<Renderer2DImpl>() }
+	Canvas::Canvas()
+		: _impl{ std::make_unique<CanvasImpl>() }
 	{
 	}
 
-	Renderer2D ::~Renderer2D() noexcept = default;
+	Canvas::~Canvas() noexcept = default;
 
-	void Renderer2D::addQuad(const QuadF& quad)
+	void Canvas::drawQuad(const QuadF& quad)
 	{
 		const auto batch = _impl->prepareBatch(4, 4);
 		batch._vertices[0] = { quad._a, _impl->_textureRect.topLeft(), _impl->_color };
@@ -98,7 +98,7 @@ namespace seir
 		batch._indices[3] = static_cast<uint16_t>(batch._baseIndex + 3);
 	}
 
-	void Renderer2D::addRect(const RectF& rect)
+	void Canvas::drawRect(const RectF& rect)
 	{
 		const auto batch = _impl->prepareBatch(4, 4);
 		batch._vertices[0] = { rect.topLeft(), _impl->_textureRect.topLeft(), _impl->_color };
@@ -111,14 +111,14 @@ namespace seir
 		batch._indices[3] = static_cast<uint16_t>(batch._baseIndex + 3);
 	}
 
-	void Renderer2D::draw(RenderPass& pass)
+	void Canvas::render(RenderPass& pass)
 	{
 		if (_impl->_indexBuffer.empty())
 			return;
 		SEIR_FINALLY{ [this]() noexcept { _impl->clear(); } };
-		static_cast<RenderPassImpl&>(pass).bind2DShaders();
-		static_cast<RenderPassImpl&>(pass).update2DBuffers(_impl->_vertexBuffer, _impl->_indexBuffer);
-		static_cast<RenderPassImpl&>(pass).begin2DRendering({
+		static_cast<RenderPassImpl&>(pass).bindCanvasShaders();
+		static_cast<RenderPassImpl&>(pass).updateCanvasBuffers(_impl->_vertexBuffer, _impl->_indexBuffer);
+		static_cast<RenderPassImpl&>(pass).beginCanvasRendering({
 			.vertexAttributes{ VertexAttribute::f32x2, VertexAttribute::f32x2, VertexAttribute::un8x4 },
 			.topology = MeshTopology::TriangleStrip,
 			.indexType = MeshIndexType::u16,
@@ -128,28 +128,28 @@ namespace seir
 			if (!range._indices)
 				continue;
 			pass.bindTexture(range._texture);
-			static_cast<RenderPassImpl&>(pass).draw2D(baseIndex, range._indices);
+			static_cast<RenderPassImpl&>(pass).renderCanvasRange(baseIndex, range._indices);
 			baseIndex += range._indices;
 		}
 	}
 
-	void Renderer2D::setColor(const Rgba32& color)
+	void Canvas::setColor(const Rgba32& color)
 	{
 		_impl->_color = color;
 	}
 
-	void Renderer2D::setTexture(const SharedPtr<Texture2D>& texture)
+	void Canvas::setTexture(const SharedPtr<Texture2D>& texture)
 	{
 		if (auto& currentRange = _impl->_ranges.back(); currentRange._texture == texture)
 			return;
 		else if (!currentRange._indices) // NOLINT(readability-else-after-return)
 			currentRange._texture = texture;
 		else
-			_impl->_ranges.emplace_back(Renderer2DImpl::Range{ texture, 0 });
+			_impl->_ranges.emplace_back(CanvasImpl::Range{ texture, 0 });
 		_impl->_textureRect = RectF{ SizeF{ 1, 1 } };
 	}
 
-	void Renderer2D::setTextureRect(const RectF& rect)
+	void Canvas::setTextureRect(const RectF& rect)
 	{
 		const auto texture = _impl->_ranges.back()._texture.get();
 		_impl->_textureRect = texture ? rect / texture->size() : RectF{ SizeF{ 1, 1 } };

@@ -12,12 +12,12 @@
 
 namespace seir
 {
+	class Canvas;
 	class Font;
 	class GuiButtonStyle;
 	class GuiContext;
 	class GuiEditStyle;
 	class GuiLabelStyle;
-	class Renderer2D;
 	class Vec2;
 
 	enum class GuiAlignment
@@ -30,7 +30,7 @@ namespace seir
 	class GuiFrame
 	{
 	public:
-		GuiFrame(GuiContext&, Renderer2D&);
+		GuiFrame(GuiContext&, Canvas&);
 		~GuiFrame() noexcept;
 
 		bool addButton(std::string_view id, std::string_view text);
@@ -40,7 +40,7 @@ namespace seir
 		bool addStringEdit(std::string_view id, std::string& text);
 		void close() noexcept;
 		void putKeyboardFocus() noexcept;
-		Renderer2D& renderer() noexcept { return _renderer; }
+		[[nodiscard]] Canvas& canvas() noexcept { return _canvas; }
 		void selectWhiteTexture();
 		void setButtonStyle(const GuiButtonStyle&) noexcept;
 		void setEditStyle(const GuiEditStyle&) noexcept;
@@ -54,7 +54,7 @@ namespace seir
 
 	private:
 		class GuiContextImpl& _context;
-		Renderer2D& _renderer;
+		Canvas& _canvas;
 		const SizeF _size;
 		friend class GuiLayout;
 	};

@@ -9,7 +9,7 @@
 #include <seir_graphics/rectf.hpp>
 #include <seir_gui/context.hpp>
 #include <seir_gui/font.hpp>
-#include <seir_renderer/2d.hpp>
+#include <seir_renderer/canvas.hpp>
 #include "context_impl.hpp"
 
 #include <cassert>
@@ -32,9 +32,9 @@ namespace
 
 namespace seir
 {
-	GuiFrame::GuiFrame(GuiContext& context, Renderer2D& renderer)
+	GuiFrame::GuiFrame(GuiContext& context, Canvas& canvas)
 		: _context{ *context._impl }
-		, _renderer{ renderer }
+		, _canvas{ canvas }
 		, _size{ context._impl->_window.size() }
 	{
 		const auto cursor = _context._window.cursor().value_or(Point{ -1, -1 });
@@ -123,14 +123,14 @@ namespace seir
 		}
 		_context.updateWhiteTexture(_context._buttonStyle._font);
 		selectWhiteTexture();
-		_renderer.setColor(styleState->_backgroundColor);
-		_renderer.addRect(rect);
+		_canvas.setColor(styleState->_backgroundColor);
+		_canvas.drawRect(rect);
 		if (_context._buttonStyle._font)
 		{
 			const auto textHeight = rect.height() * _context._buttonStyle._fontSize;
 			const auto textWidth = _context._buttonStyle._font->textWidth(text, textHeight);
-			_renderer.setColor(styleState->_textColor);
-			_context._buttonStyle._font->renderLine(_renderer, ::sizeInRect(rect, { textWidth, textHeight }), text);
+			_canvas.setColor(styleState->_textColor);
+			_context._buttonStyle._font->drawLine(_canvas, ::sizeInRect(rect, { textWidth, textHeight }), text);
 		}
 		return clicked;
 	}
@@ -202,8 +202,8 @@ namespace seir
 			else if (alignment == GuiAlignment::Right)
 				textRect._left = textRect._right - textWidth;
 		}
-		_renderer.setColor(_context._labelStyle._textColor);
-		_context._labelStyle._font->renderLine(_renderer, textRect, text);
+		_canvas.setColor(_context._labelStyle._textColor);
+		_context._labelStyle._font->drawLine(_canvas, textRect, text);
 		_context.updateWhiteTexture(_context._labelStyle._font);
 	}
 
@@ -305,8 +305,8 @@ namespace seir
 		}
 		_context.updateWhiteTexture(_context._editStyle._font);
 		selectWhiteTexture();
-		_renderer.setColor(styleState->_backgroundColor);
-		_renderer.addRect(itemRect);
+		_canvas.setColor(styleState->_backgroundColor);
+		_canvas.drawRect(itemRect);
 		if (_context._editStyle._font)
 		{
 			const auto textRect = ::relativeHeightInRect(itemRect, _context._editStyle._fontSize);
@@ -318,20 +318,20 @@ namespace seir
 				if (selectionLeft < textRect.right())
 				{
 					const auto selectionRight = std::min(textRect.left() + capture._selectionRange->second, textRect.right());
-					_renderer.setColor(_context._editStyle._selectionColor);
-					_renderer.addRect({ { selectionLeft, textRect.top() }, seir::Vec2{ selectionRight, textRect.bottom() } });
+					_canvas.setColor(_context._editStyle._selectionColor);
+					_canvas.drawRect({ { selectionLeft, textRect.top() }, seir::Vec2{ selectionRight, textRect.bottom() } });
 				}
 			}
-			_renderer.setColor(styleState->_textColor);
-			_context._editStyle._font->renderLine(_renderer, textRect, text);
+			_canvas.setColor(styleState->_textColor);
+			_context._editStyle._font->drawLine(_canvas, textRect, text);
 			if (active && capture._cursorPosition)
 			{
 				const auto cursorX = textRect.left() + *capture._cursorPosition;
 				if (cursorX < textRect.right() && _context._keyboardItem.isCursorPhaseVisible())
 				{
-					_renderer.setTextureRect(_context._editStyle._font->whiteRect());
-					_renderer.setColor(_context._editStyle._cursorColor);
-					_renderer.addRect({ { cursorX, textRect.top() }, seir::Vec2{ std::min(cursorX + 2, textRect.right()), textRect.bottom() } });
+					_canvas.setTextureRect(_context._editStyle._font->whiteRect());
+					_canvas.setColor(_context._editStyle._cursorColor);
+					_canvas.drawRect({ { cursorX, textRect.top() }, seir::Vec2{ std::min(cursorX + 2, textRect.right()), textRect.bottom() } });
 				}
 			}
 		}
@@ -351,9 +351,9 @@ namespace seir
 
 	void GuiFrame::selectWhiteTexture()
 	{
-		_renderer.setTexture(_context._whiteTexture);
+		_canvas.setTexture(_context._whiteTexture);
 		if (_context._whiteTexture)
-			_renderer.setTextureRect(_context._whiteTextureRect);
+			_canvas.setTextureRect(_context._whiteTextureRect);
 	}
 
 	void GuiFrame::setButtonStyle(const GuiButtonStyle& style) noexcept

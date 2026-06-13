@@ -19,7 +19,7 @@
 #include <seir_math/plane.hpp>
 #include <seir_math/ray.hpp>
 #include <seir_model/mesh_data.hpp>
-#include <seir_renderer/2d.hpp>
+#include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
@@ -216,10 +216,10 @@ namespace
 			if (_boardCell)
 				std::format_to(std::back_inserter(_debugText), " cur={:+},{:+}", _boardCell->x, _boardCell->y);
 			{
-				auto& renderer = frame.renderer();
-				renderer.setColor(seir::Rgba32::black(0xaa));
-				renderer.setTexture({});
-				renderer.addRect({ { 0, 0 }, seir::SizeF{ frame.size()._width, 20 } });
+				auto& canvas = frame.canvas();
+				canvas.setColor(seir::Rgba32::black(0xaa));
+				canvas.setTexture({});
+				canvas.drawRect({ { 0, 0 }, seir::SizeF{ frame.size()._width, 20 } });
 			}
 			frame.setLabelStyle({ seir::Rgba32::white(), 1 });
 			seir::GuiLayout layout{ frame };
@@ -238,12 +238,12 @@ namespace
 			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
 			const auto minimapRect = layout.addItem(minimapSize);
 			const auto minimapCenter = minimapRect.center();
-			auto& renderer = frame.renderer();
-			renderer.setTexture({});
-			renderer.setColor(seir::Rgba32::white(0x55));
-			renderer.addRect(minimapRect);
-			renderer.setColor(seir::Rgba32::red(0xaa));
-			renderer.addQuad({
+			auto& canvas = frame.canvas();
+			canvas.setTexture({});
+			canvas.setColor(seir::Rgba32::white(0x55));
+			canvas.drawRect(minimapRect);
+			canvas.setColor(seir::Rgba32::red(0xaa));
+			canvas.drawQuad({
 				minimapCenter + cameraQuad._a * minimapScale,
 				minimapCenter + cameraQuad._b * minimapScale,
 				minimapCenter + cameraQuad._c * minimapScale,
@@ -304,7 +304,7 @@ int u8main(int, char**)
 	seir::Window window{ app, "Board" };
 	seir::Renderer renderer{ window };
 	Assets assets{ renderer };
-	seir::Renderer2D renderer2d;
+	seir::Canvas canvas;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
 	seir::ConstantRate actionClock{ std::chrono::milliseconds{ 1 } };
@@ -313,10 +313,10 @@ int u8main(int, char**)
 	{
 		if (const auto period = frameClock.advance())
 			example.setFps(period->_averageFrameRate);
-		example.present({ gui, renderer2d }, actionClock.advance());
+		example.present({ gui, canvas }, actionClock.advance());
 		renderer.render([&](seir::RenderPass& pass) {
 			example.render(pass, assets);
-			renderer2d.draw(pass);
+			canvas.render(pass);
 		});
 	}
 	return 0;

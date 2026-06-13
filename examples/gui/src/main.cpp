@@ -15,7 +15,7 @@
 #include <seir_gui/style.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_math/mat.hpp>
-#include <seir_renderer/2d.hpp>
+#include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
@@ -46,8 +46,8 @@ public:
 		if (const auto cursor = frame.takeMouseCursor())
 		{
 			frame.selectWhiteTexture();
-			frame.renderer().setColor(seir::Rgba32::red());
-			frame.renderer().addRect({ *cursor, seir::SizeF{ 5, 5 } });
+			frame.canvas().setColor(seir::Rgba32::red());
+			frame.canvas().drawRect({ *cursor, seir::SizeF{ 5, 5 } });
 		}
 		if (_showFps)
 		{
@@ -84,17 +84,17 @@ int u8main(int, char**)
 	seir::App app;
 	seir::Window window{ app, "GUI" };
 	seir::Renderer renderer{ window };
-	seir::Renderer2D renderer2d;
+	seir::Canvas canvas;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24) };
 	Example example;
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{
-		example.presentGui({ gui, renderer2d });
-		renderer.render([&](seir::RenderPass& pass) {
-			renderer2d.draw(pass);
-		});
 		if (const auto period = clock.advance())
 			example.setFps(*period);
+		example.presentGui({ gui, canvas });
+		renderer.render([&](seir::RenderPass& pass) {
+			canvas.render(pass);
+		});
 	}
 	return 0;
 }

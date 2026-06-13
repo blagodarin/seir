@@ -11,7 +11,7 @@ namespace seir
 	class RendererImpl;
 	class ShaderSet;
 
-	class Vulkan2D
+	class VulkanCanvas
 	{
 	public:
 		VkBuffer indexBuffer(uint32_t frameIndex) const noexcept { return _buffers[frameIndex]._indexBuffer.handle(); }

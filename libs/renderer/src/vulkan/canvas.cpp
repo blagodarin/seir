@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "2d.hpp"
+#include "canvas.hpp"
 
 #include <seir_base/scope.hpp>
 #include "error.hpp"
@@ -11,29 +11,29 @@
 namespace
 {
 	const uint32_t kVertexShader[]{
-#include "2d_vertex.glsl.spirv.inc"
+#include "canvas_vertex.glsl.spirv.inc"
 	};
 
 	const uint32_t kFragmentShader[]{
-#include "2d_fragment.glsl.spirv.inc"
+#include "canvas_fragment.glsl.spirv.inc"
 	};
 }
 
 namespace seir
 {
-	void Vulkan2D::initialize(RendererImpl& renderer)
+	void VulkanCanvas::initialize(RendererImpl& renderer)
 	{
 		assert(!_shaders);
 		_shaders = renderer.createShaders(kVertexShader, kFragmentShader);
 	}
 
-	void Vulkan2D::resize(uint32_t frameCount)
+	void VulkanCanvas::resize(uint32_t frameCount)
 	{
 		if (frameCount > _buffers.size())
 			_buffers.resize(frameCount);
 	}
 
-	void Vulkan2D::updateBuffers(VulkanContext& context, uint32_t frameIndex, const void* vertexData, VkDeviceSize vertexDataSize, const void* indexData, VkDeviceSize indexDataSize)
+	void VulkanCanvas::updateBuffers(VulkanContext& context, uint32_t frameIndex, const void* vertexData, VkDeviceSize vertexDataSize, const void* indexData, VkDeviceSize indexDataSize)
 	{
 		assert(frameIndex < _buffers.size());
 		auto& buffers = _buffers[frameIndex];

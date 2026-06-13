@@ -12,7 +12,7 @@
 #include <seir_gui/layout.hpp>
 #include <seir_gui/style.hpp>
 #include <seir_io/inlet.hpp>
-#include <seir_renderer/2d.hpp>
+#include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 
@@ -52,17 +52,17 @@ int u8main(int, char**)
 	seir::App app;
 	seir::Window window{ app, "Minimal GUI" };
 	seir::Renderer renderer{ window };
-	seir::Renderer2D renderer2d;
+	seir::Canvas canvas;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
 	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
 	{
-		example.presentGui({ gui, renderer2d });
-		renderer.render([&](seir::RenderPass& pass) {
-			renderer2d.draw(pass);
-		});
 		if (const auto period = clock.advance())
 			example.setFps(period->_averageFrameRate);
+		example.presentGui({ gui, canvas });
+		renderer.render([&](seir::RenderPass& pass) {
+			canvas.render(pass);
+		});
 	}
 	return 0;
 }

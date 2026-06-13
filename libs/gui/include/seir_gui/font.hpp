@@ -11,10 +11,10 @@
 
 namespace seir
 {
+	class Canvas;
 	class Inlet;
 	class RectF;
 	class Renderer;
-	class Renderer2D;
 	class Texture2D;
 
 	//
@@ -44,7 +44,7 @@ namespace seir
 		[[nodiscard]] virtual SharedPtr<Texture2D> bitmapTexture() const noexcept = 0;
 
 		//
-		virtual void renderLine(Renderer2D&, const RectF&, std::string_view) const = 0;
+		virtual void drawLine(Canvas&, const RectF&, std::string_view) const = 0;
 
 		//
 		[[nodiscard]] virtual float size() const noexcept = 0;

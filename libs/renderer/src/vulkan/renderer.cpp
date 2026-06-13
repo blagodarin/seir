@@ -95,17 +95,17 @@ namespace seir
 		{
 		}
 
-		void begin2DRendering(const MeshFormat& format) override
+		void beginCanvasRendering(const MeshFormat& format) override
 		{
 			bindUniformBuffer(false);
 			selectPipeline(format, false);
 			const auto extent = _renderer._renderTarget.extent();
 			setTransformation(seir::Mat4::projection2D(static_cast<float>(extent.width), static_cast<float>(extent.height)));
 			processUpdates();
-			VkBuffer vertexBuffers[]{ _renderer._2d.vertexBuffer(_frameIndex) };
+			VkBuffer vertexBuffers[]{ _renderer._canvas.vertexBuffer(_frameIndex) };
 			VkDeviceSize offsets[]{ 0 };
 			vkCmdBindVertexBuffers(_commandBuffer, 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(_commandBuffer, _renderer._2d.indexBuffer(_frameIndex), 0, VK_INDEX_TYPE_UINT16); // TODO: Use actial index type.
+			vkCmdBindIndexBuffer(_commandBuffer, _renderer._canvas.indexBuffer(_frameIndex), 0, VK_INDEX_TYPE_UINT16); // TODO: Use actual index type.
 		}
 
 		void bindShaders(const SharedPtr<ShaderSet>& shaderSet) override
@@ -120,21 +120,15 @@ namespace seir
 			_updateUniformBuffer = true;
 		}
 
-		void bind2DShaders() override
+		void bindCanvasShaders() override
 		{
-			_shaderSet = staticCast<VulkanShaderSet>(_renderer._2d.shaders());
+			_shaderSet = staticCast<VulkanShaderSet>(_renderer._canvas.shaders());
 		}
 
 		void bindTexture(const SharedPtr<Texture2D>& texture) override
 		{
 			_texture = texture ? staticCast<VulkanTexture2D>(texture) : _renderer._whiteTexture2D;
 			_updateTexture = true;
-		}
-
-		void draw2D(uint32_t firstIndex, uint32_t indexCount) override
-		{
-			processUpdates();
-			vkCmdDrawIndexed(_commandBuffer, indexCount, 1, firstIndex, 0, 0);
 		}
 
 		void drawMesh(const Mesh& mesh) override
@@ -149,6 +143,12 @@ namespace seir
 			vkCmdDrawIndexed(_commandBuffer, vulkanMesh->indexCount(), 1, 0, 0, 0);
 		}
 
+		void renderCanvasRange(uint32_t firstIndex, uint32_t indexCount) override
+		{
+			processUpdates();
+			vkCmdDrawIndexed(_commandBuffer, indexCount, 1, firstIndex, 0, 0);
+		}
+
 		void setTransformation(const Mat4& transformation) override
 		{
 			_pushConstants._matrix = transformation;
@@ -161,9 +161,9 @@ namespace seir
 			return { static_cast<float>(viewportSize.width), static_cast<float>(viewportSize.height) };
 		}
 
-		void update2DBuffers(std::span<const Vertex2D> vertices, std::span<const uint16_t> indices) override
+		void updateCanvasBuffers(std::span<const CanvasVertex> vertices, std::span<const uint16_t> indices) override
 		{
-			_renderer._2d.updateBuffers(_renderer._context, _frameIndex, vertices.data(), vertices.size_bytes(), indices.data(), indices.size_bytes());
+			_renderer._canvas.updateBuffers(_renderer._context, _frameIndex, vertices.data(), vertices.size_bytes(), indices.data(), indices.size_bytes());
 		}
 
 		void updateUniformBuffer(const Mat4& matrix) override
@@ -311,7 +311,7 @@ namespace seir
 				_whiteTexture2D = makeShared<VulkanTexture2D>(SizeF{ width, height },
 					_context.createTextureImage2D({ width, height }, VK_FORMAT_B8G8R8A8_SRGB, sizeof(data), &data, width));
 			}
-			_2d.initialize(*this);
+			_canvas.initialize(*this);
 		}
 		catch ([[maybe_unused]] const VulkanError& e)
 		{
@@ -349,7 +349,7 @@ namespace seir
 						.descriptorCount = 1'000,
 					},
 				});
-			_2d.resize(frameCount);
+			_canvas.resize(frameCount);
 		}
 		const auto [frameAvailableSemaphore, frameRenderedSemaphore, frameFence] = _frameSync.switchFrame(_context._device);
 		uint32_t index = 0;

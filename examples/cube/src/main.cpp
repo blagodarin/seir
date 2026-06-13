@@ -137,6 +137,12 @@ int u8main(int, char**)
 	seir::VariableRate clock;
 	for (EventCallbacks callbacks; app.processEvents(callbacks);)
 	{
+		if (const auto period = clock.advance())
+		{
+			const auto windowSize = window.size();
+			window.setTitle(std::format("Cube [{}x{} @ {:.1f} fps]",
+				windowSize._width, windowSize._height, period->_averageFrameRate));
+		}
 		renderer.render([&, time = clock.time()](seir::RenderPass& pass) {
 			const auto viewportSize = pass.size();
 			pass.updateUniformBuffer(seir::Mat4::projection3D(viewportSize.x / viewportSize.y, 45, 1) * seir::Mat4::camera({ 0, -5, 0 }, { 0, 0, 0 }));
@@ -146,12 +152,6 @@ int u8main(int, char**)
 			pass.setTransformation(seir::Mat4::rotation(29 * time, { 0, 0, 1 }) * seir::Mat4::rotation(19 * time, { 1, 0, 0 }));
 			pass.drawMesh(*mesh);
 		});
-		if (const auto period = clock.advance())
-		{
-			const auto windowSize = window.size();
-			window.setTitle(std::format("Cube [{}x{} @ {:.1f} fps]",
-				windowSize._width, windowSize._height, period->_averageFrameRate));
-		}
 	}
 	return 0;
 }

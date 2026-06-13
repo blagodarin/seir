@@ -3,19 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(HEADERS
-	include/seir_renderer/2d.hpp
+	include/seir_renderer/canvas.hpp
 	include/seir_renderer/renderer.hpp
 	)
 set(SOURCES
-	src/2d.cpp
-	src/2d.hpp
+	src/canvas.cpp
+	src/canvas.hpp
 	src/pass.hpp
 	src/renderer.cpp
 	)
 if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 	list(APPEND SOURCES
-		src/vulkan/2d.cpp
-		src/vulkan/2d.hpp
+		src/vulkan/canvas.cpp
+		src/vulkan/canvas.hpp
 		src/vulkan/commands.cpp
 		src/vulkan/commands.hpp
 		src/vulkan/context.cpp
@@ -62,8 +62,8 @@ if(SEIR_RENDERER_BACKEND STREQUAL "Vulkan")
 		)
 	target_link_libraries(seir_renderer PRIVATE GPUOpen::VulkanMemoryAllocator Vulkan::Vulkan)
 	seir_embed_spirv(seir_renderer
-		VERTEX src/vulkan/2d_vertex.glsl
-		FRAGMENT src/vulkan/2d_fragment.glsl
+		VERTEX src/vulkan/canvas_vertex.glsl
+		FRAGMENT src/vulkan/canvas_fragment.glsl
 		)
 endif()
 seir_target(seir_renderer FOLDER libs/renderer STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
