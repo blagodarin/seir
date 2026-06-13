@@ -5,8 +5,8 @@
 #include <seir_app/app.hpp>
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
+#include <seir_graphics/camera_view.hpp>
 #include <seir_graphics/color.hpp>
-#include <seir_graphics/quadf.hpp>
 #include <seir_gui/context.hpp>
 #include <seir_gui/font.hpp>
 #include <seir_gui/frame.hpp>
@@ -80,72 +80,6 @@ namespace
 #endif
 	};
 
-	class Camera3D
-	{
-	public:
-		Camera3D(const seir::SizeF& viewportSize, const seir::Vec3& cameraPosition) noexcept
-			: _viewportSize{ viewportSize._width, viewportSize._height }
-			, _cameraPosition{ cameraPosition }
-			, _viewMatrix{ seir::Mat4::projection3D(_viewportSize.x / _viewportSize.y, 35, .5) * seir::Mat4::camera(_cameraPosition, { 0, -60, 0 }) }
-		{
-		}
-
-		seir::Ray3D pixelRay(const seir::Vec2& point) const noexcept
-		{
-			// Point coordinates should be in [0, D) range (where D is width or height).
-			// We shift coordinates to the center of the pixel (by adding 0.5),
-			// then normalize them from [0, D] to [-1, 1].
-			const auto x = (2 * point.x + 1) / _viewportSize.x - 1;
-			const auto y = (2 * point.y + 1) / _viewportSize.y - 1;
-			return seir::Ray3D::fromPoints(_cameraPosition, _inverseViewMatrix * seir::Vec3{ x, y, 1 });
-		}
-
-		std::optional<seir::Vec3> pixelRayIntersection(const std::optional<seir::Vec2>& pixel, const seir::Plane& plane) const noexcept
-		{
-			if (pixel.has_value())
-				return pixelRay(*pixel).intersection(plane);
-			return {};
-		}
-
-		const seir::Mat4& viewMatrix() const noexcept { return _viewMatrix; }
-
-		seir::QuadF viewportQuad(const seir::Plane& plane, const seir::Vec3& center) const noexcept
-		{
-			const auto planeIntersection = [this, &plane](float x, float y) {
-				return seir::Ray3D::fromPoints(_cameraPosition, _inverseViewMatrix * seir::Vec3{ x, y, 1 }).intersection(plane);
-			};
-
-			if (const auto topLeft = planeIntersection(-1, -1)) [[likely]]
-				if (const auto topRight = planeIntersection(1, -1)) [[likely]]
-					if (const auto bottomLeft = planeIntersection(-1, 1)) [[likely]]
-						if (const auto bottomRight = planeIntersection(1, 1)) [[likely]]
-						{
-							const auto origin = center - plane.distanceTo(center) * plane.normal();
-							const auto up = normalize(*topLeft - *bottomLeft + *topRight - *bottomRight);
-							const auto right = crossProduct(up, plane.normal());
-							const auto inversePlaneMatrix = inverse(
-								seir::Mat4{
-									right.x, up.x, plane.normal().x, origin.x,
-									right.y, up.y, plane.normal().y, origin.y,
-									right.z, up.z, plane.normal().z, origin.z,
-									0, 0, 0, 1 });
-							return {
-								seir::Vec2{ inversePlaneMatrix * *topLeft },
-								seir::Vec2{ inversePlaneMatrix * *topRight },
-								seir::Vec2{ inversePlaneMatrix * *bottomLeft },
-								seir::Vec2{ inversePlaneMatrix * *bottomRight },
-							};
-						}
-			return {};
-		}
-
-	private:
-		const seir::Vec2 _viewportSize;
-		const seir::Vec3 _cameraPosition;
-		const seir::Mat4 _viewMatrix;
-		const seir::Mat4 _inverseViewMatrix = inverse(_viewMatrix);
-	};
-
 	struct Assets
 	{
 		seir::SharedPtr<seir::Texture2D> _boardTexture;
@@ -174,9 +108,9 @@ namespace
 			const seir::Plane kBoardPlane{ { 0, 0, 1 }, { 0, 0, 0 } };
 
 			updateCameraPosition(frame, duration);
-			const Camera3D camera{ frame.size(), _cameraPosition };
-			_viewMatrix = camera.viewMatrix();
-			presentMinimap(frame, camera.viewportQuad(kBoardPlane, {}));
+			const seir::CameraView camera{ frame.size(), _cameraPosition, { 0, -60, 0 }, 35, .5 };
+			_viewMatrix = camera.matrix();
+			presentMinimap(frame, camera.viewportProjection(kBoardPlane, {}));
 			{
 				seir::GuiLayout layout{ frame };
 				updateBoardCell(camera, kBoardPlane, frame.addHoverArea(frame.size()));
@@ -251,7 +185,7 @@ namespace
 			});
 		}
 
-		void updateBoardCell(const Camera3D& camera, const seir::Plane& boardPlane, const std::optional<seir::Vec2>& cursor)
+		void updateBoardCell(const seir::CameraView& camera, const seir::Plane& boardPlane, const std::optional<seir::Vec2>& cursor)
 		{
 			if (const auto boardPoint = camera.pixelRayIntersection(cursor, boardPlane);
 				boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)

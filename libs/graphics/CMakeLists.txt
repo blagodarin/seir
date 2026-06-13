@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(HEADERS
+	include/seir_graphics/camera_view.hpp
 	include/seir_graphics/color.hpp
 	include/seir_graphics/margins.hpp
 	include/seir_graphics/marginsf.hpp

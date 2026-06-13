@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(SOURCES
+	src/camera_view.cpp
 	src/color.cpp
 	src/margins.cpp
 	src/marginsf.cpp
