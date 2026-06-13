@@ -100,6 +100,10 @@ namespace
 		}
 	};
 
+	constexpr seir::RectF kCameraBound{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
+	constexpr seir::SizeF kBoardSize{ 128, 128 };
+	constexpr seir::SizeF kMinimapSize{ 160, 160 };
+
 	class Example
 	{
 	public:
@@ -110,7 +114,7 @@ namespace
 			updateCameraPosition(frame, duration);
 			const seir::CameraView camera{ frame.size(), _cameraPosition, { 0, -60, 0 }, 35, .5 };
 			_viewMatrix = camera.matrix();
-			presentMinimap(frame, camera.viewportProjection(kBoardPlane, {}));
+			drawMinimap(frame, camera.viewportProjection(kBoardPlane, {}));
 			{
 				seir::GuiLayout layout{ frame };
 				updateBoardCell(camera, kBoardPlane, frame.addHoverArea(frame.size()));
@@ -164,19 +168,33 @@ namespace
 			frame.addLabel(_fps, seir::GuiAlignment::Right);
 		}
 
-		void presentMinimap(seir::GuiFrame& frame, const seir::QuadF& cameraQuad) const
+		std::optional<seir::Vec2> captureMinimapDrag(seir::GuiFrame& frame)
 		{
-			const seir::SizeF minimapSize{ 160, 160 };
-			const seir::Vec2 minimapScale{ minimapSize._width / 128, minimapSize._height / -128 };
 			seir::GuiLayout layout{ frame };
 			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
-			const auto minimapRect = layout.addItem(minimapSize);
+			const auto cursor = frame.addDragArea("minimap", kMinimapSize, seir::Key::Mouse1);
+			if (!cursor)
+				return {};
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto minimapRect = layout.addItem(kMinimapSize);
+			return seir::Vec2{
+				(cursor->x - minimapRect.left()) / minimapRect.width() * kBoardSize._width - kBoardSize._width / 2,
+				(minimapRect.top() - cursor->y) / minimapRect.height() * kBoardSize._height + kBoardSize._height / 2,
+			};
+		}
+
+		void drawMinimap(seir::GuiFrame& frame, const seir::QuadF& cameraQuad)
+		{
+			seir::GuiLayout layout{ frame };
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto minimapRect = layout.addItem(kMinimapSize);
 			const auto minimapCenter = minimapRect.center();
 			auto& canvas = frame.canvas();
 			canvas.setTexture({});
 			canvas.setColor(seir::Rgba32::white(0x55));
 			canvas.drawRect(minimapRect);
 			canvas.setColor(seir::Rgba32::red(0xaa));
+			constexpr seir::Vec2 minimapScale{ kMinimapSize._width / kBoardSize._width, kMinimapSize._height / -kBoardSize._height };
 			canvas.drawQuad({
 				minimapCenter + cameraQuad._a * minimapScale,
 				minimapCenter + cameraQuad._b * minimapScale,
@@ -196,29 +214,34 @@ namespace
 
 		void updateCameraPosition(seir::GuiFrame& frame, unsigned duration)
 		{
-			constexpr auto kCameraSpeed = 10.f;
-			constexpr seir::RectF kPositionLimits{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
-
-			const auto step = static_cast<float>(duration) / 1000.f * kCameraSpeed;
-
 			const auto left = frame.takeKeyDown(seir::Key::Left);
 			const auto right = frame.takeKeyDown(seir::Key::Right);
-			if (left != right)
-			{
-				if (left)
-					_cameraPosition.x = std::max(_cameraPosition.x - step, kPositionLimits.left());
-				else
-					_cameraPosition.x = std::min(_cameraPosition.x + step, kPositionLimits.right());
-			}
-
 			const auto down = frame.takeKeyDown(seir::Key::Down);
 			const auto up = frame.takeKeyDown(seir::Key::Up);
-			if (down != up)
+			if (const auto newPosition = captureMinimapDrag(frame))
 			{
-				if (down)
-					_cameraPosition.y = std::max(_cameraPosition.y - step, kPositionLimits.top());
-				else
-					_cameraPosition.y = std::min(_cameraPosition.y + step, kPositionLimits.bottom());
+				const auto bounded = kCameraBound.bound({ newPosition->x, newPosition->y - 8.5f });
+				_cameraPosition.x = bounded.x;
+				_cameraPosition.y = bounded.y;
+			}
+			else
+			{
+				constexpr auto kCameraSpeed = 10.f;
+				const auto step = static_cast<float>(duration) / 1000.f * kCameraSpeed;
+				if (left != right)
+				{
+					if (left)
+						_cameraPosition.x = std::max(_cameraPosition.x - step, kCameraBound.left());
+					else
+						_cameraPosition.x = std::min(_cameraPosition.x + step, kCameraBound.right());
+				}
+				if (down != up)
+				{
+					if (down)
+						_cameraPosition.y = std::max(_cameraPosition.y - step, kCameraBound.top());
+					else
+						_cameraPosition.y = std::min(_cameraPosition.y + step, kCameraBound.bottom());
+				}
 			}
 		}
 

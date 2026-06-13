@@ -66,3 +66,28 @@ TEST_CASE("RectF::RectF(Rect)")
 	CHECK(r.width() == 3.f);
 	CHECK(r.height() == 5.f);
 }
+
+TEST_CASE("RectF::bound(Vec2)")
+{
+	const RectF r{ { 1, 1 }, SizeF{ 1, 1 } };
+
+	CHECK(r.bound({ 0, 0 }) == Vec2(1, 1));
+	CHECK(r.bound({ 1, 0 }) == Vec2(1, 1));
+	CHECK(r.bound({ 2, 0 }) == Vec2(2, 1));
+	CHECK(r.bound({ 4, 0 }) == Vec2(2, 1));
+
+	CHECK(r.bound({ 0, 1 }) == Vec2(1, 1));
+	CHECK(r.bound({ 1, 1 }) == Vec2(1, 1));
+	CHECK(r.bound({ 2, 1 }) == Vec2(2, 1));
+	CHECK(r.bound({ 4, 1 }) == Vec2(2, 1));
+
+	CHECK(r.bound({ 0, 2 }) == Vec2(1, 2));
+	CHECK(r.bound({ 1, 2 }) == Vec2(1, 2));
+	CHECK(r.bound({ 2, 2 }) == Vec2(2, 2));
+	CHECK(r.bound({ 4, 2 }) == Vec2(2, 2));
+
+	CHECK(r.bound({ 0, 3 }) == Vec2(1, 2));
+	CHECK(r.bound({ 1, 3 }) == Vec2(1, 2));
+	CHECK(r.bound({ 2, 3 }) == Vec2(2, 2));
+	CHECK(r.bound({ 4, 3 }) == Vec2(2, 2));
+}

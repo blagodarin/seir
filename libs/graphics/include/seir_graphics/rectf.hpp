@@ -69,12 +69,12 @@ constexpr seir::Vec2 seir::RectF::bound(const Vec2& p) const noexcept
 	if (x < _left)
 		x = _left;
 	else if (x >= _right)
-		x = _right - 1;
+		x = _right;
 	auto y = p.y;
 	if (y < _top)
 		y = _top;
 	else if (y >= _bottom)
-		y = _bottom - 1;
+		y = _bottom;
 	return { x, y };
 }
 
