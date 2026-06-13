@@ -64,6 +64,7 @@ jobs:
         run: |
           ctest --verbose --label-exclude renderer --test-dir build
       - name: Build CMake FetchContent usage example
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           cmake -S examples\usage\cmake_fetchcontent -B build.cmake_fetchcontent `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
