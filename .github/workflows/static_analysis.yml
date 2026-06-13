@@ -1,10 +1,14 @@
 name: Static analysis
 on:
-  push:
-    paths-ignore:
-      - 'docs'
+  pull_request:
+    paths-ignore: &paths-ignore
+      - 'docs/**'
       - 'LICENSE'
       - 'README.md'
+  push:
+    branches:
+      - main
+    paths-ignore: *paths-ignore
 jobs:
   static-analysis:
     name: Static analysis
