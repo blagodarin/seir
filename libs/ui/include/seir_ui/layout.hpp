@@ -8,9 +8,9 @@
 
 namespace seir
 {
-	class GuiFrame;
+	class UiFrame;
 
-	class GuiLayout
+	class UiLayout
 	{
 	public:
 		enum class Axis
@@ -35,11 +35,11 @@ namespace seir
 			const float _width;
 		};
 
-		explicit GuiLayout(GuiFrame&) noexcept;
-		GuiLayout(GuiFrame&, const Center&) noexcept;
-		GuiLayout(GuiFrame&, const Height&) noexcept;
-		GuiLayout(GuiFrame&, const Width&) noexcept;
-		~GuiLayout() noexcept;
+		explicit UiLayout(UiFrame&) noexcept;
+		UiLayout(UiFrame&, const Center&) noexcept;
+		UiLayout(UiFrame&, const Height&) noexcept;
+		UiLayout(UiFrame&, const Width&) noexcept;
+		~UiLayout() noexcept;
 
 		RectF addItem(const SizeF&) noexcept;
 		RectF addItem() noexcept { return addItem(_defaultSize); }
@@ -58,8 +58,8 @@ namespace seir
 		void skip(float distance) noexcept;
 
 	private:
-		GuiFrame& _frame;
-		GuiLayout* const _previous;
+		UiFrame& _frame;
+		UiLayout* const _previous;
 		float _scaling = 1;
 		Vec2 _offset{ 0, 0 };
 		const SizeF _size;

@@ -182,17 +182,17 @@ int u8main(int, char**)
 	seir::Window window{ app, "Key Tester" };
 	seir::Renderer renderer{ window };
 	seir::Canvas canvas;
-	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 24) };
+	seir::UiContext uiContext{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 24) };
 	for (KeyHandler handler; app.processEvents(handler);)
 	{
-		seir::GuiFrame frame{ gui, canvas };
-		seir::GuiLayout layout{ frame };
-		layout.fromBottomLeft(seir::GuiLayout::Axis::Y, 2);
+		seir::UiFrame ui{ uiContext, canvas };
+		seir::UiLayout layout{ ui };
+		layout.fromBottomLeft(seir::UiLayout::Axis::Y, 2);
 		layout.setItemSize({ 0, 24 });
 		layout.setItemSpacing(0);
-		frame.setLabelStyle({ seir::Rgba32::white(), 1 });
+		ui.setLabelStyle({ seir::Rgba32::white(), 1 });
 		for (const auto& event : handler.events())
-			frame.addLabel(event);
+			ui.addLabel(event);
 		renderer.render([&](seir::RenderPass& pass) {
 			canvas.render(pass);
 		});

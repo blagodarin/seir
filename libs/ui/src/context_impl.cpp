@@ -25,25 +25,25 @@ namespace
 
 namespace seir
 {
-	GuiContextImpl::GuiContextImpl(Window& window, const SharedPtr<Font>& defaultFont) noexcept
+	UiContextImpl::UiContextImpl(Window& window, const SharedPtr<Font>& defaultFont) noexcept
 		: _window{ window }
 		, _defaultFont{ defaultFont }
 	{
 	}
 
-	GuiContextImpl::~GuiContextImpl() noexcept = default;
+	UiContextImpl::~UiContextImpl() noexcept = default;
 
-	RectF GuiContextImpl::addItem() const noexcept
+	RectF UiContextImpl::addItem() const noexcept
 	{
 		return _layout ? _layout->addItem() : RectF{};
 	}
 
-	RectF GuiContextImpl::addItem(const SizeF& size) const noexcept
+	RectF UiContextImpl::addItem(const SizeF& size) const noexcept
 	{
 		return _layout ? _layout->addItem(size) : RectF{};
 	}
 
-	GuiContextImpl::KeyCapture GuiContextImpl::captureClick(Key key, bool repeated, bool release) noexcept
+	UiContextImpl::KeyCapture UiContextImpl::captureClick(Key key, bool repeated, bool release) noexcept
 	{
 		const auto i = std::find_if(_inputEvents.begin(), _inputEvents.end(), [key](const auto event) {
 			return key == Key::None ? !(event & (kTextFlag | kProcessedFlag)) : (event & kKeySearchMask) == static_cast<uint8_t>(key);
@@ -75,7 +75,7 @@ namespace seir
 		return { count, false };
 	}
 
-	void GuiContextImpl::captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback)
+	void UiContextImpl::captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback)
 	{
 		assert(!_keyboardItemId.empty());
 		for (auto& event : _inputEvents)
@@ -90,7 +90,7 @@ namespace seir
 		}
 	}
 
-	Vec2 GuiContextImpl::takeBorderHover(const RectF& rect, float borderWidth) noexcept
+	Vec2 UiContextImpl::takeBorderHover(const RectF& rect, float borderWidth) noexcept
 	{
 		if (_mouseHoverTaken)
 			return {};
@@ -112,7 +112,7 @@ namespace seir
 		return { x, y };
 	}
 
-	std::optional<Vec2> GuiContextImpl::takeMouseCursor(const RectF& rect) noexcept
+	std::optional<Vec2> UiContextImpl::takeMouseCursor(const RectF& rect) noexcept
 	{
 		if (_mouseCursorTaken || !rect.contains(_mouseCursor))
 			return {};
@@ -121,7 +121,7 @@ namespace seir
 		return _mouseCursor;
 	}
 
-	std::optional<Vec2> GuiContextImpl::takeMouseHover(const RectF& rect) noexcept
+	std::optional<Vec2> UiContextImpl::takeMouseHover(const RectF& rect) noexcept
 	{
 		if (_mouseHoverTaken || !rect.contains(_mouseCursor))
 			return {};
@@ -129,7 +129,7 @@ namespace seir
 		return _mouseCursor;
 	}
 
-	void GuiContextImpl::updateWhiteTexture(const SharedPtr<Font>& font) noexcept
+	void UiContextImpl::updateWhiteTexture(const SharedPtr<Font>& font) noexcept
 	{
 		if (font)
 		{
@@ -140,7 +140,7 @@ namespace seir
 			_whiteTexture = {};
 	}
 
-	void GuiContextImpl::onKeyEvent([[maybe_unused]] Window& window, const KeyEvent& event)
+	void UiContextImpl::onKeyEvent([[maybe_unused]] Window& window, const KeyEvent& event)
 	{
 		assert(&window == &_window);
 		auto encodedEvent = static_cast<uint16_t>(event._key);
@@ -156,7 +156,7 @@ namespace seir
 		_keyStates.update(event);
 	}
 
-	void GuiContextImpl::onTextEvent([[maybe_unused]] Window& window, std::string_view text)
+	void UiContextImpl::onTextEvent([[maybe_unused]] Window& window, std::string_view text)
 	{
 		assert(&window == &_window);
 		const auto index = _textInputs.size();

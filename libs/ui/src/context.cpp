@@ -9,20 +9,20 @@
 
 namespace seir
 {
-	GuiContext::GuiContext(Window& window)
-		: GuiContext{ window, {} } {}
+	UiContext::UiContext(Window& window)
+		: UiContext{ window, {} } {}
 
-	GuiContext::GuiContext(Window& window, const SharedPtr<Font>& defaultFont)
-		: _impl{ std::make_unique<GuiContextImpl>(window, defaultFont) } {}
+	UiContext::UiContext(Window& window, const SharedPtr<Font>& defaultFont)
+		: _impl{ std::make_unique<UiContextImpl>(window, defaultFont) } {}
 
-	GuiContext::~GuiContext() noexcept = default;
+	UiContext::~UiContext() noexcept = default;
 
-	EventCallbacks& GuiContext::eventCallbacks() noexcept
+	EventCallbacks& UiContext::eventCallbacks() noexcept
 	{
 		return *_impl;
 	}
 
-	void GuiContext::setDefaultFont(const SharedPtr<Font>& font) noexcept
+	void UiContext::setDefaultFont(const SharedPtr<Font>& font) noexcept
 	{
 		_impl->_defaultFont = font;
 	}

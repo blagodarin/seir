@@ -112,21 +112,21 @@ namespace
 		const seir::Vec3& position() const noexcept { return _cameraPosition; }
 		const seir::CameraView& view() const noexcept { return _cameraView; }
 
-		void present(seir::GuiFrame& frame, unsigned duration)
+		void present(seir::UiFrame& ui, unsigned duration)
 		{
-			updateCameraPosition(frame, duration);
-			_cameraView = { frame.size(), _cameraPosition, { 0, -60, 0 }, 35, .5 };
-			drawMinimap(frame, _cameraView.viewportProjection(_groundPlane, {}));
+			updateCameraPosition(ui, duration);
+			_cameraView = { ui.size(), _cameraPosition, { 0, -60, 0 }, 35, .5 };
+			drawMinimap(ui, _cameraView.viewportProjection(_groundPlane, {}));
 		}
 
 	private:
-		static void drawMinimap(seir::GuiFrame& frame, const seir::QuadF& viewportProjection)
+		static void drawMinimap(seir::UiFrame& ui, const seir::QuadF& viewportProjection)
 		{
-			seir::GuiLayout layout{ frame };
-			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			seir::UiLayout layout{ ui };
+			layout.fromBottomRight(seir::UiLayout::Axis::Y, 8);
 			const auto minimapRect = layout.addItem(kMinimapSize);
 			const auto minimapCenter = minimapRect.center();
-			auto& canvas = frame.canvas();
+			auto& canvas = ui.canvas();
 			canvas.setTexture({});
 			canvas.setColor(seir::Rgba32::white(0x55));
 			canvas.drawRect(minimapRect);
@@ -143,14 +143,14 @@ namespace
 			});
 		}
 
-		static std::optional<seir::Vec2> takeMinimapPosition(seir::GuiFrame& frame)
+		static std::optional<seir::Vec2> takeMinimapPosition(seir::UiFrame& ui)
 		{
-			seir::GuiLayout layout{ frame };
-			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
-			const auto cursor = frame.addDragArea("minimap", kMinimapSize, seir::Key::Mouse1);
+			seir::UiLayout layout{ ui };
+			layout.fromBottomRight(seir::UiLayout::Axis::Y, 8);
+			const auto cursor = ui.addDragArea("minimap", kMinimapSize, seir::Key::Mouse1);
 			if (!cursor)
 				return {};
-			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			layout.fromBottomRight(seir::UiLayout::Axis::Y, 8);
 			const auto minimapRect = layout.addItem(kMinimapSize);
 			return seir::Vec2{
 				(cursor->x - minimapRect.left()) / minimapRect.width() * kBoardSize._width - kBoardSize._width / 2,
@@ -158,15 +158,15 @@ namespace
 			};
 		}
 
-		void updateCameraPosition(seir::GuiFrame& frame, unsigned duration)
+		void updateCameraPosition(seir::UiFrame& ui, unsigned duration)
 		{
 			constexpr float kBorderWidth = 2;
-			const auto forcedPosition = takeMinimapPosition(frame); // Should happen before border hover takes the mouse.
-			const auto borderHover = frame.takeBorderHover(kBorderWidth);
-			const auto left = frame.takeKeyDown(seir::Key::Left) || borderHover.x < 0;
-			const auto right = frame.takeKeyDown(seir::Key::Right) || borderHover.x > 0;
-			const auto down = frame.takeKeyDown(seir::Key::Down) || borderHover.y > 0;
-			const auto up = frame.takeKeyDown(seir::Key::Up) || borderHover.y < 0;
+			const auto forcedPosition = takeMinimapPosition(ui); // Should happen before border hover takes the mouse.
+			const auto borderHover = ui.takeBorderHover(kBorderWidth);
+			const auto left = ui.takeKeyDown(seir::Key::Left) || borderHover.x < 0;
+			const auto right = ui.takeKeyDown(seir::Key::Right) || borderHover.x > 0;
+			const auto down = ui.takeKeyDown(seir::Key::Down) || borderHover.y > 0;
+			const auto up = ui.takeKeyDown(seir::Key::Up) || borderHover.y < 0;
 			if (forcedPosition)
 			{
 				const auto bounded = kCameraBound.bound({ forcedPosition->x, forcedPosition->y + kCameraOffsetY });
@@ -207,13 +207,13 @@ namespace
 	class Example
 	{
 	public:
-		void present(seir::GuiFrame&& frame, unsigned duration)
+		void present(seir::UiFrame&& ui, unsigned duration)
 		{
-			_camera.present(frame, duration);
-			updateBoardCell(frame);
-			drawDebugGraphics(frame);
-			if (frame.takeKeyPress(seir::Key::Escape))
-				frame.close();
+			_camera.present(ui, duration);
+			updateBoardCell(ui);
+			drawDebugGraphics(ui);
+			if (ui.takeKeyPress(seir::Key::Escape))
+				ui.close();
 		}
 
 		void render(seir::RenderPass& pass, const Assets& assets)
@@ -239,31 +239,31 @@ namespace
 		}
 
 	private:
-		void drawDebugGraphics(seir::GuiFrame& frame)
+		void drawDebugGraphics(seir::UiFrame& ui)
 		{
 			_debugText.clear();
 			std::format_to(std::back_inserter(_debugText), "cam={:+.1f},{:+.1f}", _camera.position().x, _camera.position().y);
 			if (_boardCell)
 				std::format_to(std::back_inserter(_debugText), " cur={:+},{:+}", _boardCell->x, _boardCell->y);
 			{
-				auto& canvas = frame.canvas();
+				auto& canvas = ui.canvas();
 				canvas.setColor(seir::Rgba32::black(0xaa));
 				canvas.setTexture({});
-				canvas.drawRect({ { 0, 0 }, seir::SizeF{ frame.size()._width, 20 } });
+				canvas.drawRect({ { 0, 0 }, seir::SizeF{ ui.size()._width, 20 } });
 			}
-			frame.setLabelStyle({ seir::Rgba32::white(), 1 });
-			seir::GuiLayout layout{ frame };
+			ui.setLabelStyle({ seir::Rgba32::white(), 1 });
+			seir::UiLayout layout{ ui };
 			layout.setItemSize({ 0, 16 });
-			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 4);
-			frame.addLabel(_debugText, seir::GuiAlignment::Left);
-			layout.fromTopRight(seir::GuiLayout::Axis::Y, 4);
-			frame.addLabel(_fps, seir::GuiAlignment::Right);
+			layout.fromTopLeft(seir::UiLayout::Axis::Y, 4);
+			ui.addLabel(_debugText, seir::UiAlignment::Left);
+			layout.fromTopRight(seir::UiLayout::Axis::Y, 4);
+			ui.addLabel(_fps, seir::UiAlignment::Right);
 		}
 
-		void updateBoardCell(seir::GuiFrame& frame)
+		void updateBoardCell(seir::UiFrame& ui)
 		{
-			seir::GuiLayout layout{ frame };
-			const auto cursor = frame.addHoverArea(frame.size());
+			seir::UiLayout layout{ ui };
+			const auto cursor = ui.addHoverArea(ui.size());
 			if (const auto boardPoint = _camera.view().pixelRayIntersection(cursor, _camera.groundPlane());
 				boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)
 				_boardCell.emplace(std::floor(boardPoint->x), std::floor(boardPoint->y));
@@ -286,15 +286,15 @@ int u8main(int, char**)
 	seir::Renderer renderer{ window };
 	Assets assets{ renderer };
 	seir::Canvas canvas;
-	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
+	seir::UiContext uiContext{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
 	seir::ConstantRate actionClock{ std::chrono::milliseconds{ 1 } };
 	seir::VariableRate frameClock;
-	while (app.processEvents(gui.eventCallbacks()))
+	while (app.processEvents(uiContext.eventCallbacks()))
 	{
 		if (const auto period = frameClock.advance())
 			example.setFps(period->_averageFrameRate);
-		example.present({ gui, canvas }, actionClock.advance());
+		example.present({ uiContext, canvas }, actionClock.advance());
 		renderer.render([&](seir::RenderPass& pass) {
 			example.render(pass, assets);
 			canvas.render(pass);

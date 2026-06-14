@@ -21,63 +21,66 @@
 
 #include <format>
 
-class Example
+namespace
 {
-public:
-	void presentGui(seir::GuiFrame&& frame)
+	class Example
 	{
-		seir::GuiLayout layout{ frame };
-		layout.fromTopRight(seir::GuiLayout::Axis::X, 4);
-		layout.setItemSize({ 128, 32 });
-		layout.setItemSpacing(4);
-		if (frame.addButton("quit", "Quit"))
-			frame.close();
-		if (frame.addButton("fps", _showFps ? "Hide FPS" : "Show FPS"))
-			_showFps = !_showFps;
-		layout.advance();
-		if (std::exchange(_isFirstFrame, false))
-			frame.putKeyboardFocus();
-		if (frame.addStringEdit("input", _input))
+	public:
+		void present(seir::UiFrame&& ui)
 		{
-			_output = std::move(_input);
-			_input.clear();
+			seir::UiLayout layout{ ui };
+			layout.fromTopRight(seir::UiLayout::Axis::X, 4);
+			layout.setItemSize({ 128, 32 });
+			layout.setItemSpacing(4);
+			if (ui.addButton("quit", "Quit"))
+				ui.close();
+			if (ui.addButton("fps", _showFps ? "Hide FPS" : "Show FPS"))
+				_showFps = !_showFps;
+			layout.advance();
+			if (std::exchange(_isFirstFrame, false))
+				ui.putKeyboardFocus();
+			if (ui.addStringEdit("input", _input))
+			{
+				_output = std::move(_input);
+				_input.clear();
+			}
+			ui.addLabel(_output);
+			if (const auto cursor = ui.takeMouseCursor())
+			{
+				ui.selectWhiteTexture();
+				ui.canvas().setColor(seir::Rgba32::red());
+				ui.canvas().drawRect({ *cursor, seir::SizeF{ 5, 5 } });
+			}
+			if (_showFps)
+			{
+				layout.fromTopLeft(seir::UiLayout::Axis::Y, 2);
+				layout.setItemSize({ 0, 24 });
+				layout.setItemSpacing(0);
+				ui.setLabelStyle({ seir::Rgba32::white(), 1 });
+				ui.addLabel(_fps1);
+				ui.addLabel(_fps2);
+			}
+			if (ui.takeKeyPress(seir::Key::Escape))
+				ui.close();
 		}
-		frame.addLabel(_output);
-		if (const auto cursor = frame.takeMouseCursor())
-		{
-			frame.selectWhiteTexture();
-			frame.canvas().setColor(seir::Rgba32::red());
-			frame.canvas().drawRect({ *cursor, seir::SizeF{ 5, 5 } });
-		}
-		if (_showFps)
-		{
-			layout.fromTopLeft(seir::GuiLayout::Axis::Y, 2);
-			layout.setItemSize({ 0, 24 });
-			layout.setItemSpacing(0);
-			frame.setLabelStyle({ seir::Rgba32::white(), 1 });
-			frame.addLabel(_fps1);
-			frame.addLabel(_fps2);
-		}
-		if (frame.takeKeyPress(seir::Key::Escape))
-			frame.close();
-	}
 
-	void setFps(const seir::VariablePeriod& period)
-	{
-		_fps1.clear();
-		std::format_to(std::back_inserter(_fps1), "{:.1f} fps", period._averageFrameRate);
-		_fps2.clear();
-		std::format_to(std::back_inserter(_fps2), "{:.1f} < {} ms/frame", 1000 / period._averageFrameRate, period._maxFrameDuration);
-	}
+		void setFps(const seir::VariablePeriod& period)
+		{
+			_fps1.clear();
+			std::format_to(std::back_inserter(_fps1), "{:.1f} fps", period._averageFrameRate);
+			_fps2.clear();
+			std::format_to(std::back_inserter(_fps2), "{:.1f} < {} ms/frame", 1000 / period._averageFrameRate, period._maxFrameDuration);
+		}
 
-private:
-	bool _isFirstFrame = true;
-	bool _showFps = true;
-	std::string _fps1;
-	std::string _fps2;
-	std::string _input;
-	std::string _output;
-};
+	private:
+		bool _isFirstFrame = true;
+		bool _showFps = true;
+		std::string _fps1;
+		std::string _fps2;
+		std::string _input;
+		std::string _output;
+	};
+}
 
 int u8main(int, char**)
 {
@@ -85,13 +88,13 @@ int u8main(int, char**)
 	seir::Window window{ app, "UI" };
 	seir::Renderer renderer{ window };
 	seir::Canvas canvas;
-	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24) };
+	seir::UiContext uiContext{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24) };
 	Example example;
-	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
+	for (seir::VariableRate clock; app.processEvents(uiContext.eventCallbacks());)
 	{
 		if (const auto period = clock.advance())
 			example.setFps(*period);
-		example.presentGui({ gui, canvas });
+		example.present({ uiContext, canvas });
 		renderer.render([&](seir::RenderPass& pass) {
 			canvas.render(pass);
 		});

@@ -14,18 +14,18 @@ namespace seir
 	class SharedPtr;
 	class Window;
 
-	class GuiContext
+	class UiContext
 	{
 	public:
-		explicit GuiContext(Window&);
-		GuiContext(Window&, const SharedPtr<Font>&);
-		~GuiContext() noexcept;
+		explicit UiContext(Window&);
+		UiContext(Window&, const SharedPtr<Font>&);
+		~UiContext() noexcept;
 
 		EventCallbacks& eventCallbacks() noexcept;
 		void setDefaultFont(const SharedPtr<Font>&) noexcept;
 
 	private:
-		const std::unique_ptr<class GuiContextImpl> _impl;
-		friend class GuiFrame;
+		const std::unique_ptr<class UiContextImpl> _impl;
+		friend class UiFrame;
 	};
 }

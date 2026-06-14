@@ -32,7 +32,7 @@ namespace
 
 namespace seir
 {
-	GuiFrame::GuiFrame(GuiContext& context, Canvas& canvas)
+	UiFrame::UiFrame(UiContext& context, Canvas& canvas)
 		: _context{ *context._impl }
 		, _canvas{ canvas }
 		, _size{ context._impl->_window.size() }
@@ -50,7 +50,7 @@ namespace seir
 		setLabelStyle({});
 	}
 
-	GuiFrame::~GuiFrame() noexcept
+	UiFrame::~UiFrame() noexcept
 	{
 		// TODO: Release keyboard item focus on mouse click outside of the item.
 		if (_context._mouseItemKey != Key::None && _context.captureClick(_context._mouseItemKey, false, true).released)
@@ -70,7 +70,7 @@ namespace seir
 		_context._keyStates.clear();
 	}
 
-	bool GuiFrame::addButton(std::string_view id, std::string_view text)
+	bool UiFrame::addButton(std::string_view id, std::string_view text)
 	{
 		assert(!id.empty());
 		const auto rect = _context.addItem();
@@ -135,7 +135,7 @@ namespace seir
 		return clicked;
 	}
 
-	std::optional<Vec2> GuiFrame::addDragArea(std::string_view id, const SizeF& size, Key key)
+	std::optional<Vec2> UiFrame::addDragArea(std::string_view id, const SizeF& size, Key key)
 	{
 		assert(!id.empty());
 		const auto rect = _context.addItem(size);
@@ -169,12 +169,12 @@ namespace seir
 		return {};
 	}
 
-	std::optional<Vec2> GuiFrame::addHoverArea(const SizeF& size) noexcept
+	std::optional<Vec2> UiFrame::addHoverArea(const SizeF& size) noexcept
 	{
 		return _context.takeMouseHover(_context.addItem(size));
 	}
 
-	void GuiFrame::addLabel(std::string_view text, GuiAlignment alignment)
+	void UiFrame::addLabel(std::string_view text, UiAlignment alignment)
 	{
 		if (!_context._labelStyle._font)
 			return;
@@ -186,20 +186,20 @@ namespace seir
 		textRect._bottom -= verticalPadding;
 		if (textRect.left() == textRect.right())
 		{
-			if (alignment == GuiAlignment::Left || alignment == GuiAlignment::Center)
+			if (alignment == UiAlignment::Left || alignment == UiAlignment::Center)
 				textRect._right = _size._width;
-			if (alignment == GuiAlignment::Center || alignment == GuiAlignment::Right)
+			if (alignment == UiAlignment::Center || alignment == UiAlignment::Right)
 				textRect._left = 0;
 		}
 		if (const auto textWidth = _context._labelStyle._font->textWidth(text, textRect.height()); textWidth < textRect.width())
 		{
-			if (alignment == GuiAlignment::Center)
+			if (alignment == UiAlignment::Center)
 			{
 				const auto horizontalPadding = (textRect.width() - textWidth) / 2;
 				textRect._left += horizontalPadding;
 				textRect._right -= horizontalPadding;
 			}
-			else if (alignment == GuiAlignment::Right)
+			else if (alignment == UiAlignment::Right)
 				textRect._left = textRect._right - textWidth;
 		}
 		_canvas.setColor(_context._labelStyle._textColor);
@@ -207,7 +207,7 @@ namespace seir
 		_context.updateWhiteTexture(_context._labelStyle._font);
 	}
 
-	bool GuiFrame::addStringEdit(std::string_view id, std::string& text)
+	bool UiFrame::addStringEdit(std::string_view id, std::string& text)
 	{
 		assert(!id.empty());
 		const auto itemRect = _context.addItem();
@@ -338,73 +338,73 @@ namespace seir
 		return entered;
 	}
 
-	void GuiFrame::close() noexcept
+	void UiFrame::close() noexcept
 	{
 		_context._window.close();
 	}
 
-	void GuiFrame::putKeyboardFocus() noexcept
+	void UiFrame::putKeyboardFocus() noexcept
 	{
 		if (_context._keyboardItemId.empty())
 			_context._focusExpected = true;
 	}
 
-	void GuiFrame::selectWhiteTexture()
+	void UiFrame::selectWhiteTexture()
 	{
 		_canvas.setTexture(_context._whiteTexture);
 		if (_context._whiteTexture)
 			_canvas.setTextureRect(_context._whiteTextureRect);
 	}
 
-	void GuiFrame::setButtonStyle(const GuiButtonStyle& style) noexcept
+	void UiFrame::setButtonStyle(const UiButtonStyle& style) noexcept
 	{
 		_context._buttonStyle = style;
 		if (!_context._buttonStyle._font)
 			_context._buttonStyle._font = _context._defaultFont;
 	}
 
-	void GuiFrame::setEditStyle(const GuiEditStyle& style) noexcept
+	void UiFrame::setEditStyle(const UiEditStyle& style) noexcept
 	{
 		_context._editStyle = style;
 		if (!_context._editStyle._font)
 			_context._editStyle._font = _context._defaultFont;
 	}
 
-	void GuiFrame::setLabelStyle(const GuiLabelStyle& style) noexcept
+	void UiFrame::setLabelStyle(const UiLabelStyle& style) noexcept
 	{
 		_context._labelStyle = style;
 		if (!_context._labelStyle._font)
 			_context._labelStyle._font = _context._defaultFont;
 	}
 
-	bool GuiFrame::takeAnyKeyPress() noexcept
+	bool UiFrame::takeAnyKeyPress() noexcept
 	{
 		return takeKeyPress(Key::None);
 	}
 
-	Vec2 GuiFrame::takeBorderHover(float borderWidth) noexcept
+	Vec2 UiFrame::takeBorderHover(float borderWidth) noexcept
 	{
 		assert(borderWidth > 0);
 		return _context.takeBorderHover({ {}, _size }, borderWidth);
 	}
 
-	bool GuiFrame::takeKeyDown(Key key) noexcept
+	bool UiFrame::takeKeyDown(Key key) noexcept
 	{
 		const auto state = _context._keyStates.take(key);
 		return state && *state;
 	}
 
-	bool GuiFrame::takeKeyPress(Key key) noexcept
+	bool UiFrame::takeKeyPress(Key key) noexcept
 	{
 		return _context.captureClick(key, false).pressed > 0;
 	}
 
-	std::optional<bool> GuiFrame::takeKeyState(Key key) noexcept
+	std::optional<bool> UiFrame::takeKeyState(Key key) noexcept
 	{
 		return _context._keyStates.take(key);
 	}
 
-	std::optional<Vec2> GuiFrame::takeMouseCursor() noexcept
+	std::optional<Vec2> UiFrame::takeMouseCursor() noexcept
 	{
 		return _context.takeMouseCursor(RectF{ _size });
 	}
