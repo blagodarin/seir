@@ -4,9 +4,9 @@
 
 #include "context_impl.hpp"
 
-#include <seir_gui/font.hpp>
-#include <seir_gui/layout.hpp>
 #include <seir_renderer/renderer.hpp>
+#include <seir_ui/font.hpp>
+#include <seir_ui/layout.hpp>
 
 #include <cassert>
 #include <algorithm>

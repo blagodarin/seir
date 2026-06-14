@@ -7,7 +7,7 @@
 #include <seir_app/events.hpp>
 #include <seir_base/shared_ptr.hpp>
 #include <seir_graphics/rectf.hpp>
-#include <seir_gui/style.hpp>
+#include <seir_ui/style.hpp>
 #include "keyboard_item.hpp"
 
 #include <array>

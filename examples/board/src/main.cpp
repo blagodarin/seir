@@ -7,11 +7,6 @@
 #include <seir_base/clock.hpp>
 #include <seir_graphics/camera_view.hpp>
 #include <seir_graphics/color.hpp>
-#include <seir_gui/context.hpp>
-#include <seir_gui/font.hpp>
-#include <seir_gui/frame.hpp>
-#include <seir_gui/layout.hpp>
-#include <seir_gui/style.hpp>
 #include <seir_image/image.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_math/euler.hpp>
@@ -22,6 +17,11 @@
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
+#include <seir_ui/context.hpp>
+#include <seir_ui/font.hpp>
+#include <seir_ui/frame.hpp>
+#include <seir_ui/layout.hpp>
+#include <seir_ui/style.hpp>
 
 #include <cmath>
 #include <format>

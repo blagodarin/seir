@@ -6,15 +6,15 @@
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
 #include <seir_graphics/color.hpp>
-#include <seir_gui/context.hpp>
-#include <seir_gui/font.hpp>
-#include <seir_gui/frame.hpp>
-#include <seir_gui/layout.hpp>
-#include <seir_gui/style.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
+#include <seir_ui/context.hpp>
+#include <seir_ui/font.hpp>
+#include <seir_ui/frame.hpp>
+#include <seir_ui/layout.hpp>
+#include <seir_ui/style.hpp>
 
 #include <format>
 
@@ -50,7 +50,7 @@ namespace
 int u8main(int, char**)
 {
 	seir::App app;
-	seir::Window window{ app, "Minimal GUI" };
+	seir::Window window{ app, "Minimal UI" };
 	seir::Renderer renderer{ window };
 	seir::Canvas canvas;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };

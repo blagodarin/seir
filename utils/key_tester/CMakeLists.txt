@@ -8,7 +8,7 @@ set(SOURCES
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(key_tester ${SOURCES})
 target_compile_definitions(key_tester PRIVATE SEIR_DATA_DIR="${SEIR_DATA_DIR}/")
-target_link_libraries(key_tester PRIVATE Seir::gui Seir::io Seir::renderer Seir::u8main)
+target_link_libraries(key_tester PRIVATE Seir::io Seir::renderer Seir::u8main Seir::ui)
 set_target_properties(key_tester PROPERTIES WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
 seir_target(key_tester FOLDER utils STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 if(WIN32)

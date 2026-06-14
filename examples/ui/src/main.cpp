@@ -8,16 +8,16 @@
 #include <seir_base/clock.hpp>
 #include <seir_graphics/color.hpp>
 #include <seir_graphics/rectf.hpp>
-#include <seir_gui/context.hpp>
-#include <seir_gui/font.hpp>
-#include <seir_gui/frame.hpp>
-#include <seir_gui/layout.hpp>
-#include <seir_gui/style.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
+#include <seir_ui/context.hpp>
+#include <seir_ui/font.hpp>
+#include <seir_ui/frame.hpp>
+#include <seir_ui/layout.hpp>
+#include <seir_ui/style.hpp>
 
 #include <format>
 
@@ -82,7 +82,7 @@ private:
 int u8main(int, char**)
 {
 	seir::App app;
-	seir::Window window{ app, "GUI" };
+	seir::Window window{ app, "UI" };
 	seir::Renderer renderer{ window };
 	seir::Canvas canvas;
 	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceSans3-Regular.ttf"), 24) };

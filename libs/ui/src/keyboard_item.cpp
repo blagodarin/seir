@@ -5,7 +5,7 @@
 #include "keyboard_item.hpp"
 
 #include <seir_base/utf8.hpp>
-#include <seir_gui/font.hpp>
+#include <seir_ui/font.hpp>
 
 #include <cassert>
 

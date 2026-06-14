@@ -2,9 +2,9 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_gui/layout.hpp>
+#include <seir_ui/layout.hpp>
 
-#include <seir_gui/frame.hpp>
+#include <seir_ui/frame.hpp>
 #include "context_impl.hpp"
 
 namespace seir
