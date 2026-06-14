@@ -11,7 +11,7 @@ namespace seir
 {
 	class FontCapture;
 
-	class GuiKeyboardItem
+	class UiKeyboardItem
 	{
 	public:
 		void adjustToText(std::string_view text) noexcept;

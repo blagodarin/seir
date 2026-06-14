@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_gui/font.hpp>
+#include <seir_ui/font.hpp>
 
 #include <seir_base/utf8.hpp>
 #include <seir_graphics/rectf.hpp>

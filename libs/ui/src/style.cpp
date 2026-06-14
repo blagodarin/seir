@@ -2,11 +2,11 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_gui/style.hpp>
+#include <seir_ui/style.hpp>
 
 namespace seir
 {
-	GuiButtonStyle::GuiButtonStyle() noexcept
+	UiButtonStyle::UiButtonStyle() noexcept
 		: _fontSize{ .75f }
 		, _normal{ Rgba32::grayscale(0x88, 0xcc), Rgba32::black() }
 		, _hovered{ Rgba32::grayscale(0xdd, 0xdd), Rgba32::grayscale(0x11) }
@@ -14,7 +14,7 @@ namespace seir
 	{
 	}
 
-	GuiEditStyle::GuiEditStyle() noexcept
+	UiEditStyle::UiEditStyle() noexcept
 		: _fontSize{ .75f }
 		, _normal{ Rgba32::grayscale(0x00, 0xcc), Rgba32::grayscale(0xdd) }
 		, _hovered{ Rgba32::grayscale(0x11, 0xdd), Rgba32::grayscale(0xee) }
@@ -24,7 +24,7 @@ namespace seir
 	{
 	}
 
-	GuiLabelStyle::GuiLabelStyle() noexcept
+	UiLabelStyle::UiLabelStyle() noexcept
 		: _fontSize{ .75f }
 		, _textColor{ Rgba32::white() }
 	{

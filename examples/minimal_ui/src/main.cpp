@@ -6,15 +6,15 @@
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
 #include <seir_graphics/color.hpp>
-#include <seir_gui/context.hpp>
-#include <seir_gui/font.hpp>
-#include <seir_gui/frame.hpp>
-#include <seir_gui/layout.hpp>
-#include <seir_gui/style.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
+#include <seir_ui/context.hpp>
+#include <seir_ui/font.hpp>
+#include <seir_ui/frame.hpp>
+#include <seir_ui/layout.hpp>
+#include <seir_ui/style.hpp>
 
 #include <format>
 
@@ -23,17 +23,17 @@ namespace
 	class Example
 	{
 	public:
-		void presentGui(seir::GuiFrame&& frame)
+		void present(seir::UiFrame&& ui)
 		{
-			seir::GuiLayout layout{ frame };
-			layout.fromTopRight(seir::GuiLayout::Axis::Y, 4);
+			seir::UiLayout layout{ ui };
+			layout.fromTopRight(seir::UiLayout::Axis::Y, 4);
 			layout.setItemSize({ 0, 16 });
-			frame.setLabelStyle({ seir::Rgba32::white(), 1 });
-			frame.addLabel(_fps, seir::GuiAlignment::Right);
+			ui.setLabelStyle({ seir::Rgba32::white(), 1 });
+			ui.addLabel(_fps, seir::UiAlignment::Right);
 			layout.downFromCenter(16);
-			frame.addLabel("Press ESC to quit", seir::GuiAlignment::Center);
-			if (frame.takeKeyPress(seir::Key::Escape))
-				frame.close();
+			ui.addLabel("Press ESC to quit", seir::UiAlignment::Center);
+			if (ui.takeKeyPress(seir::Key::Escape))
+				ui.close();
 		}
 
 		void setFps(float fps)
@@ -50,16 +50,16 @@ namespace
 int u8main(int, char**)
 {
 	seir::App app;
-	seir::Window window{ app, "Minimal GUI" };
+	seir::Window window{ app, "Minimal UI" };
 	seir::Renderer renderer{ window };
 	seir::Canvas canvas;
-	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
+	seir::UiContext uiContext{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
 	Example example;
-	for (seir::VariableRate clock; app.processEvents(gui.eventCallbacks());)
+	for (seir::VariableRate clock; app.processEvents(uiContext.eventCallbacks());)
 	{
 		if (const auto period = clock.advance())
 			example.setFps(period->_averageFrameRate);
-		example.presentGui({ gui, canvas });
+		example.present({ uiContext, canvas });
 		renderer.render([&](seir::RenderPass& pass) {
 			canvas.render(pass);
 		});

@@ -2,21 +2,21 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_gui/layout.hpp>
+#include <seir_ui/layout.hpp>
 
-#include <seir_gui/frame.hpp>
+#include <seir_ui/frame.hpp>
 #include "context_impl.hpp"
 
 namespace seir
 {
-	GuiLayout::GuiLayout(GuiFrame& frame) noexcept
+	UiLayout::UiLayout(UiFrame& frame) noexcept
 		: _frame{ frame }
 		, _previous{ std::exchange(frame._context._layout, this) }
 		, _size{ frame._size }
 	{
 	}
 
-	GuiLayout::GuiLayout(GuiFrame& frame, const Center& mapping) noexcept
+	UiLayout::UiLayout(UiFrame& frame, const Center& mapping) noexcept
 		: _frame{ frame }
 		, _previous{ std::exchange(frame._context._layout, this) }
 		, _size{ mapping._width, mapping._height }
@@ -35,7 +35,7 @@ namespace seir
 		}
 	}
 
-	GuiLayout::GuiLayout(GuiFrame& frame, const Height& mapping) noexcept
+	UiLayout::UiLayout(UiFrame& frame, const Height& mapping) noexcept
 		: _frame{ frame }
 		, _previous{ std::exchange(frame._context._layout, this) }
 		, _scaling{ frame._size._height / mapping._height }
@@ -43,7 +43,7 @@ namespace seir
 	{
 	}
 
-	GuiLayout::GuiLayout(GuiFrame& frame, const Width& mapping) noexcept
+	UiLayout::UiLayout(UiFrame& frame, const Width& mapping) noexcept
 		: _frame{ frame }
 		, _previous{ std::exchange(frame._context._layout, this) }
 		, _scaling{ frame._size._width / mapping._width }
@@ -51,12 +51,12 @@ namespace seir
 	{
 	}
 
-	GuiLayout::~GuiLayout() noexcept
+	UiLayout::~UiLayout() noexcept
 	{
 		_frame._context._layout = _previous;
 	}
 
-	RectF GuiLayout::addItem(const SizeF& size) noexcept
+	RectF UiLayout::addItem(const SizeF& size) noexcept
 	{
 		const auto x1 = _position.x + size._width * (_direction.x - 1) / 2;
 		const auto x2 = _position.x + size._width * (_direction.x + 1) / 2;
@@ -77,7 +77,7 @@ namespace seir
 		return RectF{ { x1, y1 }, Vec2{ x2, y2 } } * _scaling + _offset;
 	}
 
-	void GuiLayout::advance() noexcept
+	void UiLayout::advance() noexcept
 	{
 		if (_axis == Axis::X)
 		{
@@ -92,7 +92,7 @@ namespace seir
 		_advance = 0;
 	}
 
-	void GuiLayout::fromPoint(const Vec2& point, const Vec2& direction, Axis axis, float padding) noexcept
+	void UiLayout::fromPoint(const Vec2& point, const Vec2& direction, Axis axis, float padding) noexcept
 	{
 		_direction = direction;
 		_position = point + padding * _direction;
@@ -101,12 +101,12 @@ namespace seir
 		_advance = 0;
 	}
 
-	RectF GuiLayout::map(const RectF& rect) const noexcept
+	RectF UiLayout::map(const RectF& rect) const noexcept
 	{
 		return rect * _scaling + _offset;
 	}
 
-	void GuiLayout::skip(float distance) noexcept
+	void UiLayout::skip(float distance) noexcept
 	{
 		if (_axis == Axis::X)
 			_position.x += _direction.x * distance;

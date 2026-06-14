@@ -5,7 +5,7 @@
 #include "keyboard_item.hpp"
 
 #include <seir_base/utf8.hpp>
-#include <seir_gui/font.hpp>
+#include <seir_ui/font.hpp>
 
 #include <cassert>
 
@@ -34,7 +34,7 @@ namespace
 
 namespace seir
 {
-	void GuiKeyboardItem::adjustToText(std::string_view text) noexcept
+	void UiKeyboardItem::adjustToText(std::string_view text) noexcept
 	{
 		if (_cursor > text.size())
 			_cursor = text.size();
@@ -47,17 +47,17 @@ namespace seir
 			_selectionSize = maxSelectionSize;
 	}
 
-	FontCapture GuiKeyboardItem::fontCapture() const noexcept
+	FontCapture UiKeyboardItem::fontCapture() const noexcept
 	{
 		return { _cursor, _selectionOffset, _selectionSize };
 	}
 
-	bool GuiKeyboardItem::isCursorPhaseVisible() const noexcept
+	bool UiKeyboardItem::isCursorPhaseVisible() const noexcept
 	{
 		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _cursorMark).count() % 1000 < 500;
 	}
 
-	void GuiKeyboardItem::onBackspace(std::string& text) noexcept
+	void UiKeyboardItem::onBackspace(std::string& text) noexcept
 	{
 		assert(_cursor <= text.size());
 		size_t count = 0;
@@ -79,7 +79,7 @@ namespace seir
 		_cursorMark = std::chrono::steady_clock::now();
 	}
 
-	void GuiKeyboardItem::onDelete(std::string& text) noexcept
+	void UiKeyboardItem::onDelete(std::string& text) noexcept
 	{
 		assert(_cursor <= text.size());
 		size_t count = 0;
@@ -98,7 +98,7 @@ namespace seir
 		_cursorMark = std::chrono::steady_clock::now();
 	}
 
-	void GuiKeyboardItem::onEnd(std::string_view text, bool shift) noexcept
+	void UiKeyboardItem::onEnd(std::string_view text, bool shift) noexcept
 	{
 		if (_cursor < text.size())
 		{
@@ -117,7 +117,7 @@ namespace seir
 			_selectionSize = 0;
 	}
 
-	void GuiKeyboardItem::onHome(bool shift) noexcept
+	void UiKeyboardItem::onHome(bool shift) noexcept
 	{
 		if (_cursor > 0)
 		{
@@ -136,7 +136,7 @@ namespace seir
 			_selectionSize = 0;
 	}
 
-	void GuiKeyboardItem::onLeft(std::string_view text, bool shift) noexcept
+	void UiKeyboardItem::onLeft(std::string_view text, bool shift) noexcept
 	{
 		if (_cursor > 0)
 		{
@@ -159,7 +159,7 @@ namespace seir
 			_selectionSize = 0;
 	}
 
-	void GuiKeyboardItem::onPaste(std::string& text, std::string_view paste)
+	void UiKeyboardItem::onPaste(std::string& text, std::string_view paste)
 	{
 		if (_selectionSize > 0)
 		{
@@ -172,7 +172,7 @@ namespace seir
 		_cursorMark = std::chrono::steady_clock::now();
 	}
 
-	void GuiKeyboardItem::onRight(std::string_view text, bool shift) noexcept
+	void UiKeyboardItem::onRight(std::string_view text, bool shift) noexcept
 	{
 		if (_cursor < text.size())
 		{
@@ -198,7 +198,7 @@ namespace seir
 			_selectionSize = 0;
 	}
 
-	void GuiKeyboardItem::setFocus() noexcept
+	void UiKeyboardItem::setFocus() noexcept
 	{
 		_cursor = std::numeric_limits<size_t>::max();
 		_cursorMark = std::chrono::steady_clock::now();

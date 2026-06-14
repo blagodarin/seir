@@ -5,11 +5,11 @@
 #pragma once
 
 #include <seir_graphics/color.hpp>
-#include <seir_gui/font.hpp>
+#include <seir_ui/font.hpp>
 
 namespace seir
 {
-	class GuiButtonStyle
+	class UiButtonStyle
 	{
 	public:
 		struct State
@@ -25,10 +25,10 @@ namespace seir
 		State _hovered;
 		State _pressed;
 
-		GuiButtonStyle() noexcept;
+		UiButtonStyle() noexcept;
 	};
 
-	class GuiEditStyle
+	class UiEditStyle
 	{
 	public:
 		struct State
@@ -46,18 +46,18 @@ namespace seir
 		Rgba32 _cursorColor;
 		Rgba32 _selectionColor;
 
-		GuiEditStyle() noexcept;
+		UiEditStyle() noexcept;
 	};
 
-	class GuiLabelStyle
+	class UiLabelStyle
 	{
 	public:
 		SharedPtr<Font> _font;
 		float _fontSize = 0;
 		Rgba32 _textColor;
 
-		GuiLabelStyle() noexcept;
-		constexpr GuiLabelStyle(Rgba32 textColor, float fontSize) noexcept
+		UiLabelStyle() noexcept;
+		constexpr UiLabelStyle(Rgba32 textColor, float fontSize) noexcept
 			: _fontSize{ fontSize }, _textColor{ textColor } {}
 	};
 }

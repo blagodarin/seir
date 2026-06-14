@@ -6,15 +6,15 @@
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
 #include <seir_graphics/color.hpp>
-#include <seir_gui/context.hpp>
-#include <seir_gui/font.hpp>
-#include <seir_gui/frame.hpp>
-#include <seir_gui/layout.hpp>
-#include <seir_gui/style.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
+#include <seir_ui/context.hpp>
+#include <seir_ui/font.hpp>
+#include <seir_ui/frame.hpp>
+#include <seir_ui/layout.hpp>
+#include <seir_ui/style.hpp>
 
 #include <cassert>
 #include <deque>
@@ -182,17 +182,17 @@ int u8main(int, char**)
 	seir::Window window{ app, "Key Tester" };
 	seir::Renderer renderer{ window };
 	seir::Canvas canvas;
-	seir::GuiContext gui{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 24) };
+	seir::UiContext uiContext{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 24) };
 	for (KeyHandler handler; app.processEvents(handler);)
 	{
-		seir::GuiFrame frame{ gui, canvas };
-		seir::GuiLayout layout{ frame };
-		layout.fromBottomLeft(seir::GuiLayout::Axis::Y, 2);
+		seir::UiFrame ui{ uiContext, canvas };
+		seir::UiLayout layout{ ui };
+		layout.fromBottomLeft(seir::UiLayout::Axis::Y, 2);
 		layout.setItemSize({ 0, 24 });
 		layout.setItemSpacing(0);
-		frame.setLabelStyle({ seir::Rgba32::white(), 1 });
+		ui.setLabelStyle({ seir::Rgba32::white(), 1 });
 		for (const auto& event : handler.events())
-			frame.addLabel(event);
+			ui.addLabel(event);
 		renderer.render([&](seir::RenderPass& pass) {
 			canvas.render(pass);
 		});

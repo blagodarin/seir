@@ -7,7 +7,7 @@
 #include <seir_app/events.hpp>
 #include <seir_base/shared_ptr.hpp>
 #include <seir_graphics/rectf.hpp>
-#include <seir_gui/style.hpp>
+#include <seir_ui/style.hpp>
 #include "keyboard_item.hpp"
 
 #include <array>
@@ -18,13 +18,13 @@
 namespace seir
 {
 	class Font;
-	class GuiContext;
-	class GuiFrame;
-	class GuiLayout;
 	class RectF;
 	class Texture2D;
+	class UiContext;
+	class UiFrame;
+	class UiLayout;
 
-	class GuiContextImpl final : public EventCallbacks
+	class UiContextImpl final : public EventCallbacks
 	{
 	public:
 		struct KeyCapture
@@ -33,8 +33,8 @@ namespace seir
 			bool released = false;
 		};
 
-		GuiContextImpl(Window&, const SharedPtr<Font>&) noexcept;
-		~GuiContextImpl() noexcept override;
+		UiContextImpl(Window&, const SharedPtr<Font>&) noexcept;
+		~UiContextImpl() noexcept override;
 
 		RectF addItem() const noexcept;
 		RectF addItem(const SizeF&) const noexcept;
@@ -90,18 +90,18 @@ namespace seir
 		Key _mouseItemKey = Key::None;
 		std::string _keyboardItemId;
 		bool _keyboardItemPresent = false;
-		GuiKeyboardItem _keyboardItem;
-		GuiButtonStyle _buttonStyle;
-		GuiEditStyle _editStyle;
-		GuiLabelStyle _labelStyle;
+		UiKeyboardItem _keyboardItem;
+		UiButtonStyle _buttonStyle;
+		UiEditStyle _editStyle;
+		UiLabelStyle _labelStyle;
 		SharedPtr<Font> _defaultFont;
 		SharedPtr<Texture2D> _whiteTexture;
 		RectF _whiteTextureRect;
-		GuiLayout* _layout = nullptr;
+		UiLayout* _layout = nullptr;
 		bool _focusExpected = false;
 		KeyStates _keyStates;
-		friend GuiContext;
-		friend GuiFrame;
-		friend GuiLayout;
+		friend UiContext;
+		friend UiFrame;
+		friend UiLayout;
 	};
 }
