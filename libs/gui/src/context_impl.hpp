@@ -40,6 +40,7 @@ namespace seir
 		RectF addItem(const SizeF&) const noexcept;
 		KeyCapture captureClick(Key key, bool repeated, bool release = false) noexcept;
 		void captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback);
+		Vec2 takeBorderHover(const RectF&, float borderWidth) noexcept;
 		std::optional<Vec2> takeMouseCursor(const RectF&) noexcept;
 		std::optional<Vec2> takeMouseHover(const RectF&) noexcept;
 		void updateWhiteTexture(const SharedPtr<Font>&) noexcept;

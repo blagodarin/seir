@@ -100,29 +100,125 @@ namespace
 		}
 	};
 
+	constexpr seir::SizeF kBoardSize{ 128, 128 };
+
+	class CameraManager
+	{
+	public:
+		CameraManager(const seir::Plane& groundPlane)
+			: _groundPlane{ groundPlane } {}
+
+		const seir::Plane& groundPlane() const noexcept { return _groundPlane; }
+		const seir::Vec3& position() const noexcept { return _cameraPosition; }
+		const seir::CameraView& view() const noexcept { return _cameraView; }
+
+		void present(seir::GuiFrame& frame, unsigned duration)
+		{
+			updateCameraPosition(frame, duration);
+			_cameraView = { frame.size(), _cameraPosition, { 0, -60, 0 }, 35, .5 };
+			drawMinimap(frame, _cameraView.viewportProjection(_groundPlane, {}));
+		}
+
+	private:
+		static void drawMinimap(seir::GuiFrame& frame, const seir::QuadF& viewportProjection)
+		{
+			seir::GuiLayout layout{ frame };
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto minimapRect = layout.addItem(kMinimapSize);
+			const auto minimapCenter = minimapRect.center();
+			auto& canvas = frame.canvas();
+			canvas.setTexture({});
+			canvas.setColor(seir::Rgba32::white(0x55));
+			canvas.drawRect(minimapRect);
+			canvas.setColor(seir::Rgba32::red(0xaa));
+			constexpr seir::Vec2 minimapScale{
+				kMinimapSize._width / kBoardSize._width,
+				kMinimapSize._height / -kBoardSize._height,
+			};
+			canvas.drawQuad({
+				viewportProjection._a * minimapScale + minimapCenter,
+				viewportProjection._b * minimapScale + minimapCenter,
+				viewportProjection._c * minimapScale + minimapCenter,
+				viewportProjection._d * minimapScale + minimapCenter,
+			});
+		}
+
+		static std::optional<seir::Vec2> takeMinimapPosition(seir::GuiFrame& frame)
+		{
+			seir::GuiLayout layout{ frame };
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto cursor = frame.addDragArea("minimap", kMinimapSize, seir::Key::Mouse1);
+			if (!cursor)
+				return {};
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto minimapRect = layout.addItem(kMinimapSize);
+			return seir::Vec2{
+				(cursor->x - minimapRect.left()) / minimapRect.width() * kBoardSize._width - kBoardSize._width / 2,
+				(minimapRect.top() - cursor->y) / minimapRect.height() * kBoardSize._height + kBoardSize._height / 2,
+			};
+		}
+
+		void updateCameraPosition(seir::GuiFrame& frame, unsigned duration)
+		{
+			constexpr float kBorderWidth = 2;
+			const auto forcedPosition = takeMinimapPosition(frame); // Should happen before border hover takes the mouse.
+			const auto borderHover = frame.takeBorderHover(kBorderWidth);
+			const auto left = frame.takeKeyDown(seir::Key::Left) || borderHover.x < 0;
+			const auto right = frame.takeKeyDown(seir::Key::Right) || borderHover.x > 0;
+			const auto down = frame.takeKeyDown(seir::Key::Down) || borderHover.y > 0;
+			const auto up = frame.takeKeyDown(seir::Key::Up) || borderHover.y < 0;
+			if (forcedPosition)
+			{
+				const auto bounded = kCameraBound.bound({ forcedPosition->x, forcedPosition->y + kCameraOffsetY });
+				_cameraPosition.x = bounded.x;
+				_cameraPosition.y = bounded.y;
+			}
+			else
+			{
+				constexpr auto kCameraSpeed = 10.f;
+				const auto step = static_cast<float>(duration) / 1000.f * kCameraSpeed;
+				if (left != right)
+				{
+					if (left)
+						_cameraPosition.x = std::max(_cameraPosition.x - step, kCameraBound.left());
+					else
+						_cameraPosition.x = std::min(_cameraPosition.x + step, kCameraBound.right());
+				}
+				if (down != up)
+				{
+					if (down)
+						_cameraPosition.y = std::max(_cameraPosition.y - step, kCameraBound.top());
+					else
+						_cameraPosition.y = std::min(_cameraPosition.y + step, kCameraBound.bottom());
+				}
+			}
+		}
+
+	private:
+		seir::Vec3 _cameraPosition{ 0, kCameraOffsetY, 16 };
+		seir::CameraView _cameraView;
+		seir::Plane _groundPlane;
+
+		static constexpr seir::RectF kCameraBound{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
+		static constexpr float kCameraOffsetY = -8.5;
+		static constexpr seir::SizeF kMinimapSize{ 160, 160 };
+	};
+
 	class Example
 	{
 	public:
 		void present(seir::GuiFrame&& frame, unsigned duration)
 		{
-			const seir::Plane kBoardPlane{ { 0, 0, 1 }, { 0, 0, 0 } };
-
-			updateCameraPosition(frame, duration);
-			const seir::CameraView camera{ frame.size(), _cameraPosition, { 0, -60, 0 }, 35, .5 };
-			_viewMatrix = camera.matrix();
-			presentMinimap(frame, camera.viewportProjection(kBoardPlane, {}));
-			{
-				seir::GuiLayout layout{ frame };
-				updateBoardCell(camera, kBoardPlane, frame.addHoverArea(frame.size()));
-			}
-			presentDebugGraphics(frame);
+			_camera.present(frame, duration);
+			updateBoardCell(frame);
+			drawDebugGraphics(frame);
 			if (frame.takeKeyPress(seir::Key::Escape))
 				frame.close();
 		}
 
 		void render(seir::RenderPass& pass, const Assets& assets)
 		{
-			pass.updateUniformBuffer(_viewMatrix);
+			pass.updateUniformBuffer(_camera.view().matrix());
 			pass.bindShaders(assets._boardShaders);
 			pass.bindTexture(assets._boardTexture);
 			pass.bindUniformBuffer(true);
@@ -143,10 +239,10 @@ namespace
 		}
 
 	private:
-		void presentDebugGraphics(seir::GuiFrame& frame) // TODO: Refactor out debug text and make this function const.
+		void drawDebugGraphics(seir::GuiFrame& frame)
 		{
 			_debugText.clear();
-			std::format_to(std::back_inserter(_debugText), "cam={:+.1f},{:+.1f}", _cameraPosition.x, _cameraPosition.y);
+			std::format_to(std::back_inserter(_debugText), "cam={:+.1f},{:+.1f}", _camera.position().x, _camera.position().y);
 			if (_boardCell)
 				std::format_to(std::back_inserter(_debugText), " cur={:+},{:+}", _boardCell->x, _boardCell->y);
 			{
@@ -164,71 +260,22 @@ namespace
 			frame.addLabel(_fps, seir::GuiAlignment::Right);
 		}
 
-		void presentMinimap(seir::GuiFrame& frame, const seir::QuadF& cameraQuad) const
+		void updateBoardCell(seir::GuiFrame& frame)
 		{
-			const seir::SizeF minimapSize{ 160, 160 };
-			const seir::Vec2 minimapScale{ minimapSize._width / 128, minimapSize._height / -128 };
 			seir::GuiLayout layout{ frame };
-			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
-			const auto minimapRect = layout.addItem(minimapSize);
-			const auto minimapCenter = minimapRect.center();
-			auto& canvas = frame.canvas();
-			canvas.setTexture({});
-			canvas.setColor(seir::Rgba32::white(0x55));
-			canvas.drawRect(minimapRect);
-			canvas.setColor(seir::Rgba32::red(0xaa));
-			canvas.drawQuad({
-				minimapCenter + cameraQuad._a * minimapScale,
-				minimapCenter + cameraQuad._b * minimapScale,
-				minimapCenter + cameraQuad._c * minimapScale,
-				minimapCenter + cameraQuad._d * minimapScale,
-			});
-		}
-
-		void updateBoardCell(const seir::CameraView& camera, const seir::Plane& boardPlane, const std::optional<seir::Vec2>& cursor)
-		{
-			if (const auto boardPoint = camera.pixelRayIntersection(cursor, boardPlane);
+			const auto cursor = frame.addHoverArea(frame.size());
+			if (const auto boardPoint = _camera.view().pixelRayIntersection(cursor, _camera.groundPlane());
 				boardPoint && std::abs(boardPoint->x) <= 64 && std::abs(boardPoint->y) <= 64)
 				_boardCell.emplace(std::floor(boardPoint->x), std::floor(boardPoint->y));
 			else
 				_boardCell.reset();
 		}
 
-		void updateCameraPosition(seir::GuiFrame& frame, unsigned duration)
-		{
-			constexpr auto kCameraSpeed = 10.f;
-			constexpr seir::RectF kPositionLimits{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
-
-			const auto step = static_cast<float>(duration) / 1000.f * kCameraSpeed;
-
-			const auto left = frame.takeKeyDown(seir::Key::Left);
-			const auto right = frame.takeKeyDown(seir::Key::Right);
-			if (left != right)
-			{
-				if (left)
-					_cameraPosition.x = std::max(_cameraPosition.x - step, kPositionLimits.left());
-				else
-					_cameraPosition.x = std::min(_cameraPosition.x + step, kPositionLimits.right());
-			}
-
-			const auto down = frame.takeKeyDown(seir::Key::Down);
-			const auto up = frame.takeKeyDown(seir::Key::Up);
-			if (down != up)
-			{
-				if (down)
-					_cameraPosition.y = std::max(_cameraPosition.y - step, kPositionLimits.top());
-				else
-					_cameraPosition.y = std::min(_cameraPosition.y + step, kPositionLimits.bottom());
-			}
-		}
-
 	private:
-		seir::Vec3 _cameraPosition{ 0, -8.5, 16 };
-		seir::Mat4 _viewMatrix;
-		std::optional<seir::Vec2> _cursor;
+		CameraManager _camera{ { { 0, 0, 1 }, {} } };
+		std::optional<seir::Vec2> _boardCell;
 		std::string _fps;
 		std::string _debugText;
-		std::optional<seir::Vec2> _boardCell;
 	};
 }
 

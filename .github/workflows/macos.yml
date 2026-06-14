@@ -82,7 +82,8 @@ jobs:
             . "${{ github.workspace }}/VulkanSDK/setup-env.sh"
           fi
           ctest --verbose --test-dir build
-      - name: Build usage examples
+      - name: Build CMake FetchContent usage example
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           export CC=clang
           export CXX=clang++
@@ -90,7 +91,11 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DREPLACE_WITH_COMMIT_HASH=${{ github.sha }}
           cmake --build build.cmake_fetchcontent
+      - name: Build CMake package usage example
+        run: |
           cmake --build build --target install
+          export CC=clang
+          export CXX=clang++
           cmake -S examples/usage/cmake_package -B build.cmake_package \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"

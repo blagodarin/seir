@@ -90,6 +90,28 @@ namespace seir
 		}
 	}
 
+	Vec2 GuiContextImpl::takeBorderHover(const RectF& rect, float borderWidth) noexcept
+	{
+		if (_mouseHoverTaken)
+			return {};
+
+		const auto match = [borderWidth](float value, float min, float max) {
+			if (value >= min)
+			{
+				if (value <= min + borderWidth)
+					return -1.f;
+				else if (value >= max - borderWidth && value <= max)
+					return 1.f;
+			}
+			return 0.f;
+		};
+
+		const auto x = match(_mouseCursor.x, rect.left(), rect.right());
+		const auto y = match(_mouseCursor.y, rect.top(), rect.bottom());
+		_mouseHoverTaken = x != 0 || y != 0;
+		return { x, y };
+	}
+
 	std::optional<Vec2> GuiContextImpl::takeMouseCursor(const RectF& rect) noexcept
 	{
 		if (_mouseCursorTaken || !rect.contains(_mouseCursor))

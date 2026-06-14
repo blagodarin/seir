@@ -211,15 +211,13 @@ namespace seir
 		case NSEventTypeLeftMouseDown:
 		case NSEventTypeLeftMouseUp:
 			if (const auto window = [event window])
-				if (NSMouseInRect([event locationInWindow], [[window contentView] frame], NO))
-					onKeyEvent(window, Key::Mouse1, eventType == NSEventTypeLeftMouseDown, false, false);
+				onKeyEvent(window, Key::Mouse1, eventType == NSEventTypeLeftMouseDown, false, false);
 			break; // Let AppKit handle clicking standard buttons (e. g. close window button).
 
 		case NSEventTypeRightMouseDown:
 		case NSEventTypeRightMouseUp:
 			if (const auto window = [event window])
-				if (NSMouseInRect([event locationInWindow], [[window contentView] frame], NO))
-					onKeyEvent(window, Key::Mouse2, eventType == NSEventTypeRightMouseDown, false, false);
+				onKeyEvent(window, Key::Mouse2, eventType == NSEventTypeRightMouseDown, false, false);
 			break;
 
 		case NSEventTypeKeyDown:

@@ -16,6 +16,7 @@ namespace seir
 	class CameraView
 	{
 	public:
+		constexpr CameraView() noexcept = default;
 		inline CameraView(const SizeF& viewportSize, const Vec3& position, const Euler& orientation, float verticalFov, float nearPlane) noexcept;
 
 		//
@@ -31,10 +32,10 @@ namespace seir
 		[[nodiscard]] inline QuadF viewportProjection(const Plane&, const Vec3& origin) const noexcept;
 
 	private:
-		const SizeF _viewportSize;
-		const Vec3 _position;
-		const Mat4 _matrix;
-		const Mat4 _inverse = inverse(_matrix);
+		SizeF _viewportSize;
+		Vec3 _position;
+		Mat4 _matrix;
+		Mat4 _inverse;
 	};
 }
 
@@ -42,6 +43,7 @@ seir::CameraView::CameraView(const SizeF& viewportSize, const Vec3& position, co
 	: _viewportSize{ viewportSize }
 	, _position{ position }
 	, _matrix{ Mat4::projection3D(viewportSize._width / viewportSize._height, verticalFov, nearPlane) * Mat4::camera(_position, orientation) }
+	, _inverse{ inverse(_matrix) }
 {
 }
 

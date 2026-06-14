@@ -382,6 +382,12 @@ namespace seir
 		return takeKeyPress(Key::None);
 	}
 
+	Vec2 GuiFrame::takeBorderHover(float borderWidth) noexcept
+	{
+		assert(borderWidth > 0);
+		return _context.takeBorderHover({ {}, _size }, borderWidth);
+	}
+
 	bool GuiFrame::takeKeyDown(Key key) noexcept
 	{
 		const auto state = _context._keyStates.take(key);
