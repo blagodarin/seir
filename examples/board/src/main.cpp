@@ -82,6 +82,7 @@ namespace
 
 	struct Assets
 	{
+		seir::SharedPtr<seir::Font> _font;
 		seir::SharedPtr<seir::Texture2D> _boardTexture;
 		seir::SharedPtr<seir::Mesh> _boardMesh;
 		seir::SharedPtr<seir::ShaderSet> _boardShaders;
@@ -89,7 +90,8 @@ namespace
 		seir::SharedPtr<seir::ShaderSet> _cubeShaders;
 
 		explicit Assets(seir::Renderer& renderer)
-			: _boardTexture{ ::makeBgra32(renderer, 128, 128, [](size_t x, size_t y) {
+			: _font{ seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) }
+			, _boardTexture{ ::makeBgra32(renderer, 128, 128, [](size_t x, size_t y) {
 				return ((x ^ y) & 1) ? seir::Rgba32::grayscale(0xdd) : seir::Rgba32::black();
 			}) }
 			, _boardMesh{ renderer.createMesh(seir::MeshData::load(seir::fromFile(LOCAL_DATA_DIR "board.obj"))) }
@@ -286,7 +288,7 @@ int u8main(int, char**)
 	seir::Renderer renderer{ window };
 	Assets assets{ renderer };
 	seir::Canvas canvas;
-	seir::UiContext uiContext{ window, seir::Font::load(renderer, seir::fromFile(SEIR_DATA_DIR "fonts/SourceCodePro-Regular.ttf"), 16) };
+	seir::UiContext uiContext{ window, assets._font };
 	Example example;
 	seir::ConstantRate actionClock{ std::chrono::milliseconds{ 1 } };
 	seir::VariableRate frameClock;
