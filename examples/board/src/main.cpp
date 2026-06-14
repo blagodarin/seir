@@ -120,21 +120,6 @@ namespace
 		}
 
 	private:
-		static std::optional<seir::Vec2> captureMinimapDrag(seir::GuiFrame& frame)
-		{
-			seir::GuiLayout layout{ frame };
-			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
-			const auto cursor = frame.addDragArea("minimap", kMinimapSize, seir::Key::Mouse1);
-			if (!cursor)
-				return {};
-			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
-			const auto minimapRect = layout.addItem(kMinimapSize);
-			return seir::Vec2{
-				(cursor->x - minimapRect.left()) / minimapRect.width() * kBoardSize._width - kBoardSize._width / 2,
-				(minimapRect.top() - cursor->y) / minimapRect.height() * kBoardSize._height + kBoardSize._height / 2,
-			};
-		}
-
 		static void drawMinimap(seir::GuiFrame& frame, const seir::QuadF& viewportProjection)
 		{
 			seir::GuiLayout layout{ frame };
@@ -158,15 +143,33 @@ namespace
 			});
 		}
 
+		static std::optional<seir::Vec2> takeMinimapPosition(seir::GuiFrame& frame)
+		{
+			seir::GuiLayout layout{ frame };
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto cursor = frame.addDragArea("minimap", kMinimapSize, seir::Key::Mouse1);
+			if (!cursor)
+				return {};
+			layout.fromBottomRight(seir::GuiLayout::Axis::Y, 8);
+			const auto minimapRect = layout.addItem(kMinimapSize);
+			return seir::Vec2{
+				(cursor->x - minimapRect.left()) / minimapRect.width() * kBoardSize._width - kBoardSize._width / 2,
+				(minimapRect.top() - cursor->y) / minimapRect.height() * kBoardSize._height + kBoardSize._height / 2,
+			};
+		}
+
 		void updateCameraPosition(seir::GuiFrame& frame, unsigned duration)
 		{
-			const auto left = frame.takeKeyDown(seir::Key::Left);
-			const auto right = frame.takeKeyDown(seir::Key::Right);
-			const auto down = frame.takeKeyDown(seir::Key::Down);
-			const auto up = frame.takeKeyDown(seir::Key::Up);
-			if (const auto newPosition = captureMinimapDrag(frame))
+			constexpr float kBorderWidth = 2;
+			const auto forcedPosition = takeMinimapPosition(frame); // Should happen before border hover takes the mouse.
+			const auto borderHover = frame.takeBorderHover(kBorderWidth);
+			const auto left = frame.takeKeyDown(seir::Key::Left) || borderHover.x < 0;
+			const auto right = frame.takeKeyDown(seir::Key::Right) || borderHover.x > 0;
+			const auto down = frame.takeKeyDown(seir::Key::Down) || borderHover.y > 0;
+			const auto up = frame.takeKeyDown(seir::Key::Up) || borderHover.y < 0;
+			if (forcedPosition)
 			{
-				const auto bounded = kCameraBound.bound({ newPosition->x, newPosition->y + kCameraOffsetY });
+				const auto bounded = kCameraBound.bound({ forcedPosition->x, forcedPosition->y + kCameraOffsetY });
 				_cameraPosition.x = bounded.x;
 				_cameraPosition.y = bounded.y;
 			}
