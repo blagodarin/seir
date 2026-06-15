@@ -6,8 +6,6 @@
 
 #include <doctest/doctest.h>
 
-using seir::Point;
-using seir::Rect;
 using seir::RectF;
 using seir::SizeF;
 using seir::Vec2;
@@ -54,17 +52,6 @@ TEST_CASE("RectF::RectF(SizeF)")
 	CHECK(r.bottom() == 2.f);
 	CHECK(r.width() == 1.f);
 	CHECK(r.height() == 2.f);
-}
-
-TEST_CASE("RectF::RectF(Rect)")
-{
-	const RectF r{ Rect{ { 1, 2 }, Point{ 4, 7 } } };
-	CHECK(r.left() == 1.f);
-	CHECK(r.top() == 2.f);
-	CHECK(r.right() == 4.f);
-	CHECK(r.bottom() == 7.f);
-	CHECK(r.width() == 3.f);
-	CHECK(r.height() == 5.f);
 }
 
 TEST_CASE("RectF::bound(Vec2)")

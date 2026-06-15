@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <seir_graphics/rect.hpp>
 #include <seir_graphics/sizef.hpp>
 #include <seir_math/vec.hpp>
 
@@ -25,8 +24,6 @@ namespace seir
 			: _left{ topLeft.x }, _top{ topLeft.y }, _right{ _left + size._width }, _bottom{ _top + size._height } {}
 		explicit constexpr RectF(const SizeF& size) noexcept
 			: _right{ size._width }, _bottom{ size._height } {}
-		explicit constexpr RectF(const Rect& rect) noexcept
-			: _left{ static_cast<float>(rect.left()) }, _top{ static_cast<float>(rect.top()) }, _right{ static_cast<float>(rect.right()) }, _bottom{ static_cast<float>(rect.bottom()) } {}
 
 		[[nodiscard]] constexpr float bottom() const noexcept { return _bottom; }
 		[[nodiscard]] constexpr Vec2 bottomLeft() const noexcept { return { _left, _bottom }; }

@@ -6,6 +6,7 @@
 
 #include <seir_app/window.hpp>
 #include <seir_graphics/color.hpp>
+#include <seir_graphics/point.hpp>
 #include <seir_graphics/rectf.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_ui/context.hpp>
