@@ -81,14 +81,14 @@ namespace
 					if (!::FT_Get_Kerning(_face, previous->second._id, current->second._id, FT_KERNING_DEFAULT, &kerning))
 						x += static_cast<int>(kerning.x >> 6);
 				}
-				const auto left = rect.left() + static_cast<float>(x + current->second._offset._x) * scale;
+				const auto left = rect.left() + (static_cast<float>(x) + current->second._offset.x) * scale;
 				if (left >= rect.right())
 					break;
 				seir::RectF positionRect{
-					{ left, rect.top() + static_cast<float>(current->second._offset._y) * scale },
-					seir::SizeF{ current->second._rect.size() } * scale,
+					{ left, rect.top() + current->second._offset.y * scale },
+					current->second._rect.size() * scale,
 				};
-				seir::RectF glyphRect{ current->second._rect };
+				auto glyphRect = current->second._rect;
 				bool clipped = false;
 				if (positionRect.right() > rect.right())
 				{
@@ -211,10 +211,10 @@ namespace
 				auto& bitmapGlyph = _bitmapGlyphs[codepoint];
 				bitmapGlyph._id = id;
 				bitmapGlyph._rect = {
-					{ static_cast<int>(x), static_cast<int>(y) },
-					seir::Size{ static_cast<int>(glyph->bitmap.width), static_cast<int>(glyph->bitmap.rows) },
+					{ static_cast<float>(x), static_cast<float>(y) },
+					seir::SizeF{ static_cast<float>(glyph->bitmap.width), static_cast<float>(glyph->bitmap.rows) },
 				};
-				bitmapGlyph._offset = { glyph->bitmap_left, baseline - glyph->bitmap_top };
+				bitmapGlyph._offset = { static_cast<float>(glyph->bitmap_left), static_cast<float>(baseline - glyph->bitmap_top) };
 				bitmapGlyph._advance = static_cast<int>(glyph->advance.x >> 6);
 				copyGlyph(glyph->bitmap.buffer, glyph->bitmap.width, glyph->bitmap.rows, glyph->bitmap.pitch);
 			}
@@ -228,8 +228,8 @@ namespace
 		struct Glyph
 		{
 			FT_UInt _id = 0;
-			seir::Rect _rect;
-			seir::Point _offset;
+			seir::RectF _rect;
+			seir::Vec2 _offset;
 			int _advance = 0;
 		};
 
