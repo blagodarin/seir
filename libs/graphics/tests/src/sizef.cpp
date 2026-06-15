@@ -6,7 +6,6 @@
 
 #include <doctest/doctest.h>
 
-using seir::Size;
 using seir::SizeF;
 
 TEST_CASE("SizeF::SizeF()")
@@ -16,16 +15,9 @@ TEST_CASE("SizeF::SizeF()")
 	CHECK(s._height == 0.f);
 }
 
-TEST_CASE("SizeF::SizeF(int, int)")
+TEST_CASE("SizeF::SizeF(float, float)")
 {
 	const SizeF s{ 1.f, 2.f };
-	CHECK(s._width == 1.f);
-	CHECK(s._height == 2.f);
-}
-
-TEST_CASE("SizeF::SizeF(Size)")
-{
-	const SizeF s{ Size{ 1, 2 } };
 	CHECK(s._width == 1.f);
 	CHECK(s._height == 2.f);
 }

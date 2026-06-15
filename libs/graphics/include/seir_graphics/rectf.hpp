@@ -37,7 +37,6 @@ namespace seir
 		[[nodiscard]] constexpr RectF intersected(const RectF&) const noexcept;
 		[[nodiscard]] constexpr bool intersects(const RectF&) const noexcept;
 		[[nodiscard]] constexpr bool isEmpty() const noexcept { return _left >= _right || _top >= _bottom; }
-		[[nodiscard]] constexpr bool isNull() const noexcept { return _left == 0 && _top == 0 && _right == 0 && _bottom == 0; } // TODO: Review usage.
 		[[nodiscard]] constexpr float left() const noexcept { return _left; }
 		[[nodiscard]] constexpr float right() const noexcept { return _right; }
 		constexpr void setHeight(float height) noexcept { _bottom = _top + height; }

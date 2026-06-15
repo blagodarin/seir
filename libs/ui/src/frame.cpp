@@ -7,6 +7,7 @@
 #include <seir_app/window.hpp>
 #include <seir_graphics/color.hpp>
 #include <seir_graphics/rectf.hpp>
+#include <seir_graphics/size.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_ui/context.hpp>
 #include <seir_ui/font.hpp>
@@ -35,7 +36,7 @@ namespace seir
 	UiFrame::UiFrame(UiContext& context, Canvas& canvas)
 		: _context{ *context._impl }
 		, _canvas{ canvas }
-		, _size{ context._impl->_window.size() }
+		, _size{ static_cast<float>(context._impl->_window.size()._width), static_cast<float>(context._impl->_window.size()._height) }
 	{
 		_context._mouseCursor = _context._window.cursor().value_or(Vec2{ -.5f, -.5f });
 		_context._mouseCursorTaken = false;

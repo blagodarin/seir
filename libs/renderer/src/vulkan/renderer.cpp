@@ -5,6 +5,7 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
+#include <seir_graphics/size.hpp>
 #include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
