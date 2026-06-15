@@ -4,8 +4,8 @@
 
 #include "window.hpp"
 
-#include <seir_graphics/point.hpp>
 #include <seir_graphics/size.hpp>
+#include <seir_math/vec.hpp>
 #include "app.hpp"
 
 namespace
@@ -109,13 +109,15 @@ namespace seir
 		}
 	}
 
-	std::optional<Point> Window::cursor() const noexcept
+	std::optional<Vec2> Window::cursor() const noexcept
 	{
 		@autoreleasepool
 		{
 			const auto mousePoint = [_impl->_delegate.window mouseLocationOutsideOfEventStream];
 			const auto windowRect = [_impl->_delegate.window contentRectForFrameRect:[_impl->_delegate.window frame]];
-			return std::make_optional<Point>(mousePoint.x, windowRect.size.height - mousePoint.y);
+			return std::make_optional<Vec2>(
+				static_cast<float>(mousePoint.x),
+				static_cast<float>(windowRect.size.height - mousePoint.y));
 		}
 	}
 

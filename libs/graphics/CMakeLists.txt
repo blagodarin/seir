@@ -7,7 +7,6 @@ set(HEADERS
 	include/seir_graphics/color.hpp
 	include/seir_graphics/margins.hpp
 	include/seir_graphics/marginsf.hpp
-	include/seir_graphics/point.hpp
 	include/seir_graphics/quadf.hpp
 	include/seir_graphics/rectf.hpp
 	include/seir_graphics/size.hpp

@@ -6,7 +6,6 @@
 
 #include <seir_app/window.hpp>
 #include <seir_graphics/color.hpp>
-#include <seir_graphics/point.hpp>
 #include <seir_graphics/rectf.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_ui/context.hpp>
@@ -38,8 +37,7 @@ namespace seir
 		, _canvas{ canvas }
 		, _size{ context._impl->_window.size() }
 	{
-		const auto cursor = _context._window.cursor().value_or(Point{ -1, -1 });
-		_context._mouseCursor = { static_cast<float>(cursor._x), static_cast<float>(cursor._y) };
+		_context._mouseCursor = _context._window.cursor().value_or(Vec2{ -.5f, -.5f });
 		_context._mouseCursorTaken = false;
 		_context._mouseHoverTaken = false;
 		_context._mouseItemPresent = false;

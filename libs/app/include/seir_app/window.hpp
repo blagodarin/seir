@@ -12,8 +12,8 @@ namespace seir
 {
 	class App;
 	class Image;
-	class Point;
 	class Size;
+	class Vec2;
 
 	//
 	struct WindowDescriptor
@@ -35,7 +35,7 @@ namespace seir
 		void close() noexcept;
 
 		//
-		[[nodiscard]] std::optional<Point> cursor() const noexcept;
+		[[nodiscard]] std::optional<Vec2> cursor() const noexcept;
 
 		//
 		[[nodiscard]] WindowDescriptor descriptor() const noexcept;

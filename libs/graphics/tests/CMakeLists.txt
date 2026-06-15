@@ -7,7 +7,6 @@ set(SOURCES
 	src/color.cpp
 	src/margins.cpp
 	src/marginsf.cpp
-	src/point.cpp
 	src/quadf.cpp
 	src/rectf.cpp
 	src/size.cpp
