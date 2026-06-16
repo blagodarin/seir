@@ -2,61 +2,51 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_graphics/marginsf.hpp>
+#include <seir_ui/margins.hpp>
 
 #include <doctest/doctest.h>
 
 using seir::Margins;
-using seir::MarginsF;
 
-TEST_CASE("MarginsF::MarginsF()")
+TEST_CASE("Margins::Margins()")
 {
-	const MarginsF m;
+	const Margins m;
 	CHECK(m._left == 0.f);
 	CHECK(m._top == 0.f);
 	CHECK(m._right == 0.f);
 	CHECK(m._bottom == 0.f);
 }
 
-TEST_CASE("MarginsF::MarginsF(float)")
+TEST_CASE("Margins::Margins(float)")
 {
-	const MarginsF m{ 1.f };
+	const Margins m{ 1.f };
 	CHECK(m._left == 1.f);
 	CHECK(m._top == 1.f);
 	CHECK(m._right == 1.f);
 	CHECK(m._bottom == 1.f);
 }
 
-TEST_CASE("MarginsF::MarginsF(float, float)")
+TEST_CASE("Margins::Margins(float, float)")
 {
-	const MarginsF m{ 1.f, 2.f };
+	const Margins m{ 1.f, 2.f };
 	CHECK(m._left == 2.f);
 	CHECK(m._top == 1.f);
 	CHECK(m._right == 2.f);
 	CHECK(m._bottom == 1.f);
 }
 
-TEST_CASE("MarginsF::MarginsF(float, float, float)")
+TEST_CASE("Margins::Margins(float, float, float)")
 {
-	const MarginsF m{ 1.f, 2.f, 3.f };
+	const Margins m{ 1.f, 2.f, 3.f };
 	CHECK(m._left == 2.f);
 	CHECK(m._top == 1.f);
 	CHECK(m._right == 2.f);
 	CHECK(m._bottom == 3.f);
 }
 
-TEST_CASE("MarginsF::MarginsF(float, float, float, float)")
+TEST_CASE("Margins::Margins(float, float, float, float)")
 {
-	const MarginsF m{ 1.f, 2.f, 3.f, 4.f };
-	CHECK(m._left == 4.f);
-	CHECK(m._top == 1.f);
-	CHECK(m._right == 2.f);
-	CHECK(m._bottom == 3.f);
-}
-
-TEST_CASE("MarginsF::MarginsF(Margins)")
-{
-	const MarginsF m{ Margins{ 1, 2, 3, 4 } };
+	const Margins m{ 1.f, 2.f, 3.f, 4.f };
 	CHECK(m._left == 4.f);
 	CHECK(m._top == 1.f);
 	CHECK(m._right == 2.f);

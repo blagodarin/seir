@@ -42,11 +42,11 @@ cmake_dependent_option(SEIR_SERIALIZATION "Build serialization library" OFF "NOT
 cmake_dependent_option(SEIR_COMPRESSION "Build compression library" OFF "NOT SEIR_COMPRESSION_ZLIB;NOT SEIR_COMPRESSION_ZSTD;NOT SEIR_IMAGE;NOT SEIR_PACKAGE" ON)
 cmake_dependent_option(SEIR_GRAPHICS "Build graphics library" OFF "NOT SEIR_APP" ON)
 cmake_dependent_option(SEIR_IO "Build IO library" OFF "NOT SEIR_AUDIO;NOT SEIR_IMAGE;NOT SEIR_MODEL;NOT SEIR_PACKAGE;NOT SEIR_SERIALIZATION" ON)
+cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_APP" ON)
 cmake_dependent_option(SEIR_SYNTH "Build synth library" OFF "NOT SEIR_ALL" ON)
 cmake_dependent_option(SEIR_U8MAIN "Build u8main library" OFF "NOT SEIR_UTILS" ON)
 # >>
 cmake_dependent_option(SEIR_BASE "Build base library" OFF "NOT SEIR_COMPRESSION;NOT SEIR_IO;NOT SEIR_SYNTH;NOT SEIR_U8MAIN" ON)
-cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_GRAPHICS" ON)
 
 set(SEIR_RENDERER_BACKEND "Vulkan" CACHE STRING "Renderer backend")
 set_property(CACHE SEIR_RENDERER_BACKEND PROPERTY STRINGS "" "Vulkan")

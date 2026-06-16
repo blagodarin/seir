@@ -2,4 +2,4 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_graphics/camera_view.hpp>
+#include <seir_math/camera_view.hpp>

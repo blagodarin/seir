@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <seir_graphics/quadf.hpp>
-#include <seir_graphics/sizef.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_math/plane.hpp>
+#include <seir_math/quad.hpp>
 #include <seir_math/ray.hpp>
+#include <seir_math/size.hpp>
 
 namespace seir
 {
@@ -17,7 +17,7 @@ namespace seir
 	{
 	public:
 		constexpr CameraView() noexcept = default;
-		inline CameraView(const SizeF& viewportSize, const Vec3& position, const Euler& orientation, float verticalFov, float nearPlane) noexcept;
+		inline CameraView(const Size2D& viewportSize, const Vec3& position, const Euler& orientation, float verticalFov, float nearPlane) noexcept;
 
 		//
 		[[nodiscard]] inline Ray3D pixelRay(const Vec2&) const noexcept;
@@ -29,20 +29,20 @@ namespace seir
 		[[nodiscard]] const Mat4& matrix() const noexcept { return _matrix; }
 
 		//
-		[[nodiscard]] inline QuadF viewportProjection(const Plane&, const Vec3& origin) const noexcept;
+		[[nodiscard]] inline Quad viewportProjection(const Plane&, const Vec3& origin) const noexcept;
 
 	private:
-		SizeF _viewportSize;
+		Size2D _viewportSize;
 		Vec3 _position;
 		Mat4 _matrix;
 		Mat4 _inverse;
 	};
 }
 
-seir::CameraView::CameraView(const SizeF& viewportSize, const Vec3& position, const Euler& orientation, float verticalFov, float nearPlane) noexcept
+seir::CameraView::CameraView(const Size2D& viewportSize, const Vec3& position, const Euler& orientation, float verticalFov, float nearPlane) noexcept
 	: _viewportSize{ viewportSize }
 	, _position{ position }
-	, _matrix{ Mat4::projection3D(viewportSize._width / viewportSize._height, verticalFov, nearPlane) * Mat4::camera(_position, orientation) }
+	, _matrix{ Mat4::projection3D(viewportSize.width / viewportSize.height, verticalFov, nearPlane) * Mat4::camera(_position, orientation) }
 	, _inverse{ inverse(_matrix) }
 {
 }
@@ -52,8 +52,8 @@ seir::Ray3D seir::CameraView::pixelRay(const Vec2& pixel) const noexcept
 	// Pixel coordinates should be in [0, D) range (where D is width or height).
 	// We shift coordinates to the center of the pixel (by adding 0.5),
 	// then normalize them from [0, D] to [-1, 1].
-	const auto x = (2 * pixel.x + 1) / _viewportSize._width - 1;
-	const auto y = (2 * pixel.y + 1) / _viewportSize._height - 1;
+	const auto x = (2 * pixel.x + 1) / _viewportSize.width - 1;
+	const auto y = (2 * pixel.y + 1) / _viewportSize.height - 1;
 	return Ray3D::fromPoints(_position, _inverse * Vec3{ x, y, 1 });
 }
 
@@ -64,7 +64,7 @@ std::optional<seir::Vec3> seir::CameraView::pixelRayIntersection(const std::opti
 	return {};
 }
 
-seir::QuadF seir::CameraView::viewportProjection(const Plane& plane, const Vec3& origin) const noexcept
+seir::Quad seir::CameraView::viewportProjection(const Plane& plane, const Vec3& origin) const noexcept
 {
 	const auto planeIntersection = [this, &plane](float x, float y) {
 		return Ray3D::fromPoints(_position, _inverse * Vec3{ x, y, 1 }).intersection(plane);

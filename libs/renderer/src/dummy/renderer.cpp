@@ -4,8 +4,8 @@
 
 #include <seir_renderer/renderer.hpp>
 
-#include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
+#include <seir_math/size.hpp>
 
 namespace
 {
@@ -20,12 +20,12 @@ namespace
 	class DummyTexture final : public seir::Texture2D
 	{
 	public:
-		explicit DummyTexture(const seir::SizeF& size) noexcept
+		explicit DummyTexture(const seir::Size2D& size) noexcept
 			: _size{ size } {}
-		seir::SizeF size() const noexcept override { return _size; }
+		seir::Size2D size() const noexcept override { return _size; }
 
 	private:
-		const seir::SizeF _size;
+		const seir::Size2D _size;
 	};
 }
 
@@ -54,7 +54,7 @@ namespace seir
 
 	SharedPtr<Texture2D> Renderer::createTexture2D(const ImageInfo& info, const void*)
 	{
-		return makeShared<Texture2D, DummyTexture>(SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) });
+		return makeShared<Texture2D, DummyTexture>(Size2D{ static_cast<float>(info.width()), static_cast<float>(info.height()) });
 	}
 
 	void Renderer::render(const std::function<void(RenderPass&)>&)

@@ -5,10 +5,10 @@
 #include <seir_app/app.hpp>
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
-#include <seir_graphics/camera_view.hpp>
 #include <seir_graphics/color.hpp>
 #include <seir_image/image.hpp>
 #include <seir_io/inlet.hpp>
+#include <seir_math/camera_view.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
 #include <seir_math/plane.hpp>
@@ -102,7 +102,7 @@ namespace
 		}
 	};
 
-	constexpr seir::SizeF kBoardSize{ 128, 128 };
+	constexpr seir::Size2D kBoardSize{ 128, 128 };
 
 	class CameraManager
 	{
@@ -122,7 +122,7 @@ namespace
 		}
 
 	private:
-		static void drawMinimap(seir::UiFrame& ui, const seir::QuadF& viewportProjection)
+		static void drawMinimap(seir::UiFrame& ui, const seir::Quad& viewportProjection)
 		{
 			seir::UiLayout layout{ ui };
 			layout.fromBottomRight(seir::UiLayout::Axis::Y, 8);
@@ -134,8 +134,8 @@ namespace
 			canvas.drawRect(minimapRect);
 			canvas.setColor(seir::Rgba32::red(0xaa));
 			constexpr seir::Vec2 minimapScale{
-				kMinimapSize._width / kBoardSize._width,
-				kMinimapSize._height / -kBoardSize._height,
+				kMinimapSize.width / kBoardSize.width,
+				kMinimapSize.height / -kBoardSize.height,
 			};
 			canvas.drawQuad({
 				viewportProjection._a * minimapScale + minimapCenter,
@@ -155,8 +155,8 @@ namespace
 			layout.fromBottomRight(seir::UiLayout::Axis::Y, 8);
 			const auto minimapRect = layout.addItem(kMinimapSize);
 			return seir::Vec2{
-				(cursor->x - minimapRect.left()) / minimapRect.width() * kBoardSize._width - kBoardSize._width / 2,
-				(minimapRect.top() - cursor->y) / minimapRect.height() * kBoardSize._height + kBoardSize._height / 2,
+				(cursor->x - minimapRect.left()) / minimapRect.width() * kBoardSize.width - kBoardSize.width / 2,
+				(minimapRect.top() - cursor->y) / minimapRect.height() * kBoardSize.height + kBoardSize.height / 2,
 			};
 		}
 
@@ -201,9 +201,9 @@ namespace
 		seir::CameraView _cameraView;
 		seir::Plane _groundPlane;
 
-		static constexpr seir::RectF kCameraBound{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
+		static constexpr seir::Rect kCameraBound{ { -54.f, -67.f }, seir::Vec2{ 54.f, 46.f } };
 		static constexpr float kCameraOffsetY = -8.5;
-		static constexpr seir::SizeF kMinimapSize{ 160, 160 };
+		static constexpr seir::Size2D kMinimapSize{ 160, 160 };
 	};
 
 	class Example
@@ -251,7 +251,7 @@ namespace
 				auto& canvas = ui.canvas();
 				canvas.setColor(seir::Rgba32::black(0xaa));
 				canvas.setTexture({});
-				canvas.drawRect({ { 0, 0 }, seir::SizeF{ ui.size()._width, 20 } });
+				canvas.drawRect({ { 0, 0 }, seir::Size2D{ ui.size().width, 20 } });
 			}
 			ui.setLabelStyle({ seir::Rgba32::white(), 1 });
 			seir::UiLayout layout{ ui };

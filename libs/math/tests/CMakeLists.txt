@@ -3,10 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(SOURCES
+	src/camera_view.cpp
 	src/euler.cpp
 	src/mat.cpp
 	src/plane.cpp
+	src/quad.cpp
 	src/ray.cpp
+	src/rect.cpp
+	src/size.cpp
 	src/vec.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})

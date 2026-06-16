@@ -13,7 +13,7 @@ namespace seir
 {
 	class Canvas;
 	class Inlet;
-	class RectF;
+	class Rect;
 	class Renderer;
 	class Texture2D;
 
@@ -44,7 +44,7 @@ namespace seir
 		[[nodiscard]] virtual SharedPtr<Texture2D> bitmapTexture() const noexcept = 0;
 
 		//
-		virtual void drawLine(Canvas&, const RectF&, std::string_view) const = 0;
+		virtual void drawLine(Canvas&, const Rect&, std::string_view) const = 0;
 
 		//
 		[[nodiscard]] virtual float size() const noexcept = 0;
@@ -53,6 +53,6 @@ namespace seir
 		virtual float textWidth(std::string_view text, float fontSize, FontCapture* = nullptr) const noexcept = 0;
 
 		//
-		[[nodiscard]] virtual RectF whiteRect() const noexcept = 0;
+		[[nodiscard]] virtual Rect whiteRect() const noexcept = 0;
 	};
 }

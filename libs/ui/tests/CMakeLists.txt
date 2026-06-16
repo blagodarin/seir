@@ -4,6 +4,7 @@
 
 set(SOURCES
 	src/font.cpp
+	src/margins.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_executable(seir_ui_tests ${SOURCES})

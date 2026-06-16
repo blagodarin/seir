@@ -7,9 +7,9 @@
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
 #include <seir_graphics/color.hpp>
-#include <seir_graphics/rectf.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_math/mat.hpp>
+#include <seir_math/rect.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
@@ -49,7 +49,7 @@ namespace
 			{
 				ui.selectWhiteTexture();
 				ui.canvas().setColor(seir::Rgba32::red());
-				ui.canvas().drawRect({ *cursor, seir::SizeF{ 5, 5 } });
+				ui.canvas().drawRect({ *cursor, seir::Size2D{ 5, 5 } });
 			}
 			if (_showFps)
 			{

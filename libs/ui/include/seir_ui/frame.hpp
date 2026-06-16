@@ -5,7 +5,7 @@
 #pragma once
 
 #include <seir_app/key.hpp>
-#include <seir_graphics/sizef.hpp>
+#include <seir_math/size.hpp>
 
 #include <optional>
 #include <string>
@@ -34,8 +34,8 @@ namespace seir
 		~UiFrame() noexcept;
 
 		bool addButton(std::string_view id, std::string_view text);
-		std::optional<Vec2> addDragArea(std::string_view id, const SizeF&, Key);
-		std::optional<Vec2> addHoverArea(const SizeF&) noexcept;
+		std::optional<Vec2> addDragArea(std::string_view id, const Size2D&, Key);
+		std::optional<Vec2> addHoverArea(const Size2D&) noexcept;
 		void addLabel(std::string_view text, UiAlignment = UiAlignment::Left);
 		bool addStringEdit(std::string_view id, std::string& text);
 		void close() noexcept;
@@ -45,7 +45,7 @@ namespace seir
 		void setButtonStyle(const UiButtonStyle&) noexcept;
 		void setEditStyle(const UiEditStyle&) noexcept;
 		void setLabelStyle(const UiLabelStyle&) noexcept;
-		[[nodiscard]] SizeF size() const noexcept { return _size; }
+		[[nodiscard]] Size2D size() const noexcept { return _size; }
 		bool takeAnyKeyPress() noexcept;
 		Vec2 takeBorderHover(float borderWidth) noexcept;
 		bool takeKeyDown(Key) noexcept;
@@ -56,7 +56,7 @@ namespace seir
 	private:
 		class UiContextImpl& _context;
 		Canvas& _canvas;
-		const SizeF _size;
+		const Size2D _size;
 		friend class UiLayout;
 	};
 }

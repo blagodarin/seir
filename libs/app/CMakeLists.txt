@@ -43,7 +43,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(seir_app STATIC ${HEADERS} ${SOURCES})
 add_library(Seir::app ALIAS seir_app)
 target_include_directories(seir_app PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(seir_app PUBLIC Seir::base PRIVATE Seir::graphics Seir::image)
+target_link_libraries(seir_app PUBLIC Seir::base PRIVATE Seir::image Seir::math)
 if(APPLE)
 	target_link_options(seir_app PUBLIC
 		"SHELL:-framework AppKit"

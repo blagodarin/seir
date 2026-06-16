@@ -2,17 +2,17 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_graphics/rectf.hpp>
+#include <seir_math/rect.hpp>
 
 #include <doctest/doctest.h>
 
-using seir::RectF;
-using seir::SizeF;
+using seir::Rect;
+using seir::Size2D;
 using seir::Vec2;
 
-TEST_CASE("RectF::RectF()")
+TEST_CASE("Rect::Rect()")
 {
-	const RectF r;
+	const Rect r;
 	CHECK(r.left() == 0.f);
 	CHECK(r.top() == 0.f);
 	CHECK(r.right() == 0.f);
@@ -21,9 +21,9 @@ TEST_CASE("RectF::RectF()")
 	CHECK(r.height() == 0.f);
 }
 
-TEST_CASE("RectF::RectF(Vec2, Vec2)")
+TEST_CASE("Rect::Rect(Vec2, Vec2)")
 {
-	const RectF r{ { 1, 2 }, Vec2{ 4, 7 } };
+	const Rect r{ { 1, 2 }, Vec2{ 4, 7 } };
 	CHECK(r.left() == 1.f);
 	CHECK(r.top() == 2.f);
 	CHECK(r.right() == 4.f);
@@ -32,9 +32,9 @@ TEST_CASE("RectF::RectF(Vec2, Vec2)")
 	CHECK(r.height() == 5.f);
 }
 
-TEST_CASE("RectF::RectF(Vec2, SizeF)")
+TEST_CASE("Rect::Rect(Vec2, Size2D)")
 {
-	const RectF r{ { 1, 2 }, SizeF{ 3, 5 } };
+	const Rect r{ { 1, 2 }, Size2D{ 3, 5 } };
 	CHECK(r.left() == 1.f);
 	CHECK(r.top() == 2.f);
 	CHECK(r.right() == 4.f);
@@ -43,9 +43,9 @@ TEST_CASE("RectF::RectF(Vec2, SizeF)")
 	CHECK(r.height() == 5.f);
 }
 
-TEST_CASE("RectF::RectF(SizeF)")
+TEST_CASE("Rect::Rect(SizeD)")
 {
-	const RectF r{ SizeF{ 1, 2 } };
+	const Rect r{ Size2D{ 1, 2 } };
 	CHECK(r.left() == 0.f);
 	CHECK(r.top() == 0.f);
 	CHECK(r.right() == 1.f);
@@ -54,9 +54,9 @@ TEST_CASE("RectF::RectF(SizeF)")
 	CHECK(r.height() == 2.f);
 }
 
-TEST_CASE("RectF::bound(Vec2)")
+TEST_CASE("Rect::bound(Vec2)")
 {
-	const RectF r{ { 1, 1 }, SizeF{ 1, 1 } };
+	const Rect r{ { 1, 1 }, Size2D{ 1, 1 } };
 
 	CHECK(r.bound({ 0, 0 }) == Vec2(1, 1));
 	CHECK(r.bound({ 1, 0 }) == Vec2(1, 1));
