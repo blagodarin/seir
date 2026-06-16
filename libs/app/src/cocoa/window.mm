@@ -4,7 +4,6 @@
 
 #include "window.hpp"
 
-#include <seir_graphics/size.hpp>
 #include <seir_math/vec.hpp>
 #include "app.hpp"
 
@@ -147,12 +146,15 @@ namespace seir
 		}
 	}
 
-	Size Window::size() const noexcept
+	WindowSize Window::size() const noexcept
 	{
 		@autoreleasepool
 		{
 			const auto rect = [_impl->_delegate.window contentRectForFrameRect:[_impl->_delegate.window frame]];
-			return { static_cast<int>(rect.size.width), static_cast<int>(rect.size.height) };
+			return {
+				rect.size.width > 0 ? static_cast<uint32_t>(rect.size.width) : 0,
+				rect.size.height > 0 ? static_cast<uint32_t>(rect.size.height) : 0,
+			};
 		}
 	}
 }

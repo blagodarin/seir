@@ -12,7 +12,6 @@ namespace seir
 {
 	class App;
 	class Image;
-	class Size;
 	class Vec2;
 
 	//
@@ -20,6 +19,13 @@ namespace seir
 	{
 		void* _pointer = nullptr;
 		intptr_t _index = 0;
+	};
+
+	//
+	struct WindowSize
+	{
+		uint32_t width = 0;
+		uint32_t height = 0;
 	};
 
 	//
@@ -50,7 +56,7 @@ namespace seir
 		void show() noexcept;
 
 		//
-		[[nodiscard]] Size size() const noexcept;
+		[[nodiscard]] WindowSize size() const noexcept;
 
 	private:
 		const std::unique_ptr<class WindowImpl> _impl;

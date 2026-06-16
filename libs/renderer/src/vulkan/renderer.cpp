@@ -5,7 +5,6 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
-#include <seir_graphics/size.hpp>
 #include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
@@ -329,12 +328,12 @@ namespace seir
 		if (!_renderTarget)
 		{
 			const auto windowSize = _window.size();
-			if (windowSize._width == 0 || windowSize._height == 0)
+			if (windowSize.width == 0 || windowSize.height == 0)
 			{
-				sleepFor(1);
+				sleepFor(1); // TODO: Stay in the event loop if no window is visible.
 				return;
 			}
-			_renderTarget.create(_context, windowSize);
+			_renderTarget.create(_context, windowSize.width, windowSize.height);
 			const auto frameCount = _renderTarget.frameCount();
 			_frameSync.resize(_context._device, frameCount);
 			assert(_pipelineCache.empty());

@@ -5,7 +5,6 @@
 #include <seir_app/window.hpp>
 
 #include <seir_app/app.hpp>
-#include <seir_graphics/size.hpp>
 #include <seir_math/vec.hpp>
 
 namespace seir
@@ -52,7 +51,7 @@ namespace seir
 	{
 	}
 
-	Size Window::size() const noexcept
+	WindowSize Window::size() const noexcept
 	{
 		return {};
 	}

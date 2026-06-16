@@ -7,7 +7,6 @@
 #include <seir_app/window.hpp>
 #include <seir_graphics/color.hpp>
 #include <seir_graphics/rectf.hpp>
-#include <seir_graphics/size.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_ui/context.hpp>
 #include <seir_ui/font.hpp>
@@ -17,6 +16,7 @@
 
 namespace
 {
+
 	constexpr seir::RectF relativeHeightInRect(const seir::RectF& rect, float relativeHeight) noexcept
 	{
 		const auto padding = rect.height() * (1 - relativeHeight) / 2;
@@ -36,7 +36,9 @@ namespace seir
 	UiFrame::UiFrame(UiContext& context, Canvas& canvas)
 		: _context{ *context._impl }
 		, _canvas{ canvas }
-		, _size{ static_cast<float>(context._impl->_window.size()._width), static_cast<float>(context._impl->_window.size()._height) }
+		, _size{ [size = context._impl->_window.size()] {
+			return SizeF{ static_cast<float>(size.width), static_cast<float>(size.height) };
+		}() }
 	{
 		_context._mouseCursor = _context._window.cursor().value_or(Vec2{ -.5f, -.5f });
 		_context._mouseCursorTaken = false;

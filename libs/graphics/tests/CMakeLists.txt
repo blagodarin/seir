@@ -9,7 +9,6 @@ set(SOURCES
 	src/marginsf.cpp
 	src/quadf.cpp
 	src/rectf.cpp
-	src/size.cpp
 	src/sizef.cpp
 	)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})

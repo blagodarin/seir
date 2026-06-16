@@ -4,7 +4,6 @@
 
 #include "window.hpp"
 
-#include <seir_graphics/size.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
 #include <seir_math/vec.hpp>
@@ -140,11 +139,14 @@ namespace seir
 		::SetFocus(_impl->_hwnd);
 	}
 
-	Size Window::size() const noexcept
+	WindowSize Window::size() const noexcept
 	{
-		RECT clientRect{};
-		if (!::GetClientRect(_impl->_hwnd, &clientRect))
+		RECT rect{};
+		if (!::GetClientRect(_impl->_hwnd, &rect))
 			windows::reportError("GetClientRect");
-		return { static_cast<int>(clientRect.right - clientRect.left), static_cast<int>(clientRect.bottom - clientRect.top) };
+		return {
+			static_cast<uint32_t>(rect.left < rect.right ? rect.right - rect.left : 0),
+			static_cast<uint32_t>(rect.top < rect.bottom ? rect.bottom - rect.top : 0),
+		};
 	}
 }

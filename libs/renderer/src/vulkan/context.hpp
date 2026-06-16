@@ -21,7 +21,6 @@ namespace seir::vulkan
 
 namespace seir
 {
-	class Size;
 	class VulkanContext;
 	class VulkanPipeline;
 	struct WindowDescriptor;
@@ -162,7 +161,7 @@ namespace seir
 		constexpr explicit operator bool() const noexcept { return _swapchain != VK_NULL_HANDLE; }
 
 		bool acquireFrame(VkDevice, VkSemaphore signalSemaphore, VkFence waitFence, uint32_t& index);
-		void create(const VulkanContext&, const Size& windowSize);
+		void create(const VulkanContext&, uint32_t width, uint32_t height);
 		void destroy(VkDevice) noexcept;
 		[[nodiscard]] constexpr VkExtent2D extent() const noexcept { return _swapchainExtent; }
 		[[nodiscard]] uint32_t frameCount() const noexcept { return static_cast<uint32_t>(_swapchainImages.size()); }
@@ -171,7 +170,7 @@ namespace seir
 		[[nodiscard]] VkRenderPassBeginInfo renderPassInfo(size_t frameIndex) const noexcept;
 
 	private:
-		void createSwapchain(const VulkanContext&, const Size& windowSize);
+		void createSwapchain(const VulkanContext&, uint32_t width, uint32_t height);
 		void createSwapchainImageViews(VkDevice, const VkSurfaceFormatKHR&);
 		void createColorBuffer(const VulkanContext&);
 		void createDepthBuffer(const VulkanContext&);

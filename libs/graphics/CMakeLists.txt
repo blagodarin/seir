@@ -9,7 +9,6 @@ set(HEADERS
 	include/seir_graphics/marginsf.hpp
 	include/seir_graphics/quadf.hpp
 	include/seir_graphics/rectf.hpp
-	include/seir_graphics/size.hpp
 	include/seir_graphics/sizef.hpp
 	)
 source_group("include" FILES ${HEADERS})
