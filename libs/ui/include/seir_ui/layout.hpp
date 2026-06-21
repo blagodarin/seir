@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <seir_graphics/rectf.hpp>
+#include <seir_math/rect.hpp>
 
 namespace seir
 {
@@ -41,19 +41,19 @@ namespace seir
 		UiLayout(UiFrame&, const Width&) noexcept;
 		~UiLayout() noexcept;
 
-		RectF addItem(const SizeF&) noexcept;
-		RectF addItem() noexcept { return addItem(_defaultSize); }
+		Rect addItem(const Size2D&) noexcept;
+		Rect addItem() noexcept { return addItem(_defaultSize); }
 		void advance() noexcept;
-		void downFromCenter(float firstItemHeight, float padding = 0) noexcept { fromPoint({ _size._width / 2, (_size._height - firstItemHeight) / 2 - padding }, { 0, 1 }, Axis::Y, padding); }
-		void fromBottomCenter(float padding = 0) noexcept { fromPoint({ _size._width / 2, _size._height }, { 0, -1 }, Axis::Y, padding); }
-		void fromBottomLeft(Axis axis, float padding = 0) noexcept { fromPoint({ 0, _size._height }, { 1, -1 }, axis, padding); }
-		void fromBottomRight(Axis axis, float padding = 0) noexcept { fromPoint({ _size._width, _size._height }, { -1, -1 }, axis, padding); }
+		void downFromCenter(float firstItemHeight, float padding = 0) noexcept { fromPoint({ _size.width / 2, (_size.height - firstItemHeight) / 2 - padding }, { 0, 1 }, Axis::Y, padding); }
+		void fromBottomCenter(float padding = 0) noexcept { fromPoint({ _size.width / 2, _size.height }, { 0, -1 }, Axis::Y, padding); }
+		void fromBottomLeft(Axis axis, float padding = 0) noexcept { fromPoint({ 0, _size.height }, { 1, -1 }, axis, padding); }
+		void fromBottomRight(Axis axis, float padding = 0) noexcept { fromPoint({ _size.width, _size.height }, { -1, -1 }, axis, padding); }
 		void fromPoint(const Vec2& point, const Vec2& direction, Axis axis, float padding = 0) noexcept;
-		void fromTopCenter(float padding = 0) noexcept { fromPoint({ _size._width / 2, 0 }, { 0, 1 }, Axis::Y, padding); }
+		void fromTopCenter(float padding = 0) noexcept { fromPoint({ _size.width / 2, 0 }, { 0, 1 }, Axis::Y, padding); }
 		void fromTopLeft(Axis axis, float padding = 0) noexcept { fromPoint({ 0, 0 }, { 1, 1 }, axis, padding); }
-		void fromTopRight(Axis axis, float padding = 0) noexcept { fromPoint({ _size._width, 0 }, { -1, 1 }, axis, padding); }
-		[[nodiscard]] RectF map(const RectF&) const noexcept;
-		constexpr void setItemSize(const SizeF& size) noexcept { _defaultSize = size; }
+		void fromTopRight(Axis axis, float padding = 0) noexcept { fromPoint({ _size.width, 0 }, { -1, 1 }, axis, padding); }
+		[[nodiscard]] Rect map(const Rect&) const noexcept;
+		constexpr void setItemSize(const Size2D& size) noexcept { _defaultSize = size; }
 		constexpr void setItemSpacing(float spacing) noexcept { _spacing = spacing; }
 		void skip(float distance) noexcept;
 
@@ -62,12 +62,12 @@ namespace seir
 		UiLayout* const _previous;
 		float _scaling = 1;
 		Vec2 _offset{ 0, 0 };
-		const SizeF _size;
+		const Size2D _size;
 		Vec2 _direction{ 1, 1 };
 		Vec2 _position{ 0, 0 };
 		Axis _axis = Axis::X;
 		float _spacing = 0;
-		SizeF _defaultSize;
+		Size2D _defaultSize;
 		float _origin = 0;
 		float _advance = 0;
 	};

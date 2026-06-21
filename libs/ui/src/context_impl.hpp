@@ -6,7 +6,7 @@
 
 #include <seir_app/events.hpp>
 #include <seir_base/shared_ptr.hpp>
-#include <seir_graphics/rectf.hpp>
+#include <seir_math/rect.hpp>
 #include <seir_ui/style.hpp>
 #include "keyboard_item.hpp"
 
@@ -18,7 +18,6 @@
 namespace seir
 {
 	class Font;
-	class RectF;
 	class Texture2D;
 	class UiContext;
 	class UiFrame;
@@ -36,13 +35,13 @@ namespace seir
 		UiContextImpl(Window&, const SharedPtr<Font>&) noexcept;
 		~UiContextImpl() noexcept override;
 
-		RectF addItem() const noexcept;
-		RectF addItem(const SizeF&) const noexcept;
+		Rect addItem() const noexcept;
+		Rect addItem(const Size2D&) const noexcept;
 		KeyCapture captureClick(Key key, bool repeated, bool release = false) noexcept;
 		void captureKeyboard(std::function<bool(Key, bool)>&& keyCallback, std::function<void(std::string_view)>&& textCallback);
-		Vec2 takeBorderHover(const RectF&, float borderWidth) noexcept;
-		std::optional<Vec2> takeMouseCursor(const RectF&) noexcept;
-		std::optional<Vec2> takeMouseHover(const RectF&) noexcept;
+		Vec2 takeBorderHover(const Rect&, float borderWidth) noexcept;
+		std::optional<Vec2> takeMouseCursor(const Rect&) noexcept;
+		std::optional<Vec2> takeMouseHover(const Rect&) noexcept;
 		void updateWhiteTexture(const SharedPtr<Font>&) noexcept;
 
 	private:
@@ -96,7 +95,7 @@ namespace seir
 		UiLabelStyle _labelStyle;
 		SharedPtr<Font> _defaultFont;
 		SharedPtr<Texture2D> _whiteTexture;
-		RectF _whiteTextureRect;
+		Rect _whiteTextureRect;
 		UiLayout* _layout = nullptr;
 		bool _focusExpected = false;
 		KeyStates _keyStates;

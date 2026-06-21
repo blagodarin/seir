@@ -5,9 +5,9 @@
 #include "renderer.hpp"
 
 #include <seir_app/window.hpp>
-#include <seir_graphics/sizef.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/mat.hpp>
+#include <seir_math/size.hpp>
 #include <seir_model/mesh_format.hpp>
 #include "../pass.hpp"
 #include "commands.hpp"
@@ -75,13 +75,13 @@ namespace seir
 	class VulkanTexture2D final : public Texture2D
 	{
 	public:
-		VulkanTexture2D(const SizeF& size, VulkanImage&& image) noexcept
+		VulkanTexture2D(const Size2D& size, VulkanImage&& image) noexcept
 			: _size{ size }, _image{ std::move(image) } {}
-		SizeF size() const noexcept override { return _size; }
+		Size2D size() const noexcept override { return _size; }
 		constexpr auto viewHandle() const noexcept { return _image.viewHandle(); }
 
 	private:
-		const SizeF _size;
+		const Size2D _size;
 		VulkanImage _image;
 	};
 
@@ -308,7 +308,7 @@ namespace seir
 				constexpr uint32_t width = 1;
 				constexpr uint32_t height = 1;
 				static uint32_t data = 0xffffffff;
-				_whiteTexture2D = makeShared<VulkanTexture2D>(SizeF{ width, height },
+				_whiteTexture2D = makeShared<VulkanTexture2D>(Size2D{ width, height },
 					_context.createTextureImage2D({ width, height }, VK_FORMAT_B8G8R8A8_SRGB, sizeof(data), &data, width));
 			}
 			_canvas.initialize(*this);
@@ -328,12 +328,12 @@ namespace seir
 		if (!_renderTarget)
 		{
 			const auto windowSize = _window.size();
-			if (windowSize._width == 0 || windowSize._height == 0)
+			if (windowSize.width == 0 || windowSize.height == 0)
 			{
-				sleepFor(1);
+				sleepFor(1); // TODO: Stay in the event loop if no window is visible.
 				return;
 			}
-			_renderTarget.create(_context, windowSize);
+			_renderTarget.create(_context, windowSize.width, windowSize.height);
 			const auto frameCount = _renderTarget.frameCount();
 			_frameSync.resize(_context._device, frameCount);
 			assert(_pipelineCache.empty());
@@ -449,7 +449,7 @@ namespace seir
 			return {};
 		try
 		{
-			return makeShared<Texture2D, VulkanTexture2D>(SizeF{ static_cast<float>(info.width()), static_cast<float>(info.height()) },
+			return makeShared<Texture2D, VulkanTexture2D>(Size2D{ static_cast<float>(info.width()), static_cast<float>(info.height()) },
 				_impl->_context.createTextureImage2D({ info.width(), info.height() }, VK_FORMAT_B8G8R8A8_SRGB, info.frameSize(), data, stride / pixelSize));
 		}
 		catch ([[maybe_unused]] const VulkanError& e)

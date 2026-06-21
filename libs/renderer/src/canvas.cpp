@@ -6,8 +6,8 @@
 
 #include <seir_base/scope.hpp>
 #include <seir_base/shared_ptr.hpp>
-#include <seir_graphics/quadf.hpp>
-#include <seir_graphics/rectf.hpp>
+#include <seir_math/quad.hpp>
+#include <seir_math/rect.hpp>
 #include <seir_model/mesh_format.hpp>
 #include <seir_renderer/renderer.hpp>
 #include "canvas.hpp"
@@ -31,7 +31,7 @@ namespace seir
 		std::vector<CanvasVertex> _vertexBuffer;
 		std::vector<uint16_t> _indexBuffer;
 		std::vector<Range> _ranges{ { nullptr, 0 } };
-		RectF _textureRect{ SizeF{ 1, 1 } };
+		Rect _textureRect{ Size2D{ 1, 1 } };
 		Rgba32 _color = Rgba32::white();
 
 		struct Batch
@@ -48,7 +48,7 @@ namespace seir
 			_ranges.clear();
 			assert(_ranges.capacity() >= 1);
 			_ranges.emplace_back(Range{ nullptr, 0 });
-			_textureRect = RectF{ SizeF{ 1, 1 } };
+			_textureRect = Rect{ Size2D{ 1, 1 } };
 			_color = Rgba32::white();
 		}
 
@@ -85,7 +85,7 @@ namespace seir
 
 	Canvas::~Canvas() noexcept = default;
 
-	void Canvas::drawQuad(const QuadF& quad)
+	void Canvas::drawQuad(const Quad& quad)
 	{
 		const auto batch = _impl->prepareBatch(4, 4);
 		batch._vertices[0] = { quad._a, _impl->_textureRect.topLeft(), _impl->_color };
@@ -98,7 +98,7 @@ namespace seir
 		batch._indices[3] = static_cast<uint16_t>(batch._baseIndex + 3);
 	}
 
-	void Canvas::drawRect(const RectF& rect)
+	void Canvas::drawRect(const Rect& rect)
 	{
 		const auto batch = _impl->prepareBatch(4, 4);
 		batch._vertices[0] = { rect.topLeft(), _impl->_textureRect.topLeft(), _impl->_color };
@@ -146,12 +146,12 @@ namespace seir
 			currentRange._texture = texture;
 		else
 			_impl->_ranges.emplace_back(CanvasImpl::Range{ texture, 0 });
-		_impl->_textureRect = RectF{ SizeF{ 1, 1 } };
+		_impl->_textureRect = Rect{ Size2D{ 1, 1 } };
 	}
 
-	void Canvas::setTextureRect(const RectF& rect)
+	void Canvas::setTextureRect(const Rect& rect)
 	{
 		const auto texture = _impl->_ranges.back()._texture.get();
-		_impl->_textureRect = texture ? rect / texture->size() : RectF{ SizeF{ 1, 1 } };
+		_impl->_textureRect = texture ? rect / texture->size() : Rect{ Size2D{ 1, 1 } };
 	}
 }

@@ -11,7 +11,7 @@ target_compile_definitions(board PRIVATE
 	SEIR_DATA_DIR="${SEIR_DATA_DIR}/"
 	LOCAL_DATA_DIR="${CMAKE_CURRENT_LIST_DIR}/data/"
 	)
-target_link_libraries(board PRIVATE Seir::image Seir::io Seir::model Seir::renderer Seir::u8main Seir::ui)
+target_link_libraries(board PRIVATE Seir::image Seir::io Seir::model Seir::u8main Seir::ui)
 set_target_properties(board PROPERTIES WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
 seir_target(board FOLDER examples STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
 if(WIN32)

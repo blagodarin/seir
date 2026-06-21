@@ -6,7 +6,6 @@
 
 #include <seir_app/window.hpp>
 #include <seir_base/int_utils.hpp>
-#include <seir_graphics/size.hpp>
 #include "commands.hpp"
 #include "error.hpp"
 #include "pipeline.hpp"
@@ -180,9 +179,9 @@ namespace seir
 		return true;
 	}
 
-	void VulkanRenderTarget::create(const VulkanContext& context, const Size& windowSize)
+	void VulkanRenderTarget::create(const VulkanContext& context, uint32_t width, uint32_t height)
 	{
-		createSwapchain(context, windowSize);
+		createSwapchain(context, width, height);
 		createSwapchainImageViews(context._device, context._surfaceFormat);
 		createColorBuffer(context);
 		createDepthBuffer(context);
@@ -260,7 +259,7 @@ namespace seir
 		};
 	}
 
-	void VulkanRenderTarget::createSwapchain(const VulkanContext& context, const Size& windowSize)
+	void VulkanRenderTarget::createSwapchain(const VulkanContext& context, uint32_t width, uint32_t height)
 	{
 		VkSurfaceCapabilitiesKHR surfaceCapabilities{};
 		SEIR_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context._physicalDevice, context._surface, &surfaceCapabilities));
@@ -268,13 +267,13 @@ namespace seir
 		_swapchainExtent = surfaceCapabilities.currentExtent;
 		if (_swapchainExtent.width == std::numeric_limits<uint32_t>::max() || _swapchainExtent.height == std::numeric_limits<uint32_t>::max())
 		{
-			if (const auto width = static_cast<uint32_t>(windowSize._width); width < surfaceCapabilities.minImageExtent.width)
+			if (width < surfaceCapabilities.minImageExtent.width)
 				_swapchainExtent.width = surfaceCapabilities.minImageExtent.width;
 			else if (width > surfaceCapabilities.maxImageExtent.width)
 				_swapchainExtent.width = surfaceCapabilities.maxImageExtent.width;
 			else
 				_swapchainExtent.width = width;
-			if (const auto height = static_cast<uint32_t>(windowSize._width); height < surfaceCapabilities.minImageExtent.height)
+			if (height < surfaceCapabilities.minImageExtent.height)
 				_swapchainExtent.height = surfaceCapabilities.minImageExtent.height;
 			else if (height > surfaceCapabilities.maxImageExtent.height)
 				_swapchainExtent.height = surfaceCapabilities.maxImageExtent.height;

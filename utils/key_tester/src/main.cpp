@@ -5,9 +5,9 @@
 #include <seir_app/app.hpp>
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
-#include <seir_graphics/color.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_renderer/canvas.hpp>
+#include <seir_renderer/color.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 #include <seir_ui/context.hpp>
@@ -186,13 +186,16 @@ int u8main(int, char**)
 	for (KeyHandler handler; app.processEvents(handler);)
 	{
 		seir::UiFrame ui{ uiContext, canvas };
+		ui.setLabelStyle({ seir::Rgba32::white(), 1 });
 		seir::UiLayout layout{ ui };
 		layout.fromBottomLeft(seir::UiLayout::Axis::Y, 2);
 		layout.setItemSize({ 0, 24 });
 		layout.setItemSpacing(0);
-		ui.setLabelStyle({ seir::Rgba32::white(), 1 });
 		for (const auto& event : handler.events())
 			ui.addLabel(event);
+		layout.fromTopRight(seir::UiLayout::Axis::Y, 2);
+		if (const auto cursor = window.cursor())
+			ui.addLabel(std::format("({:+.1f},{:+.1f})", cursor->x, cursor->y), seir::UiAlignment::Right);
 		renderer.render([&](seir::RenderPass& pass) {
 			canvas.render(pass);
 		});

@@ -5,10 +5,10 @@
 #include <seir_ui/font.hpp>
 
 #include <seir_base/utf8.hpp>
-#include <seir_graphics/rectf.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
 #include <seir_io/inlet.hpp>
+#include <seir_math/rect.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/renderer.hpp>
 
@@ -30,7 +30,7 @@ namespace
 		{ 0x00, 0x00, 0x00, 0x00 },
 		{ 0x00, 0x00, 0x00, 0x00 },
 	};
-	constexpr seir::RectF kWhiteRect{ {}, seir::SizeF{ 1, 1 } };
+	constexpr seir::Rect kWhiteRect{ {}, seir::Size2D{ 1, 1 } };
 
 	class FreeTypeFont final : public seir::Font
 	{
@@ -64,7 +64,7 @@ namespace
 			return _bitmapTexture;
 		}
 
-		void drawLine(seir::Canvas& canvas, const seir::RectF& rect, std::string_view text) const override
+		void drawLine(seir::Canvas& canvas, const seir::Rect& rect, std::string_view text) const override
 		{
 			const auto scale = rect.height() / static_cast<float>(_size);
 			int x = 0;
@@ -81,14 +81,14 @@ namespace
 					if (!::FT_Get_Kerning(_face, previous->second._id, current->second._id, FT_KERNING_DEFAULT, &kerning))
 						x += static_cast<int>(kerning.x >> 6);
 				}
-				const auto left = rect.left() + static_cast<float>(x + current->second._offset._x) * scale;
+				const auto left = rect.left() + (static_cast<float>(x) + current->second._offset.x) * scale;
 				if (left >= rect.right())
 					break;
-				seir::RectF positionRect{
-					{ left, rect.top() + static_cast<float>(current->second._offset._y) * scale },
-					seir::SizeF{ current->second._rect.size() } * scale,
+				seir::Rect positionRect{
+					{ left, rect.top() + current->second._offset.y * scale },
+					current->second._rect.size() * scale,
 				};
-				seir::RectF glyphRect{ current->second._rect };
+				auto glyphRect = current->second._rect;
 				bool clipped = false;
 				if (positionRect.right() > rect.right())
 				{
@@ -156,7 +156,7 @@ namespace
 			return static_cast<float>(x) * scale;
 		}
 
-		seir::RectF whiteRect() const noexcept override
+		seir::Rect whiteRect() const noexcept override
 		{
 			return ::kWhiteRect;
 		}
@@ -211,10 +211,10 @@ namespace
 				auto& bitmapGlyph = _bitmapGlyphs[codepoint];
 				bitmapGlyph._id = id;
 				bitmapGlyph._rect = {
-					{ static_cast<int>(x), static_cast<int>(y) },
-					seir::Size{ static_cast<int>(glyph->bitmap.width), static_cast<int>(glyph->bitmap.rows) },
+					{ static_cast<float>(x), static_cast<float>(y) },
+					seir::Size2D{ static_cast<float>(glyph->bitmap.width), static_cast<float>(glyph->bitmap.rows) },
 				};
-				bitmapGlyph._offset = { glyph->bitmap_left, baseline - glyph->bitmap_top };
+				bitmapGlyph._offset = { static_cast<float>(glyph->bitmap_left), static_cast<float>(baseline - glyph->bitmap_top) };
 				bitmapGlyph._advance = static_cast<int>(glyph->advance.x >> 6);
 				copyGlyph(glyph->bitmap.buffer, glyph->bitmap.width, glyph->bitmap.rows, glyph->bitmap.pitch);
 			}
@@ -229,7 +229,7 @@ namespace
 		{
 			FT_UInt _id = 0;
 			seir::Rect _rect;
-			seir::Point _offset;
+			seir::Vec2 _offset;
 			int _advance = 0;
 		};
 

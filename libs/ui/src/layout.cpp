@@ -21,33 +21,33 @@ namespace seir
 		, _previous{ std::exchange(frame._context._layout, this) }
 		, _size{ mapping._width, mapping._height }
 	{
-		const auto widthRatio = frame._size._width / mapping._width;
-		const auto heightRatio = frame._size._height / mapping._height;
+		const auto widthRatio = frame._size.width / mapping._width;
+		const auto heightRatio = frame._size.height / mapping._height;
 		if (widthRatio > heightRatio)
 		{
 			_scaling = heightRatio;
-			_offset = { (frame._size._width - mapping._width * _scaling) / 2, 0 };
+			_offset = { (frame._size.width - mapping._width * _scaling) / 2, 0 };
 		}
 		else
 		{
 			_scaling = widthRatio;
-			_offset = { 0, (frame._size._height - mapping._height * _scaling) / 2 };
+			_offset = { 0, (frame._size.height - mapping._height * _scaling) / 2 };
 		}
 	}
 
 	UiLayout::UiLayout(UiFrame& frame, const Height& mapping) noexcept
 		: _frame{ frame }
 		, _previous{ std::exchange(frame._context._layout, this) }
-		, _scaling{ frame._size._height / mapping._height }
-		, _size{ frame._size._width / _scaling, mapping._height }
+		, _scaling{ frame._size.height / mapping._height }
+		, _size{ frame._size.width / _scaling, mapping._height }
 	{
 	}
 
 	UiLayout::UiLayout(UiFrame& frame, const Width& mapping) noexcept
 		: _frame{ frame }
 		, _previous{ std::exchange(frame._context._layout, this) }
-		, _scaling{ frame._size._width / mapping._width }
-		, _size{ mapping._width, frame._size._height / _scaling }
+		, _scaling{ frame._size.width / mapping._width }
+		, _size{ mapping._width, frame._size.height / _scaling }
 	{
 	}
 
@@ -56,25 +56,25 @@ namespace seir
 		_frame._context._layout = _previous;
 	}
 
-	RectF UiLayout::addItem(const SizeF& size) noexcept
+	Rect UiLayout::addItem(const Size2D& size) noexcept
 	{
-		const auto x1 = _position.x + size._width * (_direction.x - 1) / 2;
-		const auto x2 = _position.x + size._width * (_direction.x + 1) / 2;
-		const auto y1 = _position.y + size._height * (_direction.y - 1) / 2;
-		const auto y2 = _position.y + size._height * (_direction.y + 1) / 2;
+		const auto x1 = _position.x + size.width * (_direction.x - 1) / 2;
+		const auto x2 = _position.x + size.width * (_direction.x + 1) / 2;
+		const auto y1 = _position.y + size.height * (_direction.y - 1) / 2;
+		const auto y2 = _position.y + size.height * (_direction.y + 1) / 2;
 		if (_axis == Axis::X)
 		{
 			_position.x = _direction.x > 0 ? x2 + _spacing : x1 - _spacing;
-			if (size._height > _advance)
-				_advance = size._height;
+			if (size.height > _advance)
+				_advance = size.height;
 		}
 		else
 		{
 			_position.y = _direction.y > 0 ? y2 + _spacing : y1 - _spacing;
-			if (size._width > _advance)
-				_advance = size._width;
+			if (size.width > _advance)
+				_advance = size.width;
 		}
-		return RectF{ { x1, y1 }, Vec2{ x2, y2 } } * _scaling + _offset;
+		return Rect{ { x1, y1 }, Vec2{ x2, y2 } } * _scaling + _offset;
 	}
 
 	void UiLayout::advance() noexcept
@@ -101,7 +101,7 @@ namespace seir
 		_advance = 0;
 	}
 
-	RectF UiLayout::map(const RectF& rect) const noexcept
+	Rect UiLayout::map(const Rect& rect) const noexcept
 	{
 		return rect * _scaling + _offset;
 	}

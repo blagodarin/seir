@@ -6,7 +6,6 @@
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
 #include <seir_base/clock.hpp>
-#include <seir_graphics/size.hpp>
 #include <seir_image/image.hpp>
 #include <seir_math/euler.hpp>
 #include <seir_math/mat.hpp>
@@ -141,7 +140,7 @@ int u8main(int, char**)
 		{
 			const auto windowSize = window.size();
 			window.setTitle(std::format("Cube [{}x{} @ {:.1f} fps]",
-				windowSize._width, windowSize._height, period->_averageFrameRate));
+				windowSize.width, windowSize.height, period->_averageFrameRate));
 		}
 		renderer.render([&, time = clock.time()](seir::RenderPass& pass) {
 			const auto viewportSize = pass.size();

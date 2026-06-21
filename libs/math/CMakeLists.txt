@@ -3,10 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(HEADERS
+	include/seir_math/camera_view.hpp
 	include/seir_math/euler.hpp
 	include/seir_math/mat.hpp
 	include/seir_math/plane.hpp
+	include/seir_math/quad.hpp
 	include/seir_math/ray.hpp
+	include/seir_math/rect.hpp
+	include/seir_math/size.hpp
 	include/seir_math/vec.hpp
 	)
 set(SOURCES

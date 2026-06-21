@@ -5,9 +5,9 @@
 #include <seir_ui/frame.hpp>
 
 #include <seir_app/window.hpp>
-#include <seir_graphics/color.hpp>
-#include <seir_graphics/rectf.hpp>
+#include <seir_math/rect.hpp>
 #include <seir_renderer/canvas.hpp>
+#include <seir_renderer/color.hpp>
 #include <seir_ui/context.hpp>
 #include <seir_ui/font.hpp>
 #include "context_impl.hpp"
@@ -16,16 +16,17 @@
 
 namespace
 {
-	constexpr seir::RectF relativeHeightInRect(const seir::RectF& rect, float relativeHeight) noexcept
+
+	constexpr seir::Rect relativeHeightInRect(const seir::Rect& rect, float relativeHeight) noexcept
 	{
 		const auto padding = rect.height() * (1 - relativeHeight) / 2;
 		return { rect.topLeft() + padding, rect.bottomRight() - padding };
 	}
 
-	constexpr seir::RectF sizeInRect(const seir::RectF& rect, const seir::SizeF& size) noexcept
+	constexpr seir::Rect sizeInRect(const seir::Rect& rect, const seir::Size2D& size) noexcept
 	{
-		const auto yPadding = (rect.height() - size._height) / 2;
-		const auto xPadding = std::max(yPadding, (rect.width() - size._width) / 2);
+		const auto yPadding = (rect.height() - size.height) / 2;
+		const auto xPadding = std::max(yPadding, (rect.width() - size.width) / 2);
 		return { rect.topLeft() + seir::Vec2{ xPadding, yPadding }, rect.bottomRight() - seir::Vec2{ xPadding, yPadding } };
 	}
 }
@@ -35,10 +36,11 @@ namespace seir
 	UiFrame::UiFrame(UiContext& context, Canvas& canvas)
 		: _context{ *context._impl }
 		, _canvas{ canvas }
-		, _size{ context._impl->_window.size() }
+		, _size{ [size = context._impl->_window.size()] {
+			return Size2D{ static_cast<float>(size.width), static_cast<float>(size.height) };
+		}() }
 	{
-		const auto cursor = _context._window.cursor().value_or(Point{ -1, -1 });
-		_context._mouseCursor = { static_cast<float>(cursor._x), static_cast<float>(cursor._y) };
+		_context._mouseCursor = _context._window.cursor().value_or(Vec2{ -.5f, -.5f });
 		_context._mouseCursorTaken = false;
 		_context._mouseHoverTaken = false;
 		_context._mouseItemPresent = false;
@@ -135,7 +137,7 @@ namespace seir
 		return clicked;
 	}
 
-	std::optional<Vec2> UiFrame::addDragArea(std::string_view id, const SizeF& size, Key key)
+	std::optional<Vec2> UiFrame::addDragArea(std::string_view id, const Size2D& size, Key key)
 	{
 		assert(!id.empty());
 		const auto rect = _context.addItem(size);
@@ -169,7 +171,7 @@ namespace seir
 		return {};
 	}
 
-	std::optional<Vec2> UiFrame::addHoverArea(const SizeF& size) noexcept
+	std::optional<Vec2> UiFrame::addHoverArea(const Size2D& size) noexcept
 	{
 		return _context.takeMouseHover(_context.addItem(size));
 	}
@@ -187,7 +189,7 @@ namespace seir
 		if (textRect.left() == textRect.right())
 		{
 			if (alignment == UiAlignment::Left || alignment == UiAlignment::Center)
-				textRect._right = _size._width;
+				textRect._right = _size.width;
 			if (alignment == UiAlignment::Center || alignment == UiAlignment::Right)
 				textRect._left = 0;
 		}
@@ -406,6 +408,6 @@ namespace seir
 
 	std::optional<Vec2> UiFrame::takeMouseCursor() noexcept
 	{
-		return _context.takeMouseCursor(RectF{ _size });
+		return _context.takeMouseCursor(Rect{ _size });
 	}
 }

@@ -33,14 +33,14 @@ namespace seir
 
 	UiContextImpl::~UiContextImpl() noexcept = default;
 
-	RectF UiContextImpl::addItem() const noexcept
+	Rect UiContextImpl::addItem() const noexcept
 	{
-		return _layout ? _layout->addItem() : RectF{};
+		return _layout ? _layout->addItem() : Rect{};
 	}
 
-	RectF UiContextImpl::addItem(const SizeF& size) const noexcept
+	Rect UiContextImpl::addItem(const Size2D& size) const noexcept
 	{
-		return _layout ? _layout->addItem(size) : RectF{};
+		return _layout ? _layout->addItem(size) : Rect{};
 	}
 
 	UiContextImpl::KeyCapture UiContextImpl::captureClick(Key key, bool repeated, bool release) noexcept
@@ -90,7 +90,7 @@ namespace seir
 		}
 	}
 
-	Vec2 UiContextImpl::takeBorderHover(const RectF& rect, float borderWidth) noexcept
+	Vec2 UiContextImpl::takeBorderHover(const Rect& rect, float borderWidth) noexcept
 	{
 		if (_mouseHoverTaken)
 			return {};
@@ -112,7 +112,7 @@ namespace seir
 		return { x, y };
 	}
 
-	std::optional<Vec2> UiContextImpl::takeMouseCursor(const RectF& rect) noexcept
+	std::optional<Vec2> UiContextImpl::takeMouseCursor(const Rect& rect) noexcept
 	{
 		if (_mouseCursorTaken || !rect.contains(_mouseCursor))
 			return {};
@@ -121,7 +121,7 @@ namespace seir
 		return _mouseCursor;
 	}
 
-	std::optional<Vec2> UiContextImpl::takeMouseHover(const RectF& rect) noexcept
+	std::optional<Vec2> UiContextImpl::takeMouseHover(const Rect& rect) noexcept
 	{
 		if (_mouseHoverTaken || !rect.contains(_mouseCursor))
 			return {};

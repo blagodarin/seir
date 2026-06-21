@@ -4,10 +4,9 @@
 
 #include "window.hpp"
 
-#include <seir_graphics/point.hpp>
-#include <seir_graphics/size.hpp>
 #include <seir_image/image.hpp>
 #include <seir_image/utils.hpp>
+#include <seir_math/vec.hpp>
 #include "app.hpp"
 
 namespace
@@ -71,7 +70,7 @@ namespace seir
 		::SendMessageW(_impl->_hwnd, WM_CLOSE, 0, 0);
 	}
 
-	std::optional<Point> Window::cursor() const noexcept
+	std::optional<Vec2> Window::cursor() const noexcept
 	{
 		POINT point{ .x = 0, .y = 0 };
 		if (!::GetCursorPos(&point))
@@ -81,7 +80,9 @@ namespace seir
 		}
 		if (!::ScreenToClient(_impl->_hwnd, &point))
 			return {};
-		return std::make_optional<Point>(point.x, point.y);
+		return std::make_optional<Vec2>(
+			static_cast<float>(point.x) + .5f,
+			static_cast<float>(point.y) + .5f);
 	}
 
 	WindowDescriptor Window::descriptor() const noexcept
@@ -138,11 +139,14 @@ namespace seir
 		::SetFocus(_impl->_hwnd);
 	}
 
-	Size Window::size() const noexcept
+	WindowSize Window::size() const noexcept
 	{
-		RECT clientRect{};
-		if (!::GetClientRect(_impl->_hwnd, &clientRect))
+		RECT rect{};
+		if (!::GetClientRect(_impl->_hwnd, &rect))
 			windows::reportError("GetClientRect");
-		return { static_cast<int>(clientRect.right - clientRect.left), static_cast<int>(clientRect.bottom - clientRect.top) };
+		return {
+			static_cast<uint32_t>(rect.left < rect.right ? rect.right - rect.left : 0),
+			static_cast<uint32_t>(rect.top < rect.bottom ? rect.bottom - rect.top : 0),
+		};
 	}
 }

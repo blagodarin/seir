@@ -8,8 +8,8 @@
 
 namespace seir
 {
-	class QuadF;
-	class RectF;
+	class Quad;
+	class Rect;
 	class RenderPass;
 	class Rgba32;
 	template <class>
@@ -24,10 +24,10 @@ namespace seir
 		~Canvas() noexcept;
 
 		//
-		void drawQuad(const QuadF&);
+		void drawQuad(const Quad&);
 
 		//
-		void drawRect(const RectF&);
+		void drawRect(const Rect&);
 
 		// Submits the canvas for actual rendering.
 		// The canvas content is reset after submission.
@@ -40,7 +40,7 @@ namespace seir
 		void setTexture(const SharedPtr<Texture2D>&);
 
 		//
-		void setTextureRect(const RectF&);
+		void setTextureRect(const Rect&);
 
 	private:
 		const std::unique_ptr<class CanvasImpl> _impl;

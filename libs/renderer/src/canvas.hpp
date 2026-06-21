@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <seir_graphics/color.hpp>
 #include <seir_math/vec.hpp>
+#include <seir_renderer/color.hpp>
 
 namespace seir
 {
