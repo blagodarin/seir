@@ -71,12 +71,12 @@ constexpr seir::Vec2 seir::Rect::bound(const Vec2& p) const noexcept
 	if (x < _left)
 		x = _left;
 	else if (x >= _right)
-		x = _right; // Minus ULP?
+		x = _right; // std::nextafter(x, _left)?
 	auto y = p.y;
 	if (y < _top)
 		y = _top;
 	else if (y >= _bottom)
-		y = _bottom; // Minus ULP?
+		y = _bottom; // std::nextafter(y, _top)?
 	return { x, y };
 }
 
