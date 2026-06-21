@@ -9,6 +9,9 @@
 
 namespace seir
 {
+	// Axis-aligned 2D rectangle.
+	// Assumes X is left to right and Y is top to bottom.
+	// A rectangle contains its top and left sides, but doesn't contain bottom and right sides.
 	class Rect
 	{
 	public:
@@ -34,7 +37,7 @@ namespace seir
 		[[nodiscard]] constexpr bool contains(const Vec2&) const noexcept;
 		[[nodiscard]] constexpr bool contains(const Rect&) const noexcept;
 		[[nodiscard]] constexpr float height() const noexcept { return _bottom - _top; }
-		[[nodiscard]] constexpr Rect intersected(const Rect&) const noexcept;
+		[[nodiscard]] constexpr Rect intersection(const Rect&) const noexcept;
 		[[nodiscard]] constexpr bool intersects(const Rect&) const noexcept;
 		[[nodiscard]] constexpr bool isEmpty() const noexcept { return _left >= _right || _top >= _bottom; }
 		[[nodiscard]] constexpr float left() const noexcept { return _left; }
@@ -61,16 +64,19 @@ namespace seir
 
 constexpr seir::Vec2 seir::Rect::bound(const Vec2& p) const noexcept
 {
+	// The current algorithm bounds points to the right and bottom sides
+	// which are considered to be outside the rectangle.
+	// No idea though whether this behavior should be fixed.
 	auto x = p.x;
 	if (x < _left)
 		x = _left;
 	else if (x >= _right)
-		x = _right;
+		x = _right; // Minus ULP?
 	auto y = p.y;
 	if (y < _top)
 		y = _top;
 	else if (y >= _bottom)
-		y = _bottom;
+		y = _bottom; // Minus ULP?
 	return { x, y };
 }
 
@@ -94,7 +100,7 @@ constexpr bool seir::Rect::contains(const Rect& r) const noexcept
 		&& _top <= r._top && r._bottom <= _bottom;
 }
 
-constexpr seir::Rect seir::Rect::intersected(const Rect& r) const noexcept
+constexpr seir::Rect seir::Rect::intersection(const Rect& r) const noexcept
 {
 	return {
 		{

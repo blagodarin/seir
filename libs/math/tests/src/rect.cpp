@@ -115,41 +115,124 @@ TEST_CASE("Rect::contains(Vec2)")
 TEST_CASE("Rect::contains(Rect::bound(Vec2))")
 {
 	const Rect r{ { 1, 2 }, Vec2{ 3, 4 } };
-	SUBCASE("top left")
+	SUBCASE("top")
 	{
 		CHECK(r.contains(r.bound({ 0, 1 })));
-	}
-	SUBCASE("top center")
-	{
 		CHECK(r.contains(r.bound({ 2, 1 })));
+		CHECK_FALSE(r.contains(r.bound({ 4, 1 })));
 	}
-	SUBCASE("top right")
-	{
-		CHECK_FALSE(r.contains(r.bound({ 4, 1 }))); // Corner case!
-	}
-	SUBCASE("middle left")
+	SUBCASE("middle")
 	{
 		CHECK(r.contains(r.bound({ 0, 3 })));
-	}
-	SUBCASE("center")
-	{
 		CHECK(r.contains(r.bound({ 2, 3 })));
-	}
-	SUBCASE("middle right")
-	{
 		CHECK_FALSE(r.contains(r.bound({ 4, 3 })));
 	}
-	SUBCASE("bottom left")
+	SUBCASE("bottom")
 	{
-		CHECK_FALSE(r.contains(r.bound({ 0, 5 }))); // Corner case!
+		CHECK_FALSE(r.contains(r.bound({ 0, 5 })));
+		CHECK_FALSE(r.contains(r.bound({ 2, 5 })));
+		CHECK_FALSE(r.contains(r.bound({ 4, 5 })));
 	}
-	SUBCASE("bottom center")
+}
+
+TEST_CASE("Rect::intersection(Rect)")
+{
+	const Rect r{ { 1, 2 }, Vec2{ 4, 5 } };
+	SUBCASE("exact match")
 	{
-		CHECK_FALSE(r.contains(r.bound({ 2, 5 }))); // Corner case!
+		const auto i = r.intersection(r);
+		CHECK_FALSE(i.isEmpty());
+		CHECK(i.left() == 1);
+		CHECK(i.top() == 2);
+		CHECK(i.right() == 4);
+		CHECK(i.bottom() == 5);
 	}
-	SUBCASE("bottom right")
+	SUBCASE("top left / bottom right")
 	{
-		CHECK_FALSE(r.contains(r.bound({ 4, 5 }))); // Corner case!
+		SUBCASE("touch corner")
+		{
+			const auto i = r.intersection({ { 0, 0 }, Vec2{ 1, 2 } });
+			CHECK(i.isEmpty());
+			CHECK(i.left() == 1);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 1);
+			CHECK(i.bottom() == 2);
+		}
+		SUBCASE("touch vertical side")
+		{
+			const auto i = r.intersection({ { 0, 0 }, Vec2{ 1, 3 } });
+			CHECK(i.isEmpty());
+			CHECK(i.left() == 1);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 1);
+			CHECK(i.bottom() == 3);
+		}
+		SUBCASE("touch horizontal side")
+		{
+			const auto i = r.intersection({ { 0, 0 }, Vec2{ 2, 2 } });
+			CHECK(i.isEmpty());
+			CHECK(i.left() == 1);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 2);
+			CHECK(i.bottom() == 2);
+		}
+		SUBCASE("intersect corner")
+		{
+			const auto i = r.intersection({ { 0, 0 }, Vec2{ 2, 3 } });
+			CHECK_FALSE(i.isEmpty());
+			CHECK(i.left() == 1);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 2);
+			CHECK(i.bottom() == 3);
+		}
+	}
+	SUBCASE("top right / bottom left")
+	{
+		SUBCASE("touch corner")
+		{
+			const auto i = r.intersection({ { 4, 0 }, Vec2{ 5, 2 } });
+			CHECK(i.isEmpty());
+			CHECK(i.left() == 4);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 4);
+			CHECK(i.bottom() == 2);
+		}
+		SUBCASE("touch vertical side")
+		{
+			const auto i = r.intersection({ { 4, 0 }, Vec2{ 5, 3 } });
+			CHECK(i.isEmpty());
+			CHECK(i.left() == 4);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 4);
+			CHECK(i.bottom() == 3);
+		}
+		SUBCASE("touch horizontal side")
+		{
+			const auto i = r.intersection({ { 3, 0 }, Vec2{ 5, 2 } });
+			CHECK(i.isEmpty());
+			CHECK(i.left() == 3);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 4);
+			CHECK(i.bottom() == 2);
+		}
+		SUBCASE("intersect corner")
+		{
+			const auto i = r.intersection({ { 3, 0 }, Vec2{ 5, 3 } });
+			CHECK_FALSE(i.isEmpty());
+			CHECK(i.left() == 3);
+			CHECK(i.top() == 2);
+			CHECK(i.right() == 4);
+			CHECK(i.bottom() == 3);
+		}
+	}
+	SUBCASE("inside / outside")
+	{
+		const auto i = r.intersection({ { 0, 1 }, Vec2{ 5, 6 } });
+		CHECK_FALSE(i.isEmpty());
+		CHECK(i.left() == 1);
+		CHECK(i.top() == 2);
+		CHECK(i.right() == 4);
+		CHECK(i.bottom() == 5);
 	}
 }
 
