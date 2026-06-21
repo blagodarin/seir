@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <seir_graphics/color.hpp>
+#include <seir_renderer/color.hpp>
 #include <seir_ui/font.hpp>
 
 namespace seir

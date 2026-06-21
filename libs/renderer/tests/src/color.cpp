@@ -2,7 +2,7 @@
 // Copyright (C) Sergei Blagodarin.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <seir_graphics/color.hpp>
+#include <seir_renderer/color.hpp>
 
 #include <doctest/doctest.h>
 

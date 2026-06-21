@@ -5,9 +5,9 @@
 #include <seir_ui/frame.hpp>
 
 #include <seir_app/window.hpp>
-#include <seir_graphics/color.hpp>
 #include <seir_math/rect.hpp>
 #include <seir_renderer/canvas.hpp>
+#include <seir_renderer/color.hpp>
 #include <seir_ui/context.hpp>
 #include <seir_ui/font.hpp>
 #include "context_impl.hpp"

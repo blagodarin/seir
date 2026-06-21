@@ -5,9 +5,9 @@
 #include <seir_app/app.hpp>
 #include <seir_app/events.hpp>
 #include <seir_app/window.hpp>
-#include <seir_graphics/color.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_renderer/canvas.hpp>
+#include <seir_renderer/color.hpp>
 #include <seir_renderer/renderer.hpp>
 #include <seir_u8main/u8main.hpp>
 #include <seir_ui/context.hpp>
