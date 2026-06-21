@@ -84,31 +84,31 @@ TEST_CASE("Rect::contains(Vec2)")
 	const Rect r{ { 1, 2 }, Vec2{ 3, 4 } };
 	SUBCASE("top left")
 	{
-		CHECK_FALSE(r.contains(Vec2{ 0.9, 1.9 }));
-		CHECK_FALSE(r.contains(Vec2{ 0.9, 2.0 }));
-		CHECK_FALSE(r.contains(Vec2{ 1.0, 1.9 }));
-		CHECK(r.contains(Vec2{ 1.0, 2.0 }));
+		CHECK_FALSE(r.contains(Vec2{ .9f, 1.9f }));
+		CHECK_FALSE(r.contains(Vec2{ .9f, 2 }));
+		CHECK_FALSE(r.contains(Vec2{ 1, 1.9f }));
+		CHECK(r.contains(Vec2{ 1, 2 }));
 	}
 	SUBCASE("top right")
 	{
-		CHECK_FALSE(r.contains(Vec2{ 2.9, 1.9 }));
-		CHECK(r.contains(Vec2{ 2.9, 2.0 }));
-		CHECK_FALSE(r.contains(Vec2{ 3.0, 1.9 }));
-		CHECK_FALSE(r.contains(Vec2{ 3.0, 2.0 }));
+		CHECK_FALSE(r.contains(Vec2{ 2.9f, 1.9f }));
+		CHECK(r.contains(Vec2{ 2.9f, 2 }));
+		CHECK_FALSE(r.contains(Vec2{ 3, 1.9f }));
+		CHECK_FALSE(r.contains(Vec2{ 3, 2 }));
 	}
 	SUBCASE("bottom left")
 	{
-		CHECK_FALSE(r.contains(Vec2{ 0.9, 3.9 }));
-		CHECK_FALSE(r.contains(Vec2{ 0.9, 4.0 }));
-		CHECK(r.contains(Vec2{ 1.0, 3.9 }));
-		CHECK_FALSE(r.contains(Vec2{ 1.0, 4.0 }));
+		CHECK_FALSE(r.contains(Vec2{ .9f, 3.9f }));
+		CHECK_FALSE(r.contains(Vec2{ .9f, 4 }));
+		CHECK(r.contains(Vec2{ 1, 3.9f }));
+		CHECK_FALSE(r.contains(Vec2{ 1, 4 }));
 	}
 	SUBCASE("bottom right")
 	{
-		CHECK(r.contains(Vec2{ 2.9, 3.9 }));
-		CHECK_FALSE(r.contains(Vec2{ 2.9, 4.0 }));
-		CHECK_FALSE(r.contains(Vec2{ 3.0, 3.9 }));
-		CHECK_FALSE(r.contains(Vec2{ 3.0, 4.0 }));
+		CHECK(r.contains(Vec2{ 2.9f, 3.9f }));
+		CHECK_FALSE(r.contains(Vec2{ 2.9f, 4 }));
+		CHECK_FALSE(r.contains(Vec2{ 3, 3.9f }));
+		CHECK_FALSE(r.contains(Vec2{ 3, 4 }));
 	}
 }
 
