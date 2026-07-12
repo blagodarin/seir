@@ -1,5 +1,34 @@
 # Contribution guide
 
+###### Directory layout
+
+Each build system target (program or library) resides in its own directory.
+
+Targets are grouped into the following top-level directories:
+- `libs` for libraries.
+- `utils` for command line utilities.
+- `tools` for standalone UI tools.
+- `examples` for example applications build with Seir.
+- `usage` for examples of using Seir in other projects.
+  These aren't included in the main build system, but are build by the CI.
+
+Each target has a common diractory layout:
+- `src` for source files (including target-private headers).
+  Optional for header-only libraries.
+- `include/seir_{target}` for public header files (only for libraries).
+  No subdirectories are allowed.
+- `data` for target-specific data files.
+- `tests` for unit test subtarget (only for libraries and utilities).
+  Has an `src` subdirectory with source files,
+  and may have a `data` subdirectory with test-specific data.
+- `benchmarks` contains performance benchmark subtarget (only for libraries).
+  Has an `src` subdirectory with source files.
+
+Other top-level directories are:
+- `cmake` for build system scripts.
+- `data` for shared data files (e. g. assets).
+- `docs` for common documentation.
+
 ###### Commit messages
 
 Commit messages must follow [Conventional Commits](https://conventionalcommits.org/),
