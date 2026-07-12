@@ -21,6 +21,8 @@ Seir aims to be:
   and third-party libraries can be provided by the build system and statically
   linked into the final binary. Static runtime builds on Windows are also supported.
 
+See the [Contribution guide](docs/contribution_guide.md) for details.
+
 ### Disclaimer
 
 Seir was created as a vessel for its author's erratic software engineering work.
