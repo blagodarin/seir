@@ -10,6 +10,11 @@ include(CMakeDependentOption)
 include(FetchContent)
 include(cmake/SeirPackages.cmake)
 
+# Global build options.
+cmake_dependent_option(SEIR_BENCHMARKS "Build benchmarks" OFF "PROJECT_IS_TOP_LEVEL" OFF)
+cmake_dependent_option(SEIR_EXAMPLES "Build examples" OFF "PROJECT_IS_TOP_LEVEL" OFF)
+cmake_dependent_option(SEIR_TESTS "Build tests" OFF "PROJECT_IS_TOP_LEVEL" OFF)
+
 # Data formats.
 option(SEIR_AUDIO_OGGVORBIS "Enable Ogg Vorbis audio support" OFF)
 option(SEIR_AUDIO_WAV "Enable Waveform audio support" OFF)
@@ -24,14 +29,16 @@ cmake_dependent_option(SEIR_COMPRESSION_ZLIB "Enable zlib compression support" O
 option(SEIR_COMPRESSION_ZSTD "Enable zstd compression support" OFF)
 
 # Libraries and utilities.
-option(SEIR_ALL "Build all libraries and utilities" OFF)
+option(SEIR_ALL "Build all libraries, utilities and tools" OFF)
 # >>
-cmake_dependent_option(SEIR_UI "Build UI library" OFF "NOT SEIR_ALL" ON)
+cmake_dependent_option(SEIR_TOOLS "Build tools" OFF "NOT SEIR_ALL" ON)
+# >>
+cmake_dependent_option(SEIR_UI "Build UI library" OFF "NOT SEIR_TOOLS" ON)
 # >>
 cmake_dependent_option(SEIR_RENDERER "Build renderer library" OFF "NOT SEIR_UI" ON)
 # >>
 cmake_dependent_option(SEIR_APP "Build app library" OFF "NOT SEIR_RENDERER" ON)
-cmake_dependent_option(SEIR_UTILS "Build utils" OFF "NOT SEIR_ALL" ON)
+cmake_dependent_option(SEIR_UTILS "Build command line utilities" OFF "NOT SEIR_ALL" ON)
 # >>
 cmake_dependent_option(SEIR_AUDIO "Build audio library" OFF "NOT SEIR_AUDIO_OGGVORBIS;NOT SEIR_AUDIO_WAV" ON)
 cmake_dependent_option(SEIR_PACKAGE "Build package library" OFF "NOT SEIR_UTILS" ON)
@@ -43,20 +50,15 @@ cmake_dependent_option(SEIR_COMPRESSION "Build compression library" OFF "NOT SEI
 cmake_dependent_option(SEIR_IO "Build IO library" OFF "NOT SEIR_AUDIO;NOT SEIR_IMAGE;NOT SEIR_MODEL;NOT SEIR_PACKAGE;NOT SEIR_SERIALIZATION" ON)
 cmake_dependent_option(SEIR_MATH "Build math library" OFF "NOT SEIR_APP" ON)
 cmake_dependent_option(SEIR_SYNTH "Build synth library" OFF "NOT SEIR_ALL" ON)
-cmake_dependent_option(SEIR_U8MAIN "Build u8main library" OFF "NOT SEIR_UTILS" ON)
+cmake_dependent_option(SEIR_U8MAIN "Build u8main library" OFF "NOT SEIR_TOOLS;NOT SEIR_UTILS" ON)
 # >>
 cmake_dependent_option(SEIR_BASE "Build base library" OFF "NOT SEIR_COMPRESSION;NOT SEIR_IO;NOT SEIR_SYNTH;NOT SEIR_U8MAIN" ON)
 
 set(SEIR_RENDERER_BACKEND "Vulkan" CACHE STRING "Renderer backend")
 set_property(CACHE SEIR_RENDERER_BACKEND PROPERTY STRINGS "" "Vulkan")
 
-# Other options.
+# Other build options.
 option(SEIR_STATIC_RUNTIME "Build Seir with static MSVC runtime" OFF)
-if(PROJECT_IS_TOP_LEVEL)
-	option(SEIR_BENCHMARKS "Build Seir benchmarks" OFF)
-	option(SEIR_EXAMPLES "Build Seir examples" OFF)
-	option(SEIR_TESTS "Build Seir tests" OFF)
-endif()
 
 if(NOT PROJECT_IS_TOP_LEVEL AND NOT DEFINED CMAKE_FOLDER)
 	set(CMAKE_FOLDER "Seir")
@@ -101,7 +103,7 @@ if(SEIR_COMPRESSION_ZSTD)
 endif()
 if(SEIR_IMAGE_JPEG)
 	seir_provide_jpeg(JPEG_ROOT STATIC_RUNTIME ${SEIR_STATIC_RUNTIME})
-	set(CMAKE_FIND_FRAMEWORK NEVER) # https://gitlab.kitware.com/cmake/cmake/-/issues/18921
+	set(CMAKE_FIND_FRAMEWORK NEVER) # https://gitlab.kitware.com/cmake/cmake/-/work_items/18921
 	find_package(JPEG REQUIRED)
 endif()
 if(SEIR_IMAGE_WEBP)
@@ -224,10 +226,11 @@ endif()
 
 if(SEIR_UTILS)
 	add_subdirectory(utils/embed)
-	if(SEIR_UI)
-		add_subdirectory(utils/key_tester)
-	endif()
 	add_subdirectory(utils/pack)
+endif()
+
+if(SEIR_TOOLS)
+	add_subdirectory(tools/key_tester)
 endif()
 
 if(SEIR_TESTS)
