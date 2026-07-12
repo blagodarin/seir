@@ -71,14 +71,14 @@ jobs:
       - name: Build CMake FetchContent usage example
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          cmake -S examples/usage/cmake_fetchcontent -B build.cmake_fetchcontent -G Ninja \
+          cmake -S usage/cmake_fetchcontent -B build.cmake_fetchcontent -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DREPLACE_WITH_COMMIT_HASH=${{ github.sha }}
           cmake --build build.cmake_fetchcontent
       - name: Build CMake package usage example
         run: |
           cmake --build build --target install
-          cmake -S examples/usage/cmake_package -B build.cmake_package -G Ninja \
+          cmake -S usage/cmake_package -B build.cmake_package -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/install"
           cmake --build build.cmake_package
