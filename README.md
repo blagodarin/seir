@@ -14,12 +14,14 @@ Seir aims to be:
   recent [CMake](https://cmake.org/download/) and a supported C++ compiler,
   which is essentially the bare minimum for building modern C++ projects.
   On top of that, you don't even need to build Seir manually in order to use it, as
-  [a few lines of CMake script](examples/usage/cmake_fetchcontent/CMakeLists.txt)
+  [a few lines of CMake script](usage/cmake_fetchcontent/CMakeLists.txt)
   will get you Seir with all its dependencies.
 * **Highly configurable.**
   Every component and every supported format can be disabled individually,
   and third-party libraries can be provided by the build system and statically
   linked into the final binary. Static runtime builds on Windows are also supported.
+
+See the [Contribution guide](docs/contribution_guide.md) for more details.
 
 ### Disclaimer
 

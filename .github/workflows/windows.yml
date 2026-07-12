@@ -66,7 +66,7 @@ jobs:
       - name: Build CMake FetchContent usage example
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          cmake -S examples\usage\cmake_fetchcontent -B build.cmake_fetchcontent `
+          cmake -S usage\cmake_fetchcontent -B build.cmake_fetchcontent `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DREPLACE_WITH_COMMIT_HASH=${{ github.sha }}
           cmake --build build.cmake_fetchcontent
@@ -75,7 +75,7 @@ jobs:
         # so that the error from the first example is not consumed by Windows shell.
         run: |
           cmake --build build --target install
-          cmake -S examples\usage\cmake_package -B build.cmake_package `
+          cmake -S usage\cmake_package -B build.cmake_package `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}\install" `
             -DSTATIC_RUNTIME=${{ matrix.config != 'Debug' && 'ON' || 'OFF' }}
