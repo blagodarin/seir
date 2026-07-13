@@ -33,7 +33,7 @@ namespace seir
 		UiFrame(UiContext&, Canvas&);
 		~UiFrame() noexcept;
 
-		bool addButton(std::string_view id, std::string_view text);
+		bool addButton(std::string_view id, std::string_view text, UiAlignment = UiAlignment::Center);
 		std::optional<Vec2> addDragArea(std::string_view id, const Size2D&, Key);
 		std::optional<Vec2> addHoverArea(const Size2D&) noexcept;
 		void addLabel(std::string_view text, UiAlignment = UiAlignment::Left);
