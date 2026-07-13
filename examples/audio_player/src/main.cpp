@@ -7,6 +7,7 @@
 #include <seir_audio/decoder.hpp>
 #include <seir_audio/format.hpp>
 #include <seir_audio/player.hpp>
+#include <seir_base/string_utils.hpp>
 #include <seir_io/inlet.hpp>
 #include <seir_renderer/canvas.hpp>
 #include <seir_renderer/color.hpp>
@@ -24,14 +25,77 @@
 
 namespace
 {
+	class DirectoryView
+	{
+	public:
+		struct Entry
+		{
+			enum class Type : bool
+			{
+				File,
+				Directory,
+			};
+
+			std::string name;
+			Type type = Type::File;
+			std::filesystem::path path;
+			std::string fullName = path.string();
+		};
+
+		DirectoryView(std::string_view pattern)
+			: _pattern{ pattern }
+		{
+			reset(std::filesystem::current_path());
+		}
+
+		[[nodiscard]] const std::string& path() const noexcept { return _path; }
+
+		[[nodiscard]] const std::vector<Entry>& entries() const noexcept { return _entries; }
+
+		void reset(const std::filesystem::path& path)
+		{
+			decltype(_entries) entries;
+			try
+			{
+				if (path.has_parent_path())
+					entries.emplace_back("..", Entry::Type::Directory, path.parent_path());
+				for (const auto& entry : std::filesystem::directory_iterator{ path })
+				{
+					auto filename = entry.path().filename().string();
+					if (filename.starts_with('.'))
+						continue;
+					if (entry.is_directory())
+						entries.emplace_back(std::move(filename), Entry::Type::Directory, entry.path());
+					else if (entry.is_regular_file() && seir::matchWildcard(filename, _pattern))
+						entries.emplace_back(std::move(filename), Entry::Type::File, entry.path());
+				}
+			}
+			catch (const std::filesystem::filesystem_error&)
+			{
+				return;
+			}
+			std::sort(path.has_parent_path() ? std::next(entries.begin()) : entries.begin(), entries.end(),
+				[](const Entry& left, const Entry& right) {
+					if (left.type != right.type)
+						return left.type == Entry::Type::Directory;
+					return left.name < right.name;
+				});
+			_path = path.string();
+			_entries = std::move(entries);
+		}
+
+	private:
+		const std::string _pattern;
+		std::string _path;
+		std::vector<Entry> _entries;
+	};
+
 	class Controller
 	{
 	public:
 		Controller(seir::AudioPlayer& player)
 			: _player{ player }
 		{
-			listPath(std::filesystem::current_path());
-
 			constexpr auto dirTextColor = seir::Rgba32::yellow();
 			constexpr auto fileTextColor = seir::Rgba32::white();
 
@@ -59,7 +123,7 @@ namespace
 			layout.fromTopLeft(seir::UiLayout::Axis::Y, 6);
 			layout.setItemSize({ 0, 20 });
 			ui.setLabelStyle({ seir::Rgba32::green(), 1 });
-			ui.addLabel(_currentPath, seir::UiAlignment::Left);
+			ui.addLabel(_directoryView.path(), seir::UiAlignment::Left);
 
 			layout.fromTopRight(seir::UiLayout::Axis::Y, 4);
 			layout.setItemSize({ 96, 24 });
@@ -69,96 +133,38 @@ namespace
 			layout.fromTopLeft(seir::UiLayout::Axis::Y, 4);
 			layout.skip(28);
 			layout.setItemSize({ 792, 20 });
-			std::filesystem::path newPath;
-			std::string selectedFile;
-			for (const auto& entry : _entries)
 			{
-				if (entry.type == Entry::Type::Directory)
+				std::filesystem::path newPath;
+				for (const auto& entry : _directoryView.entries())
 				{
-					ui.setButtonStyle(_dirButtonStyle);
-					if (ui.addButton(entry.pathString, entry.name, seir::UiAlignment::Left))
-						newPath = entry.path;
+					if (entry.type == DirectoryView::Entry::Type::Directory)
+					{
+						ui.setButtonStyle(_dirButtonStyle);
+						if (ui.addButton(entry.fullName, entry.name, seir::UiAlignment::Left))
+							newPath = entry.path;
+					}
+					else
+					{
+						ui.setButtonStyle(_fileButtonStyle);
+						if (ui.addButton(entry.fullName, entry.name, seir::UiAlignment::Left))
+						{
+							_player.stopAll();
+							if (auto decoder = seir::AudioDecoder::create(seir::fromFile(entry.fullName), { .format{}, .loop = true }))
+								_player.play(seir::SharedPtr{ std::move(decoder) });
+						}
+					}
 				}
-				else
-				{
-					ui.setButtonStyle(_fileButtonStyle);
-					if (ui.addButton(entry.pathString, entry.name, seir::UiAlignment::Left))
-						selectedFile = entry.pathString;
-				}
+				if (!newPath.empty())
+					_directoryView.reset(newPath);
 			}
+
 			if (ui.takeKeyPress(seir::Key::Escape))
-			{
 				ui.close();
-				return;
-			}
-
-			if (!newPath.empty())
-				listPath(newPath);
-			if (!selectedFile.empty())
-			{
-				_player.stopAll();
-				if (auto decoder = seir::AudioDecoder::create(seir::fromFile(selectedFile), { .format{}, .loop = true }))
-					_player.play(seir::SharedPtr{ std::move(decoder) });
-			}
 		}
 
 	private:
-		void listPath(const std::filesystem::path& path)
-		{
-			decltype(_entries) entries;
-			try
-			{
-				if (path.has_parent_path())
-					entries.emplace_back(path.parent_path(), Entry::Type::Directory, "..");
-				for (const auto& entry : std::filesystem::directory_iterator{ path })
-				{
-					auto filename = entry.path().filename().string();
-					if (filename.starts_with('.'))
-						continue;
-					if (entry.is_directory())
-						entries.emplace_back(std::filesystem::path{ entry.path() }, Entry::Type::Directory, std::move(filename));
-					else if (entry.is_regular_file() && filename.ends_with(".aulos"))
-						entries.emplace_back(std::filesystem::path{ entry.path() }, Entry::Type::File, std::move(filename));
-				}
-			}
-			catch (const std::filesystem::filesystem_error&)
-			{
-				return;
-			}
-			std::sort(path.has_parent_path() ? std::next(entries.begin()) : entries.begin(), entries.end(),
-				[](const Entry& left, const Entry& right) {
-					if (left.type != right.type)
-						return left.type == Entry::Type::Directory;
-					return left.name < right.name;
-				});
-			_currentPath = path.string();
-			_entries = std::move(entries);
-		}
-
-	private:
-		struct Entry
-		{
-			enum class Type : bool
-			{
-				File,
-				Directory,
-			};
-
-			std::string name;
-			Type type = Type::File;
-			std::filesystem::path path;
-			std::string pathString = path.string();
-
-			Entry(std::filesystem::path&& path_, Type type_, std::string&& name_)
-				: name{ std::move(name_) }
-				, type{ type_ }
-				, path{ std::move(path_) }
-			{}
-		};
-
 		seir::AudioPlayer& _player;
-		std::string _currentPath;
-		std::vector<Entry> _entries;
+		DirectoryView _directoryView{ "*.aulos" };
 		seir::UiButtonStyle _dirButtonStyle;
 		seir::UiButtonStyle _fileButtonStyle;
 	};
