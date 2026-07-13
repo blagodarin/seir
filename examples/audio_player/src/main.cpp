@@ -97,7 +97,7 @@ namespace
 			if (!selectedFile.empty())
 			{
 				_player.stopAll();
-				if (auto decoder = seir::AudioDecoder::create(seir::fromFile(selectedFile), { .loop = true }))
+				if (auto decoder = seir::AudioDecoder::create(seir::fromFile(selectedFile), { .format{}, .loop = true }))
 					_player.play(seir::SharedPtr{ std::move(decoder) });
 			}
 		}
@@ -173,7 +173,7 @@ namespace
 	};
 }
 
-int u8main(int argc, char** argv)
+int u8main(int, char**)
 {
 	seir::App app;
 	seir::Window window{ app, "Audio Player" };
