@@ -5,6 +5,7 @@
 set(SOURCES
 	src/buffer_inlet.cpp
 	src/buffer_writer.cpp
+	src/directory_view.cpp
 	src/inlet.cpp
 	src/paths.cpp
 	src/reader.cpp

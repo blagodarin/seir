@@ -21,7 +21,7 @@ namespace seir
 		decltype(_entries) entries;
 		try
 		{
-			if (path.has_parent_path())
+			if (path.has_parent_path() && path.parent_path() != path)
 				entries.emplace_back("..", Entry::Type::Directory, path.parent_path());
 			for (const auto& entry : std::filesystem::directory_iterator{ path })
 			{
