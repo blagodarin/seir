@@ -16,18 +16,37 @@
 
 namespace
 {
-
 	constexpr seir::Rect relativeHeightInRect(const seir::Rect& rect, float relativeHeight) noexcept
 	{
 		const auto padding = rect.height() * (1 - relativeHeight) / 2;
 		return { rect.topLeft() + padding, rect.bottomRight() - padding };
 	}
 
-	constexpr seir::Rect sizeInRect(const seir::Rect& rect, const seir::Size2D& size) noexcept
+	constexpr seir::Rect sizeInRect(const seir::Rect& rect, const seir::Size2D& size, seir::UiAlignment alignment) noexcept
 	{
-		const auto yPadding = (rect.height() - size.height) / 2;
-		const auto xPadding = std::max(yPadding, (rect.width() - size.width) / 2);
-		return { rect.topLeft() + seir::Vec2{ xPadding, yPadding }, rect.bottomRight() - seir::Vec2{ xPadding, yPadding } };
+		const auto padding = (rect.height() - size.height) / 2;
+		if (alignment == seir::UiAlignment::Center)
+		{
+			const auto extraPadding = std::max(padding, (rect.width() - size.width) / 2);
+			return {
+				rect.topLeft() + seir::Vec2{ extraPadding, padding },
+				rect.bottomRight() - seir::Vec2{ extraPadding, padding },
+			};
+		}
+		else
+		{
+			const auto extraPadding = std::max(padding, rect.width() - size.width - padding);
+			if (alignment == seir::UiAlignment::Right)
+				return {
+					rect.topLeft() + seir::Vec2{ extraPadding, padding },
+					rect.bottomRight() - seir::Vec2{ padding, padding },
+				};
+			else
+				return {
+					rect.topLeft() + seir::Vec2{ padding, padding },
+					rect.bottomRight() - seir::Vec2{ extraPadding, padding },
+				};
+		}
 	}
 }
 
@@ -72,7 +91,7 @@ namespace seir
 		_context._keyStates.clear();
 	}
 
-	bool UiFrame::addButton(std::string_view id, std::string_view text)
+	bool UiFrame::addButton(std::string_view id, std::string_view text, UiAlignment alignment)
 	{
 		assert(!id.empty());
 		const auto rect = _context.addItem();
@@ -132,7 +151,7 @@ namespace seir
 			const auto textHeight = rect.height() * _context._buttonStyle._fontSize;
 			const auto textWidth = _context._buttonStyle._font->textWidth(text, textHeight);
 			_canvas.setColor(styleState->_textColor);
-			_context._buttonStyle._font->drawLine(_canvas, ::sizeInRect(rect, { textWidth, textHeight }), text);
+			_context._buttonStyle._font->drawLine(_canvas, ::sizeInRect(rect, { textWidth, textHeight }, alignment), text);
 		}
 		return clicked;
 	}

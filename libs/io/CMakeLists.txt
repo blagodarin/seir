@@ -5,6 +5,7 @@
 set(HEADERS
 	include/seir_io/buffer_inlet.hpp
 	include/seir_io/buffer_writer.hpp
+	include/seir_io/directory_view.hpp
 	include/seir_io/inlet.hpp
 	include/seir_io/paths.hpp
 	include/seir_io/reader.hpp
@@ -14,6 +15,7 @@ set(HEADERS
 	)
 set(SOURCES
 	src/buffer_writer.cpp
+	src/directory_view.cpp
 	src/writer.cpp
 	)
 if(WIN32)
